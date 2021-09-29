@@ -16,7 +16,7 @@
         <h3>{{ session('success') }}</h3>
     @endif
     <div class="container mx-auto w-2/4">
-        <div class="w-full mx-auto h-adminLoginBoxH2 shadow-xl bg-white">
+        <div class="w-full mx-auto  shadow-xl bg-white">
             @livewire('multi-step-form')
         </div>
     </div>

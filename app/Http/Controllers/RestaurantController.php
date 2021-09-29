@@ -12,7 +12,6 @@ use App\Models\FoodItem;
 use App\Models\OrderSet;
 use App\Models\StoreHour;
 use App\Models\FoodSetItem;
-use App\Mail\RestaurantMail;
 use App\Models\Cancellation;
 use Illuminate\Http\Request;
 use App\Models\OrderSetFoodSet;
@@ -95,14 +94,19 @@ class RestaurantController extends Controller
         $resAccid = Session::get('loginId');
         $stamp = StampCard::where('restAcc_id', $resAccid)->first();
         if($stamp == null){
+            $rewards = RestaurantRewardList::where('restAcc_id', $resAccid)->get();
+            $tasks = RestaurantTaskList::where('restAcc_id', $resAccid)->get();
             return view('restaurant.manageRestaurant.tasksRewards.stampCard',[
                 'title' => 'Manage Task Rewards',
                 'stamp' => $stamp,
+                'rewards' => $rewards,
+                'tasks' => $tasks,
             ]);
         } else {
             $reward = RestaurantRewardList::where('restAcc_id', $resAccid)->where('id', $stamp->stampReward)->first();
+            $rewards = RestaurantRewardList::where('restAcc_id', $resAccid)->get();
             $tasks = RestaurantTaskList::where('restAcc_id', $resAccid)->get();
-            $getTasks = StampCardTasks::where('stampCards_id ', $stamp->id)->get();
+            $getTasks = StampCardTasks::where('stampCards_id', $stamp->id)->get();
             $storeTasksId = array();
             foreach ($getTasks as $getTask){
                 array_push($storeTasksId, $getTask->restaurantTaskLists_id);
@@ -112,6 +116,7 @@ class RestaurantController extends Controller
                 'resAccid' => $resAccid,
                 'stamp' => $stamp,
                 'reward' => $reward,
+                'rewards' => $rewards,
                 'tasks' => $tasks,
                 'storeTasksId' => $storeTasksId,
             ]);
@@ -407,14 +412,37 @@ class RestaurantController extends Controller
     // RENDER LOGICS
     public function addStampCard(Request $request){
         $restAccId = Session::get('loginId');
+        $checkStampExist = StampCard::where('restAcc_id', $restAccId)->first();
+
+        if($checkStampExist != null){
+            $request->session()->flash('invalid');
+            return redirect('/restaurant/manage-restaurant/task-rewards/stamp-card');
+        }
+
         $request->validate([
             'stampCapacity' => 'required',
-            'stampRewards'  => 'required',
-            'taks'          => 'required',
+            'stampReward'  => 'required',
+            'tasks'          => 'required',
             'stampValidity' => 'required',
         ]);
 
+        StampCard::create([
+            'restAcc_id' => $restAccId,
+            'stampCapacity' => $request->stampCapacity,
+            'stampReward' => $request->stampReward,
+            'stampValidity' => $request->stampValidity,
+        ]);
 
+        $getLatestStamp = StampCard::where('restAcc_id', $restAccId)->first();
+
+        foreach ($request->tasks as $taskId){
+            StampCardTasks::create([
+                'stampCards_id' => $getLatestStamp->id,
+                'restaurantTaskLists_id' => $taskId,
+            ]);
+        }
+        $request->session()->flash('added');
+        return redirect('/restaurant/manage-restaurant/task-rewards/stamp-card');
     }
     public function editTask3(Request $request){
         $restAccId = Session::get('loginId');
@@ -1331,7 +1359,7 @@ class RestaurantController extends Controller
         }
     }
 
-    // FWAEFAWEFWA
+    // TRY EDIT
     public function verifyEmail($id){
         $data = RestaurantAccount::select('emailAddress', 'fname', 'lname', 'verified')->where('id', $id)->first();
         if($data->verified == "No"){

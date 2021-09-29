@@ -2,6 +2,24 @@
 
 @section('content')
 <div class="container mx-auto stamp-card">
+    @if (session()->has('added'))
+        <script>
+            Swal.fire(
+                'Stamp Card Published',
+                '',
+                'success'
+            );
+        </script>
+    @endif
+    @if (session()->has('invalid'))
+        <script>
+            Swal.fire(
+                'You have still stamp card',
+                '',
+                'error'
+            );
+        </script>
+    @endif
     <div class="w-11/12 mx-auto my-10">
         <div class="grid grid-cols-3 gap-x-5 items-start">
             <div class="col-span-2 bg-manageRestaurantSidebarColorActive pb-8 shadow-adminDownloadButton">
@@ -25,12 +43,12 @@
                             <div class="text-left text-submitButton font-bold">Reward</div>
                             <div class="text-left text-submitButton">:</div>
                             <div class="">
-                                <select name="stampRewards" class="w-full border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none  focus:border-black">
+                                <select name="stampReward" class="w-full border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none  focus:border-black">
                                     <option value="" selected="selected">--Choose Reward--</option>
-                                    <option value="DSCN">Discount</option>
-                                    <option value="FRPE">Free Person</option>
-                                    <option value="HLF">Free Half</option>
-                                    <option value="ALL">All are Free</option>
+                                    <option value="{{ $rewards[0]->id }}">Discount {{ $rewards[0]->rewardInput }}% in a Total Bill</option>
+                                    <option value="{{ $rewards[1]->id }}">Free {{ $rewards[1]->rewardInput }} person in a group</option>
+                                    <option value="{{ $rewards[2]->id }}">Half in the group will be free</option>
+                                    <option value="{{ $rewards[3]->id }}">All people in the group will be free</option>
                                 </select>
                                 <span class="mt-2 text-red-600 italic text-sm">@error('stampRewards'){{ $message }}@enderror</span>
                             </div>
@@ -39,25 +57,25 @@
                             <div class="text-left text-submitButton">:</div>
                             <div class="grid grid-rows-1">
                                 <div>
-                                    <input type="checkbox" name="taks[]" value="SPND" class="mr-2 cursor-pointer"> Spend Amount Of Money
+                                    <input type="checkbox" name="tasks[]" value="{{ $tasks[0]->id }}" class="mr-2 cursor-pointer"> Spend {{ $tasks[0]->taskInput }} pesos in 1 visit only
                                 </div>
                                 <div>
-                                    <input type="checkbox" name="taks[]" value="BRNG" class="mr-2 cursor-pointer"> Bring Friends
+                                    <input type="checkbox" name="tasks[]" value="{{ $tasks[1]->id }}" class="mr-2 cursor-pointer"> Bring {{ $tasks[1]->taskInput }} friends in our store
                                 </div>
                                 <div>
-                                    <input type="checkbox" name="taks[]" value="ORDR" class="mr-2 cursor-pointer"> Order Add On/s
+                                    <input type="checkbox" name="tasks[]" value="{{ $tasks[2]->id }}" class="mr-2 cursor-pointer"> Order {{ $tasks[2]->taskInput }} add on/s per visit
                                 </div>
                                 <div>
-                                    <input type="checkbox" name="taks[]" value="VST" class="mr-2 cursor-pointer"> Visit in Store
+                                    <input type="checkbox" name="tasks[]" value="{{ $tasks[3]->id }}" class="mr-2 cursor-pointer"> Visit in our store
                                 </div>
                                 <div>
-                                    <input type="checkbox" name="taks[]" value="FDBK" class="mr-2 cursor-pointer"> Give Feedback
+                                    <input type="checkbox" name="tasks[]" value="{{ $tasks[4]->id }}" class="mr-2 cursor-pointer"> Give a feedback/review per visit
                                 </div>
                                 <div>
-                                    <input type="checkbox" name="taks[]" value="PUGC" class="mr-2 cursor-pointer"> Pay using GCash
+                                    <input type="checkbox" name="tasks[]" value="{{ $tasks[5]->id }}" class="mr-2 cursor-pointer"> Pay using gcash
                                 </div>
                                 <div>
-                                    <input type="checkbox" name="taks[]" value="LUDN" class="mr-2 cursor-pointer"> Eat during lunch/dinner hours
+                                    <input type="checkbox" name="tasks[]" value="{{ $tasks[6]->id }}" class="mr-2 cursor-pointer"> Eat during lunch/dinner hours
                                 </div>
                                 <span class="mt-2 text-red-600 italic text-sm">@error('taks'){{ $message }}@enderror</span>
                             </div>
@@ -90,23 +108,116 @@
                     @else
                         <div class="grid grid-cols-2 w-full items-center bg-white pl-5 pr-11 py-5">
                             <p class="col-span-1 text-submitButton font-bold">Stamp Capacity</p>
-                            <p class="col-span-1 place-self-end">10</p>
+                            <p class="col-span-1 place-self-end">{{ $stamp->stampCapacity }}</p>
+                        </div>
+                        <div class="grid grid-cols-2 w-full items-center bg-white pl-5 pr-11 py-5">
+                            <p class="col-span-1 text-submitButton font-bold">Stamp Validity Date</p>
+                            <p class="col-span-1 place-self-end">
+                                @php
+                                    $stampDate = explode('-', $stamp->stampValidity);
+                                    switch ($stampDate[1]) {
+                                        case '1':
+                                            $month = "January";
+                                            break;
+                                        case '2':
+                                            $month = "February";
+                                            break;
+                                        case '3':
+                                            $month = "March";
+                                            break;
+                                        case '4':
+                                            $month = "April";
+                                            break;
+                                        case '5':
+                                            $month = "May";
+                                            break;
+                                        case '6':
+                                            $month = "June";
+                                            break;
+                                        case '7':
+                                            $month = "July";
+                                            break;
+                                        case '8':
+                                            $month = "August";
+                                            break;
+                                        case '9':
+                                            $month = "September";
+                                            break;
+                                        case '10':
+                                            $month = "October";
+                                            break;
+                                        case '11':
+                                            $month = "November";
+                                            break;
+                                        case '12':
+                                            $month = "December";
+                                            break;
+                                        default:
+                                            $month = "";
+                                            break;
+                                    }
+                                    $year = $stampDate[0];
+                                    $day  = $stampDate[2];
+                                @endphp
+                                {{ $month.' '.$day.', '.$year }}
+                            </p>
                         </div>
                         <div class="grid grid-cols-2 w-full items-center bg-white pl-5 pr-11 py-5">
                             <p class="col-span-1 text-submitButton font-bold">Reward</p>
-                            <p class="col-span-1 place-self-end">Discount</p>
-                            <p class="col-span-full mt-5 ml-5 text-sm">Customer will receive 20% discount once stamp card has been completed.</p>
+                            <p class="col-span-full mt-5 ml-5 text-sm">
+                                @switch($reward->rewardCode)
+                                    @case('DSCN')
+                                        Discount {{ $reward->rewardInput }}% in a Total Bill
+                                        @break
+                                    @case('FRPE')
+                                        Free {{ $reward->rewardInput }} person in a group
+                                        @break
+                                    @case('HLF')
+                                        Half in the group will be free
+                                        @break
+                                    @case('ALL')
+                                        All people in the group will be free
+                                        @break
+                                    @default
+                                        No Reward
+                                @endswitch
+                            </p>
                         </div>
                         <div class="bg-white pl-5 pr-11 py-5">
                             <p class="text-submitButton font-bold">Tasks</p>
-                            <ul class="mt-2">
-                                <li>Visit The Restaurant</li>
-                                <li>Visit The Restaurant</li>
-                                <li>Visit The Restaurant</li>
-                                <li>Visit The Restaurant</li>
-                                <li>Visit The Restaurant</li>
-                                <li>Visit The Restaurant</li>
-                                <li>Visit The Restaurant</li>
+                            <ul class="mt-2 list-disc pl-10 text-sm">
+                                @foreach ($storeTasksId as $storeTaskId)
+                                    @foreach ($tasks as $task)
+                                        @if ($storeTaskId == $task->id)
+                                            @switch($task->taskCode)
+                                                @case('SPND')
+                                                    <li>Spend {{ $task->taskInput }} pesos in 1 visit only</li>
+                                                    @break
+                                                @case('BRNG')
+                                                    <li>Bring {{ $task->taskInput }} friends in our store</li>
+                                                    @break
+                                                @case('ORDR')
+                                                    <li>Order {{ $task->taskInput }} add on/s per visit</li>
+                                                    @break
+                                                @case('VST')
+                                                    <li>Visit in our store</li>
+                                                    @break
+                                                @case('FDBK')
+                                                    <li>Give a feedback/review per visit
+                                                    </li>
+                                                    @break
+                                                @case('PUGC')
+                                                    <li>Pay using gcash</li>
+                                                    @break
+                                                @case('LUDN')
+                                                    <li>Eat during lunch/dinner hours</li>
+                                                    @break
+                                                @default
+                                                    <li>No Task</li>
+                                            @endswitch
+                                        @endif
+                                    @endforeach
+                                @endforeach
                             </ul>
                         </div>
                         <div></div>
