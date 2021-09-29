@@ -1,0 +1,247 @@
+.login .box{
+    margin-top: -500px;
+    padding: 450px 0;
+    background-color: #588DA8;
+    transform: skew(0deg, -10deg);
+}
+.login .form{
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    bottom: 0;
+}
+.login .uppercase{
+    writing-mode: vertical-lr;
+    text-orientation: upright;
+    text-transform: uppercase;
+    font-size: 1.5vw;
+    letter-spacing: 5px;
+    margin-top: 10px;
+    margin-left: 10px;
+}
+
+
+/* ADD - EDIT FOOD ITEM FORM */
+.food-item .create-form,
+.food-item .edit-form{
+    position:fixed;
+    top:-150%;
+    left:50%;
+    opacity:0;
+    transform:translate(-50%,-50%) scale(1.25);
+    width:80%;
+    padding:20px 30px;
+    background:#fff;
+    box-shadow:2px 2px 5px 5px rgba(0,0,0,0.15);
+    border-radius:10px;
+    transition:top 0ms ease-in-out 200ms, opacity 200ms ease-in-out 0ms, transform 200ms ease-in-out 0ms; 
+}
+.food-item .overlay.active{
+    position:fixed;
+    top:0px;
+    left:0px;
+    width:100vw;
+    height:100vh;
+    background:rgba(0,0,0,0.8);
+    z-index:1;
+}
+.food-item .create-form.active,
+.food-item .edit-form.active{
+    top:50%;
+    opacity:1;
+    transform:translate(-50%,-50%) scale(1);
+    transition:top 0ms ease-in-out 0ms, opacity 200ms ease-in-out 0ms, transform 200ms ease-in-out 0ms;
+    z-index:2;
+}
+.food-item .create-form .close-btn,
+.food-item .edit-form .close-btn{
+    position:absolute;
+    top:20px;
+    right:20px;
+    width:15px;
+    height:15px;
+    color:#000;
+    text-align:center;
+    line-height:15px;
+    border-radius:15px;
+    cursor:pointer;
+}
+
+
+/* FOOD SET DETAIL ADD ITEM */
+.food-set .add-form,
+.food-set .add-form2{
+    position:fixed;
+    top:-150%;
+    left:50%;
+    opacity:0;
+    transform:translate(-50%,-50%) scale(1.25);
+    width:60%;
+    padding:20px 15px;
+    background:#000;
+    box-shadow:2px 2px 5px 5px rgba(0,0,0,0.15);
+    border-radius:10px;
+    transition:top 0ms ease-in-out 200ms, opacity 200ms ease-in-out 0ms, transform 200ms ease-in-out 0ms; 
+}
+.food-set .overlay.active{
+    position:fixed;
+    top:0px;
+    left:0px;
+    width:100vw;
+    height:100vh;
+    background:rgba(37, 37, 37, 0.8);
+    z-index:1;
+}
+.food-set .add-form.active,
+.food-set .add-form2.active{
+    top:50%;
+    opacity:1;
+    transform:translate(-50%,-50%) scale(1);
+    transition:top 0ms ease-in-out 0ms, opacity 200ms ease-in-out 0ms, transform 200ms ease-in-out 0ms;
+    z-index:2;
+}
+
+/* ADD - STORE HOURS FORM */
+.store-hours .create-form,
+.store-hours .edit-form{
+    position:fixed;
+    top:-150%;
+    left:50%;
+    opacity:0;
+    transform:translate(-50%,-50%) scale(1.25);
+    width:80%;
+    padding:20px 30px;
+    background:#fff;
+    box-shadow:2px 2px 5px 5px rgba(0,0,0,0.15);
+    border-radius:10px;
+    transition:top 0ms ease-in-out 200ms, opacity 200ms ease-in-out 0ms, transform 200ms ease-in-out 0ms; 
+}
+.store-hours .overlay.active{
+    position:fixed;
+    top:0px;
+    left:0px;
+    width:100vw;
+    height:100vh;
+    background:rgba(0,0,0,0.8);
+    z-index:1;
+}
+.store-hours .create-form.active,
+.store-hours .edit-form.active{
+    top:50%;
+    opacity:1;
+    transform:translate(-50%,-50%) scale(1);
+    transition:top 0ms ease-in-out 0ms, opacity 200ms ease-in-out 0ms, transform 200ms ease-in-out 0ms;
+    z-index:2;
+}
+.store-hours .create-form .close-btn,
+.store-hours .edit-form .close-btn{
+    position:absolute;
+    top:20px;
+    right:20px;
+    width:15px;
+    height:15px;
+    color:#000;
+    text-align:center;
+    line-height:15px;
+    border-radius:15px;
+    cursor:pointer;
+}
+
+
+
+/* UPDATE - REWARDS FORM */
+.rewards .reward1-form,
+.rewards .reward2-form{
+    position:fixed;
+    top:-150%;
+    left:50%;
+    opacity:0;
+    transform:translate(-50%,-50%) scale(1.25);
+    width:80%;
+    padding:20px 30px;
+    background:#fff;
+    box-shadow:2px 2px 5px 5px rgba(0,0,0,0.15);
+    border-radius:10px;
+    transition:top 0ms ease-in-out 200ms, opacity 200ms ease-in-out 0ms, transform 200ms ease-in-out 0ms; 
+}
+.rewards .overlay.active{
+    position:fixed;
+    top:0px;
+    left:0px;
+    width:100vw;
+    height:100vh;
+    background:rgba(0,0,0,0.8);
+    z-index:1;
+}
+.rewards .reward1-form.active,
+.rewards .reward2-form.active{
+    top:50%;
+    opacity:1;
+    transform:translate(-50%,-50%) scale(1);
+    transition:top 0ms ease-in-out 0ms, opacity 200ms ease-in-out 0ms, transform 200ms ease-in-out 0ms;
+    z-index:2;
+}
+.rewards .reward1-form .close-btn,
+.rewards .reward2-form .close-btn{
+    position:absolute;
+    top:20px;
+    right:20px;
+    width:15px;
+    height:15px;
+    color:#000;
+    text-align:center;
+    line-height:15px;
+    border-radius:15px;
+    cursor:pointer;
+}
+
+
+/* U{DATE - TASKS FORM */
+.tasks .task1-form,
+.tasks .task2-form,
+.tasks .task3-form{
+    position:fixed;
+    top:-150%;
+    left:50%;
+    opacity:0;
+    transform:translate(-50%,-50%) scale(1.25);
+    width:80%;
+    padding:20px 30px;
+    background:#fff;
+    box-shadow:2px 2px 5px 5px rgba(0,0,0,0.15);
+    border-radius:10px;
+    transition:top 0ms ease-in-out 200ms, opacity 200ms ease-in-out 0ms, transform 200ms ease-in-out 0ms; 
+}
+.tasks .overlay.active{
+    position:fixed;
+    top:0px;
+    left:0px;
+    width:100vw;
+    height:100vh;
+    background:rgba(0,0,0,0.8);
+    z-index:1;
+}
+.tasks .task1-form.active,
+.tasks .task2-form.active,
+.tasks .task3-form.active{
+    top:50%;
+    opacity:1;
+    transform:translate(-50%,-50%) scale(1);
+    transition:top 0ms ease-in-out 0ms, opacity 200ms ease-in-out 0ms, transform 200ms ease-in-out 0ms;
+    z-index:2;
+}
+.tasks .task1-form .close-btn,
+.tasks .task2-form .close-btn,
+.tasks .task3-form .close-btn{
+    position:absolute;
+    top:20px;
+    right:20px;
+    width:15px;
+    height:15px;
+    color:#000;
+    text-align:center;
+    line-height:15px;
+    border-radius:15px;
+    cursor:pointer;
+}
