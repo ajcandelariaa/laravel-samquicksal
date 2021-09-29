@@ -1331,6 +1331,7 @@ class RestaurantController extends Controller
         }
     }
 
+    // FWAEFAWEFWA
     public function verifyEmail($id){
         $data = RestaurantAccount::select('emailAddress', 'fname', 'lname', 'verified')->where('id', $id)->first();
         if($data->verified == "No"){
