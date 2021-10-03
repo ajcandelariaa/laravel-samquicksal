@@ -10,10 +10,12 @@ use App\Models\FoodSet;
 use App\Models\Runaway;
 use App\Models\FoodItem;
 use App\Models\OrderSet;
+use App\Models\StampCard;
 use App\Models\StoreHour;
 use App\Models\FoodSetItem;
 use App\Models\Cancellation;
 use Illuminate\Http\Request;
+use App\Models\StampCardTasks;
 use App\Models\OrderSetFoodSet;
 use App\Models\UnavailableDate;
 use App\Mail\RestaurantVerified;
@@ -26,10 +28,12 @@ use App\Models\RestaurantRewardList;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use App\Mail\RestaurantForgotPassword;
+use App\Models\RestaurantResetPassword;
 use Illuminate\Support\Facades\Session;
 use App\Mail\RestaurantFormAppreciation;
-use App\Models\StampCard;
-use App\Models\StampCardTasks;
+use App\Mail\RestaurantPasswordChanged;
+use Illuminate\Auth\Notifications\ResetPassword;
 
 class RestaurantController extends Controller
 {
@@ -41,6 +45,20 @@ class RestaurantController extends Controller
 
 
     // RENDER VIEWS
+    public function resetPasswordView($token, $emailAddress){
+        $checkIfExist = RestaurantResetPassword::where('token', $token)->where('emailAddress', $emailAddress)->where('resetStatus', 'Pending')->first();
+        if($checkIfExist == null){
+            abort(404);
+        } else {
+            return view('restaurant.resetPassword',[
+                'token' => $token,
+                'emailAddress' => $emailAddress,
+            ]);
+        }
+    }
+    public function forgotPasswordView(){
+        return view('restaurant.forgotPassword');
+    }
     public function policyView(){
         $id = Session::get('loginId');
         $policies = Policy::where('restAcc_id', $id)->get();
@@ -410,6 +428,61 @@ class RestaurantController extends Controller
     
 
     // RENDER LOGICS
+    public function resetPassword(Request $request, $token, $emailAddress){
+        $request->validate([
+            'newPassword' => 'required|min:6|confirmed',
+            'newPassword_confirmation' => 'required',
+        ],
+        [
+            'newPassword.required' => 'New Password is required',
+            'newPassword.min' => 'New Password must contain at least 6 characters',
+            'newPassword.confirmed' => 'New Password does not match Confirm Password',
+            'newPassword_confirmation.required' => 'Confirm Password is required',
+        ]);
+
+        Mail::to($emailAddress)->send(new RestaurantPasswordChanged());
+        $hashPassword = Hash::make($request->newPassword);
+        RestaurantAccount::where('emailAddress', $emailAddress)
+        ->update([
+            'password' => $hashPassword
+        ]);
+        RestaurantResetPassword::where('emailAddress', $emailAddress)->where('token', $token)
+        ->update([
+            'resetStatus' => "Changed"
+        ]);
+
+        $request->session()->flash('passwordUpdated');
+        return redirect('/restaurant/login');
+    
+    }
+    public function forgotPassword(Request $request){
+        $request->validate([
+            'emailAddress' => 'required|email',
+        ],
+        [
+            'emailAddress.required' => 'Email Address is required',
+            'emailAddress.email' => 'Email Address must be a valid email',
+        ]);
+        $findEmailAddress = RestaurantAccount::where('emailAddress', $request->emailAddress)->first();
+        if($findEmailAddress == null){
+            $request->session()->flash('emailNotExist', 'Your email does not exist');
+            return redirect('/restaurant/login/forgot-password');
+        } else {
+            $token = substr(str_shuffle("0123456789abcdefghijklmnopqrstvwxyz"), 0, 12).time().$findEmailAddress->id;
+            $details = [
+                'link' => env('APP_URL') . '/restaurant/login/reset-password/'.$token.'/'.$request->emailAddress,
+            ];
+            Mail::to($request->emailAddress)->send(new RestaurantForgotPassword($details));
+            RestaurantResetPassword::create([
+                'emailAddress' => $request->emailAddress,
+                'token' => $token,
+                'resetStatus' => 'Pending',
+            ]);
+            $request->session()->flash('emailSent');
+            return redirect('/restaurant/login/forgot-password');
+        }
+        
+    }
     public function addStampCard(Request $request){
         $restAccId = Session::get('loginId');
         $checkStampExist = StampCard::where('restAcc_id', $restAccId)->first();
@@ -1345,7 +1418,7 @@ class RestaurantController extends Controller
 
         $account = RestaurantAccount::where('username', '=', $request->username)->first();
         if(empty($account)){
-            $request->session()->flash('notExist', "Incorrect Username and Passowrd");
+            $request->session()->flash('invalidPassword', "Incorrect Username and Password");
             return redirect('/restaurant/login');
         } else {
             if(Hash::check($request->password, $account->password)){
@@ -1353,7 +1426,7 @@ class RestaurantController extends Controller
                 $request->session()->put('loginId', $account->id);
                 return redirect('/restaurant/dashboard');
             } else {
-                $request->session()->flash('invalidPassword', "Incorrect Username and Passowrd");
+                $request->session()->flash('invalidPassword', "Incorrect Username and Password");
                 return redirect('/restaurant/login');
             }
         }

@@ -29,6 +29,7 @@ module.exports = {
         lightBlue: '#C8DDEA',
         postedStatus: '#0AA034',
         completeColor: '#FBBC05',
+        btnHoverColor: '#B02B4E',
       },
       width: {
         adminLoginBoxW: '800px',
@@ -66,8 +67,8 @@ module.exports = {
         headerLogoLeftMargin: '10%'
       },
       fontFamily:{
-        'Montserrat': ['Montserrat'],
-        'Roboto' : ['Roboto'],
+        Montserrat: ['Montserrat', 'sans-serif'],
+        Roboto: ['Roboto', 'sans-serif']
       },
     },
   },

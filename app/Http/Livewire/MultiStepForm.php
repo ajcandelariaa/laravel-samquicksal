@@ -52,12 +52,25 @@ class MultiStepForm extends Component
                 'acceptLicense' => 'accepted'
             ]);
         } else if($this->currentStep == 2){
+            $todayDate = date('Y/m/d');
+            
             $this->validate([
-                'fname' => 'required',
-                'lname' => 'required',
+                'fname' => 'required|regex:/^[\pL\s\-]+$/u',
+                'mname' => 'regex:/^[\pL\s\-]+$/u',
+                'lname' => 'required|regex:/^[\pL\s\-]+$/u',
                 'role' => 'required',
                 'birthDate' => 'required',
                 'gender' => 'required',
+            ], 
+            [
+                'fname.required' => 'First Name is required',
+                'fname.regex' => 'First Name must contain letters only',
+                'mname.regex' => 'Middle Name must contain letters only',
+                'lname.required' => 'Last Name is required',
+                'lname.regex' => 'Last Name must contain letters only',
+                'role.required' => 'Role is required',
+                'birthDate.required' => 'Birthday is required',
+                'gender.required' => 'Gender is required',
             ]);
         } else if($this->currentStep == 3){
             $this->validate([
@@ -66,8 +79,22 @@ class MultiStepForm extends Component
                 'postalCode' => 'required',
                 'state' => 'required',
                 'country' => 'required',
-                'contactNumber' => 'required',
-                'emailAddress' => 'required'
+                'emailAddress' => 'required|email|unique:restaurant_accounts,emailAddress',
+                'contactNumber' => 'required|digits:11',
+                'landlineNumber' => 'digits:8',
+            ], 
+            [
+                'address.required' => 'Address is required',
+                'city.required' => 'City is required',
+                'postalCode.required' => 'Postal/Zip Code is required',
+                'state.required' => 'State/Province is required',
+                'country.required' => 'Country is required',
+                'emailAddress.required' => 'Email Address is required',
+                'emailAddress.email' => 'Email Address must be a valid email',
+                'emailAddress.unique' => 'Email Address has already taken',
+                'contactNumber.required' => 'Contact Number is required',
+                'contactNumber.digits' => 'Contact Number must be 11 digits',
+                'landlineNumber.digits' => 'Landline Number must be 8 digits',
             ]);
         } else if ($this->currentStep == 4){
             $this->validate([
@@ -78,6 +105,15 @@ class MultiStepForm extends Component
                 'rPostalCode' => 'required',
                 'rState' => 'required',
                 'rCountry' => 'required'
+            ], 
+            [
+                'rName.required' => 'Name is required',
+                'rBranch.required' => 'Branch is required',
+                'rAddress.required' => 'Address is required',
+                'rCity.required' => 'City is required',
+                'rPostalCode.required' => 'Postal/Zip Code is required',
+                'rState.required' => 'State/Province is required',
+                'rCountry.required' => 'Country is required',
             ]);
         }
     }
@@ -86,10 +122,23 @@ class MultiStepForm extends Component
         $this->resetErrorBag();
         if($this->currentStep == 5){
             $validatedData = $this->validate([
-                'bir' => 'required',
-                'dti' => 'required',
-                'mayorsPermit' => 'required',
-                'staffValidId' => 'required',
+                'bir' => 'required|mimes:pdf',
+                'dti' => 'required|mimes:pdf',
+                'mayorsPermit' => 'required|mimes:pdf',
+                'staffValidId' => 'required|mimes:pdf',
+            ], 
+            [
+                'bir.required' => 'BIR Certificate of Registration is required',
+                'bir.mimes' => 'BIR Certificate of Registration must be in pdf format',
+
+                'dti.required' => 'DTI Business Registration is required',
+                'dti.mimes' => 'DTI Business Registration must be in pdf format',
+
+                'mayorsPermit.required' => 'Mayor’s Permit is required',
+                'mayorsPermit.mimes' => 'Mayor’s Permit must be in pdf format',
+
+                'staffValidId.required' => 'Owner/Staff Valid ID is required',
+                'staffValidId.mimes' => 'Owner/Staff Valid ID must be in pdf format',
             ]);
 
             RestaurantApplicant::create([
@@ -149,7 +198,7 @@ class MultiStepForm extends Component
             ];
 
             Mail::to($this->emailAddress)->send(new RestaurantFormAppreciation($details));
-            Session::flash('success', "Your form has been submitted, kindly check your email for further instructions");
+            Session::flash('registered');
             return redirect('/restaurant/register');
         }
     }

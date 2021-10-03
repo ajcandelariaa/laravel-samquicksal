@@ -12,13 +12,13 @@
         </div>
         @if ($currentStep == 1)
             {{-- STEP 1 --}}
-            <h3 class="text-xl font-semibold">License Agreement</h3>
+            <h3 class="text-xl font-semibold">Data Privacy Agreement</h3>
             <div class="overflow-y-auto h-56 border-multiStepBoxBorder border-multiStepBoxColor mt-5 mb-5">
                 <p class="px-3 py-2 text-justify">Lorem ipsum, dolor sit amet consectetur adipisicing elit. Optio eos, molestiae facere numquam suscipit voluptatem autem tempora pariatur libero, distinctio ad consectetur eveniet? Quod eveniet quis enim fuga, eligendi harum? Lorem ipsum, dolor sit amet consectetur adipisicing elit. Optio eos, molestiae facere numquam suscipit voluptatem autem tempora pariatur libero, distinctio ad consectetur eveniet? Quod eveniet quis enim fuga, eligendi harum? Lorem ipsum, dolor sit amet consectetur adipisicing elit. Optio eos, molestiae facere numquam suscipit voluptatem autem tempora pariatur libero, distinctio ad consectetur eveniet? Quod eveniet quis enim fuga, eligendi harum?</p>
             </div>
-            <input type="checkbox" wire:model="acceptLicense" class="cursor-pointer mr-2"> I agree to terms and conditions <span class="text-red-600">*</span>
+            <input type="checkbox" wire:model="acceptLicense" class="cursor-pointer mr-2 font-Roboto"> I agree to terms and conditions <span class="text-red-600">*</span>
             <div class="float-right">
-                <button type="button" wire:click="increaseStep()" class="text-right text-submitButton font-semibold">Next <i class="fas fa-chevron-right ml-2"></i></button>
+                <button type="button" wire:click="increaseStep()" class="font-Roboto text-right text-submitButton font-semibold">Next <i class="fas fa-chevron-right ml-2"></i></button>
             </div>
             <br>
             <span class="mt-2 text-red-600 italic text-sm">@error('acceptLicense'){{ "Please check the terms and conditions first" }}@enderror</span>
@@ -31,19 +31,19 @@
                 <div class="">
                     <label class="text-gray-400 mb-1 ml-1">First Name <span class="text-red-600">*</span></label>
                     <input type="text" wire:model="fname" value="{{ old('fname') }}" class="border {{ $errors->has('fname') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }} rounded-lg w-full py-1 px-2 text-sm text-gray-700 focus:outline-none">
-                    <span class="mt-2 text-red-600 italic text-sm">@error('fname'){{ "First Name is required" }}@enderror</span>
+                    <span class="mt-2 text-red-600 italic text-sm">@error('fname'){{ $message }}@enderror</span>
                 </div>
 
                 <div class="mt-3">
                     <label class="text-gray-400 mb-1 ml-1">Middle Name</label>
                     <input type="text" wire:model="mname" value="{{ old('mname') }}" class="border {{ $errors->has('mname') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }} rounded-lg w-full py-1 px-2 text-sm text-gray-700 focus:outline-none">
-                    <span class="mt-2 text-red-600 italic text-sm">@error('mname'){{ "Middle Name is required" }}@enderror</span>
+                    <span class="mt-2 text-red-600 italic text-sm">@error('mname'){{ $message }}@enderror</span>
                 </div>
 
                 <div class="mt-3">
                     <label class="text-gray-400 mb-1 ml-1">Last Name <span class="text-red-600">*</span></label>
                     <input type="text" wire:model="lname" value="{{ old('lname') }}" class="border {{ $errors->has('lname') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }} rounded-lg w-full py-1 px-2 text-sm text-gray-700 focus:outline-none">
-                    <span class="mt-2 text-red-600 italic text-sm">@error('lname'){{ "Last Name is required" }}@enderror</span>
+                    <span class="mt-2 text-red-600 italic text-sm">@error('lname'){{ $message }}@enderror</span>
                 </div>
 
                 <div class="mt-3">
@@ -55,29 +55,29 @@
                         <option value="Staff">Staff</option>
                         <option value="Server">Server</option>
                     </select>
-                    <span class="mt-2 text-red-600 italic text-sm">@error('role'){{ "Role is required" }}@enderror</span>
+                    <span class="mt-2 text-red-600 italic text-sm">@error('role'){{ $message }}@enderror</span>
                 </div>
                 
                 <div class="grid grid-cols-2 gap-4 mt-3">
                     <div class="col-span-1">
                         <label class="text-gray-400 mb-1 ml-1">Birthday<span class="text-red-600">*</span></label>
                         <input type="date" wire:model="birthDate" value="{{ old('birthDate') }}" class="border rounded-lg w-full py-1 px-2 text-sm text-gray-500 focus:outline-none {{ $errors->has('birthDate') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }}">
-                        <span class="mt-2 text-red-600 italic text-sm">@error('birthDate'){{ "Birthday is required" }}@enderror</span>
+                        <span class="mt-2 text-red-600 italic text-sm">@error('birthDate'){{ $message }}@enderror</span>
                     </div>
                     <div class="col-span-1">
                         <label class="text-gray-400 mb-1 ml-1">Gender<span class="text-red-600">*</span></label>
-                        <select wire:model="gender" class="border rounded-lg w-full py-1 px-2 text-sm text-gray-500 focus:outline-none {{ $errors->has('birthDate') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }}">
+                        <select wire:model="gender" class="border rounded-lg w-full py-1 px-2 text-sm text-gray-500 focus:outline-none {{ $errors->has('gender') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }}">
                             <option value="">Please select your gender</option>
                             <option value="Male">Male</option>
                             <option value="Female">Female</option>
                             <option value="Female">Others</option>
                         </select>
-                        <span class="mt-2 text-red-600 italic text-sm">@error('gender'){{ "Gender is required" }}@enderror</span>
+                        <span class="mt-2 text-red-600 italic text-sm">@error('gender'){{ $message }}@enderror</span>
                     </div>
                 </div>
             </div>
             
-            <div class="mt-6">
+            <div class="mt-6 font-Roboto">
                 <div class="float-left">
                     <button type="button" wire:click="decreaseStep()" class="text-submitButton font-semibold"><i class="fas fa-chevron-left ml-2"></i> Previous</button>
                 </div>
@@ -96,53 +96,53 @@
                 <div class="col-span-full">
                     <label class="text-gray-400 mb-1 ml-1">Address<span class="text-red-600">*</span></label>
                     <input type="text" wire:model="address" value="{{ old('address') }}" class="border {{ $errors->has('address') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }} rounded-lg w-full py-1 px-2 text-sm text-gray-700 focus:outline-none">
-                    <span class="mt-2 text-red-600 italic text-sm">@error('address'){{ "Address is required" }}@enderror</span>
+                    <span class="mt-2 text-red-600 italic text-sm">@error('address'){{ $message }}@enderror</span>
                 </div>
 
                 <div class="mt-3 col-span-full">
                     <label class="text-gray-400 mb-1 ml-1">City<span class="text-red-600">*</span></label>
                     <input type="text" wire:model="city" value="{{ old('city') }}" class="border {{ $errors->has('city') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }} rounded-lg w-full py-1 px-2 text-sm text-gray-700 focus:outline-none">
-                    <span class="mt-2 text-red-600 italic text-sm">@error('city'){{ "City is required" }}@enderror</span>
+                    <span class="mt-2 text-red-600 italic text-sm">@error('city'){{ $message }}@enderror</span>
                 </div>
 
                 <div class="mt-3 col-span-1">
                     <label class="text-gray-400 mb-1 ml-1">Postal/Zip Code<span class="text-red-600">*</span></label>
                     <input type="text" wire:model="postalCode" value="{{ old('postalCode') }}" class="border {{ $errors->has('postalCode') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }} rounded-lg w-full py-1 px-2 text-sm text-gray-700 focus:outline-none">
-                    <span class="mt-2 text-red-600 italic text-sm">@error('postalCode'){{ "Postal/Zip Code is required" }}@enderror</span>
+                    <span class="mt-2 text-red-600 italic text-sm">@error('postalCode'){{ $message }}@enderror</span>
                 </div>
 
                 <div class="mt-3 col-span-1">
                     <label class="text-gray-400 mb-1 ml-1">State/Province<span class="text-red-600">*</span></label>
                     <input type="text" wire:model="state" value="{{ old('state') }}" class="border {{ $errors->has('state') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }} rounded-lg w-full py-1 px-2 text-sm text-gray-700 focus:outline-none">
-                    <span class="mt-2 text-red-600 italic text-sm">@error('state'){{ "State/Province is required" }}@enderror</span>
+                    <span class="mt-2 text-red-600 italic text-sm">@error('state'){{ $message }}@enderror</span>
                 </div>
 
                 <div class="mt-3 col-span-1">
                     <label class="text-gray-400 mb-1 ml-1">Country<span class="text-red-600">*</span></label>
                     <input type="text" wire:model="country" value="{{ old('country') }}" class="border {{ $errors->has('country') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }} rounded-lg w-full py-1 px-2 text-sm text-gray-700 focus:outline-none">
-                    <span class="mt-2 text-red-600 italic text-sm">@error('country'){{ "Country is required" }}@enderror</span>
+                    <span class="mt-2 text-red-600 italic text-sm">@error('country'){{ $message }}@enderror</span>
                 </div>
 
                 <div class="mt-3 col-span-1">
                     <label class="text-gray-400 mb-1 ml-1">Email Address<span class="text-red-600">*</span></label>
                     <input type="text" wire:model="emailAddress" value="{{ old('emailAddress') }}" class="border {{ $errors->has('emailAddress') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }} rounded-lg w-full py-1 px-2 text-sm text-gray-700 focus:outline-none">
-                    <span class="mt-2 text-red-600 italic text-sm">@error('emailAddress'){{ "Email Address is required" }}@enderror</span>
+                    <span class="mt-2 text-red-600 italic text-sm">@error('emailAddress'){{ $message }}@enderror</span>
                 </div>
 
                 <div class="mt-3 col-span-1">
                     <label class="text-gray-400 mb-1 ml-1">Contact Number<span class="text-red-600">*</span></label>
-                    <input type="text" wire:model="contactNumber" value="{{ old('contactNumber') }}" class="border {{ $errors->has('contactNumber') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }} rounded-lg w-full py-1 px-2 text-sm text-gray-700 focus:outline-none">
-                    <span class="mt-2 text-red-600 italic text-sm">@error('contactNumber'){{ "Contact Number is required" }}@enderror</span>
+                    <input type="text" wire:model="contactNumber" placeholder="(e.g. 09123456789)" value="{{ old('contactNumber') }}" class="border {{ $errors->has('contactNumber') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }} rounded-lg w-full py-1 px-2 text-sm text-gray-700 focus:outline-none">
+                    <span class="mt-2 text-red-600 italic text-sm">@error('contactNumber'){{ $message }}@enderror</span>
                 </div>
 
                 <div class="mt-3 col-span-1">
-                    <label class="text-gray-400 mb-1 ml-1">Landline Number<span class="text-red-600">*</span></label>
-                    <input type="text" wire:model="landlineNumber" value="{{ old('landlineNumber') }}" class="border {{ $errors->has('landlineNumber') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }} rounded-lg w-full py-1 px-2 text-sm text-gray-700 focus:outline-none">
-                    <span class="mt-2 text-red-600 italic text-sm">@error('landlineNumber'){{ "Landline Number is required" }}@enderror</span>
+                    <label class="text-gray-400 mb-1 ml-1">Landline Number</label>
+                    <input type="text" wire:model="landlineNumber" placeholder="(e.g. 81234567)" value="{{ old('landlineNumber') }}" class="border {{ $errors->has('landlineNumber') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }} rounded-lg w-full py-1 px-2 text-sm text-gray-700 focus:outline-none">
+                    <span class="mt-2 text-red-600 italic text-sm">@error('landlineNumber'){{ $message }}@enderror</span>
                 </div>
             </div>
 
-            <div class="mt-6">
+            <div class="mt-6 font-Roboto">
                 <div class="float-left">
                     <button type="button" wire:click="decreaseStep()" class="text-submitButton font-semibold"><i class="fas fa-chevron-left ml-2"></i> Previous</button>
                 </div>
@@ -161,12 +161,12 @@
                 <div class="col-span-full">
                     <label class="text-gray-400 mb-1 ml-1">Restaurant Name<span class="text-red-600">*</span></label>
                     <input type="text" wire:model="rName" value="{{ old('rName') }}" class="border {{ $errors->has('rName') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }} rounded-lg w-full py-1 px-2 text-sm text-gray-700 focus:outline-none">
-                    <span class="mt-2 text-red-600 italic text-sm">@error('rName'){{ "Restaurant Name is required" }}@enderror</span><br>
+                    <span class="mt-2 text-red-600 italic text-sm">@error('rName'){{ $message }}@enderror</span><br>
                 </div>
                 <div class="col-span-full">
                     <label class="text-gray-400 mb-1 ml-1">Restaurant Branch<span class="text-red-600">*</span></label>
                     <input type="text" wire:model="rBranch" value="{{ old('rBranch') }}" class="border {{ $errors->has('rBranch') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }} rounded-lg w-full py-1 px-2 text-sm text-gray-700 focus:outline-none">
-                    <span class="mt-2 text-red-600 italic text-sm">@error('rBranch'){{ "Restaurant Branch is required" }}@enderror</span><br>
+                    <span class="mt-2 text-red-600 italic text-sm">@error('rBranch'){{ $message }}@enderror</span><br>
                 </div>
                 <div class="col-span-full">
                     <label class="text-gray-400 mb-1 ml-1">Address<span class="text-red-600">*</span></label>
@@ -176,26 +176,26 @@
                 <div class="col-span-1">
                     <label class="text-gray-400 mb-1 ml-1">City<span class="text-red-600">*</span></label>
                     <input type="text" wire:model="rCity" value="{{ old('rCity') }}" class="border {{ $errors->has('rCity') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }} rounded-lg w-full py-1 px-2 text-sm text-gray-700 focus:outline-none">
-                    <span class="mt-2 text-red-600 italic text-sm">@error('rCity'){{ "City is required" }}@enderror</span><br>
+                    <span class="mt-2 text-red-600 italic text-sm">@error('rCity'){{ $message }}@enderror</span><br>
                 </div>
                 <div class="col-span-1">
                     <label class="text-gray-400 mb-1 ml-1">Postal/Zip Code<span class="text-red-600">*</span></label>
                     <input type="text" wire:model="rPostalCode" value="{{ old('rPostalCode') }}" class="border {{ $errors->has('rPostalCode') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }} rounded-lg w-full py-1 px-2 text-sm text-gray-700 focus:outline-none">
-                    <span class="mt-2 text-red-600 italic text-sm">@error('rPostalCode'){{ "Postal/Zip Code is required" }}@enderror</span><br>
+                    <span class="mt-2 text-red-600 italic text-sm">@error('rPostalCode'){{ $message }}@enderror</span><br>
                 </div>
                 <div class="col-span-1">
                     <label class="text-gray-400 mb-1 ml-1">State/Province<span class="text-red-600">*</span></label>
                     <input type="text" wire:model="rState" value="{{ old('rState') }}" class="border {{ $errors->has('rState') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }} rounded-lg w-full py-1 px-2 text-sm text-gray-700 focus:outline-none">
-                    <span class="mt-2 text-red-600 italic text-sm">@error('rState'){{ "State/Province is required" }}@enderror</span><br>
+                    <span class="mt-2 text-red-600 italic text-sm">@error('rState'){{ $message }}@enderror</span><br>
                 </div>
                 <div class="col-span-1">
                     <label class="text-gray-400 mb-1 ml-1">Country<span class="text-red-600">*</span></label>
                     <input type="text" wire:model="rCountry" value="{{ old('rCountry') }}" class="border {{ $errors->has('rCountry') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }} rounded-lg w-full py-1 px-2 text-sm text-gray-700 focus:outline-none">
-                    <span class="mt-2 text-red-600 italic text-sm">@error('rCountry'){{ "Country is required" }}@enderror</span><br>
+                    <span class="mt-2 text-red-600 italic text-sm">@error('rCountry'){{ $message }}@enderror</span><br>
                 </div>
             </div>
             
-            <div class="mt-6">
+            <div class="mt-6 font-Roboto">
                 <div class="float-left">
                     <button type="button" wire:click="decreaseStep()" class="text-submitButton font-semibold"><i class="fas fa-chevron-left ml-2"></i> Previous</button>
                 </div>
@@ -206,28 +206,38 @@
             </div>
         @endif
 
-        @if ($currentStep ==5)
+        @if ($currentStep == 5)
             <h3 class="text-xl font-semibold">Validate your Restaurant</h3>
+            <p class="text-xs text-gray-400 italic mt-2"><i class="fas fa-exclamation-circle mr-1"></i>All files must be in pdf format</p>
 
-            <div class="grid grid-cols-2 gap-y-3 mt-5">
+            <div class="grid grid-cols-2 gap-y-3 mt-5 items-center">
                 <label class="col-span-1">BIR Certificate of Registration:</label>
-                <input type="file" class="col-span-1" wire:model="bir">
-                @error('bir') <span class="col-span-2">{{ $message }}</span> @enderror
-
-                <label class="col-span-1">DTI Business Registration:</label>
-                <input type="file" class="col-span-1" wire:model="dti">
-                @error('dti') <span class="col-span-2">{{ $message }}</span> @enderror
-
-                <label class="col-span-1">Mayor’s Permit:</label>
-                <input type="file" class="col-span-1"" wire:model="mayorsPermit">
-                @error('mayorsPermit') <span class="col-span-2">{{ $message }}</span> @enderror
-
-                <label class="col-span-1">Owner/Staff Valid ID:</label>
-                <input type="file" class="col-span-1"" wire:model="staffValidId">
-                @error('staffValidId') <span class="col-span-2">{{ $message }}</span> @enderror
+                <input type="file" accept="application/pdf" class="col-span-1" wire:model="bir">
+                <span class="col-span-full text-red-600 italic text-sm ">@error('bir'){{ $message }}@enderror</span>
             </div>
 
-            <div class="mt-6">
+            
+            <div class="grid grid-cols-2 gap-y-3 mt-5 items-center">
+                <label class="col-span-1">DTI Business Registration:</label>
+                <input type="file" accept="application/pdf" class="col-span-1" wire:model="dti">
+                <span class="col-span-full text-red-600 italic text-sm">@error('dti'){{ $message }}@enderror</span>
+            </div>
+
+            
+            <div class="grid grid-cols-2 gap-y-3 mt-5 items-center">
+                <label class="col-span-1">Mayor’s Permit:</label>
+                <input type="file" accept="application/pdf" class="col-span-1"" wire:model="mayorsPermit">
+                <span class="col-span-full text-red-600 italic text-sm">@error('mayorsPermit'){{ $message }}@enderror</span>
+            </div>
+
+            
+            <div class="grid grid-cols-2 gap-y-3 mt-5 items-center">
+                <label class="col-span-1">Owner/Staff Valid ID:</label>
+                <input type="file" accept="application/pdf" class="col-span-1"" wire:model="staffValidId">
+                <span class="col-span-full text-red-600 italic text-sm">@error('staffValidId'){{ $message }}@enderror</span>
+            </div>
+
+            <div class="mt-6 font-Roboto">
                 <div class="float-left">
                     <button type="button" wire:click="decreaseStep()" class="text-submitButton font-semibold"><i class="fas fa-chevron-left ml-2"></i> Previous</button>
                 </div>

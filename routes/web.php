@@ -125,6 +125,10 @@ Route::middleware(['restaurantLoggedIn'])->group(function(){
 Route::middleware(['restaurantLoggedOut'])->group(function(){
     Route::get('/restaurant/login', [RestaurantController::class, 'loginView']);
     Route::post('/restaurant/login', [RestaurantController::class, 'login']);
+    Route::get('/restaurant/login/forgot-password', [RestaurantController::class, 'forgotPasswordView']);
+    Route::post('/restaurant/login/forgot-password', [RestaurantController::class, 'forgotPassword']);
+    Route::get('/restaurant/login/reset-password/{token}/{emailAddress}', [RestaurantController::class, 'resetPasswordView']);
+    Route::post('/restaurant/login/reset-password/{token}/{emailAddress}', [RestaurantController::class, 'resetPassword']);
 });
 
 

@@ -23,5 +23,5 @@ Verify your email
 <br>
 
 All the best,<br>
-{{ config('app.name') }}
+Samquicksal
 @endcomponent

@@ -22,5 +22,5 @@ Resubmit Form
 @endcomponent
 
 Thank your for understanding,<br>
-{{ config('app.name') }}
+Samquicksal
 @endcomponent
