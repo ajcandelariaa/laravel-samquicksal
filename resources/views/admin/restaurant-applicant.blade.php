@@ -2,36 +2,61 @@
 
 @section('content')
 <div class="bg-gray-200 w-full restaurant-applicant">
+    @if (session()->has('approved'))
+        <script>
+            Swal.fire(
+                'Restaurant Applicant Approved',
+                '',
+                'success'
+            );
+        </script>
+    @endif
+    @if (session()->has('declined'))
+        <script>
+            Swal.fire(
+                'Restaurant Applicant Declined',
+                '',
+                'success'
+            );
+        </script>
+    @endif
+    @if (session()->has('deleted'))
+        <script>
+            Swal.fire(
+                'Restaurant Applicant Deleted',
+                '',
+                'error'
+            );
+        </script>
+    @endif
     <div class="overlay"></div>
     <div class="overlay2"></div>
     @if ($applicant->status == "Declined")
         <div class="container w-11/12 mx-auto">
             <div class="mt-10 w-full flex justify-end gap-x-4">
-                <a href="/admin/restaurant-applicants/delete/{{ $applicant->id }}" class="text-sm text-white bg-red-600 rounded-xl py-1 px-7 hover:bg-red-700 shadow-adminDownloadButton">Delete this Form</a>
+                <a href="/admin/restaurant-applicants/delete/{{ $applicant->id }}" class="text-sm text-white bg-red-700 rounded-md py-2 px-7 hover:bg-adminDeleteFormColor shadow-adminDownloadButton">Delete Form</a>
             </div>
         </div>
     @else
         @if ($applicant->status == "Approved")
             <div class="container w-11/12 mx-auto mb-10">
                 <div class="mt-10 w-full flex justify-end gap-x-4">
-                    <a class="text-sm bg-gray-500 rounded-xl py-1 px-7 shadow-adminDownloadButton">Decline</a>
-                    <a class="text-sm bg-gray-500 rounded-xl py-1 px-7 shadow-adminDownloadButton">Approve</a>
+                    <a class="text-sm bg-gray-500 rounded-md py-2 px-7 shadow-adminDownloadButton">Decline</a>
+                    <a class="text-sm bg-gray-500 rounded-md py-2 px-7 shadow-adminDownloadButton">Approve</a>
                 </div>
             </div>
         @else
             <div class="container w-11/12 mx-auto mb-10">
                 <div class="mt-10 w-full flex justify-end gap-x-4">
-                    {{-- <a href="/admin/restaurant-applicants/decline/{{ $applicant->id }}/{{ $applicant->emailAddress }}" class="text-sm bg-declineButton rounded-xl py-1 px-7 hover:bg-yellow-400 shadow-adminDownloadButton">Decline</a>
-                    <a href="/admin/restaurant-applicants/approve/{{ $applicant->id }}/{{ $applicant->emailAddress }}" class="text-sm bg-approveButton rounded-xl py-1 px-7 hover:bg-green-400 shadow-adminDownloadButton">Approve</a> --}}
-                    <button id="btn-declined" class="text-sm bg-declineButton rounded-xl py-1 px-7 hover:bg-yellow-400 shadow-adminDownloadButton">Decline</button>
-                    <button id="btn-approved" class="text-sm bg-approveButton rounded-xl py-1 px-7 hover:bg-green-400 shadow-adminDownloadButton">Approve</button>
+                    <button id="btn-declined" class="text-sm bg-declineButton rounded-md py-2 px-7 hover:bg-yellow-400 shadow-adminDownloadButton">Decline</button>
+                    <button id="btn-approved" class="text-sm bg-approveButton rounded-md py-2 px-7 hover:bg-green-400 shadow-adminDownloadButton">Approve</button>
                 </div>
             </div>
 
             {{-- DECLINE POP UP FORM --}}
             <div class="popup">
                 <div class="close-btn"><i class="fas fa-times"></i></div>
-                <h1 class="mt-2 text-xl font-bold">Please check what are the applicant’s missing detail: </h1>
+                <h1 class="mt-2 text-xl font-bold">Please check what are the applicant’s inappropriate detail: </h1>
                 <form action="/admin/restaurant-applicants/decline" method="POST" id='declinedForm'>
                     @csrf
                     <input type="text" name="applicantId" hidden value="{{ $applicant->id }}">
@@ -41,42 +66,42 @@
                         <div class="col-span-2">
                             <h3 class="font-bold mb-2">Owner / Staff Information</h3>
                             <div class="grid grid-cols-2 w-full">
-                                <div><input type="checkbox" name="checkbox[]" value="First Name"> First Name</div>
-                                <div><input type="checkbox" name="checkbox[]" value="Middle Name"> Middle Name</div>
-                                <div><input type="checkbox" name="checkbox[]" value="Last name"> Last name</div>
-                                <div><input type="checkbox" name="checkbox[]" value="Address"> Address</div>
-                                <div><input type="checkbox" name="checkbox[]" value="City"> City</div>
-                                <div><input type="checkbox" name="checkbox[]" value="Postal/Zip Code"> Postal/Zip Code</div>
-                                <div><input type="checkbox" name="checkbox[]" value="State/Province"> State/Province</div>
-                                <div><input type="checkbox" name="checkbox[]" value="Country"> Country</div>
-                                <div><input type="checkbox" name="checkbox[]" value="Role"> Role</div>
-                                <div><input type="checkbox" name="checkbox[]" value="Birthdate"> Birthdate</div>
-                                <div><input type="checkbox" name="checkbox[]" value="Gender"> Gender</div>
-                                <div><input type="checkbox" name="checkbox[]" value="Contact Number"> Contact Number</div>
-                                <div><input type="checkbox" name="checkbox[]" value="Landline Number"> Landline Number</div>
-                                <div><input type="checkbox" name="checkbox[]" value="Email Address"> Email Address</div>
+                                <div><input type="checkbox" class="cursor-pointer" name="checkbox[]" value="First Name"> First Name</div>
+                                <div><input type="checkbox" class="cursor-pointer" name="checkbox[]" value="Middle Name"> Middle Name</div>
+                                <div><input type="checkbox" class="cursor-pointer" name="checkbox[]" value="Last name"> Last name</div>
+                                <div><input type="checkbox" class="cursor-pointer" name="checkbox[]" value="Address"> Address</div>
+                                <div><input type="checkbox" class="cursor-pointer" name="checkbox[]" value="City"> City</div>
+                                <div><input type="checkbox" class="cursor-pointer" name="checkbox[]" value="Postal/Zip Code"> Postal/Zip Code</div>
+                                <div><input type="checkbox" class="cursor-pointer" name="checkbox[]" value="State/Province"> State/Province</div>
+                                <div><input type="checkbox" class="cursor-pointer" name="checkbox[]" value="Country"> Country</div>
+                                <div><input type="checkbox" class="cursor-pointer" name="checkbox[]" value="Role"> Role</div>
+                                <div><input type="checkbox" class="cursor-pointer" name="checkbox[]" value="Birthdate"> Birthdate</div>
+                                <div><input type="checkbox" class="cursor-pointer" name="checkbox[]" value="Gender"> Gender</div>
+                                <div><input type="checkbox" class="cursor-pointer" name="checkbox[]" value="Contact Number"> Contact Number</div>
+                                <div><input type="checkbox" class="cursor-pointer" name="checkbox[]" value="Landline Number"> Landline Number</div>
+                                <div><input type="checkbox" class="cursor-pointer" name="checkbox[]" value="Email Address"> Email Address</div>
                             </div>
                         </div>
                         <div class="col-span-1">
                             <h3 class="font-bold mb-2">Restaurant Information</h3>
-                            <div><input type="checkbox" name="checkbox[]" value="Restaurant Name"> Name</div>
-                            <div><input type="checkbox" name="checkbox[]" value="Restaurant Branch"> Branch</div>
-                            <div><input type="checkbox" name="checkbox[]" value="Restaurant Address"> Address</div>
-                            <div><input type="checkbox" name="checkbox[]" value="Restaurant City"> City</div>
-                            <div><input type="checkbox" name="checkbox[]" value="Restaurant Postal/Zip Code"> Postal/Zip Code</div>
-                            <div><input type="checkbox" name="checkbox[]" value="Restaurant State/Province"> State/Province</div>
-                            <div><input type="checkbox" name="checkbox[]" value="Restaurant Country"> Country</div>
+                            <div><input type="checkbox" class="cursor-pointer" name="checkbox[]" value="Restaurant Name"> Name</div>
+                            <div><input type="checkbox" class="cursor-pointer" name="checkbox[]" value="Restaurant Branch"> Branch</div>
+                            <div><input type="checkbox" class="cursor-pointer" name="checkbox[]" value="Restaurant Address"> Address</div>
+                            <div><input type="checkbox" class="cursor-pointer" name="checkbox[]" value="Restaurant City"> City</div>
+                            <div><input type="checkbox" class="cursor-pointer" name="checkbox[]" value="Restaurant Postal/Zip Code"> Postal/Zip Code</div>
+                            <div><input type="checkbox" class="cursor-pointer" name="checkbox[]" value="Restaurant State/Province"> State/Province</div>
+                            <div><input type="checkbox" class="cursor-pointer" name="checkbox[]" value="Restaurant Country"> Country</div>
                         </div>
                         <div class="col-span-1">
                             <h3 class="font-bold mb-2">Documents</h3>
-                            <div><input type="checkbox" name="checkbox[]" value="BIR Certficate of Registration"> BIR Certficate of Registration</div>
-                            <div><input type="checkbox" name="checkbox[]" value="DTI Business Registration"> DTI Business Registration</div>
-                            <div><input type="checkbox" name="checkbox[]" value="Mayor’s Permit"> Mayor’s Permit</div>
-                            <div><input type="checkbox" name="checkbox[]" value="Owner/Staff Valid ID"> Owner/Staff Valid ID</div>
+                            <div><input type="checkbox" class="cursor-pointer" name="checkbox[]" value="BIR Certficate of Registration"> BIR Certficate of Registration</div>
+                            <div><input type="checkbox" class="cursor-pointer" name="checkbox[]" value="DTI Business Registration"> DTI Business Registration</div>
+                            <div><input type="checkbox" class="cursor-pointer" name="checkbox[]" value="Mayor’s Permit"> Mayor’s Permit</div>
+                            <div><input type="checkbox" class="cursor-pointer" name="checkbox[]" value="Owner/Staff Valid ID"> Owner/Staff Valid ID</div>
                         </div>
                     </div>
                     <div class="text-center mb-5 mt-10">
-                        <button class="text-sm bg-submitButton rounded-lg py-1 px-7 hover:bg-red-600 shadow-adminDownloadButton text-white">Submit</button>
+                        <button class="text-sm bg-submitButton rounded-lg py-1 px-7 hover:bg-btnHoverColor shadow-adminDownloadButton text-white">Submit</button>
                     </div>
                 </form>
             </div>
@@ -103,7 +128,7 @@
                     
                     <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3860.911375538337!2d120.9864360152883!3d14.604124180904545!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3397c9f8b14eb259%3A0xad4d12caac9a068e!2sFEU%20Institute%20of%20Technology!5e0!3m2!1sen!2sae!4v1632310147062!5m2!1sen!2sae" allowfullscreen="" loading="lazy" class="w-full h-52 border-0"></iframe>
                     <div class="text-center mb-5 mt-5">
-                        <button class="text-sm bg-submitButton rounded-lg py-1 px-7 hover:bg-red-600 shadow-adminDownloadButton text-white">Submit</button>
+                        <button class="text-sm bg-submitButton rounded-lg py-1 px-7 hover:bg-btnHoverColor shadow-adminDownloadButton text-white">Submit</button>
                     </div>
                 </form>
             </div>

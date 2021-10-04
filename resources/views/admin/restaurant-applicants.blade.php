@@ -55,27 +55,27 @@
                 @endphp
                 @foreach ($applicants as $applicant)
                     @if ($count % 2 == 0)
-                        <div class="bg-white grid grid-cols-12 items-center text-center h-10 px-5 mb-3">
-                            <div class="col-span-1">{{ $applicant->id }}</div>
+                        <div class="bg-white grid grid-cols-12 items-center text-center h-10 px-5 mb-3 text-sm">
+                            <div class="col-span-1">{{ $count }}</div>
                             <div class="col-span-1">{{ $applicant->status }}</div>
                             <div class="col-span-3">{{ $applicant->fname . ' ' . $applicant->lname }}</div>
                             <div class="col-span-1">{{ $applicant->role }}</div>
                             <div class="col-span-3">{{ $applicant->rName }}</div>
-                            <div class="col-span-1">{{ $applicant->rCity }}</div>
                             <div class="col-span-1">{{ $applicant->rState }}</div>
+                            <div class="col-span-1">{{ $applicant->rCity }}</div>
                             <div class="col-span-1">
                                 <a href="/admin/restaurant-applicants/{{ $applicant->id }}" target="_blank"><i class="fas fa-eye"></i></a>
                             </div>
                         </div>
                     @else
-                        <div class="bg-gray-100 grid grid-cols-12 items-center text-center h-10 px-5 mb-3">
-                            <div class="col-span-1">{{ $applicant->id }}</div>
+                        <div class="bg-gray-100 grid grid-cols-12 items-center text-center h-10 px-5 mb-3 text-sm">
+                            <div class="col-span-1">{{ $count }}</div>
                             <div class="col-span-1">{{ $applicant->status }}</div>
                             <div class="col-span-3">{{ $applicant->fname . ' ' . $applicant->lname }}</div>
                             <div class="col-span-1">{{ $applicant->role }}</div>
                             <div class="col-span-3">{{ $applicant->rName }}</div>
-                            <div class="col-span-1">{{ $applicant->rCity }}</div>
                             <div class="col-span-1">{{ $applicant->rState }}</div>
+                            <div class="col-span-1">{{ $applicant->rCity }}</div>
                             <div class="col-span-1">
                                 <a href="/admin/restaurant-applicants/{{ $applicant->id }}" target="_blank"><i class="fas fa-eye"></i></a>
                             </div>
@@ -89,8 +89,8 @@
         </div>
 
         @if ($applicants->isEmpty())
-            <div class="mx-auto w-11/12 mt-2 grid grid-cols-1 items-center bg-red-400 h-14 shadow-xl rounded-lg">
-                <div class="text-center text-white">There are no restaurant applicants right now</div>
+            <div class="mx-auto w-11/12 mt-1 grid grid-cols-1 items-center bg-manageFoodItemHeaderBgColor h-14 shadow-xl rounded-lg">
+                <div class="text-center text-multiStepBoxColor uppercase">There are no restaurant applicants right now</div>
             </div>
         @endif
 

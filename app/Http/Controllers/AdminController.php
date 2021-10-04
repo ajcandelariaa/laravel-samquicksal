@@ -7,6 +7,8 @@ use App\Models\Runaway;
 use App\Models\StoreHour;
 use App\Models\Cancellation;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use App\Models\CustomerAccount;
 use App\Models\RestaurantAccount;
 use App\Models\RestaurantTaskList;
 use Illuminate\Support\Facades\DB;
@@ -27,19 +29,61 @@ class AdminController extends Controller
         return view('admin.login');
     }
     public function dashboardView(){
+        $endTime = Carbon::parse(time());
+        $getTime1 = RestaurantApplicant::latest()->first();
+        $getTime2 = RestaurantAccount::latest()->first();
+        $getTime3 = CustomerAccount::latest()->first();
+
+        if($getTime1 != null){ 
+            $rAppstartTime = Carbon::parse($getTime1->created_at);
+            $rAppDiffHours = $endTime->diffInHours($rAppstartTime);
+        } else {
+            $rAppDiffHours = 0;
+        }
+
+        if($getTime2 != null){ 
+            $rAccstartTime = Carbon::parse($getTime2->created_at);
+            $rAccDiffHours = $endTime->diffInHours($rAccstartTime);
+        } else {
+            $rAccDiffHours = 0;
+        }
+
+        if($getTime3 != null){ 
+            $cAccstartTime = Carbon::parse($getTime3->created_at);  
+            $cAccDiffHours = $endTime->diffInHours($cAccstartTime); 
+        } else {
+            $cAccDiffHours = 0;
+        }
+        
+        $restaurantAccountsCount = RestaurantAccount::count();
+        $restaurantApplicantsCount = RestaurantApplicant::count();
+        $customerAccountsCount = CustomerAccount::count();
+        $approvedCount = RestaurantApplicant::where('status', 'Approved')->count();
+        $pendingCount = RestaurantApplicant::where('status', 'Pending')->count();
+        $declinedCount = RestaurantApplicant::where('status', 'Declined')->count();
         return view('admin.dashboard', [
-            'title' => "Dashboard"
+            'title' => "Dashboard",
+            'restaurantAccountsCount' => $restaurantAccountsCount,
+            'restaurantApplicantsCount' => $restaurantApplicantsCount,
+            'customerAccountsCount' => $customerAccountsCount,
+            'approvedCount' => $approvedCount,
+            'pendingCount' => $pendingCount,
+            'declinedCount' => $declinedCount,
+            'rAppDiffHours' => $rAppDiffHours,
+            'rAccDiffHours' => $rAccDiffHours,
+            'cAccDiffHours' => $cAccDiffHours,
         ]);
     }
     public function restaurantApplicantsView(Request $request){
         if(isset($_GET['q']) && !empty($_GET['q'])){
             $searchText = '%'.$_GET['q'].'%';
-            $data = RestaurantApplicant::where('fname', 'LIKE', $searchText)
+            $data = RestaurantApplicant::where('status', 'LIKE', $searchText)
+                        ->orWhere('fname', 'LIKE', $searchText)
                         ->orWhere('lname', 'LIKE', $searchText)
                         ->orWhere('role', 'LIKE', $searchText)
-                        ->orWhere('restaurantName', 'LIKE', $searchText)
-                        ->orWhere('city', 'LIKE', $searchText)
-                        ->orWhere('status', 'LIKE', $searchText)
+                        ->orWhere('rName', 'LIKE', $searchText)
+                        ->orWhere('rState', 'LIKE', $searchText)
+                        ->orWhere('rCity', 'LIKE', $searchText)
                         ->paginate(2);
             $data->appends($request->all());
             return view('admin.restaurant-applicants', [
@@ -64,12 +108,12 @@ class AdminController extends Controller
     public function restaurantAccountsView(Request $request){
         if(isset($_GET['q']) && !empty($_GET['q'])){
             $searchText = '%'.$_GET['q'].'%';
-            $data = RestaurantAccount::where('fname', 'LIKE', $searchText)
-                        ->orWhere('lname', 'LIKE', $searchText)
-                        ->orWhere('role', 'LIKE', $searchText)
-                        ->orWhere('restaurantName', 'LIKE', $searchText)
-                        ->orWhere('city', 'LIKE', $searchText)
-                        ->orWhere('status', 'LIKE', $searchText)
+            $data = RestaurantAccount::where('status', 'LIKE', $searchText)
+                        ->orWhere('rName', 'LIKE', $searchText)
+                        ->orWhere('rBranch', 'LIKE', $searchText)
+                        ->orWhere('rState', 'LIKE', $searchText)
+                        ->orWhere('rCity', 'LIKE', $searchText)
+                        ->orWhere('rCountry', 'LIKE', $searchText)
                         ->paginate(2);
             $data->appends($request->all());
             return view('admin.restaurant-accounts', [
@@ -86,8 +130,17 @@ class AdminController extends Controller
     }
     public function restaurantAccountView($id){
         $account = DB::table('restaurant_accounts')->find($id);
+        $storeHours = StoreHour::where('restAcc_id', '=', $id)->get();
+        $existingDays = array();
+        foreach ($storeHours as $storeHour){
+            foreach (explode(",", $storeHour->days) as $day){
+                array_push($existingDays, $day);
+            }
+        }
         return view('admin.restaurant-account', [
             'account' => $account,
+            'storeHours' => $storeHours,
+            'existingDays' => $existingDays,
             'title' => "Restaurant Account View"
         ]);
     }
@@ -317,13 +370,13 @@ class AdminController extends Controller
         Mail::to($applicant->emailAddress)->send(new RestaurantFormApprove($details));
 
         RestaurantApplicant::where('id', $applicant->id)->update(['status' => "Approved"]);
-        $request->session()->flash('approved', "Applicant Form is Approved");
+        $request->session()->flash('approved');
         return redirect('/admin/restaurant-applicants');
     }
     public function deleteRestaurantApplicant(Request $request, $id){
         File::deleteDirectory(public_path('uploads/restaurant/'.$id));
         DB::table('restaurant_applicants')->where('id', $id)->delete();
-        $request->session()->flash('deleted', "Applicant Form is Deleted");
+        $request->session()->flash('deleted');
         return redirect('/admin/restaurant-applicants');
     }
     public function declineRestaurantApplicant(Request $request){
@@ -342,7 +395,7 @@ class AdminController extends Controller
 
         Mail::to($request->applicantEmail)->send(new RestaurantFormDecline($details));
         RestaurantApplicant::where('id', $request->applicantId)->update(['status' => "Declined"]);
-        $request->session()->flash('decline', "Applicant is declined");
+        $request->session()->flash('declined');
         return redirect('/admin/restaurant-applicants');
     }
     public function restaurantApplicantDownloadFile($id, $filename){

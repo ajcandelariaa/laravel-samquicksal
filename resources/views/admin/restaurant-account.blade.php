@@ -116,41 +116,63 @@
         <div class="col-span-5 bg-white">
             <div class="uppercase font-bold bg-gradient-to-r from-adminViewAccountHeaderColor to-adminViewAccountHeaderColor2 py-2 text-submitButton pl-5">Restaurant Status</div>
             <div class="container w-10/12 mx-auto mt-5">
-                <div class="bg-adminViewAccountHeaderColor2 w-full rounded-xl px-6 py-3">
-                    <div class="grid grid-cols-2 w-full gap-x-7">
-                        <div class="col-span-1 grid grid-cols-2 w-full">
-                            <div class="text-sm text-submitButton">Opens at:</div>
-                            <div class="text-sm font-bold">10:00 A.M</div>
+                @foreach ($storeHours as $storeHour)
+                    @php
+                        $days = explode(",", $storeHour->days)
+                    @endphp
+                    <div class="bg-adminViewAccountHeaderColor2 w-full rounded-xl px-6 py-3 mb-5">
+                        <div class="w-full mx-auto mb-3">
+                                <div class="tr col-span-1 rounded-lg p-2">
+                                    <div hidden class="td">{{ $storeHour->openingTime }}</div>
+                                    <div hidden class="td">{{ $storeHour->closingTime }}</div>
+                                    <div hidden class="td">{{ $storeHour->id }}</div>
+                                    <div hidden class="col-span-1 {{ (in_array('SU', $days)) ? 'text-submitButton td' : 'text-white' }}">SU</div>
+                                    <div hidden class="col-span-1 {{ (in_array('MO', $days)) ? 'text-submitButton td' : 'text-white' }}">MO</div>
+                                    <div hidden class="col-span-1 {{ (in_array('TU', $days)) ? 'text-submitButton td' : 'text-white' }}">TU</div>
+                                    <div hidden class="col-span-1 {{ (in_array('WE', $days)) ? 'text-submitButton td' : 'text-white' }}">WE</div>
+                                    <div hidden class="col-span-1 {{ (in_array('TH', $days)) ? 'text-submitButton td' : 'text-white' }}">TH</div>
+                                    <div hidden class="col-span-1 {{ (in_array('FR', $days)) ? 'text-submitButton td' : 'text-white' }}">FR</div>
+                                    <div hidden class="col-span-1 {{ (in_array('SA', $days)) ? 'text-submitButton td' : 'text-white' }}">SA</div>
+        
+                                    <div class="bg-adminViewAccountHeaderColor2 p-4 rounded-lg">
+                                        <div class="grid grid-cols-7 rounded-full bg-sundayToSaturdayBoxColor p-1 text-xs text-center">
+                                            <div class="col-span-1 {{ (in_array('SU', $days)) ? 'text-submitButton' : 'text-white' }}">SU</div>
+                                            <div class="col-span-1 {{ (in_array('MO', $days)) ? 'text-submitButton' : 'text-white' }}">MO</div>
+                                            <div class="col-span-1 {{ (in_array('TU', $days)) ? 'text-submitButton' : 'text-white' }}">TU</div>
+                                            <div class="col-span-1 {{ (in_array('WE', $days)) ? 'text-submitButton' : 'text-white' }}">WE</div>
+                                            <div class="col-span-1 {{ (in_array('TH', $days)) ? 'text-submitButton' : 'text-white' }}">TH</div>
+                                            <div class="col-span-1 {{ (in_array('FR', $days)) ? 'text-submitButton' : 'text-white' }}">FR</div>
+                                            <div class="col-span-1 {{ (in_array('SA', $days)) ? 'text-submitButton' : 'text-white' }}">SA</div>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3 grid grid-cols-3 text-xs text-center items-center w-9/12 mx-auto">
+                                        <div class="text-submitButton">Opening</div>
+                                        <div class="text-submitButton">:</div>
+                                        <div>{{ $storeHour->openingTime }}</div>
+                                    </div>
+                                    <div class="tr mt-3 grid grid-cols-3 text-xs text-center items-center w-9/12 mx-auto">
+                                        <div class="text-submitButton">Closing</div>
+                                        <div class="text-submitButton">:</div>
+                                        <div>{{ $storeHour->closingTime }}</div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-span-1 grid grid-cols-2 w-full">
-                            <div class="text-sm text-submitButton">Closes at:</div>
-                            <div class="text-sm font-bold">10:00 P.M</div>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-7 mt-5 bg-sundayToSaturdayBoxColor rounded-full w-10/12 text-sm text-white font-bold mx-auto items-center mb-2">
-                        <div class="bg-submitButton rounded-full w-full h-full px-2 py-2 text-center">S</div>
-                        <div class="rounded-full  w-full h-full px-2 py-2 text-center">M</div>
-                        <div class="rounded-full w-full h-full px-2 py-2 text-center">T</div>
-                        <div class="bg-submitButton rounded-full w-full h-full px-2 py-2 text-center">W</div>
-                        <div class="bg-submitButton rounded-full  w-full h-full px-2 py-2 text-center">T</div>
-                        <div class="rounded-full  w-full h-full px-2 py-2 text-center">F</div>
-                        <div class="rounded-full  w-full h-full px-2 py-2 text-center">S</div>
-                    </div>
-                </div>
+                @endforeach
                 <div class="grid grid-cols-5 mt-8 text-sm">
-                    <div class="col-span-2 text-left text-submitButton"><i class="fas fa-file mr-3"></i> Status</div>
+                    <div class="col-span-2 text-left text-submitButton"><i class="fas fa-file w-7 text-center mr-1"></i>Status</div>
                     <div class="col-span-1 text-center text-submitButton">:</div>
                     <div class="col-span-2 font-bold mb-4 text-right">{{ $account->status }}</div>
                     
-                    <div class="col-span-2 text-left text-submitButton"><i class="fas fa-store mr-3"></i>Store</div>
+                    <div class="col-span-2 text-left text-submitButton"><i class="fas fa-store w-7 text-center mr-1"></i>Store</div>
                     <div class="col-span-1 text-center text-submitButton">:</div>
                     <div class="col-span-2 font-bold mb-4 text-right">{{ "Open" }}</div>
                     
-                    <div class="col-span-2 text-left text-submitButton"><i class="fas fa-ethernet mr-3"></i>Number of Tables</div>
+                    <div class="col-span-2 text-left text-submitButton"><i class="fas fa-ethernet w-7 text-center mr-1"></i>Number of Tables</div>
                     <div class="col-span-1 text-center text-submitButton">:</div>
                     <div class="col-span-2 font-bold mb-4 text-right">{{ $account->rNumberOfTables }}</div>
                     
-                    <div class="col-span-2 text-left text-submitButton"><i class="fas fa-chair mr-3"></i>Chairs per Table</div>
+                    <div class="col-span-2 text-left text-submitButton"><i class="fas fa-chair w-7 text-center mr-1"></i>Chairs per Table</div>
                     <div class="col-span-1 text-center text-submitButton">:</div>
                     <div class="col-span-2 font-bold mb-4 text-right">{{ $account->rCapacityPerTable }}</div>
                 </div>

@@ -40,7 +40,7 @@
                     <div class="grid grid-col-2 my-8 text-sm">
                         <label class="text-loginLandingPage">Email Address</label>
                         <div class="w-full relative">
-                            <i class="fas fa-user absolute px-3 py-3 text-loginLandingPage"></i>
+                            <i class="fas fa-envelope absolute px-3 py-3 text-loginLandingPage"></i>
                             <input type="text" name="emailAddress" class="w-full pl-8 pr-3 py-2 rounded-md border-multiStepBoxBorder {{($errors->has('emailAddress') ? 'border-red-600' : 'border-loginLandingPage')}} focus:outline-none" autocomplete="off">
                         </div>
                         <span class="text-red-600 h-4 mt-1">

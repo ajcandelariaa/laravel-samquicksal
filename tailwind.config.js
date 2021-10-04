@@ -30,6 +30,8 @@ module.exports = {
         postedStatus: '#0AA034',
         completeColor: '#FBBC05',
         btnHoverColor: '#B02B4E',
+        adminBgColor: '#E5E5E5',
+        adminDeleteFormColor: '#91001B',
       },
       width: {
         adminLoginBoxW: '800px',

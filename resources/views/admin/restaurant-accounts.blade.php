@@ -32,8 +32,8 @@
                 @endphp
                 @foreach ($accounts as $account)
                     @if ($count % 2 == 0)
-                        <div class="bg-white grid grid-cols-12 items-center text-center h-10 px-5 mb-3">
-                            <div class="col-span-1">{{ $account->id }}</div>
+                        <div class="bg-white grid grid-cols-12 items-center text-center h-10 px-5 mb-3 text-sm">
+                            <div class="col-span-1">{{ $count }}</div>
                             <div class="col-span-1">{{ $account->status }}</div>
                             <div class="col-span-3">{{ $account->rName }}</div>
                             <div class="col-span-3">{{ $account->rBranch }}</div>
@@ -45,8 +45,8 @@
                             </div>
                         </div>
                     @else
-                        <div class="bg-gray-100 grid grid-cols-12 items-center text-center h-10 px-5 mb-3">
-                            <div class="col-span-1">{{ $account->id }}</div>
+                        <div class="bg-gray-100 grid grid-cols-12 items-center text-center h-10 px-5 mb-3 text-sm">
+                            <div class="col-span-1">{{ $count }}</div>
                             <div class="col-span-1">{{ $account->status }}</div>
                             <div class="col-span-3">{{ $account->rName }}</div>
                             <div class="col-span-3">{{ $account->rBranch }}</div>
@@ -66,8 +66,8 @@
         </div>
 
         @if ($accounts->isEmpty())
-            <div class="mx-auto w-11/12 mt-2 grid grid-cols-1 items-center bg-red-400 h-14 shadow-xl rounded-lg">
-                <div class="text-center text-white">There are no customer accounts right now</div>
+            <div class="mx-auto w-11/12 mt-1 grid grid-cols-1 items-center bg-manageFoodItemHeaderBgColor h-14 shadow-xl rounded-lg">
+                <div class="text-center text-multiStepBoxColor uppercase">There are no restaurant accounts right now</div>
             </div>
         @endif
 
