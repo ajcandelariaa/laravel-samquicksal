@@ -31,3 +31,41 @@ function previewFile(input){
         reader.readAsDataURL(file);
     }
 }
+
+$('.btn-delete').on('click', function(e){
+    e.preventDefault();
+    const href = $(this).attr('href')
+
+    Swal.fire({
+        title: 'Delete Food Set?',
+        text: 'Are you sure you want to delete this food set?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes'
+    }).then((result) =>{
+        if(result.value){
+            document.location.href = href;
+        }
+    })
+});
+
+$('.btn-delete2').on('click', function(e){
+    e.preventDefault();
+    const href = $(this).attr('href')
+
+    Swal.fire({
+        title: 'Delete Food Item?',
+        text: 'Are you sure you want to delete this food item in these food set?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes'
+    }).then((result) =>{
+        if(result.value){
+            document.location.href = href;
+        }
+    })
+});

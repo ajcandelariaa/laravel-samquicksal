@@ -10,13 +10,20 @@
                 'success'
             );
         </script>
-    @endif
-    @if (session()->has('editedReward2'))
+    @elseif (session()->has('editedReward2'))
         <script>
             Swal.fire(
                 'Reward 2 Updated',
                 '',
                 'success'
+            );
+        </script>
+    @elseif (session()->has('cantEdit'))
+        <script>
+            Swal.fire(
+                'You can\'t edit right now',
+                'You stil have a stamp card',
+                'error'
             );
         </script>
     @endif

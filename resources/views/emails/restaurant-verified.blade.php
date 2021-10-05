@@ -3,10 +3,13 @@
 <h1>Dear {{ $details['applicantName'] }},</h1>
 
 <br>
+@if ($details['status']  == "update")
+    <p>Your email has been verified.</p>
+@else
+    <h3>Welcome to Samquicksal!</h3>
+    <p>Your email has been verified, you can now publish your restaurant.</p>
+@endif
 
-<h3>Welcome to Samquicksal!</h3>
-
-<p>Your email has been verified, you can now publish your restaurant.</p>
 <p>If you have any questions, feel free to contact us.</p>
 
 <br>
@@ -18,5 +21,5 @@ Click here to Login
 <br>
 
 Thanks,<br>
-ALTWAV Team!
+Samquicksal
 @endcomponent

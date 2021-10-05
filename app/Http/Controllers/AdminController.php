@@ -359,7 +359,7 @@ class AdminController extends Controller
             public_path('storage/uploads/restaurantAccounts/'.$nextIdFolderName.'/'.$applicant->staffValidId));
             
         $link = env('APP_URL') . '/restaurant/login';
-        $linkToVerify = env('APP_URL') . '/restaurant/email-verification/'.$nextIdFolderName;
+        $linkToVerify = env('APP_URL') . '/restaurant/email-verification/'.$nextIdFolderName.'/new';
         $details = [
             'applicantName' => $applicant->fname.' '.$applicant->lname,
             'username' => $defaultUsername,

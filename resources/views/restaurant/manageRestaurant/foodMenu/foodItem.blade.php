@@ -10,8 +10,7 @@
                 'success'
             );
         </script>
-    @endif
-    @if (session()->has('deleted'))
+    @elseif (session()->has('deleted'))
         <script>
             Swal.fire(
                 'Item Deleted',
@@ -67,7 +66,7 @@
                                 <a href="/restaurant/manage-restaurant/food-menu/food-item/edit/{{ $foodItem->id }}"><i class="fas fa-edit"></i></a>
                             </div>
                             <div class="col-span-1">
-                                <a href="/restaurant/manage-restaurant/food-menu/food-item/delete/{{ $foodItem->id }}"><i class="fas fa-trash-alt"></i></a>
+                                <a href="/restaurant/manage-restaurant/food-menu/food-item/delete/{{ $foodItem->id }}" class="btn-delete"><i class="fas fa-trash-alt"></i></a>
                             </div>
                         </div>
                     @else
@@ -84,7 +83,7 @@
                                 <a href="/restaurant/manage-restaurant/food-menu/food-item/edit/{{ $foodItem->id }}"><i class="fas fa-edit"></i></a>
                             </div>
                             <div class="col-span-1">
-                                <a href="/restaurant/manage-restaurant/food-menu/food-item/delete/{{ $foodItem->id }}"><i class="fas fa-trash-alt"></i></a>
+                                <a href="/restaurant/manage-restaurant/food-menu/food-item/delete/{{ $foodItem->id }}" class="btn-delete"><i class="fas fa-trash-alt"></i></a>
                             </div>
                         </div>
                     @endif

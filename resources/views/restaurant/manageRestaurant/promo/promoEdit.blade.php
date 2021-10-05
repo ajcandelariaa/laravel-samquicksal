@@ -5,7 +5,7 @@
     @if (session()->has('edited'))
         <script>
             Swal.fire(
-                'Item Updated',
+                'Promo Updated',
                 '',
                 'success'
             );

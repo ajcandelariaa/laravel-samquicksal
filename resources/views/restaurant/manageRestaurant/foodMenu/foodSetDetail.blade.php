@@ -10,8 +10,7 @@
                 'success'
             );
         </script>
-    @endif
-    @if (session()->has('deleted'))
+    @elseif (session()->has('deleted'))
         <script>
             Swal.fire(
                 'Food Item is Deleted in Food Set',
@@ -19,8 +18,7 @@
                 'success'
             );
         </script>
-    @endif
-    @if (session()->has('empty'))
+    @elseif (session()->has('empty'))
         <script>
             Swal.fire(
                 'No Item Added',
@@ -28,13 +26,20 @@
                 'error'
             );
         </script>
-    @endif
-    @if (session()->has('existing'))
+    @elseif (session()->has('allExisting'))
         <script>
             Swal.fire(
-                'Some of your Items are already exist',
+                'All food item are already exist',
                 '',
-                'warning'
+                'error'
+            );
+        </script>
+    @elseif (session()->has('someExisting'))
+        <script>
+            Swal.fire(
+                'Food Item Added',
+                'some food item are already exist',
+                'success'
             );
         </script>
     @endif
@@ -42,7 +47,7 @@
         <a href="/restaurant/manage-restaurant/food-menu/food-set" class="mt-2 text-submitButton uppercase font-bold"><i class="fas fa-chevron-left mr-2"></i>Back</a>
         <div class="w-full mt-3 text-right">
             <a href="/restaurant/manage-restaurant/food-menu/food-set/detail/edit/{{ $foodSet->id }}" class="text-white bg-manageRestaurantSidebarColorActive inline-block text-center leading-9 w-9 h-9 rounded-full mr-3"><i class="fas fa-edit"></i></a>
-            <a href="/restaurant/manage-restaurant/food-menu/food-set/delete/{{ $foodSet->id }}" class="text-white bg-red-800 inline-block text-center leading-9 w-9 h-9 rounded-full"><i class="fas fa-trash-alt"></i></a>
+            <a href="/restaurant/manage-restaurant/food-menu/food-set/delete/{{ $foodSet->id }}" class="btn-delete text-white bg-red-800 inline-block text-center leading-9 w-9 h-9 rounded-full"><i class="fas fa-trash-alt"></i></a>
         </div>
         
         <div class="w-full mt-3 rounded-2xl shadow-adminDownloadButton">
@@ -93,7 +98,7 @@
                                         <div class="col-span-5">{{ $foodItem->foodItemDescription }}</div>
                                         <div class="col-span-1">{{ $foodItem->foodItemPrice }}</div>
                                         <div class="col-span-1">
-                                            <a href="/restaurant/manage-restaurant/food-menu/food-set/item/delete/{{ $foodSet->id }}/{{ $foodSetItem->id }}"><i class="fas fa-trash-alt"></i></a>
+                                            <a href="/restaurant/manage-restaurant/food-menu/food-set/item/delete/{{ $foodSet->id }}/{{ $foodSetItem->id }}" class="btn-delete2"><i class="fas fa-trash-alt"></i></a>
                                         </div>
                                     </div>
                                 @else
@@ -106,7 +111,7 @@
                                         <div class="col-span-5">{{ $foodItem->foodItemDescription }}</div>
                                         <div class="col-span-1">{{ $foodItem->foodItemPrice }}</div>
                                         <div class="col-span-1">
-                                            <a href="/restaurant/manage-restaurant/food-menu/food-set/item/delete/{{ $foodSet->id }}/{{ $foodSetItem->id }}"><i class="fas fa-trash-alt"></i></a>
+                                            <a href="/restaurant/manage-restaurant/food-menu/food-set/item/delete/{{ $foodSet->id }}/{{ $foodSetItem->id }}" class="btn-delete2"><i class="fas fa-trash-alt"></i></a>
                                         </div>
                                     </div>
                                 @endif

@@ -25,3 +25,42 @@ function previewFile(input){
         reader.readAsDataURL(file);
     }
 }
+
+$('.btn-delete').on('click', function(e){
+    e.preventDefault();
+    const href = $(this).attr('href')
+
+    Swal.fire({
+        title: 'Delete Food Item?',
+        text: 'Are you sure you want to delete this food item?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes'
+    }).then((result) =>{
+        if(result.value){
+            document.location.href = href;
+        }
+    })
+})
+
+
+
+// PARA TO SA STAMP CARD
+$('#stampCardForm').submit(function(e) {
+    e.preventDefault();
+    Swal.fire({
+      title: 'Publish Stamp Card?',
+      text: 'Are you sure you want publish this stamp card?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes'
+    }).then((result) =>{
+        if(result.value){
+          e.currentTarget.submit();
+        }
+    });
+  });

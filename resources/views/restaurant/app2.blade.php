@@ -14,13 +14,13 @@
 </head>
 <body>
     <header class="bg-adminLoginTextColor">
-        <div class="w-11/12 mx-auto py-3">
+        <div class="w-full mx-auto py-3 px-5">
             <div class="grid grid-cols-2 items-center">
                 <div class="justify-self-start">
                     <img src="{{ asset('images/samquicksalLogo.png') }}" class="w-10" alt="samquicksalLogo">
                 </div>
-                <div class="logoutBtn justify-self-end ">
-                    <a href="/restaurant/logout" class="text-white">Logout</a>
+                <div class="logoutBtn justify-self-end pr-5">
+                    <a href="/restaurant/logout" class="text-white hover:underline">Logout</a>
                 </div>
             </div>
         </div>
@@ -50,31 +50,31 @@
                             <i class="fas fa-arrow-left mr-4 ml-8"></i> Manage Restaurant
                         </a>
                         <div class="text-sm mt-5 w-10/12 mx-auto">
-                            <a href="/restaurant/manage-restaurant/about/restaurant-information" class="ml-5 {{ (request()->is('restaurant/manage-restaurant/about/*')) ? 'text-manageRestaurantSidebarColorActive' : 'text-manageRestaurantSidebarColor' }}"><i class="fas fa-file mr-3"></i> About Restaurant</a>
+                            <a href="/restaurant/manage-restaurant/about/restaurant-information" class="ml-5 {{ (request()->is('restaurant/manage-restaurant/about/*')) ? 'text-manageRestaurantSidebarColorActive' : 'text-manageRestaurantSidebarColor hover:underline' }}"><i class="fas fa-file w-3 mr-3"></i> About Restaurant</a>
                             <div class="border-multiStepBoxBorder border-manageRestaurantHrColor mt-3"></div>
                         </div>
                         <div class="text-sm mt-3 w-10/12 mx-auto">
-                            <a href="/restaurant/manage-restaurant/food-menu/food-item" class="ml-5 {{ (request()->is('restaurant/manage-restaurant/food-menu/*')) ? 'text-manageRestaurantSidebarColorActive' : 'text-manageRestaurantSidebarColor' }}"><i class="fas fa-file mr-3"></i> Food Menu</a>
+                            <a href="/restaurant/manage-restaurant/food-menu/food-item" class="ml-5 {{ (request()->is('restaurant/manage-restaurant/food-menu/*')) ? 'text-manageRestaurantSidebarColorActive' : 'text-manageRestaurantSidebarColor hover:underline' }}"><i class="fas fa-file w-3 mr-3"></i> Food Menu</a>
                             <div class="border-multiStepBoxBorder border-manageRestaurantHrColor mt-3"></div>
                         </div>
                         <div class="text-sm mt-3 w-10/12 mx-auto">
-                            <a href="/restaurant/manage-restaurant/task-rewards/stamp-card" class="ml-5 {{ (request()->is('restaurant/manage-restaurant/task-rewards*')) ? 'text-manageRestaurantSidebarColorActive' : 'text-manageRestaurantSidebarColor' }}"><i class="fas fa-file mr-3"></i> Tasks & Rewards</a>
+                            <a href="/restaurant/manage-restaurant/task-rewards/stamp-card" class="ml-5 {{ (request()->is('restaurant/manage-restaurant/task-rewards*')) ? 'text-manageRestaurantSidebarColorActive' : 'text-manageRestaurantSidebarColor hover:underline' }}"><i class="fas fa-file w-3 mr-3"></i> Tasks & Rewards</a>
                             <div class="border-multiStepBoxBorder border-manageRestaurantHrColor mt-3"></div>
                         </div>
                         <div class="text-sm mt-3 w-10/12 mx-auto">
-                            <a href="/restaurant/manage-restaurant/promo" class="ml-5 {{ (request()->is('restaurant/manage-restaurant/promo*')) ? 'text-manageRestaurantSidebarColorActive' : 'text-manageRestaurantSidebarColor' }}"><i class="fas fa-file mr-3"></i> Promos</a>
+                            <a href="/restaurant/manage-restaurant/promo" class="ml-5 {{ (request()->is('restaurant/manage-restaurant/promo*')) ? 'text-manageRestaurantSidebarColorActive' : 'text-manageRestaurantSidebarColor hover:underline' }}"><i class="fas fa-file w-3 mr-3"></i> Promos</a>
                             <div class="border-multiStepBoxBorder border-manageRestaurantHrColor mt-3"></div>
                         </div>
                         <div class="text-sm mt-3 w-10/12 mx-auto">
-                            <a href="/restaurant/manage-restaurant/time/store-hours" class="ml-5 {{ (request()->is('restaurant/manage-restaurant/time*')) ? 'text-manageRestaurantSidebarColorActive' : 'text-manageRestaurantSidebarColor' }}"><i class="fas fa-file mr-3"></i> Manage Time</a>
+                            <a href="/restaurant/manage-restaurant/time/store-hours" class="ml-5 {{ (request()->is('restaurant/manage-restaurant/time*')) ? 'text-manageRestaurantSidebarColorActive' : 'text-manageRestaurantSidebarColor hover:underline' }}"><i class="fas fa-file w-3 mr-3"></i> Manage Time</a>
                             <div class="border-multiStepBoxBorder border-manageRestaurantHrColor mt-3"></div>
                         </div>
                         <div class="text-sm mt-3 w-10/12 mx-auto">
-                            <a href="/restaurant/manage-restaurant/offense/cancel-reservation" class="ml-5 {{ (request()->is('restaurant/manage-restaurant/offense*')) ? 'text-manageRestaurantSidebarColorActive' : 'text-manageRestaurantSidebarColor' }}"><i class="fas fa-file mr-3"></i> Manage Offense</a>
+                            <a href="/restaurant/manage-restaurant/offense/cancel-reservation" class="ml-5 {{ (request()->is('restaurant/manage-restaurant/offense*')) ? 'text-manageRestaurantSidebarColorActive' : 'text-manageRestaurantSidebarColor hover:underline' }}"><i class="fas fa-file w-3 mr-3"></i> Manage Offense</a>
                             <div class="border-multiStepBoxBorder border-manageRestaurantHrColor mt-3"></div>
                         </div>
                         <div class="text-sm mt-3 w-10/12 mx-auto">
-                            <a href="/restaurant/manage-restaurant/checklist" class="ml-5 {{ (request()->is('restaurant/manage-restaurant/checklist*')) ? 'text-manageRestaurantSidebarColorActive' : 'text-manageRestaurantSidebarColor' }}"><i class="fas fa-file mr-3"></i> Checklist</a>
+                            <a href="/restaurant/manage-restaurant/checklist" class="ml-5 {{ (request()->is('restaurant/manage-restaurant/checklist*')) ? 'text-manageRestaurantSidebarColorActive' : 'text-manageRestaurantSidebarColor hover:underline' }}"><i class="fas fa-file w-3 mr-3"></i> Checklist</a>
                             <div class="border-multiStepBoxBorder border-manageRestaurantHrColor mt-3"></div>
                         </div>
                     @endif
@@ -126,6 +126,8 @@
         <script type="text/javascript" src="{{ asset('js/orderSet.js') }}"></script>
     @elseif (request()->is('restaurant/manage-restaurant/about/restaurant-information*'))
         <script type="text/javascript" src="{{ asset('js/restaurantInformation.js') }}"></script>
+    @elseif (request()->is('restaurant/manage-restaurant/about/restaurant-post*'))
+        <script type="text/javascript" src="{{ asset('js/restaurantPost.js') }}"></script>
     @elseif (request()->is('restaurant/manage-restaurant/promo*'))
         <script type="text/javascript" src="{{ asset('js/promo.js') }}"></script>
     @elseif (request()->is('restaurant/manage-restaurant/time/store-hours*'))

@@ -10,8 +10,7 @@
                 'success'
             );
         </script>
-    @endif
-    @if (session()->has('gcashQrUpdated'))
+    @elseif (session()->has('gcashQrUpdated'))
         <script>
             Swal.fire(
                 'Gcash Qr Code Updated',
@@ -19,8 +18,7 @@
                 'success'
             );
         </script>
-    @endif
-    @if (session()->has('passwordUpdated'))
+    @elseif (session()->has('passwordUpdated'))
         <script>
             Swal.fire(
                 'Password Updated',
@@ -28,17 +26,7 @@
                 'success'
             );
         </script>
-    @endif
-    @if (session()->has('currentPassNotMatch'))
-        <script>
-            Swal.fire(
-                'Current Password Does not match',
-                '',
-                'error'
-            );
-        </script>
-    @endif
-    @if (session()->has('usernameUpdated'))
+    @elseif (session()->has('usernameUpdated'))
         <script>
             Swal.fire(
                 'Username Updated',
@@ -46,17 +34,39 @@
                 'success'
             );
         </script>
-    @endif
-    @if (session()->has('usernameEqual'))
+    @elseif (session()->has('contactUpdated'))
+         <script>
+             Swal.fire(
+                 'Contact Updated',
+                 '',
+                 'success'
+             );
+         </script>
+    @elseif (session()->has('emailAddressUpdated'))
+         <script>
+             Swal.fire(
+                 'Email Address Updated',
+                 'We\'ve emailed you the link to verify your new email',
+                 'success'
+             );
+         </script>
+    @elseif (session()->has('emailAddressNotVerified'))
         <script>
             Swal.fire(
-                'Username did not change',
-                '',
-                'warning'
+                'Current Email Address is not yet verified',
+                'Please verify it first before changing your email',
+                'error'
             );
-        </script>
+        </script>    
+     @elseif (session()->has('resendEmailVerificationSent'))
+        <script>
+            Swal.fire(
+                'Verification Link has been sent to your email',
+                '',
+                'success'
+            );
+        </script>      
     @endif
-    
     
     <div class="relative w-full h-56">
         @if ($account->rLogo == "" || $account->rLogo == null)
@@ -102,7 +112,12 @@
                 
                 <div class="text-left text-submitButton">Verified</div>
                 <div class="text-left text-submitButton">:</div>
-                <div class="font-bold mb-4">{{ $account->verified }}</div>
+                <div class="font-bold mb-4">
+                    {{ $account->verified }}
+                    @if ($account->verified == "No")
+                        <a href="/restaurant/manage-restaurant/about/restaurant-information/resend-email-verification/{{ $account->emailAddress }}/{{ $account->fname }}/{{ $account->lname }}" class="ml-2 text-xs text-manageRestaurantSidebarColorActive hover:underline">Re-send verification link</a>
+                    @endif
+                </div>
                 
                 <div class="text-left text-submitButton">Status</div>
                 <div class="text-left text-submitButton">:</div>
@@ -127,16 +142,34 @@
                         <input type="text" name="landlineNumber" class="w-full border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none  {{ $errors->has('landlineNumber') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }}" value="{{ $account->landlineNumber }}">
                         <span class="mt-2 text-red-600 italic text-sm">@error('landlineNumber'){{ $message }}@enderror</span>
                     </div>
-                    
+                </div>
+                <div class="w-10/12 mx-auto text-right mb-5">
+                    <button type="submit" class="bg-submitButton hover:bg-btnHoverColor text-white w-36 h-9 rounded-md">Update Contact</button>
+                </div>
+            </form>
+
+            <div class="uppercase font-bold bg-gradient-to-r from-adminViewAccountHeaderColor to-adminViewAccountHeaderColor2 py-2 text-submitButton pl-5">Update Email Address</div>
+            <form action="/restaurant/manage-restaurant/about/restaurant-information/updateEmailAddress" method="POST">
+                @csrf
+                <div class="grid grid-cols-formsThreeCols w-10/12 mx-auto mt-5 mb-3">
                     <div class="text-left text-submitButton">Email</div>
                     <div class="text-left text-submitButton">:</div>
                     <div class="font-bold mb-4">
-                        <input type="text" name="emailAddress" class="w-full border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none  {{ $errors->has('emailAddress') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }}" value="{{ $account->emailAddress }}">
-                        <span class="mt-2 text-red-600 italic text-sm">@error('emailAddress'){{ $message }}@enderror</span>
+                        @if (session()->has('emailAddressEqual'))
+                            <input type="text" name="emailAddress" class="w-full border rounded-sm text-sm text-gray-700 focus:outline-none  border-red-600 focus:border-red-600" value="{{ $account->emailAddress }}">
+                        @else
+                            <input type="text" name="emailAddress" class="w-full border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none  {{ $errors->has('emailAddress') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }}" value="{{ $account->emailAddress }}">
+                        @endif
+                        <span class="mt-2 text-red-600 italic text-sm">
+                            @error('emailAddress'){{ $message }}@enderror
+                            @if (session()->has('emailAddressEqual'))
+                                Email Address is the same as your old email address
+                            @endif
+                        </span>
                     </div>
                 </div>
                 <div class="w-10/12 mx-auto text-right mb-5">
-                    <button type="submit" class="bg-submitButton text-white w-36 h-9 rounded-md">Update Contact</button>
+                    <button type="submit" class="bg-submitButton hover:bg-btnHoverColor text-white w-36 h-9 rounded-md">Update Email</button>
                 </div>
             </form>
 
@@ -171,12 +204,21 @@
                     <div class="text-left text-submitButton">Username</div>
                     <div class="text-left text-submitButton">:</div>
                     <div class="font-bold mb-4">
-                        <input type="text" name="username" class="w-full border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none  {{ $errors->has('username') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }}" value="{{ $account->username }}">
-                        <span class="mt-2 text-red-600 italic text-sm">@error('username'){{ $message }}@enderror</span>
+                        @if (session()->has('usernameEqual'))
+                            <input type="text" name="username" class="w-full border rounded-sm text-sm text-gray-700 focus:outline-none border-red-600 focus:border-red-600" value="{{ $account->username }}">
+                        @else
+                            <input type="text" name="username" class="w-full border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none  {{ $errors->has('username') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }}" value="{{ $account->username }}">
+                        @endif
+                        <span class="mt-2 text-red-600 italic text-sm">
+                            @error('username'){{ $message }}@enderror
+                            @if (session()->has('usernameEqual'))
+                                Username is the same as your old username
+                            @endif
+                        </span>
                     </div>
                 </div>
                 <div class="w-10/12 mx-auto text-right mb-5">
-                    <button type="submit" class="bg-submitButton text-white w-36 h-9 rounded-md">Update Username</button>
+                    <button type="submit" class="bg-submitButton hover:bg-btnHoverColor text-white w-36 h-9 rounded-md">Update Username</button>
                 </div>
             </form>
 
@@ -185,17 +227,27 @@
             <form action="/restaurant/manage-restaurant/about/restaurant-information/updatePassword" method="POST">
                 @csrf
                 <div class="grid grid-cols-formsThreeCols w-10/12 mx-auto mt-5">
-                    <div class="text-left text-submitButton">Old Password</div>
+                    <div class="text-left text-submitButton">Current Password</div>
                     <div class="text-left text-submitButton">:</div>
                     <div class="font-bold mb-4">
-                        <input type="password" name="oldPassword" class="w-full border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none {{ $errors->has('oldPassword') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }}">
-                        <span class="mt-2 text-red-600 italic text-sm">@error('oldPassword'){{ $message }}@enderror</span>
+                        @if (session()->has('currentPassNotMatch'))
+                            <input type="password" name="oldPassword" class="w-full border rounded-sm text-sm text-gray-700 focus:outline-none border-red-600 focus:border-red-600">
+                        @else
+                            <input type="password" name="oldPassword" class="w-full border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none {{ $errors->has('oldPassword') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }}" value="{{ old('oldPassword') }}">
+                        @endif
+                        <span class="mt-2 text-red-600 italic text-sm">
+                            @error('oldPassword'){{ $message }}@enderror
+                            @if (session()->has('currentPassNotMatch'))
+                                Current Password does not match
+                            @endif
+                        </span>
                     </div>
 
                     
                     <div class="text-left text-submitButton">New Password</div>
                     <div class="text-left text-submitButton">:</div>
                     <div class="font-bold mb-4">
+                        <input type="hidden" name="currentPassword" value="{{ $account->password }}">
                         <input type="password" name="newPassword" class="w-full border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none {{ $errors->has('newPassword') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }}">
                         <span class="mt-2 text-red-600 italic text-sm">@error('newPassword'){{ $message }}@enderror</span>
                     </div>
@@ -211,7 +263,7 @@
                     
                 </div>
                 <div class="w-10/12 mx-auto text-right mt-3 mb-5">
-                    <button type="submit" class="bg-submitButton text-white w-36 h-9 rounded-md">Reset Password</button>
+                    <button type="submit" class="bg-submitButton hover:bg-btnHoverColor text-white w-36 h-9 rounded-md">Reset Password</button>
                 </div>
             </form>
 
@@ -224,7 +276,7 @@
                     <div class="text-left text-submitButton">:</div>
                     <div class="font-bold mb-4">
                         <input type="file" name="restaurantLogo" onchange="previewLogo(this);" class="w-full border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none {{ $errors->has('restaurantLogo') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }}">
-                        <span class="mt-2 text-red-600 italic text-sm">@error('restaurantLogo'){{ "Please choose image first" }}@enderror</span>
+                        <span class="mt-2 text-red-600 italic text-sm">@error('restaurantLogo'){{ $message }}@enderror</span>
                     </div>
                 </div>
                 <div class="flex w-10/12 mx-auto pb-5">
@@ -234,7 +286,7 @@
                         <img src="{{ asset('uploads/restaurantAccounts/logo/'.$id.'/'.$account->rLogo) }}" id="restaurantLogo" alt="restaurantLogo" class="border-multiStepBoxBorder border-gray-300 w-36 h-36">
                     @endif
                     <div class="w-full mx-auto text-right">
-                        <button type="submit" class="bg-submitButton text-white w-36 h-9 rounded-md">Update Logo</button>
+                        <button type="submit" class="bg-submitButton hover:bg-btnHoverColor text-white w-36 h-9 rounded-md">Update Logo</button>
                     </div>
                 </div>
             </form>
@@ -247,7 +299,7 @@
                     <div class="text-left text-submitButton">:</div>
                     <div class="font-bold mb-4">
                         <input type="file" name="restaurantGcashQr" onchange="previewGcashQr(this);" class="w-full border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none {{ $errors->has('restaurantGcashQr') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }}">
-                        <span class="mt-2 text-red-600 italic text-sm">@error('restaurantGcashQr'){{ "Please choose image first" }}@enderror</span>
+                        <span class="mt-2 text-red-600 italic text-sm">@error('restaurantGcashQr'){{ $message }}@enderror</span>
                     </div>
                 </div>
                 <div class="flex w-10/12 mx-auto pb-5">
@@ -257,7 +309,7 @@
                         <img src="{{ asset('uploads/restaurantAccounts/gcashQr/'.$id.'/'.$account->rGcashQrCodeImage) }}" id="restaurantGcashQr" alt="restaurantGcashQr" class="border-multiStepBoxBorder border-gray-300 w-36 h-36">
                     @endif
                     <div class="w-full mx-auto text-right">
-                        <button type="submit" class="bg-submitButton text-white w-36 h-9 rounded-md">Update Qr Code</button>
+                        <button type="submit" class="bg-submitButton hover:bg-btnHoverColor text-white w-36 h-9 rounded-md">Update Qr Code</button>
                     </div>
                 </div>
             </form>

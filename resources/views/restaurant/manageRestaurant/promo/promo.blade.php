@@ -10,8 +10,7 @@
                 'success'
             );
         </script>
-    @endif
-    @if (session()->has('deleted'))
+    @elseif (session()->has('deleted'))
         <script>
             Swal.fire(
                 'Promo Deleted',
@@ -19,8 +18,7 @@
                 'success'
             );
         </script>
-    @endif
-    @if (session()->has('posted'))
+    @elseif (session()->has('posted'))
         <script>
             Swal.fire(
                 'Promo Posted',
@@ -28,8 +26,7 @@
                 'success'
             );
         </script>
-    @endif
-    @if (session()->has('drafted'))
+    @elseif (session()->has('drafted'))
         <script>
             Swal.fire(
                 'Promo Drafted',
@@ -81,16 +78,16 @@
                             <div class="td col-span-5">{{ $promo->promoDescription }}</div>
                             <div class="td col-span-1">
                                 @if ($promo->promoPosted == "Draft")
-                                    <a href="/restaurant/manage-restaurant/promo/promoPost/{{ $promo->id }}" class="text-manageRestaurantSidebarColor">{{ $promo->promoPosted }}</a>
+                                    <a href="/restaurant/manage-restaurant/promo/promoPost/{{ $promo->id }}" class="text-manageRestaurantSidebarColor inline-block text-center leading-5 w-20 h-6 rounded-md border border-gray-400 hover:bg-gray-200">{{ $promo->promoPosted }}</a>
                                 @else
-                                    <a href="/restaurant/manage-restaurant/promo/promoDraft/{{ $promo->id }}" class="text-postedStatus">{{ $promo->promoPosted }}</a>
+                                    <a href="/restaurant/manage-restaurant/promo/promoDraft/{{ $promo->id }}" class="text-postedStatus inline-block text-center leading-5 w-20 h-6 rounded-md border border-gray-400 hover:bg-gray-200">{{ $promo->promoPosted }}</a>
                                 @endif
                             </div>
                             <div class="col-span-1">
                                 <a href="/restaurant/manage-restaurant/promo/edit/{{ $promo->id }}"><i class="fas fa-edit"></i></a>
                             </div>
                             <div class="col-span-1">
-                                <a href="/restaurant/manage-restaurant/promo/delete/{{ $promo->id }}"><i class="fas fa-trash-alt"></i></a>
+                                <a href="/restaurant/manage-restaurant/promo/delete/{{ $promo->id }}" class="btn-delete"><i class="fas fa-trash-alt"></i></a>
                             </div>
                         </div>
                     @else
@@ -112,7 +109,7 @@
                                 <a href="/restaurant/manage-restaurant/promo/edit/{{ $promo->id }}"><i class="fas fa-edit"></i></a>
                             </div>
                             <div class="col-span-1">
-                                <a href="/restaurant/manage-restaurant/promo/delete/{{ $promo->id }}"><i class="fas fa-trash-alt"></i></a>
+                                <a href="/restaurant/manage-restaurant/promo/delete/{{ $promo->id }}" class="btn-delete"><i class="fas fa-trash-alt"></i></a>
                             </div>
                         </div>
                     @endif

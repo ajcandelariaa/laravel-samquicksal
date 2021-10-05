@@ -26,7 +26,7 @@ Route::get('/restaurant', function () {
 // RESTAURANT ROUTES
 Route::get('/restaurant/register', [RestaurantController::class, 'registerView']);
 Route::post('/restaurant/register', [RestaurantController::class, 'addRestaurant']);
-Route::get('/restaurant/email-verification/{id}', [RestaurantController::class, 'verifyEmail']);
+Route::get('/restaurant/email-verification/{id}/{status}', [RestaurantController::class, 'verifyEmail']);
 
 Route::middleware(['restaurantLoggedIn'])->group(function(){
     Route::get('/restaurant/logout', [RestaurantController::class, 'logout']);
@@ -58,8 +58,10 @@ Route::middleware(['restaurantLoggedIn'])->group(function(){
     Route::post('/restaurant/manage-restaurant/food-menu/order-set/detail/add-set/{id}', [RestaurantController::class, 'orderSetAddFoodSet']);
     Route::post('/restaurant/manage-restaurant/food-menu/order-set/detail/add-item/{id}', [RestaurantController::class, 'orderSetAddFoodItem']);
     // -------RESTAURANT INFORMATION------------ //
+    Route::get('/restaurant/manage-restaurant/about/restaurant-information/resend-email-verification/{emailAddress}/{fname}/{lname}', [RestaurantController::class, 'resendEmailVerification']);
     Route::get('/restaurant/manage-restaurant/about/restaurant-information', [RestaurantController::class, 'manageRestaurantInformationView']);
     Route::post('/restaurant/manage-restaurant/about/restaurant-information/updateContact', [RestaurantController::class, 'updateRestaurantContact']);
+    Route::post('/restaurant/manage-restaurant/about/restaurant-information/updateEmailAddress', [RestaurantController::class, 'updateEmailAddress']);
     Route::post('/restaurant/manage-restaurant/about/restaurant-information/updateUsername', [RestaurantController::class, 'updateRestaurantUsername']);
     Route::post('/restaurant/manage-restaurant/about/restaurant-information/updatePassword', [RestaurantController::class, 'updateRestaurantPassword']);
     Route::post('/restaurant/manage-restaurant/about/restaurant-information/updateLogo', [RestaurantController::class, 'updateRestaurantLogo']);

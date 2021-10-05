@@ -10,8 +10,7 @@
                 'success'
             );
         </script>
-    @endif
-    @if (session()->has('editedTask2'))
+    @elseif (session()->has('editedTask2'))
         <script>
             Swal.fire(
                 'Task 2 Updated',
@@ -19,8 +18,7 @@
                 'success'
             );
         </script>
-    @endif
-    @if (session()->has('editedTask3'))
+    @elseif (session()->has('editedTask3'))
         <script>
             Swal.fire(
                 'Task 3 Updated',
@@ -28,7 +26,16 @@
                 'success'
             );
         </script>
+    @elseif (session()->has('cantEdit'))
+        <script>
+            Swal.fire(
+                'You can\'t edit right now',
+                'You stil have a stamp card',
+                'error'
+            );
+        </script>
     @endif
+    
     <div class="w-11/12 mx-auto my-10">
         <div class="grid grid-cols-2 gap-5 items-center">
 

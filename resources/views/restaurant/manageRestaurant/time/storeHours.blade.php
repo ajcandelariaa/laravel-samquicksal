@@ -10,8 +10,7 @@
                 'success'
             );
         </script>
-    @endif
-    @if (session()->has('edited'))
+    @elseif (session()->has('edited'))
         <script>
             Swal.fire(
                 'Store Hour Updated',
@@ -19,8 +18,7 @@
                 'success'
             );
         </script>
-    @endif
-    @if (session()->has('emptyDays'))
+    @elseif (session()->has('emptyDays'))
         <script>
             Swal.fire(
                 'Please select at least one day',
@@ -28,8 +26,7 @@
                 'error'
             );
         </script>
-    @endif
-    @if (session()->has('cantDelete'))
+    @elseif (session()->has('cantDelete'))
         <script>
             Swal.fire(
                 'You can\'t delete this one',
@@ -37,8 +34,7 @@
                 'error'
             );
         </script>
-    @endif
-    @if (session()->has('deleted'))
+    @elseif (session()->has('deleted'))
         <script>
             Swal.fire(
                 'Store Hour Deleted',
@@ -99,7 +95,7 @@
                             @else
                             <div class="mt-4 mb-1 text-right">
                                 <button class="btn-edit-item text-white bg-manageRestaurantSidebarColorActive inline-block text-center leading-6 w-6 h-6 rounded-full  text-xs"><i class="fas fa-edit"></i></button>
-                                <a href="/restaurant/manage-restaurant/time/store-hours/delete/{{ $storeHour->id }}"  class="text-white bg-red-800 inline-block text-center leading-6 w-6 h-6 rounded-full text-xs"><i class="fas fa-trash-alt"></i></a>
+                                <a href="/restaurant/manage-restaurant/time/store-hours/delete/{{ $storeHour->id }}"  class="btn-delete text-white bg-red-800 inline-block text-center leading-6 w-6 h-6 rounded-full text-xs"><i class="fas fa-trash-alt"></i></a>
                             </div>
                             @endif
                         </div>

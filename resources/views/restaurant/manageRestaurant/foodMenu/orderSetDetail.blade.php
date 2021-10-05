@@ -139,7 +139,7 @@
         <a href="/restaurant/manage-restaurant/food-menu/order-set" class="mt-2 text-submitButton uppercase font-bold"><i class="fas fa-chevron-left mr-2"></i>Back</a>
         <div class="w-full mt-3 text-right">
             <a href="/restaurant/manage-restaurant/food-menu/order-set/detail/edit/{{ $orderSet->id }}" class="text-white bg-manageRestaurantSidebarColorActive inline-block text-center leading-9 w-9 h-9 rounded-full mr-3"><i class="fas fa-edit"></i></a>
-            <a href="/restaurant/manage-restaurant/food-menu/order-set/delete/{{ $orderSet->id }}" class="text-white bg-red-800 inline-block text-center leading-9 w-9 h-9 rounded-full"><i class="fas fa-trash-alt"></i></a>
+            <a href="/restaurant/manage-restaurant/food-menu/order-set/delete/{{ $orderSet->id }}" class="btn-delete text-white bg-red-800 inline-block text-center leading-9 w-9 h-9 rounded-full"><i class="fas fa-trash-alt"></i></a>
         </div>
         
         <div class="w-full mt-3 rounded-2xl shadow-adminDownloadButton">
@@ -194,7 +194,7 @@
                                                 <div class="col-span-5">{{ $foodSet->foodSetDescription }}</div>
                                                 <div class="col-span-1">{{ $foodSet->foodSetPrice }}</div>
                                                 <div class="col-span-1">
-                                                    <a href="/restaurant/manage-restaurant/food-menu/order-set/food-set/delete/{{ $orderSet->id }}/{{ $orderSetFoodSet->id }}"><i class="fas fa-trash-alt"></i></a>
+                                                    <a href="/restaurant/manage-restaurant/food-menu/order-set/food-set/delete/{{ $orderSet->id }}/{{ $orderSetFoodSet->id }}" class="btn-delete2"><i class="fas fa-trash-alt"></i></a>
                                                 </div>
                                             </div>
                                         @else
@@ -207,7 +207,7 @@
                                                 <div class="col-span-5">{{ $foodSet->foodSetDescription }}</div>
                                                 <div class="col-span-1">{{ $foodSet->foodSetPrice }}</div>
                                                 <div class="col-span-1">
-                                                    <a href="/restaurant/manage-restaurant/food-menu/order-set/food-set/delete/{{ $orderSet->id }}/{{ $orderSetFoodSet->id }}"><i class="fas fa-trash-alt"></i></a>
+                                                    <a href="/restaurant/manage-restaurant/food-menu/order-set/food-set/delete/{{ $orderSet->id }}/{{ $orderSetFoodSet->id }}" class="btn-delete2"><i class="fas fa-trash-alt"></i></a>
                                                 </div>
                                             </div>
                                         @endif
@@ -262,7 +262,7 @@
                                                 <div class="col-span-5">{{ $foodItem->foodItemDescription }}</div>
                                                 <div class="col-span-1">{{ $foodItem->foodItemPrice }}</div>
                                                 <div class="col-span-1">
-                                                    <a href="/restaurant/manage-restaurant/food-menu/order-set/food-item/delete/{{ $orderSet->id }}/{{ $orderSetFoodItem->id }}"><i class="fas fa-trash-alt"></i></a>
+                                                    <a href="/restaurant/manage-restaurant/food-menu/order-set/food-item/delete/{{ $orderSet->id }}/{{ $orderSetFoodItem->id }}" class="btn-delete3"><i class="fas fa-trash-alt"></i></a>
                                                 </div>
                                             </div>
                                         @else
@@ -275,7 +275,7 @@
                                                 <div class="col-span-5">{{ $foodItem->foodItemDescription }}</div>
                                                 <div class="col-span-1">{{ $foodItem->foodItemPrice }}</div>
                                                 <div class="col-span-1">
-                                                    <a href="/restaurant/manage-restaurant/food-menu/order-set/food-item/delete/{{ $orderSet->id }}/{{ $orderSetFoodItem->id }}"><i class="fas fa-trash-alt"></i></a>
+                                                    <a href="/restaurant/manage-restaurant/food-menu/order-set/food-item/delete/{{ $orderSet->id }}/{{ $orderSetFoodItem->id }}" class="btn-delete3"><i class="fas fa-trash-alt"></i></a>
                                                 </div>
                                             </div>
                                         @endif

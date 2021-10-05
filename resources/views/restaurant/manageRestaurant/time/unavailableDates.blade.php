@@ -10,8 +10,7 @@
                 'error'
             );
         </script>
-    @endif
-    @if (session()->has('added'))
+    @elseif (session()->has('added'))
         <script>
             Swal.fire(
                 'Date Added',
@@ -19,8 +18,7 @@
                 'success'
             );
         </script>
-    @endif
-    @if (session()->has('deleted'))
+    @elseif (session()->has('deleted'))
         <script>
             Swal.fire(
                 'Date Deleted',
@@ -28,8 +26,7 @@
                 'success'
             );
         </script>
-    @endif
-    @if (session()->has('edited'))
+    @elseif (session()->has('edited'))
         <script>
             Swal.fire(
                 'Date Updated',
@@ -101,7 +98,7 @@
                     </div>
                     <div>
                         <button class="btn-edit-item text-white bg-manageRestaurantSidebarColorActive inline-block text-center leading-6 w-6 h-6 rounded-full text-xs"><i class="fas fa-edit"></i></button>
-                        <a href="/restaurant/manage-restaurant/time/unavailable-dates/delete/{{ $unavailableDate->id }}"  class="mt-2 text-white bg-red-800 inline-block text-center leading-6 w-6 h-6 rounded-full text-xs"><i class="fas fa-trash-alt"></i></a>
+                        <a href="/restaurant/manage-restaurant/time/unavailable-dates/delete/{{ $unavailableDate->id }}"  class="btn-delete mt-2 text-white bg-red-800 inline-block text-center leading-6 w-6 h-6 rounded-full text-xs"><i class="fas fa-trash-alt"></i></a>
                     </div>
                 </div>
             @endforeach

@@ -30,7 +30,7 @@
                     <div class="w-11/12 mx-auto pt-7">
                         <div class="text-manageRestaurantSidebarColor text-sm italic">Once published, you can no longer edit this section unless the reward has completed its validity period. </div>
                     </div>
-                    <form action="/restaurant/manage-restaurant/task-rewards/stamp-card/add" method="POST">
+                    <form action="/restaurant/manage-restaurant/task-rewards/stamp-card/add" method="POST" id="stampCardForm">
                         @csrf
                         <div class="grid grid-cols-stampCardGrid w-9/12 gap-y-5 mx-auto py-10">
                             <div class="text-left text-submitButton font-bold">Stamp Capacity</div>

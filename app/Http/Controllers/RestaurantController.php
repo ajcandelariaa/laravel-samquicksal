@@ -33,6 +33,7 @@ use App\Models\RestaurantResetPassword;
 use Illuminate\Support\Facades\Session;
 use App\Mail\RestaurantFormAppreciation;
 use App\Mail\RestaurantPasswordChanged;
+use App\Mail\RestaurantUpdateEmail;
 use Illuminate\Auth\Notifications\ResetPassword;
 
 class RestaurantController extends Controller
@@ -519,6 +520,13 @@ class RestaurantController extends Controller
     }
     public function editTask3(Request $request){
         $restAccId = Session::get('loginId');
+
+        $checkStampExist = StampCard::where('restAcc_id', $restAccId)->first();
+        if($checkStampExist != null){
+            $request->session()->flash('cantEdit');
+            return redirect('/restaurant/manage-restaurant/task-rewards/tasks');
+        }
+
         $taskCode = "ORDR";
         RestaurantTaskList::where('restAcc_id', $restAccId)->where('taskCode', $taskCode)
         ->update([
@@ -530,6 +538,13 @@ class RestaurantController extends Controller
     }
     public function editTask2(Request $request){
         $restAccId = Session::get('loginId');
+
+        $checkStampExist = StampCard::where('restAcc_id', $restAccId)->first();
+        if($checkStampExist != null){
+            $request->session()->flash('cantEdit');
+            return redirect('/restaurant/manage-restaurant/task-rewards/tasks');
+        }
+
         $taskCode = "BRNG";
         RestaurantTaskList::where('restAcc_id', $restAccId)->where('taskCode', $taskCode)
         ->update([
@@ -541,6 +556,13 @@ class RestaurantController extends Controller
     }
     public function editTask1(Request $request){
         $restAccId = Session::get('loginId');
+
+        $checkStampExist = StampCard::where('restAcc_id', $restAccId)->first();
+        if($checkStampExist != null){
+            $request->session()->flash('cantEdit');
+            return redirect('/restaurant/manage-restaurant/task-rewards/tasks');
+        }
+
         $taskCode = "SPND";
         RestaurantTaskList::where('restAcc_id', $restAccId)->where('taskCode', $taskCode)
         ->update([
@@ -552,6 +574,13 @@ class RestaurantController extends Controller
     }
     public function editReward2(Request $request){
         $restAccId = Session::get('loginId');
+
+        $checkStampExist = StampCard::where('restAcc_id', $restAccId)->first();
+        if($checkStampExist != null){
+            $request->session()->flash('cantEdit');
+            return redirect('/restaurant/manage-restaurant/task-rewards/rewards');
+        }
+
         $rewardCode = "FRPE";
         RestaurantRewardList::where('restAcc_id', $restAccId)->where('rewardCode', $rewardCode)
         ->update([
@@ -563,6 +592,13 @@ class RestaurantController extends Controller
     }
     public function editReward1(Request $request){
         $restAccId = Session::get('loginId');
+
+        $checkStampExist = StampCard::where('restAcc_id', $restAccId)->first();
+        if($checkStampExist != null){
+            $request->session()->flash('cantEdit');
+            return redirect('/restaurant/manage-restaurant/task-rewards/rewards');
+        }
+
         $rewardCode = "DSCN";
         RestaurantRewardList::where('restAcc_id', $restAccId)->where('rewardCode', $rewardCode)
         ->update([
@@ -934,7 +970,11 @@ class RestaurantController extends Controller
         $getrGcashLogo = RestaurantAccount::select('rGcashQrCodeImage')->where('id', $restAccId)->first();
 
         $request->validate([
-            'restaurantGcashQr' => 'required',
+            'restaurantGcashQr' => 'required|image',
+        ],
+        [
+            'restaurantGcashQr.required' => 'Gcash Qr Code is required',
+            'restaurantGcashQr.image' => 'Gcash Qr Code must be in jpeg, png, bmp, gif, or svg format',
         ]);
         
         if($getrGcashLogo->rGcashQrCodeImage != "" || $getrGcashLogo->rGcashQrCodeImage != null){
@@ -956,9 +996,12 @@ class RestaurantController extends Controller
         $getrLogo = RestaurantAccount::select('rLogo')->where('id', $restAccId)->first();
 
         $request->validate([
-            'restaurantLogo' => 'required',
+            'restaurantLogo' => 'required|image',
+        ],
+        [
+            'restaurantLogo.required' => 'Logo is required',
+            'restaurantLogo.image' => 'Logo must be in jpeg, png, bmp, gif, or svg format',
         ]);
-
         if($getrLogo->rLogo != "" || $getrLogo->rLogo != null){
             File::delete(public_path('uploads/restaurantAccounts/logo/'.$restAccId.'/'.$getrLogo->rLogo));
         }
@@ -977,15 +1020,23 @@ class RestaurantController extends Controller
         $restAccId = Session::get('loginId');
         $account = RestaurantAccount::select('password')->where('id', $restAccId)->first();
 
-        $request->validate([
-            'oldPassword' => 'required',
-            'newPassword' => 'required|min:6|same:confirmPassword',
-            'confirmPassword' => 'required',
-        ]);
         if(!Hash::check($request->oldPassword, $account->password)){
             $request->session()->flash('currentPassNotMatch');
             return redirect('/restaurant/manage-restaurant/about/restaurant-information');
         }
+
+        $request->validate([
+            'oldPassword' => 'required',
+            'newPassword' => 'required|min:6|same:confirmPassword',
+            'confirmPassword' => 'required',
+        ],
+        [
+            'oldPassword.required' => 'Current Password is required',
+            'newPassword.same' => 'New Password does not match Confirm Password',
+            'newPassword.min' => 'New Password must contain at least 6 characters',
+            'newPassword.same' => 'New Password does not match Confirm Password',
+            'confirmPassword.required' => 'Confirm Password is required',
+        ]);
 
         RestaurantAccount::where('id', $restAccId)
         ->update([
@@ -1002,8 +1053,15 @@ class RestaurantController extends Controller
             $request->session()->flash('usernameEqual');
             return redirect('/restaurant/manage-restaurant/about/restaurant-information');
         }
+
         $request->validate([
-            'username' => 'required',
+            'username' => 'required|min:6|regex:/^\S*$/u|unique:restaurant_accounts,emailAddress',
+        ], 
+        [
+            'username.required' => 'Username is required',
+            'username.min' => 'Username must contain at least 6 characters',
+            'username.regex' => 'Username must not contain any spaces',
+            'username.unique' => 'Username is taken',
         ]);
 
         RestaurantAccount::where('id', $restAccId)
@@ -1014,11 +1072,78 @@ class RestaurantController extends Controller
         $request->session()->flash('usernameUpdated');
         return redirect('/restaurant/manage-restaurant/about/restaurant-information');
     }
-    public function updateRestaurantContact(Request $request){
+    public function resendEmailVerification($emailAddress, $fname, $lname){
+        $restAccId = Session::get('loginId');
+        $details = [
+            'link' => env('APP_URL') . '/restaurant/email-verification/'.$restAccId.'/update',
+            'applicantName' => $fname.' '.$lname,
+            'status' => 'resend'
+        ];
+        Mail::to($emailAddress)->send(new RestaurantUpdateEmail($details));
+
+        Session::flash('resendEmailVerificationSent');
+        return redirect('/restaurant/manage-restaurant/about/restaurant-information');
+    }
+    public function updateEmailAddress(Request $request){
+        $restAccId = Session::get('loginId');
+        $account = RestaurantAccount::select('emailAddress', 'verified', 'fname', 'lname')->where('id', $restAccId)->first();
+        if($account->emailAddress == $request->emailAddress){
+            $request->session()->flash('emailAddressEqual');
+            return redirect('/restaurant/manage-restaurant/about/restaurant-information');
+        }
+
         $request->validate([
-            'contactNumber' => 'required',
-            'emailAddress' => 'required',
+            'emailAddress' => 'required|email|unique:restaurant_accounts,emailAddress',
+        ], 
+        [
+            'emailAddress.required' => 'Email Address is required',
+            'emailAddress.email' => 'Email Address must be a valid email',
+            'emailAddress.unique' => 'Email Address has already taken',
         ]);
+
+        if($account->verified == "No"){
+            $request->session()->flash('emailAddressNotVerified');
+            return redirect('/restaurant/manage-restaurant/about/restaurant-information');
+        } else {
+
+            $details = [
+                'link' => env('APP_URL') . '/restaurant/email-verification/'.$restAccId.'/update',
+                'applicantName' => $account->fname.' '.$account->lname,
+                'status' => 'changedEmail'
+            ];
+            Mail::to($request->emailAddress)->send(new RestaurantUpdateEmail($details));
+
+            RestaurantAccount::where('id', $restAccId)
+            ->update([
+                'verified' => "No",
+                'emailAddress' => $request->emailAddress,
+            ]);
+
+            $request->session()->flash('emailAddressUpdated');
+            return redirect('/restaurant/manage-restaurant/about/restaurant-information');
+        }
+
+    }
+    public function updateRestaurantContact(Request $request){
+        $restAccId = Session::get('loginId');
+        $request->validate([
+            'contactNumber' => 'required|digits:11',
+            'landlineNumber' => 'digits:8',
+        ], 
+        [
+            'contactNumber.required' => 'Contact Number is required',
+            'contactNumber.digits' => 'Contact Number must be 11 digits',
+            'landlineNumber.digits' => 'Landline Number must be 8 digits',
+        ]);
+
+        RestaurantAccount::where('id', $restAccId)
+        ->update([
+            'contactNumber' => $request->contactNumber,
+            'landlineNumber' => $request->landlineNumber,
+        ]);
+
+        $request->session()->flash('contactUpdated');
+        return redirect('/restaurant/manage-restaurant/about/restaurant-information');
     }
     public function editPost(Request $request, $id){
         $restAccId = Session::get('loginId');
@@ -1331,6 +1456,7 @@ class RestaurantController extends Controller
             $request->session()->flash('empty');
             return redirect('/restaurant/manage-restaurant/food-menu/food-set/detail/'.$request->foodSetId);
         } else {
+            $countFoodItem = sizeOf($request->foodItem);
             foreach ($request->foodItem as $foodItemId) {
                 $data = FoodSetItem::where('foodSet_id', '=', $request->foodSetId)
                                     ->where('foodItem_id', '=', $foodItemId)
@@ -1344,8 +1470,10 @@ class RestaurantController extends Controller
                     ]);
                 }
             }
-            if($checkIfExisting > 0){
-                $request->session()->flash('existing');
+            if($checkIfExisting == sizeOf($request->foodItem)){
+                $request->session()->flash('allExisting');
+            } else if ($checkIfExisting > 0 && $checkIfExisting < sizeOf($request->foodItem)) {
+                $request->session()->flash('someExisting');
             } else {
                 $request->session()->flash('added');
             }
@@ -1432,17 +1560,17 @@ class RestaurantController extends Controller
         }
     }
 
-    // TRY EDIT
-    public function verifyEmail($id){
+    public function verifyEmail($id, $status){
         $data = RestaurantAccount::select('emailAddress', 'fname', 'lname', 'verified')->where('id', $id)->first();
         if($data->verified == "No"){
             $details = [
+                'status' => $status,
                 'link' => env('APP_URL') . '/restaurant/login',
                 'applicantName' => $data->fname.' '.$data->lname,
             ];
             Mail::to($data->emailAddress)->send(new RestaurantVerified($details));
+            RestaurantAccount::where('id', $id)->update(['verified' => "Yes"]);
+            return redirect('/restaurant/login');
         }
-        RestaurantAccount::where('id', $id)->update(['verified' => "Yes"]);
-        return redirect('/restaurant/login');
     }
 }

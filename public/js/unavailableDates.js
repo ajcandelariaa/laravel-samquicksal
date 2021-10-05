@@ -43,3 +43,24 @@ $(".edit-form .close-btn").click(function(){
     document.querySelector(".edit-form").classList.remove("active");
     document.querySelector(".overlay").classList.remove("active");
 });
+
+
+
+$('.btn-delete').on('click', function(e){
+    e.preventDefault();
+    const href = $(this).attr('href')
+
+    Swal.fire({
+        title: 'Delete date?',
+        text: 'Are you sure you want to delete this date?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes'
+    }).then((result) =>{
+        if(result.value){
+            document.location.href = href;
+        }
+    })
+})

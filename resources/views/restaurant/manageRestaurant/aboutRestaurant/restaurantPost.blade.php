@@ -20,7 +20,7 @@
             );
         </script>
     @endif
-    <div class="w-11/12 mx-auto mt-10">
+    <div class="w-11/12 mx-auto my-10">
         <div class="w-full mt-5 bg-adminViewAccountHeaderColor2 p-5 rounded-xl shadow-adminDownloadButton">
             <form action="/restaurant/manage-restaurant/about/restaurant-post/add" method="POST" enctype="multipart/form-data">
                 @csrf
@@ -45,7 +45,7 @@
                         </div>
                         <div class="place-self-end">
                             <a href="/restaurant/manage-restaurant/about/restaurant-post/edit/{{ $post->id }}" class="text-white bg-manageRestaurantSidebarColorActive inline-block text-center leading-9 w-9 h-9 rounded-full mr-1"><i class="fas fa-edit"></i></a>
-                            <a href="/restaurant/manage-restaurant/about/restaurant-post/delete/{{ $post->id }}" class="text-white bg-red-800 inline-block text-center leading-9 w-9 h-9 rounded-full"><i class="fas fa-trash-alt"></i></a>
+                            <a href="/restaurant/manage-restaurant/about/restaurant-post/delete/{{ $post->id }}" class="btn-delete text-white bg-red-800 inline-block text-center leading-9 w-9 h-9 rounded-full"><i class="fas fa-trash-alt"></i></a>
                         </div>
                     </div>
                 @endforeach

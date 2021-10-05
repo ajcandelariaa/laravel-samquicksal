@@ -55,7 +55,7 @@
                             <p class="text-justify">{{ $policy->policyDesc }}</p>
                             <div class="text-center">
                                 <button class="btn-edit-item text-white bg-manageRestaurantSidebarColorActive inline-block text-center leading-9 w-9 h-9 rounded-full"><i class="fas fa-edit"></i></button>
-                                <a href="/restaurant/manage-restaurant/offense/policy/delete/{{ $policy->id }}"  class="text-white bg-red-800 inline-block text-center leading-9 w-9 h-9 rounded-full"><i class="fas fa-trash-alt"></i></a>
+                                <a href="/restaurant/manage-restaurant/offense/policy/delete/{{ $policy->id }}"  class="btn-delete text-white bg-red-800 inline-block text-center leading-9 w-9 h-9 rounded-full"><i class="fas fa-trash-alt"></i></a>
                             </div>
                         </div>
                         @php
