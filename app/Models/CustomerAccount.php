@@ -10,9 +10,10 @@ class CustomerAccount extends Model
     use HasFactory;
 
     protected $fillable = [
-        'fullName',
+        'name',
         'emailAddress',
         'contactNumber',
         'password',
+        'profileImage',
     ];
 }

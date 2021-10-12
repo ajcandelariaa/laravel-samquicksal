@@ -15,10 +15,11 @@ class CreateCustomerAccountsTable extends Migration
     {
         Schema::create('customer_accounts', function (Blueprint $table) {
             $table->id();
-            $table->string('fullName');
+            $table->string('name');
             $table->string('emailAddress');
             $table->string('contactNumber');
             $table->string('password');
+            $table->string('profileImage');
             $table->timestamps();
         });
     }
