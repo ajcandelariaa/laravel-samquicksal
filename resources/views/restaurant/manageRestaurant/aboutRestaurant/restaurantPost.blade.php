@@ -27,7 +27,7 @@
                 <textarea type="text" name="postDesc" placeholder="Write a post..." class="border border-gray-400 focus:border-black rounded-sm w-full p-2 text-sm text-gray-700 focus:outline-none" rows="5"></textarea>
                 <div class="flex justify-between mt-3">
                     <input type="file" name="postImage">
-                    <button class="bg-submitButton text-white w-32 h-9 rounded-md">Post</button>
+                    <button class="bg-submitButton text-white w-36 h-9 rounded-md font-Montserrat hover:text-gray-300 hover:bg-darkerSubmitButton transition duration-200 ease-in-out">Post</button>
                 </div>
             </form>
         </div>
@@ -44,8 +44,8 @@
                             <p class="mt-4 text-sm "> {{ $post->postDesc }} </p>
                         </div>
                         <div class="place-self-end">
-                            <a href="/restaurant/manage-restaurant/about/restaurant-post/edit/{{ $post->id }}" class="text-white bg-manageRestaurantSidebarColorActive inline-block text-center leading-9 w-9 h-9 rounded-full mr-1"><i class="fas fa-edit"></i></a>
-                            <a href="/restaurant/manage-restaurant/about/restaurant-post/delete/{{ $post->id }}" class="btn-delete text-white bg-red-800 inline-block text-center leading-9 w-9 h-9 rounded-full"><i class="fas fa-trash-alt"></i></a>
+                            <a href="/restaurant/manage-restaurant/about/restaurant-post/edit/{{ $post->id }}" class="text-white hover:text-gray-300 bg-manageRestaurantSidebarColorActive hover:bg-hoverManageRestaurantSidebarColorActive transition duration-200 ease-in-out inline-block text-center leading-9 w-9 h-9 rounded-full mr-1"><i class="fas fa-edit"></i></a>
+                            <a href="/restaurant/manage-restaurant/about/restaurant-post/delete/{{ $post->id }}" class="btn-delete text-white hover:text-gray-300 bg-submitButton hover:bg-darkerSubmitButton transition duration-200 ease-in-out inline-block text-center leading-9 w-9 h-9 rounded-full"><i class="fas fa-trash-alt"></i></a>
                         </div>
                     </div>
                 @endforeach

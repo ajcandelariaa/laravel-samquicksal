@@ -12,7 +12,7 @@ class StampCard extends Model
     protected $fillable = [
         'restAcc_id',
         'stampCapacity',
-        'stampReward',
+        'stampReward_id',
         'stampValidity',
     ];
 }

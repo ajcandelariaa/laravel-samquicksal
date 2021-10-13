@@ -1,7 +1,7 @@
 <div class="w-3/5 mx-auto pt-10 pb-12">
     <form wire:submit.prevent="register" enctype="multipart/form-data">
         <div class="relative">
-            <div class="flex justify-between mb-10 font-semibold">
+            <div class="flex justify-between mb-10 font-semibold ">
                 <div class="px-5 py-3 z-10 rounded-xl {{ $currentStep == 1 ? 'bg-submitButton text-white border-2 border-submitButton' : 'border-2 border-multiStepBoxColor text-multiStepBoxColor bg-white' }}">1</div>
                 <div class="px-5 py-3 z-10 rounded-xl {{ $currentStep == 2 ? 'bg-submitButton text-white border-2 border-submitButton' : 'border-2 border-multiStepBoxColor text-multiStepBoxColor bg-white' }}">2</div>
                 <div class="px-5 py-3 z-10 rounded-xl {{ $currentStep == 3 ? 'bg-submitButton text-white border-2 border-submitButton' : 'border-2 border-multiStepBoxColor text-multiStepBoxColor bg-white' }}">3</div>
@@ -30,14 +30,18 @@
             <div class="mt-5">
                 <div class="">
                     <label class="text-gray-400 mb-1 ml-1">First Name <span class="text-red-600">*</span></label>
-                    <input type="text" wire:model="fname" value="{{ old('fname') }}" class="border {{ $errors->has('fname') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }} rounded-lg w-full py-1 px-2 text-sm text-gray-700 focus:outline-none">
-                    <span class="mt-2 text-red-600 italic text-sm">@error('fname'){{ $message }}@enderror</span>
+                    <input type="text" wire:model="fname" value="{{ old('fname') }}" class="border {{ $errors->has('fname') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }} rounded-lg w-full py-1 px-2 text-sm text-gray-700 focus:outline-none ">
+                        <span class=" text-red-600 italic text-sm">@error('fname'){{ $message }}@enderror</span>
+                    
+                        
                 </div>
 
                 <div class="mt-3">
                     <label class="text-gray-400 mb-1 ml-1">Middle Name</label>
                     <input type="text" wire:model="mname" value="{{ old('mname') }}" class="border {{ $errors->has('mname') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }} rounded-lg w-full py-1 px-2 text-sm text-gray-700 focus:outline-none">
-                    <span class="mt-2 text-red-600 italic text-sm">@error('mname'){{ $message }}@enderror</span>
+                        <span class="mt-2 text-red-600 italic text-sm">@error('mname'){{ $message }}@enderror</span>
+              
+                    
                 </div>
 
                 <div class="mt-3">

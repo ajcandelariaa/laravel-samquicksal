@@ -12,7 +12,7 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" integrity="sha512-1ycn6IcaQQ40/MKBW2W4Rhis/DbILU74C1vSrLJxCq57o941Ym01SwNsOMqvEBFlcgUa6xLiPY/NS5R+E6ztJQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
-<body>
+<body class="font-Roboto">
     <header class="bg-adminLoginTextColor">
         <div class="w-full mx-auto py-3 px-5">
             <div class="grid grid-cols-2 items-center">
@@ -20,7 +20,7 @@
                     <img src="{{ asset('images/samquicksalLogo.png') }}" class="w-10" alt="samquicksalLogo">
                 </div>
                 <div class="logoutBtn justify-self-end pr-5">
-                    <a href="/restaurant/logout" class="text-white hover:underline">Logout</a>
+                    <a href="/restaurant/logout" class="text-white hover:underline hover:text-gray-300 transition duration-200 ease-in-out">Logout</a>
                 </div>
             </div>
         </div>
@@ -46,8 +46,8 @@
             <div class="bg-black min-h-screen w-80">
                 <div class="grid items-center mt-8 text-white">
                     @if (request()->is('restaurant/manage-restaurant/*'))
-                        <a href="/restaurant/dashboard" class="pt-3 pb-3 hover:bg-sideBarHoverBgColor">
-                            <i class="fas fa-arrow-left mr-4 ml-8"></i> Manage Restaurant
+                        <a href="/restaurant/dashboard" class="pt-3 pb-3 hover:bg-sideBarHoverBgColor hover:text-gray-300 transition duration-200 ease-in-out">
+                            <i class="fas fa-arrow-left mr-4 ml-8 "></i> Manage Restaurant
                         </a>
                         <div class="text-sm mt-5 w-10/12 mx-auto">
                             <a href="/restaurant/manage-restaurant/about/restaurant-information" class="ml-5 {{ (request()->is('restaurant/manage-restaurant/about/*')) ? 'text-manageRestaurantSidebarColorActive' : 'text-manageRestaurantSidebarColor hover:underline' }}"><i class="fas fa-file w-3 mr-3"></i> About Restaurant</a>

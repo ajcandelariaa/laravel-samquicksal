@@ -18,33 +18,33 @@
                 @csrf
                 <div class="flex justify-between items-center px-4 py-3">
                     <div class="text-white font-bold uppercase text-xl">Update Food Item</div>
-                    <button id="btn-add-food-item" class="bg-submitButton text-white w-28 h-9 rounded-md">Save</button>
+                    <button id="btn-add-food-item" class="bg-submitButton hover:bg-darkerSubmitButton text-white hover:text-gray-300 w-28 h-9 rounded-md transition duration-200 ease-in-out">Save</button>
                 </div>
                 <div class=" w-full grid grid-cols-3 gap-1 bg-adminViewAccountHeaderColor2">
                     <div class="col-span-1 bg-white">
                         <div class="w-full px-4 mt-5">
-                            <input type="file" name="foodImage" onchange="previewFile(this);" class="w-full border border-gray-400 text-sm text-gray-700 focus:outline-none focus:border-black">
+                            <input type="file" name="foodImage" onchange="previewFile(this);" class="w-full border border-gray-400 text-sm text-gray-700 focus:outline-none rounded-md focus:border-black">
                         </div>
                         <div class="w-full px-4 mt-5">
                             <img src="{{ asset('uploads/restaurantAccounts/foodItem/'.$resAccid.'/'.$foodItem->foodItemImage) }}" id="previewImg" alt="foodItemImage">
                         </div>
                     </div>
-                    <div class="col-span-2 bg-black">
+                    <div class="col-span-2 bg-white">
                         <div class="bg-adminViewAccountHeaderColor2 uppercase pl-5 font-bold py-3">Name</div>
                         <div class="bg-white w-full p-4">
-                            <input type="text" name="foodName" class="w-full border border-gray-400 py-1 px-2 text-sm text-gray-700 focus:outline-none focus:border-black h-14" value="{{ $foodItem->foodItemName }}">
+                            <input type="text" name="foodName" class="w-full border border-gray-400 py-1 px-2 text-sm text-gray-700 focus:outline-none rounded-md focus:border-black h-14" value="{{ $foodItem->foodItemName }}">
                             <span class="mt-2 text-red-600 italic text-sm">@error('foodName'){{ "Food Name is required" }}@enderror</span>
                         </div>
     
                         <div class="bg-adminViewAccountHeaderColor2 uppercase pl-5 font-bold py-3">DESCRIPTION</div>
                         <div class="bg-white w-full p-4">
-                            <textarea name="foodDesc" class="w-full border border-gray-400 y-1 px-2 text-sm text-gray-700 focus:outline-none focus:border-black h-14">{{ $foodItem->foodItemDescription }}</textarea>
+                            <textarea name="foodDesc" class="w-full border border-gray-400 y-1 px-2 text-sm text-gray-700 focus:outline-none rounded-md focus:border-black h-14">{{ $foodItem->foodItemDescription }}</textarea>
                             <span class="mt-2 text-red-600 italic text-sm">@error('foodDesc'){{ "Food Description is required" }}@enderror</span>
                         </div>
                         
                         <div class="bg-adminViewAccountHeaderColor2 uppercase pl-5 font-bold py-3">Price</div>
                         <div class="bg-white w-full p-4">
-                            <input type="text" name="foodPrice" class="w-full border border-gray-400 py-1 px-2 text-sm text-gray-700 focus:outline-none focus:border-black h-14" value="{{ $foodItem->foodItemPrice }}">
+                            <input type="text" name="foodPrice" class="w-full border border-gray-400 py-1 px-2 text-sm text-gray-700 focus:outline-none rounded-md focus:border-black h-14" value="{{ $foodItem->foodItemPrice }}">
                             <span class="mt-2 text-red-600 italic text-sm">@error('foodPrice'){{ "Food Price is required" }}@enderror</span>
                         </div>
                     </div>

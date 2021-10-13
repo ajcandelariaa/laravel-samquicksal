@@ -43,11 +43,11 @@
             );
         </script>
     @endif
-    <div class="w-11/12 mx-auto mt-10">
+    <div class="w-11/12 mx-auto mt-10 font-Montserrat">
         <div class="w-full mt-3 rounded-2xl shadow-adminDownloadButton items-center bg-manageRestaurantSidebarColorActive pb-7">
             <div class="flex justify-between rounded-t-2xl px-5 py-4 items-center">
                 <div class="text-white font-bold uppercase text-xl">Manage Store hours</div>
-                <button id="btn-add-item" class="bg-submitButton text-white w-36 h-9 rounded-md"><i class="fas fa-plus mr-3"></i>Time Slot</button>
+                <button id="btn-add-item" class="bg-submitButton text-white w-36 h-9 rounded-md font-Montserrat hover:bg-darkerSubmitButton transition duration-200 ease-in-out "><i class="fas fa-plus mr-3"></i>Time Slot</button>
             </div>
             <div class="bg-white py-5">
                 <div class="w-10/12 mx-auto grid grid-cols-3 gap-5 mb-3">
@@ -90,12 +90,12 @@
                             </div>
                             @if ($storeHour->type == "Permanent")
                             <div class="mt-4 mb-1 text-right">
-                                <button class="btn-edit-item text-white bg-manageRestaurantSidebarColorActive inline-block text-center leading-6 w-6 h-6 rounded-full  text-xs"><i class="fas fa-edit"></i></button>
+                                <button class="btn-edit-item text-white bg-manageRestaurantSidebarColorActive hover:text-gray-300 hover:bg-hoverManageRestaurantSidebarColorActive inline-block text-center leading-6 w-6 h-6 rounded-full text-xs transition duration-200 ease-in-out "><i class="fas fa-edit"></i></button>
                             </div>
                             @else
                             <div class="mt-4 mb-1 text-right">
-                                <button class="btn-edit-item text-white bg-manageRestaurantSidebarColorActive inline-block text-center leading-6 w-6 h-6 rounded-full  text-xs"><i class="fas fa-edit"></i></button>
-                                <a href="/restaurant/manage-restaurant/time/store-hours/delete/{{ $storeHour->id }}"  class="btn-delete text-white bg-red-800 inline-block text-center leading-6 w-6 h-6 rounded-full text-xs"><i class="fas fa-trash-alt"></i></a>
+                                <button class="btn-edit-item text-white bg-manageRestaurantSidebarColorActive hover:text-gray-300 hover:bg-hoverManageRestaurantSidebarColorActive inline-block text-center leading-6 w-6 h-6 rounded-full text-xs transition duration-200 ease-in-out"><i class="fas fa-edit"></i></button>
+                                <a href="/restaurant/manage-restaurant/time/store-hours/delete/{{ $storeHour->id }}"  class="btn-delete text-white bg-submitButton inline-block text-center leading-6 w-6 h-6 rounded-full text-xs transition duration-200 ease-in-out hover:bg-darkerSubmitButton hover:text-gray-300"><i class="fas fa-trash-alt"></i></a>
                             </div>
                             @endif
                         </div>
@@ -137,13 +137,13 @@
                     </div>
                 </div>
                 <div class="text-center mt-5">
-                    <button class="bg-submitButton text-white rounded-w-9/12 w-32 h-10 text-sm" type="submit">Add</button>
+                    <button class="bg-submitButton text-white hover:bg-darkerSubmitButton hover:text-gray-300 rounded-md rounded-w-9/12 w-32 h-10 text-sm transition duration-200 ease-in-out uppercase font-bold" type="submit">Add</button>
                 </div>
             </form>
         </div> 
 
 
-        <div class="edit-form" id="edit-form">
+        <div class="edit-form font-Montserrat" id="edit-form">
             <div class="modal-header flex justify-end px-4 py-2">
                 <button id="btn-close" class="close-btn text-xl font-bold">&times;</button>
             </div>
@@ -178,7 +178,7 @@
                     </div>
                 </div>
                 <div class="text-center mt-5">
-                    <button class="bg-submitButton text-white rounded-w-9/12 w-32 h-10 text-sm" type="submit">Add</button>
+                    <button class="bg-submitButton hover:bg-darkerSubmitButton text-white hover:text-gray-300 rounded-md rounded-w-9/12 w-32 h-10 text-sm uppercase font-bold transition duration-200 ease-in-out" type="submit">ADD</button>
                 </div>
             </form>
         </div> 

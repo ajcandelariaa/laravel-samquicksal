@@ -54,7 +54,7 @@
         <script>
             Swal.fire(
                 'Current Email Address is not yet verified',
-                'Please verify it first before changing your email',
+                'Please-in-oute verify it first before changing your email',
                 'error'
             );
         </script>    
@@ -144,7 +144,7 @@
                     </div>
                 </div>
                 <div class="w-10/12 mx-auto text-right mb-5">
-                    <button type="submit" class="bg-submitButton hover:bg-btnHoverColor text-white w-36 h-9 rounded-md">Update Contact</button>
+                    <button type="submit" class="bg-submitButton hover:bg-btnHoverColor text-white hover:text-gray-300 w-36 h-9 rounded-md transition duration-200 ease-in-out ">Update Contact</button>
                 </div>
             </form>
 
@@ -169,7 +169,7 @@
                     </div>
                 </div>
                 <div class="w-10/12 mx-auto text-right mb-5">
-                    <button type="submit" class="bg-submitButton hover:bg-btnHoverColor text-white w-36 h-9 rounded-md">Update Email</button>
+                    <button type="submit" class="bg-submitButton hover:bg-btnHoverColor text-white hover:text-gray-300 w-36 h-9 rounded-md transition duration-200 ease-in-out ">Update Email</button>
                 </div>
             </form>
 
@@ -218,7 +218,7 @@
                     </div>
                 </div>
                 <div class="w-10/12 mx-auto text-right mb-5">
-                    <button type="submit" class="bg-submitButton hover:bg-btnHoverColor text-white w-36 h-9 rounded-md">Update Username</button>
+                    <button type="submit" class="bg-submitButton hover:bg-btnHoverColor text-white hover:text-gray-300 w-36 h-9 rounded-md transition duration-200 ease-in-out ">Update Username</button>
                 </div>
             </form>
 
@@ -263,7 +263,7 @@
                     
                 </div>
                 <div class="w-10/12 mx-auto text-right mt-3 mb-5">
-                    <button type="submit" class="bg-submitButton hover:bg-btnHoverColor text-white w-36 h-9 rounded-md">Reset Password</button>
+                    <button type="submit" class="bg-submitButton hover:bg-btnHoverColor text-white hover:text-gray-300 w-36 h-9 rounded-md transition duration-200 ease-in-out ">Reset Password</button>
                 </div>
             </form>
 
@@ -286,7 +286,7 @@
                         <img src="{{ asset('uploads/restaurantAccounts/logo/'.$id.'/'.$account->rLogo) }}" id="restaurantLogo" alt="restaurantLogo" class="border-multiStepBoxBorder border-gray-300 w-36 h-36">
                     @endif
                     <div class="w-full mx-auto text-right">
-                        <button type="submit" class="bg-submitButton hover:bg-btnHoverColor text-white w-36 h-9 rounded-md">Update Logo</button>
+                        <button type="submit" class="bg-submitButton hover:bg-btnHoverColor text-white hover:text-gray-300 w-36 h-9 rounded-md transition duration-200 ease-in-out ">Update Logo</button>
                     </div>
                 </div>
             </form>
@@ -302,14 +302,14 @@
                         <span class="mt-2 text-red-600 italic text-sm">@error('restaurantGcashQr'){{ $message }}@enderror</span>
                     </div>
                 </div>
-                <div class="flex w-10/12 mx-auto pb-5">
+                <div class="flex flex-row w-10/12 mx-auto pb-5">
                     @if ($account->rGcashQrCodeImage == "" || $account->rGcashQrCodeImage == null)
                         <img src="{{ asset('images/defaultAccountImage.png') }}" id="restaurantGcashQr" alt="restaurantGcashQr" class="border-multiStepBoxBorder border-gray-300 w-36 h-36">
                     @else
                         <img src="{{ asset('uploads/restaurantAccounts/gcashQr/'.$id.'/'.$account->rGcashQrCodeImage) }}" id="restaurantGcashQr" alt="restaurantGcashQr" class="border-multiStepBoxBorder border-gray-300 w-36 h-36">
                     @endif
                     <div class="w-full mx-auto text-right">
-                        <button type="submit" class="bg-submitButton hover:bg-btnHoverColor text-white w-36 h-9 rounded-md">Update Qr Code</button>
+                        <button type="submit" class="bg-submitButton hover:bg-btnHoverColor text-white hover:text-gray-300 w-36 h-9 rounded-md transition duration-200 ease-in-out ">Update Qr Code</button>
                     </div>
                 </div>
             </form>

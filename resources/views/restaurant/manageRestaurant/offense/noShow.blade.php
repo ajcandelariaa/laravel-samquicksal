@@ -11,7 +11,7 @@
             );
         </script>
     @endif
-    <div class="w-11/12 mx-auto mt-10">
+    <div class="w-11/12 mx-auto mt-10 font-Montserrat">
         <div class="grid grid-cols-2 gap-x-5 items-start">
             <div class="col-span-1 bg-manageRestaurantSidebarColorActive pb-8 shadow-adminDownloadButton">
                 <form action="/restaurant/manage-restaurant/offense/no-show/edit/{{ $noShow->id }}" method="POST">
@@ -24,7 +24,7 @@
                             <div class="text-left text-submitButton font-bold">No. of No Show</div>
                             <div class="text-left text-submitButton">:</div>
                             <div class="">
-                                <input type="text" name="numberOfNoShow" class="w-full border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none  focus:border-black">
+                                <input type="text" name="numberOfNoShow" class="w-full border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none  focus:border-black py-1">
                                 <span class="mt-2 text-red-600 italic text-sm">@error('numberOfNoShow'){{ $message }}@enderror</span>
                             </div>
 
@@ -32,14 +32,14 @@
                             <div class="text-left text-submitButton font-bold">No. of Days</div>
                             <div class="text-left text-submitButton">:</div>
                             <div class="">
-                                <input type="text" name="numberOfDays" class="w-full border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none  focus:border-black">
+                                <input type="text" name="numberOfDays" class="w-full border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none  focus:border-black py-1">
                                 <span class="mt-2 text-red-600 italic text-sm">@error('numberOfDays'){{ $message }}@enderror</span>
                             </div>
 
                             <div class="text-left text-submitButton font-bold">Type of Offense</div>
                             <div class="text-left text-submitButton">:</div>
                             <div class="">
-                                <select name="offenseType" id="offenseType" onchange="noShowBlockDays();" class="w-full border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none  focus:border-black">
+                                <select name="offenseType" id="offenseType" onchange="noShowBlockDays();" class="w-full border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none  focus:border-black py-1">
                                     <option value="" selected="selected">--Choose Offense--</option>
                                     <option value="noOffense">No Offense</option>
                                     <option value="permanentBlock">Permanent Block</option>
@@ -47,13 +47,13 @@
                                 </select>
                                 <span class="mt-2 text-red-600 italic text-sm">@error('offenseType'){{ $message }}@enderror</span>
                                 
-                                <input type="text" placeholder="Number of Days Of Block (e.g. 2)" id="showCancellationBlockDays" style="display: none" name="cancelBlockDays" class="mt-2 w-full border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none  focus:border-black">
+                                <input type="text" placeholder="Number of Days Of Block (e.g. 2)" id="showCancellationBlockDays" style="display: none" name="cancelBlockDays" class="py-1 mt-2 w-full border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none  focus:border-black">
                                 <span class="mt-2 text-red-600 italic text-sm">@error('cancelBlockDays'){{ $message }}@enderror</span>
                             </div>
 
                             
                             <div class="text-center mt-4 col-span-full">
-                                <button type="submit" class="bg-submitButton text-white w-36 h-9 rounded-md">Update</button>
+                                <button type="submit" class="bg-submitButton text-white w-36 h-9 rounded-md font-Montserrat hover:bg-btnHoverColor transition duration-200 ease-in-out">Update</button>
                             </div>
                         </div>
                     </div>

@@ -122,7 +122,7 @@ class RestaurantController extends Controller
                 'tasks' => $tasks,
             ]);
         } else {
-            $reward = RestaurantRewardList::where('restAcc_id', $resAccid)->where('id', $stamp->stampReward)->first();
+            $reward = RestaurantRewardList::where('restAcc_id', $resAccid)->where('id', $stamp->stampReward_id)->first();
             $rewards = RestaurantRewardList::where('restAcc_id', $resAccid)->get();
             $tasks = RestaurantTaskList::where('restAcc_id', $resAccid)->get();
             $getTasks = StampCardTasks::where('stampCards_id', $stamp->id)->get();
@@ -503,7 +503,7 @@ class RestaurantController extends Controller
         StampCard::create([
             'restAcc_id' => $restAccId,
             'stampCapacity' => $request->stampCapacity,
-            'stampReward' => $request->stampReward,
+            'stampReward_id' => $request->stampReward,
             'stampValidity' => $request->stampValidity,
         ]);
 

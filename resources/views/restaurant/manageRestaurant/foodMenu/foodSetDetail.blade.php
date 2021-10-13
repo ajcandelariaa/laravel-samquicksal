@@ -47,7 +47,7 @@
         <a href="/restaurant/manage-restaurant/food-menu/food-set" class="mt-2 text-submitButton uppercase font-bold"><i class="fas fa-chevron-left mr-2"></i>Back</a>
         <div class="w-full mt-3 text-right">
             <a href="/restaurant/manage-restaurant/food-menu/food-set/detail/edit/{{ $foodSet->id }}" class="text-white bg-manageRestaurantSidebarColorActive inline-block text-center leading-9 w-9 h-9 rounded-full mr-3"><i class="fas fa-edit"></i></a>
-            <a href="/restaurant/manage-restaurant/food-menu/food-set/delete/{{ $foodSet->id }}" class="btn-delete text-white bg-red-800 inline-block text-center leading-9 w-9 h-9 rounded-full"><i class="fas fa-trash-alt"></i></a>
+            <a href="/restaurant/manage-restaurant/food-menu/food-set/delete/{{ $foodSet->id }}" class="btn-delete text-white bg-submitButton inline-block text-center leading-9 w-9 h-9 rounded-full"><i class="fas fa-trash-alt"></i></a>
         </div>
         
         <div class="w-full mt-3 rounded-2xl shadow-adminDownloadButton">
@@ -68,12 +68,12 @@
 
         <div class="w-full mt-10 mb-12 rounded-2xl shadow-adminDownloadButton bg-adminViewAccountHeaderColor2">
             <div class="rounded-t-2xl bg-manageRestaurantSidebarColorActive w-full flex justify-between items-center px-4 py-3">
-                <div class="text-white font-bold uppercase text-xl">Food Items</div>
+                <div class="text-white font-bold uppercase text-xl font-Montserrat">Food Items</div>
                 <div class="">
-                    <button id="btn-add-food-item" class="bg-submitButton text-white w-36 h-9 rounded-md"><i class="fas fa-plus mr-3"></i>Food Item</button>
+                    <button id="btn-add-food-item" class="bg-submitButton text-white w-36 h-9 rounded-md font-Montserrat hover:bg-white hover:text-submitButton hover:shadow-xl transition duration-300 ease-in-out  "><i class="fas fa-plus mr-3"></i>Food Item</button>
                 </div>
             </div>
-            <div class="grid grid-cols-11 items-center text-center font-bold h-16 px-5">
+            <div class="grid grid-cols-11 items-center text-center font-bold h-16 px-5 font-Montserrat">
                 <div class="col-span-1">Image</div>
                 <div class="col-span-1">Id</div>
                 <div class="col-span-2">Name</div>
@@ -98,7 +98,7 @@
                                         <div class="col-span-5">{{ $foodItem->foodItemDescription }}</div>
                                         <div class="col-span-1">{{ $foodItem->foodItemPrice }}</div>
                                         <div class="col-span-1">
-                                            <a href="/restaurant/manage-restaurant/food-menu/food-set/item/delete/{{ $foodSet->id }}/{{ $foodSetItem->id }}" class="btn-delete2"><i class="fas fa-trash-alt"></i></a>
+                                            <a href="/restaurant/manage-restaurant/food-menu/food-set/item/delete/{{ $foodSet->id }}/{{ $foodSetItem->id }}" class="btn-delete2  "><i class="fas fa-trash-alt"></i></a>
                                         </div>
                                     </div>
                                 @else

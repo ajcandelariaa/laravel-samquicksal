@@ -51,7 +51,7 @@
                     </div>
                     
                     <div class="text-center">
-                        <button class="text-white bg-headerActiveTextColor rounded-full h-10 w-56 mb-5 text-xs font-Roboto hover:bg-btnHoverColor">Login</button>
+                        <button class="text-white bg-headerActiveTextColor rounded-full h-10 w-56 mb-5 text-xs font-Roboto  ">Login</button>
                     </div>
                 </form>
             </div>

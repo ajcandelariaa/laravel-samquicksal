@@ -26,15 +26,15 @@
 
     <div class="form mt-12">
         <header class="flex items-center justify-center mb-10">
-            <img class="h-20"src="{{ asset('images/samquicksalLogo.png') }}" alt="samquicksalLogo.png">
+           <a href="/" target="_blank"><img class="h-20"src="{{ asset('images/samquicksalLogo.png') }}" alt="samquicksalLogo.png"></a> 
         </header>
 
-        <section class="w-3/6 h-4/6 grid grid-cols-12 mx-auto shadow-xl">
-            <div class="col-span-5">
-                <div style="background-image: linear-gradient(rgba(255, 255, 255, 0), rgba(255, 255, 255, 0)), url({{asset('images/login-left-bg.png')}}); background-repeat: no-repeat; background-size: cover;" class="h-full"></div>
+        <section class="w-3/6 h-4/6 grid grid-cols-12 mx-auto shadow-xl ">
+            <div class="col-span-5 ">
+                <div style="background-image: linear-gradient(rgba(255, 255, 255, 0), rgba(255, 255, 255, 0)), url({{asset('images/login-left-bg.png')}}); background-repeat: no-repeat; background-size: cover;" class="h-full rounded-l-xl"></div>
             </div>
             
-            <div class="grid items-center w-full py-12 px-16 col-span-7 bg-gradient-to-b from-white to-headerBgColor">
+            <div class="grid items-center w-full py-12 px-16 col-span-7 bg-gradient-to-b from-white to-headerBgColor rounded-r-xl">
                 <form action="/restaurant/login" method="POST">
                     @csrf
                     <h1 class="flex justify-center text-login text-2xl text-adminLoginTextColor">Restaurant Login</h1>
@@ -65,7 +65,7 @@
                     </div>
                     
                     <div class="text-center">
-                        <button class="text-white bg-headerActiveTextColor rounded-full h-10 w-56 mb-5 text-xs font-Roboto hover:bg-btnHoverColor">Login</button>
+                        <button class="text-white bg-headerActiveTextColor rounded-full h-10 w-56 mb-5 text-xs font-Roboto hover:bg-btnHoverColor  hover:shadow-xl transition duration-300 ease-in-out hover:font-bold">Login</button>
                     </div>
                 </form>
             </div>

@@ -20,11 +20,11 @@
             );
         </script>
     @endif
-    <div class="w-11/12 mx-auto my-10">
+    <div class="w-11/12 mx-auto my-10 font-Montserrat">
         <div class="grid grid-cols-3 gap-x-5 items-start">
             <div class="col-span-2 bg-manageRestaurantSidebarColorActive pb-8 shadow-adminDownloadButton">
                 <div class="w-11/12 mx-auto">
-                    <div class="uppercase font-bold text-white text-xl py-3">Manage stamp card</div>
+                    <div class="uppercase font-bold text-white text-xl py-3 font-Montserrat">Manage stamp card</div>
                 </div>
                 <div class="bg-white">
                     <div class="w-11/12 mx-auto pt-7">
@@ -88,7 +88,7 @@
                             </div>
     
                             <div class="text-center mt-4 col-span-full">
-                                <button type="submit" class="bg-submitButton text-white w-36 h-9 rounded-md">Publish</button>
+                                <button type="submit" class="bg-submitButton text-white w-36 h-9 rounded-md font-Montserrat hover:bg-btnHoverColor transition duration-300 ease-in-out ">Publish</button>
                             </div>
                         </div>
                     </form>

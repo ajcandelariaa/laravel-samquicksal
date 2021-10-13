@@ -12,7 +12,7 @@
     <script type="text/javascript" src="{{ asset('js/sweetalert2.all.min.js') }}"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" integrity="sha512-1ycn6IcaQQ40/MKBW2W4Rhis/DbILU74C1vSrLJxCq57o941Ym01SwNsOMqvEBFlcgUa6xLiPY/NS5R+E6ztJQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
-<body>
+<body class="font-Roboto">
     <header class="bg-adminLoginTextColor">
         <div class="w-full mx-auto py-3 px-5">
             <div class="grid grid-cols-2 items-center">
@@ -20,7 +20,7 @@
                     <img src="{{ asset('images/samquicksalLogo.png') }}" class="w-10" alt="samquicksalLogo">
                 </div>
                 <div class="logoutBtn justify-self-end pr-5">
-                    <a href="/restaurant/logout" class="text-white hover:underline">Logout</a>
+                    <a href="/restaurant/logout" class=" text-white hover:underline hover:text-gray-300 transition duration-200 ease-in-out">Logout</a>
                 </div>
             </div>
         </div>
@@ -33,7 +33,7 @@
                     <a href="/restaurant/dashboard" class="pt-3 pb-3"><i class="fas fa-th-large w-10 ml-8"></i>Dashboard</a>
                 </div>
                 <div class="grid items-center mt-4 {{ (request()->is('restaurant/manage-restaurant*')) ? 'text-headerActiveTextColor bg-black' : 'text-white hover:bg-sideBarHoverBgColor' }}">
-                    <a href="/restaurant/manage-restaurant/about/restaurant-information" class="pt-3 pb-3"><i class="fas fa-file-signature w-10 ml-8"></i>Manage Restaurant</a>
+                    <a href="/restaurant/manage-restaurant/about/restaurant-information" class="pt-3 pb-3 hover:text-gray-300"><i class="fas fa-file-signature w-10 ml-8 hover:text-gray-300"></i>Manage Restaurant</a>
                 </div>
             </div>
             <div class="bg-gray-200 w-full">

@@ -29,14 +29,14 @@
             );
         </script>
     @endif
-    <div class="w-11/12 mx-auto mt-10">
+    <div class="w-11/12 mx-auto mt-10 font-Montserrat">
         <div class="w-full mt-5 bg-adminViewAccountHeaderColor2 p-5 rounded-xl shadow-adminDownloadButton">
             <form action="/restaurant/manage-restaurant/offense/policy/add" method="POST" enctype="multipart/form-data">
                 @csrf
                 <textarea type="text" name="policyDesc" placeholder="Write a policy..." class="border {{ $errors->has('policyDesc') ? 'border-red-600 focus:border-red-600' : 'border-gray-400 focus:border-black' }} rounded-lg w-full py-1 px-2 text-sm text-gray-700 focus:outline-none" rows="5"></textarea>
                 <span class="mt-2 text-red-600 italic text-sm">@error('policyDesc'){{ "Policy is required" }}@enderror</span>
                 <div class="text-right mt-2">
-                    <button class="bg-submitButton text-white w-32 h-9 rounded-md">Add</button>
+                    <button class="bg-submitButton text-white w-36 h-9 rounded-md font-Montserrat hover:bg-btnHoverColor transition duration-200 ease-in-out">Add</button>
                 </div>
             </form>
         </div>
@@ -54,8 +54,8 @@
                             <p>{{ $count }}.</p>
                             <p class="text-justify">{{ $policy->policyDesc }}</p>
                             <div class="text-center">
-                                <button class="btn-edit-item text-white bg-manageRestaurantSidebarColorActive inline-block text-center leading-9 w-9 h-9 rounded-full"><i class="fas fa-edit"></i></button>
-                                <a href="/restaurant/manage-restaurant/offense/policy/delete/{{ $policy->id }}"  class="btn-delete text-white bg-red-800 inline-block text-center leading-9 w-9 h-9 rounded-full"><i class="fas fa-trash-alt"></i></a>
+                                <button class="btn-edit-item text-white bg-manageRestaurantSidebarColorActive inline-block text-center leading-9 w-9 h-9 rounded-full  hover:text-gray-300 hover:bg-hoverManageRestaurantSidebarColorActive transition duration-200 ease-in-out"><i class="fas fa-edit"></i></button>
+                                <a href="/restaurant/manage-restaurant/offense/policy/delete/{{ $policy->id }}"  class="btn-delete text-white bg-submitButton hover:text-gray-300 hover:bg-darkerSubmitButton transition duration-200 ease-in-out inline-block text-center leading-9 w-9 h-9 rounded-full"><i class="fas fa-trash-alt"></i></a>
                             </div>
                         </div>
                         @php

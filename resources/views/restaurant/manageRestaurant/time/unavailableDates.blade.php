@@ -37,7 +37,7 @@
     @endif
     <div class="w-11/12 mx-auto mt-10">
         <div class="mt-5 text-right">
-            <button id="btn-add-item" class="bg-submitButton text-white w-36 h-9 rounded-md"><i class="fas fa-plus mr-3"></i>Date</button>
+            <button id="btn-add-item" class="bg-submitButton text-white w-36 h-9 rounded-md font-Montserrat hover:bg-darkerSubmitButton transition duration-200 ease-in-out"><i class="fas fa-plus mr-3"></i>Date</button>
         </div>
         <div class="grid grid-cols-2 gap-5 mt-5 w-11/12 mx-auto items-center">
             @foreach ($unavailableDates as $unavailableDate)
@@ -97,8 +97,8 @@
                         <p class="text-xs mt-2">{{ $unavailableDate->unavailableDatesDesc }}</p>
                     </div>
                     <div>
-                        <button class="btn-edit-item text-white bg-manageRestaurantSidebarColorActive inline-block text-center leading-6 w-6 h-6 rounded-full text-xs"><i class="fas fa-edit"></i></button>
-                        <a href="/restaurant/manage-restaurant/time/unavailable-dates/delete/{{ $unavailableDate->id }}"  class="btn-delete mt-2 text-white bg-red-800 inline-block text-center leading-6 w-6 h-6 rounded-full text-xs"><i class="fas fa-trash-alt"></i></a>
+                        <button class="btn-edit-item text-white bg-manageRestaurantSidebarColorActive inline-block text-center leading-6 w-6 h-6 rounded-full text-xs transition duration-200 ease-in-out hover:bg-hoverManageRestaurantSidebarColorActive hover:text-gray-300"><i class="fas fa-edit"></i></button>
+                        <a href="/restaurant/manage-restaurant/time/unavailable-dates/delete/{{ $unavailableDate->id }}"  class="btn-delete mt-2 text-white bg-submitButton inline-block text-center leading-6 w-6 h-6 rounded-full text-xs transition duration-200 ease-in-out hover:bg-darkerSubmitButton hover:text-gray-300 "><i class="fas fa-trash-alt"></i></a>
                     </div>
                 </div>
             @endforeach
@@ -115,7 +115,7 @@
 
 
 
-        <div class="create-form" id="create-form">
+        <div class="create-form font-Montserrat" id="create-form">
             <div class="modal-header flex justify-end px-4 py-2">
                 <button id="btn-close" class="close-btn text-xl font-bold">&times;</button>
             </div>
@@ -127,26 +127,26 @@
                         <div>Date</div>
                         <div>:</div>
                         <div>
-                            <input type="date" name="date" class="border focus:border-black w-9/12 py-1 px-2 text-sm focus:outline-non text-gray-700" required>
+                            <input type="date" name="date" class="border rounded-md focus:border-black w-full py-1 px-2 text-sm focus:outline-non text-gray-700" required>
                         </div>
                     </div>
                     <div class="grid grid-cols-storeHoursThreeCols justify-center mt-5">
                         <div>Description</div>
                         <div>:</div>
                         <div>
-                            <textarea name="description" cols="30" class="border focus:border-black w-9/12 py-1 px-2 text-sm focus:outline-non text-gray-700" required></textarea>
+                            <textarea name="description" cols="30" class="border rounded-md focus:border-black w-full py-1 px-2 text-sm focus:outline-non text-gray-700" required></textarea>
                         </div>
                     </div>
                 </div>
                 <div class="text-center mt-5">
-                    <button class="bg-submitButton text-white rounded-w-9/12 w-32 h-10 text-sm" type="submit">Add</button>
+                    <button class="bg-submitButton hover:bg-darkerSubmitButton text-white hover:text-gray-300 rounded-md rounded-w-9/12 w-32 h-10 text-sm uppercase font-bold transition duration-200 ease-in-out " type="submit">Add</button>
                 </div>
             </form>
         </div> 
 
 
 
-        <div class="edit-form" id="edit-form">
+        <div class="edit-form font-Montserrat" id="edit-form">
             <div class="modal-header flex justify-end px-4 py-2">
                 <button id="btn-close" class="close-btn text-xl font-bold">&times;</button>
             </div>
@@ -171,7 +171,7 @@
                     </div>
                 </div>
                 <div class="text-center mt-5">
-                    <button class="bg-submitButton text-white rounded-w-9/12 w-32 h-10 text-sm" type="submit">Update</button>
+                    <button class="bg-submitButton hover:bg-darkerSubmitButton text-white bg:text-gray-300 rounded-md rounded-w-9/12 w-32 h-10 text-sm uppercase font-bold transition duration-200 ease-in-out" type="submit">Update</button>
                 </div>
             </form>
         </div> 

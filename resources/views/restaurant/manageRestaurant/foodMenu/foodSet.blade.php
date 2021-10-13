@@ -20,7 +20,7 @@
             );
         </script>
     @endif
-    <div class="w-11/12 mx-auto mt-10">
+    <div class="w-11/12 mx-auto mt-10 font-Montserrat">
         <div class="flex justify-between w-full">
             <div>
                 <form action="/restaurant/manage-restaurant/food-menu/food-set" method="GET">
@@ -35,7 +35,7 @@
                 </form>
             </div>
             <div>
-                <button id="btn-add-item" class="bg-submitButton text-white w-36 h-9 rounded-md"><i class="fas fa-plus mr-3"></i>Food Set</button>
+                <button id="btn-add-item" class="bg-submitButton text-white w-36 h-9 rounded-md font-Montserrat hover:bg-btnHoverColor transition duration-200 ease-in-out "><i class="fas fa-plus mr-3"></i>Food Set</button>
             </div>
         </div>
         <div class="w-full mt-3">
@@ -70,34 +70,31 @@
             <div class="modal-header flex justify-end px-4 py-2">
                 <button id="btn-close" class="close-btn text-xl font-bold">&times;</button>
             </div>
-            <h1 class="text-center text-submitButton font-bold text-2xl">Create Food Set</h1>
+            <h1 class="text-center text-submitButton font-bold text-2xl font-Montserrat ">Create Food Set</h1>
             <form action="/restaurant/manage-restaurant/food-menu/food-set/add" method="POST" enctype="multipart/form-data">
                 @csrf
-                <div class="grid grid-cols-5 w-9/12 gap-y-5 mx-auto mt-10">
-                    <div class="col-span-1">Name</div>
-                    <div class="col-span-1">:</div>
-                    <div class="col-span-3">
-                        <input type="text" name="foodName" class="border focus:border-black w-full py-1 px-2 text-sm focus:outline-non text-gray-700">
+                <div class="flex flex-col w-9/12 gap-y-5 mx-auto mt-10 font-Montserrat ">
+                    <div class="flex flex-row -mb-1">
+                        <h1 class="mr-2">Name:</h1>
+                        <input type="text" name="foodName" class="border focus:border-black rounded-md w-7/12 py-1 px-2 text-sm focus:outline-non text-gray-700 ">
+                        <h1 class="ml-4 mr-2">Price:</h1>
+                        <input type="text" name="foodPrice" class="border focus:border-black rounded-md w-2/12 py-1 px-2 text-sm focus:outline-non text-gray-700">
                     </div>
-                    
-                    <div class="col-span-1">Description</div>
-                    <div class="col-span-1">:</div>
-                    <div class="col-span-3"><input type="text" name="foodDesc" class="border focus:border-black w-full py-1 px-2 text-sm focus:outline-non text-gray-700"></div>
-                    
-                    <div class="col-span-1">Price</div>
-                    <div class="col-span-1">:</div>
-                    <div class="col-span-3"><input type="text" name="foodPrice" class="border focus:border-black w-full py-1 px-2 text-sm focus:outline-non text-gray-700"></div>
-                    
-                    <div class="col-span-1">Image</div>
-                    <div class="col-span-1">:</div>
-                    <div class="col-span-3"><input type="file" name="foodImage" onchange="previewFile(this);" class="border focus:border-black w-full py-1 px-2 text-sm focus:outline-non text-gray-700"></div>
 
-                    <div class="col-span-full w-28 justify-self-center h-28">
-                        <img src="{{ asset('images/defaultAccountImage.png') }}" alt="food-image" id="previewImg" class="bg-cover">
+                    <div class="-mb-3 ">Description: </div>
+                    <textarea type="text" name="foodDesc" placeholder="Type description..." class="p-5 mb-1 bg-white border rounded-md border-gray-200 shadow-sm h-24 w-full" id=""></textarea>
+                    
+                      <div class="justify-self-center flex flex-row">
+                        <h1 class="mr-4">Image:</h1>
+                        <div class="flex-row"><input type="file" name="foodImage" onchange="previewFile(this);" class="border focus:border-black rounded-md w-full h-full py-1 px-2 text-sm focus:outline-non text-gray-700 "></div>
+                     </div>
+                     
+                    <div class="mx-auto">
+                    <img src="{{ asset('images/defaultAccountImage.png') }}" alt="food-image" id="previewImg" class="h-28 w-28">
                     </div>
                 </div>
-                <div class="text-center mt-5">
-                    <button class="bg-submitButton text-white rounded-full w-32 h-10 text-sm" type="submit">Add</button>
+                <div class="text-center mt-2 mb-4">
+                    <button class="bg-submitButton text-white rounded-full w-32 h-10 text-sm hover:bg-darkerSubmitButton hover:text-gray-300 transition duration-200 ease-in-out font-bold" type="submit">ADD</button>
                 </div>
             </form>
         </div>

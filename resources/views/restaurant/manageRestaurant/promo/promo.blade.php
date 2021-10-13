@@ -50,12 +50,12 @@
                 </form>
             </div>
             <div>
-                <button id="btn-add-item" class="bg-submitButton text-white w-36 h-9 rounded-md"><i class="fas fa-plus mr-3"></i>Promo</button>
+                <button id="btn-add-item" class="bg-submitButton text-white w-36 h-9 rounded-md font-Montserrat hover:bg-btnHoverColor transition duration-300 ease-in-out "><i class="fas fa-plus mr-3"></i>Promo</button>
             </div>
         </div>
         <div class="w-full bg-adminViewAccountHeaderColor2 mt-3">
-            <div class="grid grid-cols-12 items-center text-center font-bold h-16 px-5 bg-adminViewAccountHeaderColor2 shadow-adminDownloadButton">
-                <div class="col-span-1">Id</div>
+            <div class="grid grid-cols-12 items-center text-center font-bold h-16 px-5 bg-adminViewAccountHeaderColor2 shadow-adminDownloadButton font-Montserrat">
+                <div class="col-span-1">ID</div>
                 <div class="col-span-1">Image</div>
                 <div class="col-span-2">Title</div>
                 <div class="col-span-5">Description</div>
@@ -84,10 +84,10 @@
                                 @endif
                             </div>
                             <div class="col-span-1">
-                                <a href="/restaurant/manage-restaurant/promo/edit/{{ $promo->id }}"><i class="fas fa-edit"></i></a>
+                                <a href="/restaurant/manage-restaurant/promo/edit/{{ $promo->id }}"><i class="fas fa-edit hover:text-gray-400 transition duration-300 ease-in-out "></i></a>
                             </div>
                             <div class="col-span-1">
-                                <a href="/restaurant/manage-restaurant/promo/delete/{{ $promo->id }}" class="btn-delete"><i class="fas fa-trash-alt"></i></a>
+                                <a href="/restaurant/manage-restaurant/promo/delete/{{ $promo->id }}" class="btn-delete hover:text-gray-400 transition duration-300 ease-in-out"><i class="fas fa-trash-alt"></i></a>
                             </div>
                         </div>
                     @else
@@ -106,10 +106,10 @@
                                 @endif
                             </div>
                             <div class="col-span-1">
-                                <a href="/restaurant/manage-restaurant/promo/edit/{{ $promo->id }}"><i class="fas fa-edit"></i></a>
+                                <a href="/restaurant/manage-restaurant/promo/edit/{{ $promo->id }}"><i class="fas fa-edit hover:text-gray-400 transition duration-300 ease-in-out"></i></a>
                             </div>
                             <div class="col-span-1">
-                                <a href="/restaurant/manage-restaurant/promo/delete/{{ $promo->id }}" class="btn-delete"><i class="fas fa-trash-alt"></i></a>
+                                <a href="/restaurant/manage-restaurant/promo/delete/{{ $promo->id }}" class="btn-delete hover:text-gray-400 transition duration-300 ease-in-out"><i class="fas fa-trash-alt"></i></a>
                             </div>
                         </div>
                     @endif
@@ -134,34 +134,34 @@
             <div class="modal-header flex justify-end px-4 py-2">
                 <button id="btn-close" class="close-btn text-xl font-bold">&times;</button>
             </div>
-            <h1 class="text-center text-submitButton font-bold text-2xl">Create Promo</h1>
+            <h1 class="text-center text-submitButton font-bold text-2xl font-Montserrat">Create Promo</h1>
             <form action="/restaurant/manage-restaurant/promo/add" method="POST" enctype="multipart/form-data">
                 @csrf
-                <div class="grid grid-cols-5 w-9/12 gap-y-5 mx-auto mt-10">
+                <div class="grid grid-cols-5 w-9/12 gap-y-5 mx-auto mt-10 font-Montserrat ">
                     <div class="col-span-1">Title</div>
                     <div class="col-span-1">:</div>
                     <div class="col-span-3">
-                        <input type="text" name="promoTitle" class="border focus:border-black w-full py-1 px-2 text-sm focus:outline-non text-gray-700">
+                        <input type="text" name="promoTitle" class="border rounded-md focus:border-black w-full py-1 px-2 text-sm focus:outline-non text-gray-700">
                     </div>
                     
                     <div class="col-span-1">Description</div>
                     <div class="col-span-1">:</div>
-                    <div class="col-span-3"><input type="text" name="promoDescription" class="border focus:border-black w-full py-1 px-2 text-sm focus:outline-non text-gray-700"></div>
+                    <div class="col-span-3"><input type="text" name="promoDescription" class="border rounded-md focus:border-black w-full py-1 px-2 text-sm focus:outline-non text-gray-700"></div>
                     
                     <div class="col-span-1">Mechanics</div>
                     <div class="col-span-1">:</div>
-                    <div class="col-span-3"><input type="text" name="promoMechanics" class="border focus:border-black w-full py-1 px-2 text-sm focus:outline-non text-gray-700"></div>
+                    <div class="col-span-3"><input type="text" name="promoMechanics" class="border rounded-md focus:border-black w-full py-1 px-2 text-sm focus:outline-non text-gray-700"></div>
                     
                     <div class="col-span-1">Image</div>
                     <div class="col-span-1">:</div>
-                    <div class="col-span-3"><input type="file" name="promoImage" onchange="previewFile(this);" class="border focus:border-black w-full py-1 px-2 text-sm focus:outline-non text-gray-700"></div>
+                    <div class="col-span-3"><input type="file" name="promoImage" onchange="previewFile(this);" class="border rounded-md focus:border-black w-full py-1 px-2 text-sm focus:outline-non text-gray-700"></div>
 
                     <div class="col-span-full w-28 justify-self-center h-28">
                         <img src="{{ asset('images/defaultAccountImage.png') }}" alt="promoImage" id="previewImg" class="bg-cover">
                     </div>
                 </div>
                 <div class="text-center mt-5">
-                    <button class="bg-submitButton text-white rounded-full w-32 h-10 text-sm" type="submit">Add</button>
+                    <button class="bg-submitButton text-white rounded-full w-32 h-10 text-sm hover:bg-darkerSubmitButton transition duration-200 ease-in-out uppercase font-Montserrat font-bold" type="submit">Add</button>
                 </div>
             </form>
         </div> 
