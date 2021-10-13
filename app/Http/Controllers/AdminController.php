@@ -410,7 +410,7 @@ class AdminController extends Controller
             'password' => 'required'
         ]);
 
-        if($request->username == 'admin' && $request->password == 'admin'){
+        if($request->username == 'samquicksal@dmin' && $request->password == 'S@mquicksal2021'){
             $request->session()->put('userType', 'admin');
             return redirect('/admin/dashboard');
         } else {
