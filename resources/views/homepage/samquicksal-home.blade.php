@@ -19,9 +19,8 @@
 <body>
    <section style="background-image: linear-gradient(rgba(255, 255, 255, 0), rgba(255, 255, 255, 0)), url({{asset('images/restaurant.png')}}); background-repeat: no-repeat; background-size: cover;" class="w-full h-full">
     <header class="flex items-center flex-wrap">
-            <div class="flex flex-row lg:inline-flex lg:w-auto">
-                <img class="w-12 lg:w-16 ml-3 lg:ml-10 my-3" src="{{ asset('images/samquicksalLogo.png') }}" alt="samquicksalLogo">
-                <h1 class="font-Molle text-darkerSubmitButton mt-7 text-2xl -m-3">amquicksal</h1>
+            <div class="flex flex-row lg:inline-flex lg:w-auto mt-2">
+                <img class="w-40 lg:w-40 ml-3 lg:ml-10 my-3" src="{{ asset('images/samquicksalLogoText.png') }}" alt="samquicksalLogo">
             </div>
         <button class="text-gray-200 inline-flex mr-1 p-3 rounded lg:hidden ml-auto transition duration-200 nav-toggler  " data-target="#navigation">
             <svg class="h-8" xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -38,7 +37,7 @@
     </header>
     {{-- Sample --}}
             <div class=" grid lg:grid-cols-3 py-16 lg:py-32 lg:mt-20 lg:pl-20 w-9/12 mx-auto text-gray-200">
-                <div class="lg:ml-5 mb-5 text-center lg:text-left w-9/12 lg:col-span-2 flex items-center justify-center flex-col mx-auto">
+                <div class="lg:ml-5 mb-5 text-center lg:text-left w-10/12 lg:col-span-2 flex items-center justify-center flex-col mx-auto">
                     <h1 class="lg:text-5xl md:text-2xl text-xl font-Montserrat font-medium">“The Quick way to Samgyup”</h1>
                     <p class="font-Roboto mt-1 lg:mt-5 lg:ml-1 text-xs lg:text-2xl font-medium">Treat Yourself using Samquicksal! </p>
                     <div class="font-Roboto border-submitButton text-submitButton border-2 rounded-full uppercase mt-5 lg:mt-24 lg:py-3 lg:px-16 px-3 py-1 lg:text-xl text-xs cursor-pointer tracking-wider hover:bg-submitButton hover:text-gray-50 shadow-inner hover:shadow-xl transition duration-200 ">
@@ -56,18 +55,17 @@
                 <img class="lg:my-20 mt-8" src="{{ asset('images/samquicksalLogo.png') }}" alt="samquicksalLogo">
             </div>
             <div class="z-10 text-submitButton font-Montserrat font-bold text-xs lg:text-xl px-10 mt-3 lg:p-16">
-                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Diam quis enim lobortis scelerisque fermentum dui faucibus in ornare. A arcu cursus vitae congue mauris rhoncus aenean. Elementum nisi quis eleifend quam adipiscing vitae. Nam aliquam sem et tortor consequat id porta. Varius duis at consectetur lorem. Malesuada proin libero nunc consequat interdum varius sit. Dui id ornare arcu odio ut sem nulla pharetra diam. Eu lobortis elementum nibh tellus molestie nunc non. Eu ultrices vitae auctor eu augue ut. Et molestie ac feugiat sed lectus. Habitant morbi tristique senectus et netus et malesuada fames ac. Ultricies lacus sed turpis tincidunt.</p>
-                <p class="mt-2 lg:mt-4">Commodo elit at imperdiet dui. Cursus risus at ultrices mi tempus. Etiam non quam lacus suspendisse faucibus interdum posuere. Massa ultricies mi quis hendrerit. Proin sed libero enim sed. Euismod in pellentesque massa placerat duis ultricies lacus. </p>
+                <p>Be part of an exclusive club, If you enjoy eating samgyup you'll love this. The loyalty rewards card gives its members discounts upon completion of the 10 stamps on the card. Stamps will be gained through the tasks given depending on the restaurant. Download the app and get your own card now! In the mood <br><br> for samgyupsal today? Use our queueing feature to queue yourself,friends and family in! It also lets you know how many customers are in the restaurant so you can go ahead and select another one if you're in a rush! See its Samquick! Looking to get that samgyup fix in advance? Use the booking feature to reserve your slot ahead of the others to ensure you get your table and know when to get there!</p>
+                <p class="mt-2 lg:mt-4">Be the first to hear about the exclusive promotions that our registered restaurants have to offer such as special lunch rates, holiday discounts, or exclusive promos for their anniversaries. Stamp card for users that can be used for exclusive discounts and many more No more guessing, you’ll know when your table is ready when you get a notification from our app! Reserve or queue in seconds, Choose the restaurant fill in the form and you're ready to go!</p>
             </div>
             <div class="hidden overflow-hidden absolute lg:block rounded-lg bg-indigo-200 top-80 h-80 w-6/12 right-0 z-0"></div>
     </section>
     
-    <section class="hidden lg:block bg-adminViewAccountHeaderColor2 w-full h-96">
-        
+    <section style="background-image: linear-gradient(rgba(255, 255, 255, 0), rgba(255, 255, 255, 0)), url({{asset('images/phones.jpg')}}); background-repeat: no-repeat; background-size: cover;" class="w-full h-96">
     </section>
 
     
-    <section class="font-Montserrat">
+    <section class="font-Montserrat mt-20">
         <div class="container flex flex-col items-start px-5 py-16 mx-auto lg:items-center md:flex-row lg:px-28">
           <div class="mx-auto mb-10 lg:w-5/6 lg:max-w-lg md:w-1/2">
             <div class="bg-submitButton text-white rounded-xl ">
@@ -135,34 +133,46 @@
             <div class="flex flex-col items-center pb-10 mx-auto mb-10 sm:flex-row lg:w-1/2">
               <div class="inline-flex items-center justify-center flex-shrink-0 w-20 h-20 rounded-ful sm:mr-10">
                   <div class="inline-flex items-center justify-center flex-shrink-0  rounded-full sm:mr-10">
-                      <img class=" h-12 lg:h-32  " src="{{ asset('images/waitingLogo.png') }}" alt="waitingLogo">
+                      <img class=" h-12 lg:h-32  " src="{{ asset('images/getNotifiedIcon.png') }}" alt="waitingLogo">
                   </div>
               </div>
               <div class="flex-grow mt-1 lg:mt-6 text-center sm:text-left sm:mt-0">
-                <h2 class="mb-2 lg:mb-1 text-lg font-semibold leading-none tracking-tighter lg:text-3xl"> No Long Wait Hours!</h2>
-                <p class="text-xs lg:text-lg leading-relaxed px-9 lg:px-0 lg:mb-0 -mb-14">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor </p>
+                <h2 class="mb-2 lg:mb-1 text-lg font-semibold leading-none tracking-tighter lg:text-3xl"> Get Notified</h2>
+                <p class="text-xs lg:text-lg leading-relaxed px-9 lg:px-0 lg:mb-0 -mb-14">Reserve or queue in seconds, Choose the restaurant fill in the form and you're ready to go!</p>
               </div>
             </div>
             <div class="flex flex-col items-center pb-10 mx-auto mb-10 sm:flex-row lg:w-1/2">
               <div class="inline-flex items-center justify-center flex-shrink-0 w-20 h-20 sm:mr-10">
                   <div class="inline-flex items-center justify-center flex-shrink-0  sm:mr-10">
-                      <img class=" h-12 lg:h-32 " src="{{ asset('images/waitingLogo.png') }}" alt="waitingLogo">
+                      <img class=" h-12 lg:h-32 " src="{{ asset('images/noLongWaitHoursIcon.png') }}" alt="waitingLogo">
                   </div>
               </div>
               <div class="flex-grow mt-1 lg:mt-6 text-center sm:text-left sm:mt-0">
                   <h2 class="mb-2 lg:mb-1 text-lg font-semibold leading-none tracking-tighter lg:text-3xl"> No Long Wait Hours!</h2>
-                  <p class="text-xs lg:text-lg leading-relaxed px-9 lg:px-0 lg:mb-0 -mb-14">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor </p>
+                  <p class="text-xs lg:text-lg leading-relaxed px-9 lg:px-0 lg:mb-0 -mb-14">No more guessing, you’ll know when your table is ready
+                    when you get a notification from our app!</p>
                 </div>
               </div>
             <div class="flex flex-col items-center pb-10 mx-auto mb-10 sm:flex-row lg:w-1/2">
               <div class="inline-flex items-center justify-center flex-shrink-0 w-20 h-20 rounded-ful sm:mr-10">
                   <div class="inline-flex items-center justify-center flex-shrink-0 sm:mr-10">
-                      <img class=" h-12 lg:h-32 " src="{{ asset('images/waitingLogo.png') }}" alt="waitingLogo">
+                      <img class=" h-12 lg:h-32 " src="{{ asset('images/beRewardedIcon.png') }}" alt="waitingLogo">
                   </div>
               </div>
               <div class="flex-grow mt-1 lg:mt-6 text-center sm:text-left sm:mt-0">
-                  <h2 class="mb-2 lg:mb-1 text-lg font-semibold leading-none tracking-tighter lg:text-3xl"> No Long Wait Hours!</h2>
-                  <p class="text-xs lg:text-lg leading-relaxed px-9 lg:px-0">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor </p>
+                  <h2 class="mb-2 lg:mb-1 text-lg font-semibold leading-none tracking-tighter lg:text-3xl"> Be Rewarded</h2>
+                  <p class="text-xs lg:text-lg leading-relaxed px-9 lg:px-0">Stamp card for users that can be used for exclusive discounts and many more</p>
+                </div>
+              </div>
+              <div class="flex flex-col items-center pb-10 mx-auto mb-10 sm:flex-row lg:w-1/2">
+              <div class="inline-flex items-center justify-center flex-shrink-0 w-20 h-20 rounded-ful sm:mr-10">
+                  <div class="inline-flex items-center justify-center flex-shrink-0 sm:mr-10">
+                      <img class=" h-12 lg:h-32 " src="{{ asset('images/excitingPromosIcon.png') }}" alt="waitingLogo">
+                  </div>
+              </div>
+              <div class="flex-grow mt-1 lg:mt-6 text-center sm:text-left sm:mt-0">
+                  <h2 class="mb-2 lg:mb-1 text-lg font-semibold leading-none tracking-tighter lg:text-3xl"> Exciting Promos</h2>
+                  <p class="text-xs lg:text-lg leading-relaxed px-9 lg:px-0">Be the first to hear about the exclusive promotions that our registered restaurants have to offer such as special lunch rates, holiday discounts, or exclusive promos for their anniversaries.</p>
                 </div>
               </div>
           </div>

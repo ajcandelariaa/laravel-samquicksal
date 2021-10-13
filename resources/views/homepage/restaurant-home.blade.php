@@ -20,8 +20,7 @@
     {{-- sample --}}
     <header class="bg-adminLoginTextColor flex items-center flex-wrap">
         <div class="flex flex-row lg:inline-flex lg:w-auto">
-            <img class="w-12 lg:w-16 ml-3 lg:ml-10 my-3" src="{{ asset('images/samquicksalLogo.png') }}" alt="samquicksalLogo">
-            <h1 class="font-Molle text-darkerSubmitButton mt-7 text-2xl -m-3">amquicksal</h1>
+            <img class="w-40 lg:w-40 ml-3 lg:ml-10 my-3" src="{{ asset('images/samquicksalLogoText.png') }}" alt="samquicksalLogo">
         </div>
     <button class="text-gray-200 inline-flex mr-1 p-3 rounded lg:hidden ml-auto transition duration-200 nav-toggler  " data-target="#navigation">
         <svg class="h-8" xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -70,7 +69,7 @@
             </div>
             <div class="grid lg:grid-cols-3 p-3 lg:p-16">
                 <div class="mx-auto">
-                    <img class=" text-headerActiveTextColor lg:h-44 lg:w-52 h-12 w-12 mx-auto " src="{{ asset('images/filloutIcon.png') }}" alt="filloutIcon">
+                    <img class=" text-headerActiveTextColor lg:h-44 lg:w-52 h-12 w-12 mx-auto " src="{{ asset('images/fillOutIcon.png') }}" alt="filloutIcon">
                     <div class="flex flex-col text-center">
                         <span class="text-xs lg:text-lg">Step 1:</span>
                         <span class=" font-semibold text-xs lg:text-xl mb-4">Fill out the form</span>
