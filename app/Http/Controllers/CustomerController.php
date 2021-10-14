@@ -323,6 +323,20 @@ class CustomerController extends Controller
                 'profileImage' => "",
             ]);
             
+            if(!is_dir('uploads')){
+                mkdir('uploads');
+                mkdir('uploads/customerAccounts');
+                mkdir('uploads/customerAccounts/logo');
+                mkdir('uploads/restaurantAccounts');
+                mkdir('uploads/restaurantAccounts/foodItem');
+                mkdir('uploads/restaurantAccounts/foodSet');
+                mkdir('uploads/restaurantAccounts/orderSet');
+                mkdir('uploads/restaurantAccounts/post');
+                mkdir('uploads/restaurantAccounts/gcashQr');
+                mkdir('uploads/restaurantAccounts/logo');
+                mkdir('uploads/restaurantAccounts/promo');
+            }
+
             mkdir('uploads/customerAccounts/logo/'.$customer->id);
 
             return response()->json([

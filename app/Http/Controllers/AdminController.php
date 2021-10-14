@@ -153,7 +153,7 @@ class AdminController extends Controller
 
     // RENDER LOGICS
     public function restaurantAccountViewFile($id, $filename){
-        return view('admin.restaurant-applicant-view-pdf',[
+        return view('admin.restaurant-account-view-pdf',[
             'id' => $id,
             'filename' => $filename
         ]);
@@ -191,7 +191,7 @@ class AdminController extends Controller
             'birthDate' => $applicant->birthDate,
             'gender' => $applicant->gender,
             'contactNumber' => $applicant->contactNumber,
-            'landlineNumber' => $applicant->contactNumber,
+            'landlineNumber' => $applicant->landlineNumber,
             'emailAddress' => $applicant->emailAddress,
 
             'username' => $defaultUsername,
@@ -223,10 +223,30 @@ class AdminController extends Controller
 
         $resultId = DB::table('restaurant_accounts')->get('id')->last();
         $nextIdFolderName = $resultId->id;
-
+        
+        // MAKE DIRECTORY FOR RESTAURANT ACCOUNT
+        if(!is_dir('storage/uploads/restaurantAccounts')){
+            mkdir('storage/uploads/restaurantAccounts/');
+        }
         mkdir('storage/uploads/restaurantAccounts/'.$nextIdFolderName);
 
+
+
         // MAKE DIRECTORIES FOR ACCOUNTS
+        if(!is_dir('uploads')){
+            mkdir('uploads');
+            mkdir('uploads/customerAccounts');
+            mkdir('uploads/customerAccounts/logo');
+            mkdir('uploads/restaurantAccounts');
+            mkdir('uploads/restaurantAccounts/foodItem');
+            mkdir('uploads/restaurantAccounts/foodSet');
+            mkdir('uploads/restaurantAccounts/orderSet');
+            mkdir('uploads/restaurantAccounts/post');
+            mkdir('uploads/restaurantAccounts/gcashQr');
+            mkdir('uploads/restaurantAccounts/logo');
+            mkdir('uploads/restaurantAccounts/promo');
+        }
+        
         mkdir('uploads/restaurantAccounts/foodItem/'.$nextIdFolderName);
         mkdir('uploads/restaurantAccounts/foodSet/'.$nextIdFolderName);
         mkdir('uploads/restaurantAccounts/orderSet/'.$nextIdFolderName);
@@ -374,7 +394,7 @@ class AdminController extends Controller
         return redirect('/admin/restaurant-applicants');
     }
     public function deleteRestaurantApplicant(Request $request, $id){
-        File::deleteDirectory(public_path('uploads/restaurant/'.$id));
+        File::deleteDirectory(public_path('storage/uploads/restaurantApplicants/'.$id));
         DB::table('restaurant_applicants')->where('id', $id)->delete();
         $request->session()->flash('deleted');
         return redirect('/admin/restaurant-applicants');
@@ -401,16 +421,13 @@ class AdminController extends Controller
     public function restaurantApplicantDownloadFile($id, $filename){
         return response()->download(public_path('storage/uploads/restaurantApplicants/'.$id.'/'.$filename));
     }
-    public function restaurantAccountDownloadFile($id, $filename){
-        return response()->download(public_path('uploads/restaurantAccounts/'.$id.'/'.$filename));
-    }
     public function login(Request $request){
         $request->validate([ 
             'username' => 'required',
             'password' => 'required'
         ]);
 
-        if($request->username == 'samquicksal@dmin' && $request->password == 'S@mquicksal2021'){
+        if($request->username == env('ADMIN_USERNAME') && $request->password == env('ADMIN_PASSWORD')){
             $request->session()->put('userType', 'admin');
             return redirect('/admin/dashboard');
         } else {

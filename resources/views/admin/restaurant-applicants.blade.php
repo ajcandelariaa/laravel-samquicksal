@@ -3,7 +3,7 @@
 @section('content')
 <div class="bg-gray-200 w-full">
     <div class="container mx-auto">
-        @if (session()->has('decline'))
+        @if (session()->has('declined'))
             <script>
                 Swal.fire(
                   'Applicant Declined',
@@ -11,13 +11,15 @@
                   'success'
                 );
             </script>
-        @endif
-    
-        @if (session()->has('deleted'))
-            <h3>{{ session('deleted') }}</h3>
-        @endif
-        
-        @if (session()->has('approved'))
+        @elseif (session()->has('deleted'))
+        <script>
+            Swal.fire(
+              'Applicant Deleted',
+              '',
+              'success'
+            );
+        </script>
+        @elseif (session()->has('approved'))
         <script>
             Swal.fire(
               'Applicant Approved',

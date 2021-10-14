@@ -1571,6 +1571,8 @@ class RestaurantController extends Controller
             Mail::to($data->emailAddress)->send(new RestaurantVerified($details));
             RestaurantAccount::where('id', $id)->update(['verified' => "Yes"]);
             return redirect('/restaurant/login');
+        } else {
+            return redirect('/restaurant/login');
         }
     }
 }

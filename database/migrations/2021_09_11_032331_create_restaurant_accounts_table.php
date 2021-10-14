@@ -14,33 +14,46 @@ class CreateRestaurantAccountsTable extends Migration
     public function up()
     {
         Schema::create('restaurant_accounts', function (Blueprint $table) {
-            $table->increments('id');
-            $table->integer('restaurant_applicants_id');
+            $table->id('id');
+            $table->integer('resApp_id');
             $table->string('verified');
             $table->string('status');
             $table->string('fname');
-            $table->string('mname');
+            $table->string('mname')->nullable();
             $table->string('lname');
-            $table->string('sname');
             $table->string('address');
+            $table->string('city');
+            $table->string('postalCode');
+            $table->string('state');
+            $table->string('country');
             $table->string('role');
             $table->date('birthDate');
+            $table->string('gender');
             $table->string('contactNumber');
-            $table->string('landlineNumber');
+            $table->string('landlineNumber')->nullable();
             $table->string('emailAddress');
+
             $table->string('username');
             $table->string('password');
-            $table->string('restaurantName');
-            $table->string('branchName');
-            $table->string('fullAddress');
-            $table->string('city');
-            $table->string('restaurantExactLocation');
-            // $table->string('restaurantLatitudeLoc');
-            // $table->string('restaurantLongitudeLoc');
-            $table->integer('numberOfTables');
-            $table->integer('capacityPerTable');
-            $table->string('gcashQrCodeImage');
-            $table->string('restaurantLogo');
+
+            $table->string('rName');
+            $table->string('rBranch');
+            $table->string('rAddress');
+            $table->string('rCity');
+            $table->string('rPostalCode');
+            $table->string('rState');
+            $table->string('rCountry');
+           
+            $table->string('rLatitudeLoc');
+            $table->string('rLongitudeLoc');
+
+            $table->integer('rNumberOfTables');
+            $table->integer('rCapacityPerTable');
+            $table->string('rGcashQrCodeImage');
+            $table->string('rLogo');
+            
+            $table->integer('rTimeLimit');
+
             $table->string('bir');
             $table->string('dti');
             $table->string('mayorsPermit');

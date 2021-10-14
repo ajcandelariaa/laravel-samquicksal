@@ -126,16 +126,12 @@
                     <label class="text-gray-400 mb-1 ml-1">First Name <span class="text-red-600">*</span></label>
                     <input type="text" wire:model="fname" value="{{ old('fname') }}" class="border {{ $errors->has('fname') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }} rounded-lg w-full py-1 px-2 text-sm text-gray-700 focus:outline-none ">
                         <span class=" text-red-600 italic text-sm">@error('fname'){{ $message }}@enderror</span>
-                    
-                        
                 </div>
 
                 <div class="mt-3">
                     <label class="text-gray-400 mb-1 ml-1">Middle Name</label>
                     <input type="text" wire:model="mname" value="{{ old('mname') }}" class="border {{ $errors->has('mname') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }} rounded-lg w-full py-1 px-2 text-sm text-gray-700 focus:outline-none">
                         <span class="mt-2 text-red-600 italic text-sm">@error('mname'){{ $message }}@enderror</span>
-              
-                    
                 </div>
 
                 <div class="mt-3">

@@ -25,7 +25,7 @@
             Swal.fire(
                 'Restaurant Applicant Deleted',
                 '',
-                'error'
+                'success'
             );
         </script>
     @endif
@@ -34,7 +34,7 @@
     @if ($applicant->status == "Declined")
         <div class="container w-11/12 mx-auto">
             <div class="mt-10 w-full flex justify-end gap-x-4">
-                <a href="/admin/restaurant-applicants/delete/{{ $applicant->id }}" class="text-sm text-white bg-red-700 rounded-md py-2 px-7 hover:bg-adminDeleteFormColor shadow-adminDownloadButton">Delete Form</a>
+                <a href="/admin/restaurant-applicants/delete/{{ $applicant->id }}" id="deleteForm" class="text-sm text-white bg-red-700 rounded-md py-2 px-7 hover:bg-adminDeleteFormColor shadow-adminDownloadButton">Delete Form</a>
             </div>
         </div>
     @else

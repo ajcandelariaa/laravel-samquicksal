@@ -56,7 +56,7 @@ class MultiStepForm extends Component
             
             $this->validate([
                 'fname' => 'required|regex:/^[\pL\s\-]+$/u',
-                'mname' => 'regex:/^[\pL\s\-]+$/u',
+                'mname' => 'nullable|regex:/^[\pL\s\-]+$/u',
                 'lname' => 'required|regex:/^[\pL\s\-]+$/u',
                 'role' => 'required',
                 'birthDate' => 'required',
