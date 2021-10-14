@@ -9,6 +9,7 @@ use App\Mail\RestaurantFormAppreciation;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpFoundation\Request;
 
 class MultiStepForm extends Component
 {
@@ -81,7 +82,7 @@ class MultiStepForm extends Component
                 'country' => 'required',
                 'emailAddress' => 'required|email|unique:restaurant_accounts,emailAddress',
                 'contactNumber' => 'required|digits:11',
-                'landlineNumber' => 'digits:8',
+                'landlineNumber' => 'numeric|min:8',
             ], 
             [
                 'address.required' => 'Address is required',
@@ -122,24 +123,30 @@ class MultiStepForm extends Component
         $this->resetErrorBag();
         if($this->currentStep == 5){
             $validatedData = $this->validate([
-                'bir' => 'required|mimes:pdf',
-                'dti' => 'required|mimes:pdf',
-                'mayorsPermit' => 'required|mimes:pdf',
-                'staffValidId' => 'required|mimes:pdf',
+                'bir' => 'required|mimes:pdf|max:12288',
+                'dti' => 'required|mimes:pdf|max:12288',
+                'mayorsPermit' => 'required|mimes:pdf|max:12288',
+                'staffValidId' => 'required|mimes:pdf|max:12288',
             ], 
             [
                 'bir.required' => 'BIR Certificate of Registration is required',
                 'bir.mimes' => 'BIR Certificate of Registration must be in pdf format',
+                'bir.max' => 'BIR Certificate of Registration must be 12mb below',
 
                 'dti.required' => 'DTI Business Registration is required',
                 'dti.mimes' => 'DTI Business Registration must be in pdf format',
+                'dti.max' => 'DTI Business Registration must be 12mb below',
 
                 'mayorsPermit.required' => 'Mayor’s Permit is required',
                 'mayorsPermit.mimes' => 'Mayor’s Permit must be in pdf format',
+                'mayorsPermit.max' => 'Mayor’s Permit must be 12mb below',
 
                 'staffValidId.required' => 'Owner/Staff Valid ID is required',
                 'staffValidId.mimes' => 'Owner/Staff Valid ID must be in pdf format',
+                'staffValidId.max' => 'Owner/Staff Valid ID must be 12mb below',
             ]);
+
+            dd($validatedData);
 
             RestaurantApplicant::create([
                 'status' => 'Pending',
