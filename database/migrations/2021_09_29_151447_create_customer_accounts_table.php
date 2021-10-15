@@ -17,7 +17,9 @@ class CreateCustomerAccountsTable extends Migration
             $table->id();
             $table->string('name');
             $table->string('emailAddress');
+            $table->string('emailAddressVerified');
             $table->string('contactNumber');
+            $table->string('contactNumberVerified');
             $table->string('password');
             $table->string('profileImage');
             $table->timestamps();

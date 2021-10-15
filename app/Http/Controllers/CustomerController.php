@@ -252,7 +252,7 @@ class CustomerController extends Controller
             ]);
         }
         
-        if(isEmpty($finalPromos)){
+        if($promos == null){
             $finalPromos = null;
         }
 
@@ -267,6 +267,14 @@ class CustomerController extends Controller
 
 
 
+    public function customers(){
+        $account = CustomerAccount::all();
+        return response()->json([$account]);
+    }
+    public function restaurants(){
+        $account = RestaurantAccount::all();
+        return response()->json([$account]);
+    }
 
 
 

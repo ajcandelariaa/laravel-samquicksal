@@ -146,7 +146,6 @@ class MultiStepForm extends Component
                 'staffValidId.max' => 'Owner/Staff Valid ID must be 12mb below',
             ]);
 
-            dd($validatedData);
 
             RestaurantApplicant::create([
                 'status' => 'Pending',

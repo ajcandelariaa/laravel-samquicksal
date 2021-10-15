@@ -16,11 +16,17 @@ use Illuminate\Support\Facades\Route;
 */
 
 
+Route::get('/customer/test-customers', [CustomerController::class, 'customers']);
+Route::get('/customer/test-restaurants', [CustomerController::class, 'restaurants']);
+
+
 Route::get('/customer/restaurants', [CustomerController::class, 'getListOfRestaurants']);
 Route::get('/customer/get-restaurants/about/{id}', [CustomerController::class, 'getRestaurantAboutInfo']);
 Route::get('/customer/get-restaurants/rewards/{id}', [CustomerController::class, 'getRestaurantsRewardsInfo']);
 Route::get('/customer/get-homepage-info/{id}', [CustomerController::class, 'getCustomerHomepageInfo']);
 Route::get('/customer/get-account-info/{id}', [CustomerController::class, 'getCustomerAccountInfo']);
+
+
 
 Route::post('/customer/register-customer', [CustomerController::class, 'registerCustomer']);
 Route::post('/customer/login-customer', [CustomerController::class, 'loginCustomer']);

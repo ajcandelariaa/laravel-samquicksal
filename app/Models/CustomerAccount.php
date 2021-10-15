@@ -12,7 +12,9 @@ class CustomerAccount extends Model
     protected $fillable = [
         'name',
         'emailAddress',
+        'emailAddressVerified',
         'contactNumber',
+        'contactNumberVerified',
         'password',
         'profileImage',
     ];
