@@ -70,7 +70,7 @@
     
     <div class="relative w-full h-56">
         @if ($account->rLogo == "" || $account->rLogo == null)
-        <div style="background-image: linear-gradient(rgba(255, 226, 226, 0.75), rgba(255, 226, 226, 0.75)), url({{asset('images/defaultAccountImage.png')}}); background-repeat: no-repeat; background-size: cover; background-position: center;" class="h-full"></div>
+        <div style="background-image: linear-gradient(rgba(255, 226, 226, 0.75), rgba(255, 226, 226, 0.75)), url({{asset('images/resto-default.png')}}); background-repeat: no-repeat; background-size: cover; background-position: center;" class="h-full"></div>
         @else
         <div style="background-image: linear-gradient(rgba(255, 226, 226, 0.75), rgba(255, 226, 226, 0.75)), url({{asset('uploads/restaurantAccounts/logo/'.$id.'/'.$account->rLogo)}}); background-repeat: no-repeat; background-size: cover; background-position: center;" class="h-full"></div>
         @endif
@@ -78,7 +78,7 @@
             <div class="grid grid-cols-1 items-center h-full">
                 <div class="col-span-1 grid grid-cols-profileHeaderGrid items-center">
                     @if ($account->rLogo == "" || $account->rLogo == null)
-                        <img src="{{ asset('images/defaultAccountImage.png') }}" alt="accountImage" class="w-44 h-44">
+                        <img src="{{ asset('images/resto-default.png') }}" alt="accountImage" class="w-44 h-44">
                     @else
                         <img src="{{ asset('uploads/restaurantAccounts/logo/'.$id.'/'.$account->rLogo) }}" alt="accountImage" class="w-44 h-44">
                     @endif
@@ -281,7 +281,7 @@
                 </div>
                 <div class="flex w-10/12 mx-auto pb-5">
                     @if ($account->rLogo == "" || $account->rLogo == null)
-                        <img src="{{ asset('images/defaultAccountImage.png') }}" id="restaurantLogo" alt="restaurantLogo" class="border-multiStepBoxBorder border-gray-300 w-36 h-36">
+                        <img src="{{ asset('images/resto-default.png') }}" id="restaurantLogo" alt="restaurantLogo" class="border-multiStepBoxBorder border-gray-300 w-36 h-36">
                     @else
                         <img src="{{ asset('uploads/restaurantAccounts/logo/'.$id.'/'.$account->rLogo) }}" id="restaurantLogo" alt="restaurantLogo" class="border-multiStepBoxBorder border-gray-300 w-36 h-36">
                     @endif

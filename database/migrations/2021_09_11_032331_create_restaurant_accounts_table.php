@@ -49,8 +49,8 @@ class CreateRestaurantAccountsTable extends Migration
 
             $table->integer('rNumberOfTables');
             $table->integer('rCapacityPerTable');
-            $table->string('rGcashQrCodeImage');
-            $table->string('rLogo');
+            $table->string('rGcashQrCodeImage')->nullable();
+            $table->string('rLogo')->nullable();
             
             $table->integer('rTimeLimit');
 

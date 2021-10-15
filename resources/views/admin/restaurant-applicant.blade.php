@@ -2,30 +2,12 @@
 
 @section('content')
 <div class="bg-gray-200 w-full restaurant-applicant">
-    @if (session()->has('approved'))
+    @if (session()->has('emailAlreadyExist'))
         <script>
             Swal.fire(
-                'Restaurant Applicant Approved',
+                'Applicant email is already registered',
                 '',
-                'success'
-            );
-        </script>
-    @endif
-    @if (session()->has('declined'))
-        <script>
-            Swal.fire(
-                'Restaurant Applicant Declined',
-                '',
-                'success'
-            );
-        </script>
-    @endif
-    @if (session()->has('deleted'))
-        <script>
-            Swal.fire(
-                'Restaurant Applicant Deleted',
-                '',
-                'success'
+                'error'
             );
         </script>
     @endif

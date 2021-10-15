@@ -48,43 +48,19 @@
                         <div class="w-full h-7 bg-white mb-2">
                             <div class="w-11/12 h-7 mx-auto grid grid-cols-3 items-center">
                                 <p class="text-xs col-span-2"><i class="fas fa-file-signature w-6"></i>New Restaurant Applicant</p>
-                                <p class="text-gray-600 text-xs col-span-1 justify-self-end">
-                                    @if ($rAppDiffHours == 0)
-                                        No entries
-                                    @elseif ($rAppDiffHours == 1)
-                                        {{ $rAppDiffHours }} hr ago
-                                    @else
-                                        {{ $rAppDiffHours }} hrs ago
-                                    @endif
-                                </p>
+                                <p class="text-gray-600 text-xs col-span-1 justify-self-end">{{ $rAppDiffTime }}</p>
                             </div>
                         </div>
                         <div class="w-full h-7 bg-white mb-2">
                             <div class="w-11/12 h-7 mx-auto grid grid-cols-3 items-center">
                                 <p class="text-xs col-span-2"><i class="fas fa-users w-6"></i>New Customer Account</p>
-                                <p class="text-gray-600 text-xs col-span-1 justify-self-end">
-                                    @if ($cAccDiffHours == 0)
-                                        No entries
-                                    @elseif ($cAccDiffHours == 1)
-                                        {{ $cAccDiffHours }} hr ago
-                                    @else
-                                        {{ $cAccDiffHours }} hrs ago
-                                    @endif
-                                </p>
+                                <p class="text-gray-600 text-xs col-span-1 justify-self-end">{{ $cAccDiffTime }}</p>
                             </div>
                         </div>
                         <div class="w-full h-7 bg-white">
                             <div class="w-11/12 h-7 mx-auto grid grid-cols-3 items-center">
                                 <p class="text-xs col-span-2"><i class="fas fa-user-tie w-6"></i>New Restaurant Account</p>
-                                <p class="text-gray-600 text-xs col-span-1 justify-self-end">
-                                    @if ($rAccDiffHours == 0)
-                                        No entries
-                                    @elseif ($rAccDiffHours == 1)
-                                        {{ $rAccDiffHours }} hr ago
-                                    @else
-                                        {{ $rAccDiffHours }} hrs ago
-                                    @endif
-                                </p>
+                                <p class="text-gray-600 text-xs col-span-1 justify-self-end">{{ $rAccDiffTime }}</p>
                             </div>
                         </div>
                     </div>

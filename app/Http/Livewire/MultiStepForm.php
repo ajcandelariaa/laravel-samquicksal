@@ -147,7 +147,7 @@ class MultiStepForm extends Component
             ]);
 
 
-            RestaurantApplicant::create([
+            $result = RestaurantApplicant::create([
                 'status' => 'Pending',
                 'fname' => $this->fname,
                 'mname' => $this->mname,
@@ -178,9 +178,7 @@ class MultiStepForm extends Component
                 'staffValidId' => "",
             ]);
             
-            $resultId = DB::table('restaurant_applicants')->get('id')->last();
-            $nextIdFolderName = $resultId->id;
-
+            $nextIdFolderName = $result->id;
             $birName = 'BIR_'.str_replace(' ', '', $validatedData['bir']->getClientOriginalName());
             $dtiName = 'DTI_'.str_replace(' ', '', $validatedData['dti']->getClientOriginalName());
             $mayorsPermitName = 'MayorsPermit_'.str_replace(' ', '', $validatedData['mayorsPermit']->getClientOriginalName());

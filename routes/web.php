@@ -146,8 +146,8 @@ Route::middleware(['adminLoggedIn'])->group(function(){
     Route::get('/admin/restaurant-applicants/delete/{id}', [AdminController::class, 'deleteRestaurantApplicant']);
     Route::get('/admin/restaurant-accounts', [AdminController::class, 'restaurantAccountsView']);
     Route::get('/admin/restaurant-accounts/{id}', [AdminController::class, 'restaurantAccountView']);
-    // Route::get('/admin/restaurant-account/downloadFile/{id}/{filename}', [AdminController::class, 'restaurantAccountDownloadFile']);
     Route::get('/admin/customer-accounts', [AdminController::class, 'customerAccountsView']);
+    Route::get('/admin/customer-accounts/{id}', [AdminController::class, 'customerAccountView']);
     
     Route::post('/admin/restaurant-applicants/decline', [AdminController::class, 'declineRestaurantApplicant']);
     Route::post('/admin/restaurant-applicants/approve', [AdminController::class, 'approveRestaurantApplicant']);

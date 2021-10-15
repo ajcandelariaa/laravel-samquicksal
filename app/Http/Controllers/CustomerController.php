@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\CustomerAccount;
+use App\Models\OrderSet;
 use App\Models\Post;
 use App\Models\Promo;
 use App\Models\RestaurantAccount;
@@ -24,6 +25,7 @@ class CustomerController extends Controller
     public $ACCOUNT_NO_IMAGE_PATH = "http://192.168.1.53:8000/images";
     public $POST_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/post";
     public $PROMO_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/promo";
+    public $ORDER_SET_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/orderSet";
     
     public function convertDays($day){
         if ($day == "MO"){
@@ -44,6 +46,18 @@ class CustomerController extends Controller
             return "";
         }
     }
+
+    public function customers(){
+        $account = CustomerAccount::all();
+        return response()->json([$account]);
+    }
+    public function restaurants(){
+        $account = RestaurantAccount::all();
+        return response()->json([$account]);
+    }
+
+
+
 
     // RESTAURANT ROUTES
     // -------LIST OF RESTAURANTS------------ //
@@ -87,7 +101,7 @@ class CustomerController extends Controller
             }
 
             $finalImageUrl = "";
-            if ($restaurant->rLogo == ""){$finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/defaultAccountImage.png';
+            if ($restaurant->rLogo == ""){$finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
                 
             } else {
                 $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
@@ -133,7 +147,7 @@ class CustomerController extends Controller
 
         $finalImageUrl = "";
         if ($account->rLogo == ""){
-            $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/defaultAccountImage.png';
+            $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
         } else {
             $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$id.'/'. $account->rLogo;
         }
@@ -264,17 +278,42 @@ class CustomerController extends Controller
             'promos' => $finalPromos,
         ]);
     }
+    public function getRestaurantsMenuInfo($id){
+        $orderSets = OrderSet::where('restAcc_id', $id)->get();
 
+        $finalData = array();
 
+        foreach ($orderSets as $orderSet){
+            array_push($finalData, [
+                'orderSetName' => $orderSet->orderSetName,
+                'orderSetTagline' => $orderSet->orderSetTagline,
+                'orderSetDescription' => $orderSet->orderSetDescription,
+                'orderSetPrice' => "Price: ".$orderSet->orderSetPrice,
+                'orderSetImage' => $this->ORDER_SET_IMAGE_PATH."/".$id."/".$orderSet->orderSetImage,
+                'foodSet' => [
+                    [
+                        "foodSetName" => "Pork Set1",
+                        "foodItem" => ["Plain Pork 1", "Plain Pork 2", "Plain Pork 1", "Plain Pork 1", "Plain Pork 1", "Plain Pork 2", "Plain Pork 1", "Plain Pork 1", "Plain Pork 1"],
+                    ],
+                    [
+                        "foodSetName" => "Pork Set2",
+                        "foodItem" => ["Plain Pork 1", "Plain Pork 2"],
+                    ],
+                    [
+                        "foodSetName" => "Pork Set3",
+                        "foodItem" => ["Plain Pork 1"],
+                    ],
+                    [
+                        "foodSetName" => "Pork Set4",
+                        "foodItem" => ["Plain Pork 1", "Plain Pork 2", "Plain Pork 1", "Plain Pork 1", "Plain Pork 1"],
+                    ]
+                ],
+            ]);
+        }
 
-    public function customers(){
-        $account = CustomerAccount::all();
-        return response()->json([$account]);
+        return response()->json($finalData);
     }
-    public function restaurants(){
-        $account = RestaurantAccount::all();
-        return response()->json([$account]);
-    }
+    
 
 
 
@@ -359,7 +398,7 @@ class CustomerController extends Controller
 
         $finalImageUrl = "";
         if($account->profileImage == ""){
-            $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/defaultAccountImage.png';
+            $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/user-default.png';
         } else {
             $finalImageUrl = $this->CUSTOMER_IMAGE_PATH.'/'.$id.'/'. $account->profileImage;
         }
@@ -376,7 +415,7 @@ class CustomerController extends Controller
 
         $finalImageUrl = "";
         if($account->profileImage == ""){
-            $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/defaultAccountImage.png';
+            $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/user-default.png';
         } else {
             $finalImageUrl = $this->CUSTOMER_IMAGE_PATH.'/'.$id.'/'. $account->profileImage;
         }

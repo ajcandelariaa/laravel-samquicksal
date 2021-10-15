@@ -29,31 +29,126 @@ class AdminController extends Controller
         return view('admin.login');
     }
     public function dashboardView(){
-        $endTime = Carbon::parse(time());
-        $getTime1 = RestaurantApplicant::latest()->first();
-        $getTime2 = RestaurantAccount::latest()->first();
-        $getTime3 = CustomerAccount::latest()->first();
+        $endTime = Carbon::now();
+        $getTime1 = RestaurantApplicant::select('created_at', 'id')->latest()->first();
+        $getTime2 = RestaurantAccount::select('created_at')->latest()->first();
+        $getTime3 = CustomerAccount::select('created_at')->latest()->first();
 
+
+        // RESTAURANT APPLICANT DIFF TIME
         if($getTime1 != null){ 
             $rAppstartTime = Carbon::parse($getTime1->created_at);
+            $rAppDiffSeconds = $endTime->diffInSeconds($rAppstartTime);
+            $rAppDiffMinutes = $endTime->diffInMinutes($rAppstartTime);
             $rAppDiffHours = $endTime->diffInHours($rAppstartTime);
+            $rAppDiffDays = $endTime->diffInDays($rAppstartTime);
+
+            if($rAppDiffDays > 0){
+                if ($rAppDiffDays == 1){
+                    $rAppDiffTime = "1 day ago";
+                } else {
+                    $rAppDiffTime = "$rAppDiffDays days ago";
+                }
+            } else if ($rAppDiffHours > 0){
+                if ($rAppDiffHours == 1){
+                    $rAppDiffTime = "1 hour ago";
+                } else {
+                    $rAppDiffTime = "$rAppDiffHours hours ago";
+                }
+            } else if ($rAppDiffMinutes > 0){
+                if ($rAppDiffMinutes == 1){
+                    $rAppDiffTime = "1 minute ago";
+                } else {
+                    $rAppDiffTime = "$rAppDiffMinutes minutes ago";
+                }
+            } else {
+                if ($rAppDiffSeconds == 1){
+                    $rAppDiffTime = "1 second ago";
+                } else {
+                    $rAppDiffTime = "$rAppDiffSeconds seconds ago";
+                }
+            }
         } else {
-            $rAppDiffHours = 0;
+            $rAppDiffTime = "No entries";
         }
 
+
+        // RESTAURANT ACCOUNT DIFF TIME
         if($getTime2 != null){ 
             $rAccstartTime = Carbon::parse($getTime2->created_at);
+            $rAccDiffSeconds = $endTime->diffInSeconds($rAccstartTime);
+            $rAccDiffMinutes = $endTime->diffInMinutes($rAccstartTime);
             $rAccDiffHours = $endTime->diffInHours($rAccstartTime);
+            $rAccDiffDays = $endTime->diffInDays($rAccstartTime);
+
+            if($rAccDiffDays > 0){
+                if ($rAccDiffDays == 1){
+                    $rAccDiffTime = "1 day ago";
+                } else {
+                    $rAccDiffTime = "$rAccDiffDays days ago";
+                }
+            } else if ($rAccDiffHours > 0){
+                if ($rAccDiffHours == 1){
+                    $rAccDiffTime = "1 hour ago";
+                } else {
+                    $rAccDiffTime = "$rAccDiffHours hours ago";
+                }
+            } else if ($rAccDiffMinutes > 0){
+                if ($rAccDiffMinutes == 1){
+                    $rAccDiffTime = "1 minute ago";
+                } else {
+                    $rAccDiffTime = "$rAccDiffMinutes minutes ago";
+                }
+            } else {
+                if ($rAccDiffSeconds == 1){
+                    $rAccDiffTime = "1 second ago";
+                } else {
+                    $rAccDiffTime = "$rAccDiffSeconds seconds ago";
+                }
+            }
         } else {
-            $rAccDiffHours = 0;
+            $rAccDiffTime = "No entries";
         }
 
+
+        // CUSTOMER ACCOUNT DIFF TIME
         if($getTime3 != null){ 
-            $cAccstartTime = Carbon::parse($getTime3->created_at);  
-            $cAccDiffHours = $endTime->diffInHours($cAccstartTime); 
+            $cAccstartTime = Carbon::parse($getTime3->created_at);
+            $cAccDiffSeconds = $endTime->diffInSeconds($cAccstartTime);
+            $cAccDiffMinutes = $endTime->diffInMinutes($cAccstartTime);
+            $cAccDiffHours = $endTime->diffInHours($cAccstartTime);
+            $cAccDiffDays = $endTime->diffInDays($cAccstartTime);
+
+            if($cAccDiffDays > 0){
+                if ($cAccDiffDays == 1){
+                    $cAccDiffTime = "1 day ago";
+                } else {
+                    $cAccDiffTime = "$cAccDiffDays days ago";
+                }
+            } else if ($cAccDiffHours > 0){
+                if ($cAccDiffHours == 1){
+                    $cAccDiffTime = "1 hour ago";
+                } else {
+                    $cAccDiffTime = "$cAccDiffHours hours ago";
+                }
+            } else if ($cAccDiffMinutes > 0){
+                if ($cAccDiffMinutes == 1){
+                    $cAccDiffTime = "1 minute ago";
+                } else {
+                    $cAccDiffTime = "$cAccDiffMinutes minutes ago";
+                }
+            } else {
+                if ($cAccDiffSeconds == 1){
+                    $cAccDiffTime = "1 second ago";
+                } else {
+                    $cAccDiffTime = "$cAccDiffSeconds seconds ago";
+                }
+            }
         } else {
-            $cAccDiffHours = 0;
+            $cAccDiffTime = "No entries";
         }
+
+
         
         $restaurantAccountsCount = RestaurantAccount::count();
         $restaurantApplicantsCount = RestaurantApplicant::count();
@@ -69,9 +164,9 @@ class AdminController extends Controller
             'approvedCount' => $approvedCount,
             'pendingCount' => $pendingCount,
             'declinedCount' => $declinedCount,
-            'rAppDiffHours' => $rAppDiffHours,
-            'rAccDiffHours' => $rAccDiffHours,
-            'cAccDiffHours' => $cAccDiffHours,
+            'rAppDiffTime' => $rAppDiffTime,
+            'rAccDiffTime' => $rAccDiffTime,
+            'cAccDiffTime' => $cAccDiffTime,
         ]);
     }
     public function restaurantApplicantsView(Request $request){
@@ -84,22 +179,29 @@ class AdminController extends Controller
                         ->orWhere('rName', 'LIKE', $searchText)
                         ->orWhere('rState', 'LIKE', $searchText)
                         ->orWhere('rCity', 'LIKE', $searchText)
-                        ->paginate(2);
+                        ->paginate(10);
             $data->appends($request->all());
             return view('admin.restaurant-applicants', [
                 'applicants' => $data,
                 'title' => "Restaurant Applicants"
             ]);
         } else {
-            $data = RestaurantApplicant::paginate(2);
+            $data = RestaurantApplicant::paginate(10);
             return view('admin.restaurant-applicants', [
                 'applicants' => $data,
                 'title' => "Restaurant Applicants"
             ]);
         }
     }
+    public function customerAccountView($id){
+        $account = CustomerAccount::where('id', $id)->first();
+        return view('admin.customer-account', [
+            'account' => $account,
+            'title' => "Customer Accoutn View"
+        ]);
+    }
     public function restaurantApplicantView($id){
-        $applicant = DB::table('restaurant_applicants')->find($id);
+        $applicant = RestaurantApplicant::where('id', $id)->first();
         return view('admin.restaurant-applicant', [
             'applicant' => $applicant,
             'title' => "Restaurant Applicant View"
@@ -114,14 +216,14 @@ class AdminController extends Controller
                         ->orWhere('rState', 'LIKE', $searchText)
                         ->orWhere('rCity', 'LIKE', $searchText)
                         ->orWhere('rCountry', 'LIKE', $searchText)
-                        ->paginate(2);
+                        ->paginate(10);
             $data->appends($request->all());
             return view('admin.restaurant-accounts', [
                 'accounts' => $data,
                 'title' => "Restaurant Owners"
             ]);
         } else {
-            $data = RestaurantAccount::paginate(2);
+            $data = RestaurantAccount::paginate(10);
             return view('admin.restaurant-accounts', [
                 'accounts' => $data,
                 'title' => "Restaurant Owners"
@@ -129,7 +231,7 @@ class AdminController extends Controller
         }
     }
     public function restaurantAccountView($id){
-        $account = DB::table('restaurant_accounts')->find($id);
+        $account = RestaurantAccount::where('id', $id)->first();
         $storeHours = StoreHour::where('restAcc_id', '=', $id)->get();
         $existingDays = array();
         foreach ($storeHours as $storeHour){
@@ -144,10 +246,25 @@ class AdminController extends Controller
             'title' => "Restaurant Account View"
         ]);
     }
-    public function customerAccountsView(){
-        return view('admin.customer-accounts', [
-            'title' => "Customer Accounts"
-        ]);
+    public function customerAccountsView(Request $request){
+        if(isset($_GET['q']) && !empty($_GET['q'])){
+            $searchText = '%'.$_GET['q'].'%';
+            $data = CustomerAccount::where('name', 'LIKE', $searchText)
+                        ->orWhere('emailAddress', 'LIKE', $searchText)
+                        ->orWhere('contactNumber', 'LIKE', $searchText)
+                        ->paginate(10);
+            $data->appends($request->all());
+            return view('admin.customer-accounts', [
+                'accounts' => $data,
+                'title' => "Customers"
+            ]);
+        } else {
+            $data = CustomerAccount::paginate(10);
+            return view('admin.customer-accounts', [
+                'accounts' => $data,
+                'title' => "Customers"
+            ]);
+        }
     }
 
 
@@ -169,13 +286,19 @@ class AdminController extends Controller
         return redirect('/admin/login');
     }
     public function approveRestaurantApplicant(Request $request){
-        $applicant = DB::table('restaurant_applicants')->find($request->applicantId);
+        $applicant = RestaurantApplicant::where('id', $request->applicantId)->first();
+        $account = RestaurantAccount::select('emailAddress')->where('emailAddress', $applicant->emailAddress)->first();
+
+        if($account != null){
+            $request->session()->flash('emailAlreadyExist');
+            return redirect('/admin/restaurant-applicants/'.$request->applicantId);
+        }
 
         $defaultUsername = time().$applicant->lname;
         $defaultPassword = $applicant->id.str_replace(' ', '', $applicant->rBranch);
         $hashPassword = Hash::make($defaultPassword);
 
-        RestaurantAccount::create([
+        $result = RestaurantAccount::create([
             'resApp_id' => $applicant->id,
             'verified' => "No",
             'status' => 'Unpublished',
@@ -208,10 +331,8 @@ class AdminController extends Controller
             'rLatitudeLoc' => $request->applicantLocLat,
             'rLongitudeLoc' => $request->applicantLocLong,
 
-            'rNumberOfTables' => 0,
-            'rCapacityPerTable' => 0,
-            'rGcashQrCodeImage' => "",
-            'rLogo' => "",
+            'rNumberOfTables' => 10,
+            'rCapacityPerTable' => 4,
 
             'rTimeLimit' => 0,
 
@@ -221,8 +342,7 @@ class AdminController extends Controller
             'staffValidId' => $applicant->staffValidId,
         ]);
 
-        $resultId = DB::table('restaurant_accounts')->get('id')->last();
-        $nextIdFolderName = $resultId->id;
+        $nextIdFolderName = $result->id;
         
         // MAKE DIRECTORY FOR RESTAURANT ACCOUNT
         if(!is_dir('storage/uploads/restaurantAccounts')){
