@@ -389,6 +389,13 @@ class CustomerController extends Controller
                 'status' => "Email Address is already existing",
             ]);
         } else {
+            
+            $details = [
+                'applicantName' => $request->name,
+            ];
+
+            Mail::to($request->emailAddress)->send(new RestaurantFormAppreciation($details));
+
             $customer = CustomerAccount::create([
                 'name' => $request->name,
                 'emailAddress' => $request->emailAddress,
@@ -414,13 +421,6 @@ class CustomerController extends Controller
             }
 
             mkdir('uploads/customerAccounts/logo/'.$customer->id);
-            
-
-            $details = [
-                'applicantName' => $request->name,
-            ];
-
-            Mail::to($request->emailAddress)->send(new RestaurantFormAppreciation($details));
 
             return response()->json([
                 'id' => $customer->id,
