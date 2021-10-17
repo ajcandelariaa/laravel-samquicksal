@@ -26,6 +26,14 @@
                 'success'
             );
         </script>
+    @elseif (session()->has('tablesUpdated'))
+        <script>
+            Swal.fire(
+                'Tables Updated',
+                '',
+                'success'
+            );
+        </script>
     @elseif (session()->has('usernameUpdated'))
         <script>
             Swal.fire(
@@ -219,6 +227,30 @@
                 </div>
                 <div class="w-10/12 mx-auto text-right mb-5">
                     <button type="submit" class="bg-submitButton hover:bg-btnHoverColor text-white hover:text-gray-300 w-36 h-9 rounded-md transition duration-200 ease-in-out ">Update Username</button>
+                </div>
+            </form>
+
+            <div class="uppercase font-bold bg-gradient-to-r from-adminViewAccountHeaderColor to-adminViewAccountHeaderColor2 py-2 text-submitButton pl-5">Tables</div>
+            <form action="/restaurant/manage-restaurant/about/restaurant-information/updateTables" method="POST">
+                @csrf
+                <div class="grid grid-cols-formsThreeCols w-10/12 mx-auto mt-5">
+                    <div class="text-left text-submitButton">Number of Tables</div>
+                    <div class="text-left text-submitButton">:</div>
+                    <div class="font-bold mb-4">
+                        <input type="text" name="rNumberOfTables" value="{{ $account->rNumberOfTables }}" class="w-full border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none {{ $errors->has('rNumberOfTables') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }}">
+                        <span class="mt-2 text-red-600 italic text-sm">@error('rNumberOfTables'){{ $message }}@enderror</span>
+                    </div>
+
+                    
+                    <div class="text-left text-submitButton">Capacity per Table</div>
+                    <div class="text-left text-submitButton">:</div>
+                    <div class="font-bold mb-4">
+                        <input type="text" name="rCapacityPerTable" value="{{ $account->rCapacityPerTable }}" class="w-full border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none {{ $errors->has('rCapacityPerTable') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }}">
+                        <span class="mt-2 text-red-600 italic text-sm">@error('rCapacityPerTable'){{ $message }}@enderror</span>
+                    </div>
+                </div>
+                <div class="w-10/12 mx-auto text-right mt-3 mb-5">
+                    <button type="submit" class="bg-submitButton hover:bg-btnHoverColor text-white hover:text-gray-300 w-36 h-9 rounded-md transition duration-200 ease-in-out ">Update Table</button>
                 </div>
             </form>
 

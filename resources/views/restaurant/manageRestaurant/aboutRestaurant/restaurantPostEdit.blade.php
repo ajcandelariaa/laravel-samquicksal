@@ -24,6 +24,7 @@
                     <div class="col-span-1 bg-white">
                         <div class="w-full px-4 mt-5">
                             <input type="file" name="postImage" onchange="previewFile(this);" class="w-full border border-gray-400 text-sm text-gray-700 focus:outline-none focus:border-black">
+                            <span class="mt-2 text-red-600 italic text-sm">@error('postImage'){{ $message }}@enderror</span>
                         </div>
                         <div class="w-full px-4 mt-5">
                             <img src="{{ asset('uploads/restaurantAccounts/post/'.$resAccid.'/'.$post->postImage) }}" id="previewImg" alt="orderSetImage">

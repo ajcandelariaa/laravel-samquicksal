@@ -4,7 +4,12 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\CustomerAccount;
+use App\Models\FoodItem;
+use App\Models\FoodSet;
+use App\Models\FoodSetItem;
 use App\Models\OrderSet;
+use App\Models\OrderSetFoodItem;
+use App\Models\OrderSetFoodSet;
 use App\Models\Post;
 use App\Models\Promo;
 use App\Models\RestaurantAccount;
@@ -15,18 +20,25 @@ use App\Models\StampCardTasks;
 use App\Models\StoreHour;
 use App\Models\UnavailableDate;
 use Illuminate\Support\Facades\Hash;
-
-use function PHPUnit\Framework\isEmpty;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\RestaurantFormAppreciation;
 
 class CustomerController extends Controller
 {
-    public $RESTAURANT_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/logo";
-    public $CUSTOMER_IMAGE_PATH = "http://192.168.1.53:8000/uploads/customerAccounts/logo";
-    public $ACCOUNT_NO_IMAGE_PATH = "http://192.168.1.53:8000/images";
-    public $POST_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/post";
-    public $PROMO_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/promo";
-    public $ORDER_SET_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/orderSet";
+    // public $RESTAURANT_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/logo";
+    // public $CUSTOMER_IMAGE_PATH = "http://192.168.1.53:8000/uploads/customerAccounts/logo";
+    // public $ACCOUNT_NO_IMAGE_PATH = "http://192.168.1.53:8000/images";
+    // public $POST_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/post";
+    // public $PROMO_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/promo";
+    // public $ORDER_SET_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/orderSet";
+
     
+    public $CUSTOMER_IMAGE_PATH = "https://www.samquicksal.com/uploads/customerAccounts/logo";
+    public $ACCOUNT_NO_IMAGE_PATH = "https://www.samquicksal.com/images";
+    public $POST_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/post";
+    public $PROMO_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/promo";
+    public $ORDER_SET_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/orderSet";
+
     public function convertDays($day){
         if ($day == "MO"){
             return "Monday";
@@ -284,30 +296,47 @@ class CustomerController extends Controller
         $finalData = array();
 
         foreach ($orderSets as $orderSet){
+            $foodSets = array();
+            $orderSetFoodSets = OrderSetFoodSet::where('orderSet_id', $orderSet->id)->get();
+            $orderSetFoodItems = OrderSetFoodItem::where('orderSet_id', $orderSet->id)->get();
+
+            // GET FOOD SETS
+            if(!$orderSetFoodSets->isEmpty()){
+                foreach($orderSetFoodSets as $orderSetFoodSet){
+                    $foodItems = array();
+                    $foodSetName = FoodSet::select('foodSetName', 'id')->where('id', $orderSetFoodSet->foodSet_id)->where('restAcc_id', $id)->first();
+                    $foodSetItems = FoodSetItem::where('foodSet_id', $foodSetName->id)->get();
+                    foreach($foodSetItems as $foodSetItem){
+                        $foodItemName = FoodItem::where('id', $foodSetItem->foodItem_id)->where('restAcc_id', $id)->first();
+                        array_push($foodItems, $foodItemName->foodItemName);
+                    }
+                    array_push($foodSets, [
+                        'foodSetName' => $foodSetName->foodSetName,
+                        'foodItem' => $foodItems,
+                    ]);
+                }
+            }
+            
+            // GET OTHER FOOD SET (FOOD ITEMS)
+            if(!$orderSetFoodItems->isEmpty()){
+                $foodItems = array();
+                foreach($orderSetFoodItems as $orderSetFoodItem){
+                    $foodItemName = FoodItem::where('id', $orderSetFoodItem->foodItem_id)->where('restAcc_id', $id)->first();
+                    array_push($foodItems, $foodItemName->foodItemName);
+                }
+                array_push($foodSets, [
+                    'foodSetName' => "Others",
+                    'foodItem' => $foodItems,
+                ]);
+            }
+
             array_push($finalData, [
                 'orderSetName' => $orderSet->orderSetName,
                 'orderSetTagline' => $orderSet->orderSetTagline,
                 'orderSetDescription' => $orderSet->orderSetDescription,
                 'orderSetPrice' => "Price: ".$orderSet->orderSetPrice,
                 'orderSetImage' => $this->ORDER_SET_IMAGE_PATH."/".$id."/".$orderSet->orderSetImage,
-                'foodSet' => [
-                    [
-                        "foodSetName" => "Pork Set1",
-                        "foodItem" => ["Plain Pork 1", "Plain Pork 2", "Plain Pork 1", "Plain Pork 1", "Plain Pork 1", "Plain Pork 2", "Plain Pork 1", "Plain Pork 1", "Plain Pork 1"],
-                    ],
-                    [
-                        "foodSetName" => "Pork Set2",
-                        "foodItem" => ["Plain Pork 1", "Plain Pork 2"],
-                    ],
-                    [
-                        "foodSetName" => "Pork Set3",
-                        "foodItem" => ["Plain Pork 1"],
-                    ],
-                    [
-                        "foodSetName" => "Pork Set4",
-                        "foodItem" => ["Plain Pork 1", "Plain Pork 2", "Plain Pork 1", "Plain Pork 1", "Plain Pork 1"],
-                    ]
-                ],
+                'foodSet' => $foodSets,
             ]);
         }
 
@@ -385,6 +414,13 @@ class CustomerController extends Controller
             }
 
             mkdir('uploads/customerAccounts/logo/'.$customer->id);
+            
+
+            $details = [
+                'applicantName' => $request->name,
+            ];
+
+            Mail::to($request->emailAddress)->send(new RestaurantFormAppreciation($details));
 
             return response()->json([
                 'id' => $customer->id,

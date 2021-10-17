@@ -363,13 +363,14 @@ class RestaurantController extends Controller
         $id = Session::get('loginId');
         if(isset($_GET['q']) && !empty($_GET['q'])){
             $searchText = '%'.$_GET['q'].'%';
-            $foodItems = FoodItem::where('restAcc_Id', '=', $id)
+            $foodItems = FoodItem::where('restAcc_Id', $id)
                         ->where(function ($query) use ($searchText) {
                             $query->where('foodItemName', 'LIKE', $searchText)
                                   ->orWhere('foodItemDescription', 'LIKE', $searchText)
                                   ->orWhere('foodItemPrice', 'LIKE', $searchText);
                         })
-                        ->paginate(2);
+                        ->orderBy('id', 'DESC')
+                        ->paginate(10);
             $foodItems->appends($request->all());
             return view('restaurant.manageRestaurant.foodMenu.foodItem',[
                 'foodItems' => $foodItems,
@@ -377,7 +378,7 @@ class RestaurantController extends Controller
                 'id' => $id
             ]);
         } else {
-            $foodItems = FoodItem::where('restAcc_Id', '=', $id)->paginate(2);
+            $foodItems = FoodItem::where('restAcc_Id', $id)->orderBy('id', 'DESC')->paginate(10);
             return view('restaurant.manageRestaurant.foodMenu.foodItem',[
                 'foodItems' => $foodItems,
                 'title' => 'Manage Food Menu',
@@ -396,7 +397,7 @@ class RestaurantController extends Controller
     }
     public function manageRestaurantPostView(){
         $id = Session::get('loginId');
-        $posts = Post::where('restAcc_id', $id)->get();
+        $posts = Post::where('restAcc_id', $id)->orderBy('id', 'DESC')->get();
         return view('restaurant.manageRestaurant.aboutRestaurant.restaurantPost',[
             'posts' => $posts,
             'title' => 'Manage About Restaurant',
@@ -970,11 +971,12 @@ class RestaurantController extends Controller
         $getrGcashLogo = RestaurantAccount::select('rGcashQrCodeImage')->where('id', $restAccId)->first();
 
         $request->validate([
-            'restaurantGcashQr' => 'required|image',
+            'restaurantGcashQr' => 'required|mimes:jpeg,png,jpg|max:2048',
         ],
         [
             'restaurantGcashQr.required' => 'Gcash Qr Code is required',
-            'restaurantGcashQr.image' => 'Gcash Qr Code must be in jpeg, png, bmp, gif, or svg format',
+            'restaurantGcashQr.mimes' => 'Gcash Qr Code must be in jpeg, png and jpg format',
+            'restaurantGcashQr.max' => 'Gcash Qr Code must not be greater than 2mb',
         ]);
         
         if($getrGcashLogo->rGcashQrCodeImage != "" || $getrGcashLogo->rGcashQrCodeImage != null){
@@ -996,12 +998,14 @@ class RestaurantController extends Controller
         $getrLogo = RestaurantAccount::select('rLogo')->where('id', $restAccId)->first();
 
         $request->validate([
-            'restaurantLogo' => 'required|image',
+            'restaurantLogo' => 'required|mimes:jpeg,png,jpg|max:2048',
         ],
         [
             'restaurantLogo.required' => 'Logo is required',
-            'restaurantLogo.image' => 'Logo must be in jpeg, png, bmp, gif, or svg format',
+            'restaurantLogo.mimes' => 'Logo must be in jpeg, png and jpg format',
+            'restaurantLogo.max' => 'Logo must not be greater than 2mb',
         ]);
+
         if($getrLogo->rLogo != "" || $getrLogo->rLogo != null){
             File::delete(public_path('uploads/restaurantAccounts/logo/'.$restAccId.'/'.$getrLogo->rLogo));
         }
@@ -1014,6 +1018,31 @@ class RestaurantController extends Controller
         ]);
 
         $request->session()->flash('logoUpdated');
+        return redirect('/restaurant/manage-restaurant/about/restaurant-information');
+    }
+    public function updateRestaurantTables(Request $request){
+        $restAccId = Session::get('loginId');
+
+        $request->validate([
+            'rNumberOfTables' => 'required|numeric|min:1',
+            'rCapacityPerTable' => 'required|numeric|min:1',
+        ],
+        [
+            'rNumberOfTables.required' => 'Number of Tables is required',
+            'rNumberOfTables.numeric' => 'Number of Tables must be number only',
+            'rNumberOfTables.min' => 'Number of Tables must be greater than zero',
+            'rCapacityPerTable.required' => 'Capacity per Table is required',
+            'rCapacityPerTable.numeric' => 'Capacity per Table must be number only',
+            'rCapacityPerTable.min' => 'Capacity per Table must be greater than zero',
+        ]);
+
+        RestaurantAccount::where('id', $restAccId)
+        ->update([
+            'rNumberOfTables' => $request->rNumberOfTables,
+            'rCapacityPerTable' => $request->rCapacityPerTable,
+        ]);
+
+        $request->session()->flash('tablesUpdated');
         return redirect('/restaurant/manage-restaurant/about/restaurant-information');
     }
     public function updateRestaurantPassword(Request $request){
@@ -1147,9 +1176,16 @@ class RestaurantController extends Controller
     }
     public function editPost(Request $request, $id){
         $restAccId = Session::get('loginId');
-        $post = Post::where('id', $id)
-                                ->where('restAcc_id', $restAccId)
-                                ->first();
+        
+        $request->validate([
+            'postImage' => 'mimes:jpeg,png,jpg|max:2048',
+        ],
+        [
+            'postImage.mimes' => 'Image be in jpeg, png and jpg format',
+            'postImage.max' => 'Image not be greater than 2mb',
+        ]);
+
+        $post = Post::where('id', $id)->where('restAcc_id', $restAccId)->first();
         if($request->postImage == null){
             Post::where('id', $id)
             ->where('restAcc_id', $restAccId)
@@ -1183,7 +1219,12 @@ class RestaurantController extends Controller
     public function addPost(Request $request){
         $restAccId = Session::get('loginId');
         $request->validate([
-            'postImage' => 'required',
+            'postImage' => 'required|mimes:jpeg,png,jpg|max:2048',
+        ],
+        [
+            'postImage.required' => 'Image is required',
+            'postImage.mimes' => 'Image must be in jpeg, png and jpg format',
+            'postImage.max' => 'Image must not be greater than 2mb',
         ]);
         
         $postImage = time().'.'.$request->postImage->extension();

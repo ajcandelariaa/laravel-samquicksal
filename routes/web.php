@@ -63,6 +63,7 @@ Route::middleware(['restaurantLoggedIn'])->group(function(){
     Route::post('/restaurant/manage-restaurant/about/restaurant-information/updateContact', [RestaurantController::class, 'updateRestaurantContact']);
     Route::post('/restaurant/manage-restaurant/about/restaurant-information/updateEmailAddress', [RestaurantController::class, 'updateEmailAddress']);
     Route::post('/restaurant/manage-restaurant/about/restaurant-information/updateUsername', [RestaurantController::class, 'updateRestaurantUsername']);
+    Route::post('/restaurant/manage-restaurant/about/restaurant-information/updateTables', [RestaurantController::class, 'updateRestaurantTables']);
     Route::post('/restaurant/manage-restaurant/about/restaurant-information/updatePassword', [RestaurantController::class, 'updateRestaurantPassword']);
     Route::post('/restaurant/manage-restaurant/about/restaurant-information/updateLogo', [RestaurantController::class, 'updateRestaurantLogo']);
     Route::post('/restaurant/manage-restaurant/about/restaurant-information/updateGcashQr', [RestaurantController::class, 'updateRestaurantGcashQr']);

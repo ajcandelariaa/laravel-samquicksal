@@ -39,11 +39,10 @@
         </div>
         <div class="w-full bg-adminViewAccountHeaderColor2 mt-3">
             <div class="grid grid-cols-12 items-center text-center font-bold h-16 px-5 bg-adminViewAccountHeaderColor2 shadow-adminDownloadButton font-Montserrat">
-                <div class="col-span-1">ID</div>
-                <div class="col-span-1">Image</div>
-                <div class="col-span-2">Name</div>
-                <div class="col-span-5">Description</div>
-                <div class="col-span-1">Price</div>
+                <div class="col-span-1">No.</div>
+                <div class="col-span-3">Image</div>
+                <div class="col-span-3">Name</div>
+                <div class="col-span-3">Price</div>
                 <div class="col-span-1">Edit</div>
                 <div class="col-span-1">Delete</div>
             </div>
@@ -53,15 +52,14 @@
                 @endphp
                 @foreach ($foodItems as $foodItem)  
                     @if ($count % 2 == 0)
-                        <div class="tr bg-manageFoodItemHeaderBgColor grid grid-cols-12 justify-items-center items-center h-10 px-5 mb-3">
-                            <div class="td col-span-1">{{ $foodItem->id }}</div>
-                            <div class="td col-span-1">
+                        <div class="tr bg-manageFoodItemHeaderBgColor grid grid-cols-12 justify-items-center items-center py-3 px-5 mb-3">
+                            <div class="td col-span-1">{{ $count }}</div>
+                            <div class="td col-span-3">
                                 <span class="hidden">{{ $foodItem->foodItemImage }}</span>
-                                <img src="{{ asset('uploads/restaurantAccounts/foodItem/'.$id.'/'.$foodItem->foodItemImage) }}" alt="foodItemImage" class="w-8 h-7">
+                                <img src="{{ asset('uploads/restaurantAccounts/foodItem/'.$id.'/'.$foodItem->foodItemImage) }}" alt="foodItemImage" class="w-16 h-16">
                             </div>
-                            <div class="td col-span-2">{{ $foodItem->foodItemName }}</div>
-                            <div class="td col-span-5">{{ $foodItem->foodItemDescription }}</div>
-                            <div class="td col-span-1">{{ $foodItem->foodItemPrice }}</div>
+                            <div class="td col-span-3">{{ $foodItem->foodItemName }}</div>
+                            <div class="td col-span-3">{{ $foodItem->foodItemPrice }}</div>
                             <div class="col-span-1">
                                 <a href="/restaurant/manage-restaurant/food-menu/food-item/edit/{{ $foodItem->id }}"><i class="fas fa-edit hover:text-gray-400 transition duration-200 ease-in-out"></i></a>
                             </div>
@@ -70,15 +68,14 @@
                             </div>
                         </div>
                     @else
-                        <div class="tr bg-white grid grid-cols-12 justify-items-center items-center h-10 px-5 mb-3">
-                            <div class="td col-span-1">{{ $foodItem->id }}</div>
-                            <div class="td col-span-1">
+                        <div class="tr bg-white grid grid-cols-12 justify-items-center items-center py-3 px-5 mb-3">
+                            <div class="td col-span-1">{{ $count }}</div>
+                            <div class="td col-span-3">
                                 <span class="hidden">{{ $foodItem->foodItemImage }}</span>
-                                <img src="{{ asset('uploads/restaurantAccounts/foodItem/'.$id.'/'.$foodItem->foodItemImage) }}" alt="foodItemImage" class="w-8 h-7">
+                                <img src="{{ asset('uploads/restaurantAccounts/foodItem/'.$id.'/'.$foodItem->foodItemImage) }}" alt="foodItemImage" class="w-16 h-16">
                             </div>
-                            <div class="td col-span-2">{{ $foodItem->foodItemName }}</div>
-                            <div class="td col-span-5">{{ $foodItem->foodItemDescription }}</div>
-                            <div class="td col-span-1">{{ $foodItem->foodItemPrice }}</div>
+                            <div class="td col-span-3">{{ $foodItem->foodItemName }}</div>
+                            <div class="td col-span-3">{{ $foodItem->foodItemPrice }}</div>
                             <div class="col-span-1">
                                 <a href="/restaurant/manage-restaurant/food-menu/food-item/edit/{{ $foodItem->id }}"><i class="fas fa-edit hover:text-gray-400 transition duration-200 ease-in-out"></i></a>
                             </div>
