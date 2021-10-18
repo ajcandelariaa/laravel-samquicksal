@@ -19,7 +19,7 @@ class CreateOrderSetsTable extends Migration
             $table->string('orderSetName');
             $table->mediumText('orderSetTagline');
             $table->mediumText('orderSetDescription');
-            $table->double('orderSetPrice');
+            $table->decimal('orderSetPrice', 5, 2);
             $table->string('orderSetImage');
             $table->timestamps();
             $table->foreign('restAcc_id')->references('id')->on('restaurant_accounts')->onDelete('cascade');

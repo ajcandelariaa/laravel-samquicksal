@@ -66,7 +66,7 @@
                 <div class="bg-adminViewAccountHeaderColor2 grid grid-cols-1 gap-y-2">
                     <div class="py-3"></div>
                     <div class="grid grid-cols-2 w-full items-center bg-white pl-5 pr-11 py-5">
-                        <p class="col-span-1 text-submitButton font-bold">No. of Cancellation</p>
+                        <p class="col-span-1 text-submitButton font-bold">No. of No Show</p>
                         <p class="col-span-1 place-self-end">{{ $noShow->noOfNoShows }}</p>
                     </div>
                     <div class="grid grid-cols-2 w-full items-center bg-white pl-5 pr-11 py-5">

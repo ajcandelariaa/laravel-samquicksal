@@ -50,16 +50,17 @@
                 </form>
             </div>
             <div>
-                <button id="btn-add-item" class="bg-submitButton text-white w-36 h-9 rounded-md font-Montserrat hover:bg-btnHoverColor transition duration-300 ease-in-out "><i class="fas fa-plus mr-3"></i>Promo</button>
+                <a href="/restaurant/manage-restaurant/promo/add" class="bg-submitButton text-white px-10 py-3 rounded-md font-Montserrat hover:bg-btnHoverColor transition duration-300 ease-in-out ">
+                    <i class="fas fa-plus mr-3"></i>Promo
+                </a>
             </div>
         </div>
         <div class="w-full bg-adminViewAccountHeaderColor2 mt-3">
-            <div class="grid grid-cols-12 items-center text-center font-bold h-16 px-5 bg-adminViewAccountHeaderColor2 shadow-adminDownloadButton font-Montserrat">
-                <div class="col-span-1">ID</div>
-                <div class="col-span-1">Image</div>
+            <div class="grid grid-cols-10 items-center text-center font-bold h-16 px-5 bg-adminViewAccountHeaderColor2 shadow-adminDownloadButton font-Montserrat">
+                <div class="col-span-1">No.</div>
+                <div class="col-span-3">Image</div>
                 <div class="col-span-2">Title</div>
-                <div class="col-span-5">Description</div>
-                <div class="col-span-1">Status</div>
+                <div class="col-span-2">Status</div>
                 <div class="col-span-1">Edit</div>
                 <div class="col-span-1">Delete</div>
             </div>
@@ -69,18 +70,17 @@
                 @endphp
                 @foreach ($promos as $promo)  
                     @if ($count % 2 == 0)
-                        <div class="tr bg-manageFoodItemHeaderBgColor grid grid-cols-12 justify-items-center items-center h-10 px-5 mb-3">
-                            <div class="td col-span-1">{{ $promo->id }}</div>
-                            <div class="td col-span-1">
-                                <img src="{{ asset('uploads/restaurantAccounts/promo/'.$id.'/'.$promo->promoImage) }}" alt="promoImage" class="w-8 h-7">
+                        <div class="tr bg-manageFoodItemHeaderBgColor grid grid-cols-10 justify-items-center items-center py-3 px-5 mb-3">
+                            <div class="td col-span-1">{{ $count }}</div>
+                            <div class="td col-span-3">
+                                <img src="{{ asset('uploads/restaurantAccounts/promo/'.$id.'/'.$promo->promoImage) }}" alt="promoImage" class="w-12 h-12">
                             </div>
                             <div class="td col-span-2">{{ $promo->promoTitle }}</div>
-                            <div class="td col-span-5">{{ $promo->promoDescription }}</div>
-                            <div class="td col-span-1">
+                            <div class="td col-span-2">
                                 @if ($promo->promoPosted == "Draft")
-                                    <a href="/restaurant/manage-restaurant/promo/promoPost/{{ $promo->id }}" class="text-manageRestaurantSidebarColor inline-block text-center leading-5 w-20 h-6 rounded-md border border-gray-400 hover:bg-gray-200">{{ $promo->promoPosted }}</a>
+                                <a href="/restaurant/manage-restaurant/promo/promoPost/{{ $promo->id }}" class="text-manageRestaurantSidebarColor py-2 px-5 border-multiStepBoxBorder rounded-md border-gray-400 hover:bg-gray-200">{{ $promo->promoPosted }}</a>
                                 @else
-                                    <a href="/restaurant/manage-restaurant/promo/promoDraft/{{ $promo->id }}" class="text-postedStatus inline-block text-center leading-5 w-20 h-6 rounded-md border border-gray-400 hover:bg-gray-200">{{ $promo->promoPosted }}</a>
+                                    <a href="/restaurant/manage-restaurant/promo/promoDraft/{{ $promo->id }}" class="text-postedStatus py-2 px-5 border-multiStepBoxBorder rounded-md border-postedStatus hover:bg-gray-200">{{ $promo->promoPosted }}</a>
                                 @endif
                             </div>
                             <div class="col-span-1">
@@ -91,22 +91,21 @@
                             </div>
                         </div>
                     @else
-                        <div class="tr bg-white grid grid-cols-12 justify-items-center items-center h-10 px-5 mb-3">
-                            <div class="td col-span-1">{{ $promo->id }}</div>
-                            <div class="td col-span-1">
-                                <img src="{{ asset('uploads/restaurantAccounts/promo/'.$id.'/'.$promo->promoImage) }}" alt="promoImage" class="w-8 h-7">
+                        <div class="tr bg-white grid grid-cols-10 justify-items-center items-center py-3 px-5 mb-3">
+                            <div class="td col-span-1">{{ $count }}</div>
+                            <div class="td col-span-3">
+                                <img src="{{ asset('uploads/restaurantAccounts/promo/'.$id.'/'.$promo->promoImage) }}" alt="promoImage" class="w-12 h-12">
                             </div>
                             <div class="td col-span-2">{{ $promo->promoTitle }}</div>
-                            <div class="td col-span-5">{{ $promo->promoDescription }}</div>
-                            <div class="td col-span-1">
+                            <div class="td col-span-2">
                                 @if ($promo->promoPosted == "Draft")
-                                    <a href="/restaurant/manage-restaurant/promo/promoPost/{{ $promo->id }}" class="text-manageRestaurantSidebarColor inline-block text-center leading-5 w-20 h-6 rounded-md border border-gray-400 hover:bg-gray-200">{{ $promo->promoPosted }}</a>
+                                    <a href="/restaurant/manage-restaurant/promo/promoPost/{{ $promo->id }}" class="text-manageRestaurantSidebarColor py-2 px-5 border-multiStepBoxBorder rounded-md border-gray-400 hover:bg-gray-200">{{ $promo->promoPosted }}</a>
                                 @else
-                                    <a href="/restaurant/manage-restaurant/promo/promoDraft/{{ $promo->id }}" class="text-postedStatus inline-block text-center leading-5 w-20 h-6 rounded-md border border-gray-400 hover:bg-gray-200">{{ $promo->promoPosted }}</a>
+                                    <a href="/restaurant/manage-restaurant/promo/promoDraft/{{ $promo->id }}" class="text-postedStatus py-2 px-5 border-multiStepBoxBorder rounded-md border-postedStatus hover:bg-gray-200">{{ $promo->promoPosted }}</a>
                                 @endif
                             </div>
                             <div class="col-span-1">
-                                <a href="/restaurant/manage-restaurant/promo/edit/{{ $promo->id }}"><i class="fas fa-edit hover:text-gray-400 transition duration-300 ease-in-out"></i></a>
+                                <a href="/restaurant/manage-restaurant/promo/edit/{{ $promo->id }}"><i class="fas fa-edit hover:text-gray-400 transition duration-300 ease-in-out "></i></a>
                             </div>
                             <div class="col-span-1">
                                 <a href="/restaurant/manage-restaurant/promo/delete/{{ $promo->id }}" class="btn-delete hover:text-gray-400 transition duration-300 ease-in-out"><i class="fas fa-trash-alt"></i></a>
@@ -130,42 +129,6 @@
             {{ $promos->links() }}
         </div>
 
-        <div class="create-form" id="create-form">
-            <div class="modal-header flex justify-end px-4 py-2">
-                <button id="btn-close" class="close-btn text-xl font-bold">&times;</button>
-            </div>
-            <h1 class="text-center text-submitButton font-bold text-2xl font-Montserrat">Create Promo</h1>
-            <form action="/restaurant/manage-restaurant/promo/add" method="POST" enctype="multipart/form-data">
-                @csrf
-                <div class="grid grid-cols-5 w-9/12 gap-y-5 mx-auto mt-10 font-Montserrat ">
-                    <div class="col-span-1">Title</div>
-                    <div class="col-span-1">:</div>
-                    <div class="col-span-3">
-                        <input type="text" name="promoTitle" class="border rounded-md focus:border-black w-full py-1 px-2 text-sm focus:outline-non text-gray-700">
-                    </div>
-                    
-                    <div class="col-span-1">Description</div>
-                    <div class="col-span-1">:</div>
-                    <div class="col-span-3"><input type="text" name="promoDescription" class="border rounded-md focus:border-black w-full py-1 px-2 text-sm focus:outline-non text-gray-700"></div>
-                    
-                    <div class="col-span-1">Mechanics</div>
-                    <div class="col-span-1">:</div>
-                    <div class="col-span-3"><input type="text" name="promoMechanics" class="border rounded-md focus:border-black w-full py-1 px-2 text-sm focus:outline-non text-gray-700"></div>
-                    
-                    <div class="col-span-1">Image</div>
-                    <div class="col-span-1">:</div>
-                    <div class="col-span-3"><input type="file" name="promoImage" onchange="previewFile(this);" class="border rounded-md focus:border-black w-full py-1 px-2 text-sm focus:outline-non text-gray-700"></div>
-
-                    <div class="col-span-full w-28 justify-self-center h-28">
-                        <img src="{{ asset('images/defaultAccountImage.png') }}" alt="promoImage" id="previewImg" class="bg-cover">
-                    </div>
-                </div>
-                <div class="text-center mt-5">
-                    <button class="bg-submitButton text-white rounded-full w-32 h-10 text-sm hover:bg-darkerSubmitButton transition duration-200 ease-in-out uppercase font-Montserrat font-bold" type="submit">Add</button>
-                </div>
-            </form>
-        </div> 
-        <div class="overlay"></div>
     </div>
 </div>
 @endsection

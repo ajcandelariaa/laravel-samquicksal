@@ -22,22 +22,23 @@ use App\Models\UnavailableDate;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\RestaurantFormAppreciation;
+use App\Models\PromoMechanics;
 
 class CustomerController extends Controller
 {
-    // public $RESTAURANT_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/logo";
-    // public $CUSTOMER_IMAGE_PATH = "http://192.168.1.53:8000/uploads/customerAccounts/logo";
-    // public $ACCOUNT_NO_IMAGE_PATH = "http://192.168.1.53:8000/images";
-    // public $POST_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/post";
-    // public $PROMO_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/promo";
-    // public $ORDER_SET_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/orderSet";
+    public $RESTAURANT_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/logo";
+    public $CUSTOMER_IMAGE_PATH = "http://192.168.1.53:8000/uploads/customerAccounts/logo";
+    public $ACCOUNT_NO_IMAGE_PATH = "http://192.168.1.53:8000/images";
+    public $POST_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/post";
+    public $PROMO_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/promo";
+    public $ORDER_SET_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/orderSet";
 
     
-    public $CUSTOMER_IMAGE_PATH = "https://www.samquicksal.com/uploads/customerAccounts/logo";
-    public $ACCOUNT_NO_IMAGE_PATH = "https://www.samquicksal.com/images";
-    public $POST_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/post";
-    public $PROMO_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/promo";
-    public $ORDER_SET_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/orderSet";
+    // public $CUSTOMER_IMAGE_PATH = "https://www.samquicksal.com/uploads/customerAccounts/logo";
+    // public $ACCOUNT_NO_IMAGE_PATH = "https://www.samquicksal.com/images";
+    // public $POST_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/post";
+    // public $PROMO_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/promo";
+    // public $ORDER_SET_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/orderSet";
 
     public function convertDays($day){
         if ($day == "MO"){
@@ -56,6 +57,49 @@ class CustomerController extends Controller
             return "Sunday";
         } else {
             return "";
+        }
+    }
+    public function convertMonths($month){
+        switch ($month) {
+            case '1':
+                return "January";
+                break;
+            case '2':
+                return "February";
+                break;
+            case '3':
+                return "March";
+                break;
+            case '4':
+                return "April";
+                break;
+            case '5':
+                return "May";
+                break;
+            case '6':
+                return "June";
+                break;
+            case '7':
+                return "July";
+                break;
+            case '8':
+                return "August";
+                break;
+            case '9':
+                return "September";
+                break;
+            case '10':
+                return "October";
+                break;
+            case '11':
+                return "November";
+                break;
+            case '12':
+                return "December";
+                break;
+            default:
+                return "";
+                break;
         }
     }
 
@@ -178,6 +222,37 @@ class CustomerController extends Controller
         ]);
     }
     // -------RESTAURANT ABOUT BY ID------------ //
+    public function getRestaurantsPromoDetailInfo($promoId, $restaurantId){
+        $finalMechanics = array();
+        $promo = Promo::where('id', $promoId)->first();
+        $mechanics = PromoMechanics::where('promo_id', $promoId)->get();
+        
+        foreach($mechanics as $mechanic){
+            array_push($finalMechanics, [
+                'mechanic' => $mechanic->promoMechanic,
+            ]);
+        }
+
+        $orderdate1 = explode('-', $promo->promoStartDate);
+        $month1 = $this->convertMonths($orderdate1[1]);
+        $year1 = $orderdate1[0];
+        $day1  = $orderdate1[2];
+
+        $orderdate2 = explode('-', $promo->promoEndDate);
+        $month2 = $this->convertMonths($orderdate2[1]);
+        $year2 = $orderdate2[0];
+        $day2  = $orderdate2[2];
+        
+        return response()->json([
+            'promoTitle' => $promo->promoTitle,
+            'promoDescription' => $promo->promoDescription,
+            'promoStartDate' => $month1." ".$day1.", ".$year1,
+            'promoEndDate' => $month2." ".$day2.", ".$year2,
+            'promoImage' => $this->PROMO_IMAGE_PATH."/".$restaurantId."/".$promo->promoImage,
+            'promoMechanics' => $finalMechanics,
+        ]);
+
+    }
     public function getRestaurantsRewardsInfo($id){
         $finalStampTasks = array();
         $stamp = StampCard::where('restAcc_id', $id)->first();
@@ -215,47 +290,7 @@ class CustomerController extends Controller
             }
     
             $orderdate = explode('-', $stamp->stampValidity);
-            switch ($orderdate[1]) {
-                case '1':
-                    $month = "January";
-                    break;
-                case '2':
-                    $month = "February";
-                    break;
-                case '3':
-                    $month = "March";
-                    break;
-                case '4':
-                    $month = "April";
-                    break;
-                case '5':
-                    $month = "May";
-                    break;
-                case '6':
-                    $month = "June";
-                    break;
-                case '7':
-                    $month = "July";
-                    break;
-                case '8':
-                    $month = "August";
-                    break;
-                case '9':
-                    $month = "September";
-                    break;
-                case '10':
-                    $month = "October";
-                    break;
-                case '11':
-                    $month = "November";
-                    break;
-                case '12':
-                    $month = "December";
-                    break;
-                default:
-                    $month = "";
-                    break;
-            }
+            $month = $this->convertMonths($orderdate[1]);
             $year = $orderdate[0];
             $day  = $orderdate[2];
             $finalValidity = "Valid Until: ".$month." ".$day.", ".$year;
@@ -278,7 +313,7 @@ class CustomerController extends Controller
             ]);
         }
         
-        if($promos == null){
+        if($promos->isEmpty()){
             $finalPromos = null;
         }
 
@@ -342,7 +377,75 @@ class CustomerController extends Controller
 
         return response()->json($finalData);
     }
+    public function getListOfPromos(){
+        $finalData = array();
+
+        $promos = Promo::orderBy('id', 'DESC')->where('promoPosted', "Posted")->get();
+
+        foreach ($promos as $promo){
+            $restaurantInfo = RestaurantAccount::select('id', 'rLogo', 'rAddress')->where('id', $promo->restAcc_id)->first();
+            $finalImageUrl = "";
+            if ($restaurantInfo->rLogo == ""){
+                $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+            } else {
+                $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurantInfo->id.'/'. $restaurantInfo->rLogo;
+            }
+            
+
+            $orderdate1 = explode('-', $promo->promoStartDate);
+            $month1 = $this->convertMonths($orderdate1[1]);
+            $year1 = $orderdate1[0];
+            $day1  = $orderdate1[2];
+
+            $orderdate2 = explode('-', $promo->promoEndDate);
+            $month2 = $this->convertMonths($orderdate2[1]);
+            $year2 = $orderdate2[0];
+            $day2  = $orderdate2[2];
+        
+            array_push($finalData, [
+                'restaurantImage' => $finalImageUrl,
+                'restaurantAddress' => $restaurantInfo->rAddress,
+                'restaurantId' => $restaurantInfo->id,
+                'promoId' => $promo->id,
+                'promoTitle' => $promo->promoTitle,
+                'promoStartDate' => $month1." ".$day1.", ".$year1,
+                'promoEndDate' => $month2." ".$day2.", ".$year2,
+            ]);
+        }
+        return response()->json($finalData);
+    }
+    public function getRestaurantChooseOrderSet($id){
+        $finalData = array();
+        $restaurant = RestaurantAccount::select('rName')->where('id', $id)->first();
+        $orderSets = OrderSet::select('id', 'orderSetName', 'orderSetTagline', 'orderSetImage')->where('restAcc_id', $id)->get();
+        foreach ($orderSets as $orderSet){
+            array_push($finalData, [
+                'orderSetId' => $orderSet->id,
+                'orderSetName' => $orderSet->orderSetName,
+                'orderSetTagline' => $orderSet->orderSetTagline,
+                'orderSetImage' => $this->ORDER_SET_IMAGE_PATH."/".$id."/".$orderSet->orderSetImage,
+            ]);
+        }
+        return response()->json([
+            'restaurantName' => $restaurant->rName,
+            'orderSets' => $finalData,
+        ]);
+    }
     
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -390,11 +493,11 @@ class CustomerController extends Controller
             ]);
         } else {
             
-            $details = [
-                'applicantName' => $request->name,
-            ];
+            // $details = [
+            //     'applicantName' => $request->name,
+            // ];
 
-            Mail::to($request->emailAddress)->send(new RestaurantFormAppreciation($details));
+            // Mail::to($request->emailAddress)->send(new RestaurantFormAppreciation($details));
 
             $customer = CustomerAccount::create([
                 'name' => $request->name,

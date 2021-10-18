@@ -64,3 +64,7 @@ $('#stampCardForm').submit(function(e) {
         }
     });
   });
+
+
+
+//   PARA TO SA CLIENT VALIDATION

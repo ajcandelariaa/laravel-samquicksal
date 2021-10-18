@@ -14,7 +14,8 @@ class Promo extends Model
         'promoPosted',
         'promoTitle',
         'promoDescription',
-        'promoMechanics',
+        'promoStartDate',
+        'promoEndDate',
         'promoImage',
     ];
 }

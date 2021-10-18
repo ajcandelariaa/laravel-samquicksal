@@ -18,7 +18,7 @@ class CreateFoodSetsTable extends Migration
             $table->unsignedBigInteger('restAcc_id');
             $table->string('foodSetName');
             $table->mediumText('foodSetDescription');
-            $table->double('foodSetPrice');
+            $table->decimal('foodSetPrice', 5, 2);
             $table->string('foodSetImage');
             $table->timestamps();
             $table->foreign('restAcc_id')->references('id')->on('restaurant_accounts')->onDelete('cascade');

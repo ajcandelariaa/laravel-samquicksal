@@ -77,7 +77,9 @@ Route::middleware(['restaurantLoggedIn'])->group(function(){
     Route::get('/restaurant/manage-restaurant/promo/edit/{id}', [RestaurantController::class, 'editPromoView']);
     Route::get('/restaurant/manage-restaurant/promo/delete/{id}', [RestaurantController::class, 'deletePromo']);
     Route::post('/restaurant/manage-restaurant/promo/edit/{id}', [RestaurantController::class, 'editPromo']);
+    Route::get('/restaurant/manage-restaurant/promo/add', [RestaurantController::class, 'addPromoView']);
     Route::post('/restaurant/manage-restaurant/promo/add', [RestaurantController::class, 'addPromo']);
+    Route::get('/restaurant/manage-restaurant/promo/mechanics/delete/{id}/{currentPromoId}', [RestaurantController::class, 'deletePromoMechanic']);
     Route::get('/restaurant/manage-restaurant/promo/promoDraft/{id}', [RestaurantController::class, 'promoDraft']);
     Route::get('/restaurant/manage-restaurant/promo/promoPost/{id}', [RestaurantController::class, 'promoPost']);
     // -------STORE HOURS------------ //

@@ -21,8 +21,11 @@ Route::get('/customer/test-restaurants', [CustomerController::class, 'restaurant
 
 
 Route::get('/customer/restaurants', [CustomerController::class, 'getListOfRestaurants']);
+Route::get('/customer/promos', [CustomerController::class, 'getListOfPromos']);
 Route::get('/customer/get-restaurants/about/{id}', [CustomerController::class, 'getRestaurantAboutInfo']);
 Route::get('/customer/get-restaurants/rewards/{id}', [CustomerController::class, 'getRestaurantsRewardsInfo']);
+Route::get('/customer/get-restaurants/promo/detail/{promoId}/{restaurantId}', [CustomerController::class, 'getRestaurantsPromoDetailInfo']);
+Route::get('/customer/get-restaurants/choose-order-set/{id}', [CustomerController::class, 'getRestaurantChooseOrderSet']);
 Route::get('/customer/get-restaurants/menu/{id}', [CustomerController::class, 'getRestaurantsMenuInfo']);
 Route::get('/customer/get-homepage-info/{id}', [CustomerController::class, 'getCustomerHomepageInfo']);
 Route::get('/customer/get-account-info/{id}', [CustomerController::class, 'getCustomerAccountInfo']);

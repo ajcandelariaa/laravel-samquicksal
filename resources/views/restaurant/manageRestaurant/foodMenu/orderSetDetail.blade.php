@@ -151,7 +151,7 @@
                 <div class="mt-4">
                     <div class="flex justify-between">
                         <p class="text-4xl uppercase font-bold">{{ $orderSet->orderSetName }}</p>
-                        <p class="text-lg font-bold text-manageRestaurantSidebarColor">Price: <span class="text-red-800"> Php {{ $orderSet->orderSetPrice }} </span></p>
+                        <p class="text-lg font-bold text-manageRestaurantSidebarColor">Price: <span class="text-red-800"> ₱ {{ $orderSet->orderSetPrice }} </span></p>
                     </div>
                     <p class="mt-3 text-sm">{{ $orderSet->orderSetDescription }}</p>
                 </div>
@@ -169,12 +169,12 @@
                                 <button id="btn-add-food-set" class="bg-submitButton text-white w-36 h-9 rounded-md"><i class="fas fa-plus mr-3"></i>Food Set</button>
                             </div>
                         </div>
-                        <div class="grid grid-cols-11 items-center text-center font-bold h-16 px-5">
-                            <div class="col-span-1">Image</div>
-                            <div class="col-span-1">Id</div>
-                            <div class="col-span-2">Name</div>
-                            <div class="col-span-5">Description</div>
-                            <div class="col-span-1">Price</div>
+                        <div class="grid grid-cols-10 items-center text-center font-bold h-16 px-5">
+                            <div class="col-span-1">No.</div>
+                            <div class="col-span-2">Image</div>
+                            <div class="col-span-3">Name</div>
+                            <div class="col-span-2">Price</div>
+                            <div class="col-span-1">View</div>
                             <div class="col-span-1">Delete</div>
                         </div>
                         @if (!$orderSetFoodSets->isEmpty())
@@ -185,27 +185,31 @@
                                 @foreach ($foodSets as $foodSet)
                                     @if ($orderSetFoodSet->foodSet_id == $foodSet->id)
                                         @if ($count % 2 == 0)
-                                            <div class="bg-manageFoodItemHeaderBgColor grid grid-cols-11 justify-items-center items-center h-10 px-5 mb-2">
-                                                <div class="col-span-1">
+                                            <div class="bg-manageFoodItemHeaderBgColor grid grid-cols-10 justify-items-center items-center h-10 px-5 mb-2">
+                                                <div class="col-span-1">{{ $count }}</div>
+                                                <div class="col-span-2">
                                                     <img src="{{ asset('uploads/restaurantAccounts/foodSet/'.$id.'/'.$foodSet->foodSetImage) }}" alt="foodSetImage" class="w-8 h-7">
                                                 </div>
-                                                <div class="col-span-1">{{ $foodSet->id }}</div>
-                                                <div class="col-span-2">{{ $foodSet->foodSetName }}</div>
-                                                <div class="col-span-5">{{ $foodSet->foodSetDescription }}</div>
-                                                <div class="col-span-1">{{ $foodSet->foodSetPrice }}</div>
+                                                <div class="col-span-3">{{ $foodSet->foodSetName }}</div>
+                                                <div class="col-span-2">₱ {{ $foodSet->foodSetPrice }}</div>
+                                                <div class="col-span-1">
+                                                    <a href="/restaurant/manage-restaurant/food-menu/food-set/detail/{{ $foodSet->id }}" target="_blank"><i class="fas fa-eye"></i></a>
+                                                </div>
                                                 <div class="col-span-1">
                                                     <a href="/restaurant/manage-restaurant/food-menu/order-set/food-set/delete/{{ $orderSet->id }}/{{ $orderSetFoodSet->id }}" class="btn-delete2"><i class="fas fa-trash-alt"></i></a>
                                                 </div>
                                             </div>
                                         @else
-                                            <div class="bg-white grid grid-cols-11 justify-items-center items-center h-10 px-5 mb-2">
-                                                <div class="col-span-1">
+                                            <div class="bg-white grid grid-cols-10 justify-items-center items-center h-10 px-5 mb-2">
+                                                <div class="col-span-1">{{ $count }}</div>
+                                                <div class="col-span-2">
                                                     <img src="{{ asset('uploads/restaurantAccounts/foodSet/'.$id.'/'.$foodSet->foodSetImage) }}" alt="foodSetImage" class="w-8 h-7">
                                                 </div>
-                                                <div class="col-span-1">{{ $foodSet->id }}</div>
-                                                <div class="col-span-2">{{ $foodSet->foodSetName }}</div>
-                                                <div class="col-span-5">{{ $foodSet->foodSetDescription }}</div>
-                                                <div class="col-span-1">{{ $foodSet->foodSetPrice }}</div>
+                                                <div class="col-span-3">{{ $foodSet->foodSetName }}</div>
+                                                <div class="col-span-2">₱ {{ $foodSet->foodSetPrice }}</div>
+                                                <div class="col-span-1">
+                                                    <a href="/restaurant/manage-restaurant/food-menu/food-set/detail/{{ $foodSet->id }}" target="_blank"><i class="fas fa-eye"></i></a>
+                                                </div>
                                                 <div class="col-span-1">
                                                     <a href="/restaurant/manage-restaurant/food-menu/order-set/food-set/delete/{{ $orderSet->id }}/{{ $orderSetFoodSet->id }}" class="btn-delete2"><i class="fas fa-trash-alt"></i></a>
                                                 </div>
@@ -237,12 +241,12 @@
                             <button id="btn-add-food-item" class="bg-submitButton text-white w-36 h-9 rounded-md"><i class="fas fa-plus mr-3"></i>Food Item</button>
                         </div>
                     </div>
-                    <div class="grid grid-cols-11 items-center text-center font-bold h-16 px-5">
-                        <div class="col-span-1">Image</div>
-                        <div class="col-span-1">Id</div>
-                        <div class="col-span-2">Name</div>
-                        <div class="col-span-5">Description</div>
-                        <div class="col-span-1">Price</div>
+                    <div class="grid grid-cols-10 items-center text-center font-bold h-16 px-5">
+                        <div class="col-span-1">No.</div>
+                        <div class="col-span-2">Image</div>
+                        <div class="col-span-3">Name</div>
+                        <div class="col-span-2">Price</div>
+                        <div class="col-span-1">View</div>
                         <div class="col-span-1">Delete</div>
                     </div>
                     @if (!$orderSetFoodItems->isEmpty())
@@ -253,27 +257,31 @@
                                 @foreach ($foodItems as $foodItem)
                                     @if ($orderSetFoodItem->foodItem_id == $foodItem->id)
                                         @if ($count % 2 == 0)
-                                            <div class="bg-manageFoodItemHeaderBgColor grid grid-cols-11 justify-items-center items-center h-10 px-5 mb-2">
-                                                <div class="col-span-1">
+                                            <div class="bg-manageFoodItemHeaderBgColor grid grid-cols-10 justify-items-center items-center h-10 px-5 mb-2">
+                                                <div class="col-span-1">{{ $count }}</div>
+                                                <div class="col-span-2">
                                                     <img src="{{ asset('uploads/restaurantAccounts/foodItem/'.$id.'/'.$foodItem->foodItemImage) }}" alt="foodItemImage" class="w-8 h-7">
                                                 </div>
-                                                <div class="col-span-1">{{ $foodItem->id }}</div>
-                                                <div class="col-span-2">{{ $foodItem->foodItemName }}</div>
-                                                <div class="col-span-5">{{ $foodItem->foodItemDescription }}</div>
-                                                <div class="col-span-1">{{ $foodItem->foodItemPrice }}</div>
+                                                <div class="col-span-3">{{ $foodItem->foodItemName }}</div>
+                                                <div class="col-span-2">₱ {{ $foodItem->foodItemPrice }}</div>
+                                                <div class="col-span-1">
+                                                    <a href="/restaurant/manage-restaurant/food-menu/food-item/edit/{{ $orderSetFoodItem->foodItem_id }}" target="_blank"><i class="fas fa-eye"></i></a>
+                                                </div>
                                                 <div class="col-span-1">
                                                     <a href="/restaurant/manage-restaurant/food-menu/order-set/food-item/delete/{{ $orderSet->id }}/{{ $orderSetFoodItem->id }}" class="btn-delete3"><i class="fas fa-trash-alt"></i></a>
                                                 </div>
                                             </div>
                                         @else
-                                            <div class="bg-white grid grid-cols-11 justify-items-center items-center h-10 px-5 mb-2">
-                                                <div class="col-span-1">
+                                            <div class="bg-white grid grid-cols-10 justify-items-center items-center h-10 px-5 mb-2">
+                                                <div class="col-span-1">{{ $count }}</div>
+                                                <div class="col-span-2">
                                                     <img src="{{ asset('uploads/restaurantAccounts/foodItem/'.$id.'/'.$foodItem->foodItemImage) }}" alt="foodItemImage" class="w-8 h-7">
                                                 </div>
-                                                <div class="col-span-1">{{ $foodItem->id }}</div>
-                                                <div class="col-span-2">{{ $foodItem->foodItemName }}</div>
-                                                <div class="col-span-5">{{ $foodItem->foodItemDescription }}</div>
-                                                <div class="col-span-1">{{ $foodItem->foodItemPrice }}</div>
+                                                <div class="col-span-3">{{ $foodItem->foodItemName }}</div>
+                                                <div class="col-span-2">₱ {{ $foodItem->foodItemPrice }}</div>
+                                                <div class="col-span-1">
+                                                    <a href="/restaurant/manage-restaurant/food-menu/food-item/edit/{{ $orderSetFoodItem->foodItem_id }}" target="_blank"><i class="fas fa-eye"></i></a>
+                                                </div>
                                                 <div class="col-span-1">
                                                     <a href="/restaurant/manage-restaurant/food-menu/order-set/food-item/delete/{{ $orderSet->id }}/{{ $orderSetFoodItem->id }}" class="btn-delete3"><i class="fas fa-trash-alt"></i></a>
                                                 </div>
@@ -309,16 +317,15 @@
             </div>
             @csrf
             <div class="w-full bg-adminViewAccountHeaderColor2 mt-3">
-                <div class="grid grid-cols-12 items-center text-center font-bold h-16 px-5">
+                <div class="grid grid-cols-10 items-center text-center font-bold h-16 px-5">
                     <div class="col-span-2 bg-white py-2">
                         <input type="checkbox" name="select-all-food-set" id="select-all-food-set" class="mr-4"> 
                         <label class="text-manageRestaurantSidebarColorActive">Select All</label>
                     </div>
-                    <div class="col-span-1"> </div>
-                    <div class="col-span-1">Id</div>
-                    <div class="col-span-2">Name</div>
-                    <div class="col-span-5">Description</div>
-                    <div class="col-span-1">Price</div>
+                    <div class="col-span-2"> </div>
+                    <div class="col-span-1">No. </div>
+                    <div class="col-span-3">Name</div>
+                    <div class="col-span-2">Price</div>
                 </div>
                 @if (!$foodSets->isEmpty())
                     @php
@@ -326,32 +333,30 @@
                     @endphp
                     @foreach ($foodSets as $foodSet)  
                         @if ($count % 2 == 0)
-                            <div class="bg-manageFoodItemHeaderBgColor grid grid-cols-12 justify-items-center items-center h-10 px-5 mb-2">
+                            <div class="bg-manageFoodItemHeaderBgColor grid grid-cols-10 justify-items-center items-center h-10 px-5 mb-2">
                                 <div class="col-span-2">
                                     <input type="checkbox" class="foodSet" name="foodSet[]" value="{{ $foodSet->id }}">
                                 </div>
-                                <div class="col-span-1">
+                                <div class="col-span-2">
                                     <span class="hidden">{{ $foodSet->foodSetImage }}</span>
                                     <img src="{{ asset('uploads/restaurantAccounts/foodSet/'.$id.'/'.$foodSet->foodSetImage) }}" alt="foodSetImage" class="w-8 h-7">
                                 </div>
-                                <div class="col-span-1">{{ $foodSet->id }}</div>
-                                <div class="col-span-2">{{ $foodSet->foodSetName }}</div>
-                                <div class="col-span-5">{{ $foodSet->foodSetDescription }}</div>
-                                <div class="col-span-1">{{ $foodSet->foodSetPrice }}</div>
+                                <div class="col-span-1">{{ $count }}</div>
+                                <div class="col-span-3">{{ $foodSet->foodSetName }}</div>
+                                <div class="col-span-2">₱ {{ $foodSet->foodSetPrice }}</div>
                             </div>
                         @else
-                            <div class="bg-white grid grid-cols-12 justify-items-center items-center h-10 px-5 mb-2">
+                            <div class="bg-white grid grid-cols-10 justify-items-center items-center h-10 px-5 mb-2">
                                 <div class="col-span-2">
                                     <input type="checkbox" class="foodSet" name="foodSet[]" value="{{ $foodSet->id }}">
                                 </div>
-                                <div class="col-span-1">
+                                <div class="col-span-2">
                                     <span class="hidden">{{ $foodSet->foodSetImage }}</span>
                                     <img src="{{ asset('uploads/restaurantAccounts/foodSet/'.$id.'/'.$foodSet->foodSetImage) }}" alt="foodSetImage" class="w-8 h-7">
                                 </div>
-                                <div class="col-span-1">{{ $foodSet->id }}</div>
-                                <div class="col-span-2">{{ $foodSet->foodSetName }}</div>
-                                <div class="col-span-5">{{ $foodSet->foodSetDescription }}</div>
-                                <div class="col-span-1">{{ $foodSet->foodSetPrice }}</div>
+                                <div class="col-span-1">{{ $count }}</div>
+                                <div class="col-span-3">{{ $foodSet->foodSetName }}</div>
+                                <div class="col-span-2">₱ {{ $foodSet->foodSetPrice }}</div>
                             </div>
                         @endif
                         @php
@@ -379,16 +384,15 @@
             </div>
             @csrf
             <div class="w-full bg-adminViewAccountHeaderColor2 mt-3">
-                <div class="grid grid-cols-12 items-center text-center font-bold h-16 px-5">
+                <div class="grid grid-cols-10 items-center text-center font-bold h-16 px-5">
                     <div class="col-span-2 bg-white py-2">
                         <input type="checkbox" name="select-all-food-item" id="select-all-food-item" class="mr-4"> 
                         <label class="text-manageRestaurantSidebarColorActive">Select All</label>
                     </div>
-                    <div class="col-span-1"> </div>
-                    <div class="col-span-1">Id</div>
-                    <div class="col-span-2">Name</div>
-                    <div class="col-span-5">Description</div>
-                    <div class="col-span-1">Price</div>
+                    <div class="col-span-2"> </div>
+                    <div class="col-span-1">No. </div>
+                    <div class="col-span-3">Name</div>
+                    <div class="col-span-2">Price</div>
                 </div>
                 @if (!$foodItems->isEmpty())
                     @php
@@ -396,32 +400,30 @@
                     @endphp
                     @foreach ($foodItems as $foodItem)  
                         @if ($count % 2 == 0)
-                            <div class="bg-manageFoodItemHeaderBgColor grid grid-cols-12 justify-items-center items-center h-10 px-5 mb-2">
+                            <div class="bg-manageFoodItemHeaderBgColor grid grid-cols-10 justify-items-center items-center h-10 px-5 mb-2">
                                 <div class="col-span-2">
                                     <input type="checkbox" class="foodItem" name="foodItem[]" value="{{ $foodItem->id }}">
                                 </div>
-                                <div class="col-span-1">
+                                <div class="col-span-2">
                                     <span class="hidden">{{ $foodItem->foodItemImage }}</span>
                                     <img src="{{ asset('uploads/restaurantAccounts/foodItem/'.$id.'/'.$foodItem->foodItemImage) }}" alt="foodItemImage" class="w-8 h-7">
                                 </div>
                                 <div class="col-span-1">{{ $foodItem->id }}</div>
-                                <div class="col-span-2">{{ $foodItem->foodItemName }}</div>
-                                <div class="col-span-5">{{ $foodItem->foodItemDescription }}</div>
-                                <div class="col-span-1">{{ $foodItem->foodItemPrice }}</div>
+                                <div class="col-span-3">{{ $foodItem->foodItemName }}</div>
+                                <div class="col-span-2">₱ {{ $foodItem->foodItemPrice }}</div>
                             </div>
                         @else
-                            <div class="bg-white grid grid-cols-12 justify-items-center items-center h-10 px-5 mb-2">
+                            <div class="bg-white grid grid-cols-10 justify-items-center items-center h-10 px-5 mb-2">
                                 <div class="col-span-2">
                                     <input type="checkbox" class="foodItem" name="foodItem[]" value="{{ $foodItem->id }}">
                                 </div>
-                                <div class="col-span-1">
+                                <div class="col-span-2">
                                     <span class="hidden">{{ $foodItem->foodItemImage }}</span>
                                     <img src="{{ asset('uploads/restaurantAccounts/foodItem/'.$id.'/'.$foodItem->foodItemImage) }}" alt="foodItemImage" class="w-8 h-7">
                                 </div>
                                 <div class="col-span-1">{{ $foodItem->id }}</div>
-                                <div class="col-span-2">{{ $foodItem->foodItemName }}</div>
-                                <div class="col-span-5">{{ $foodItem->foodItemDescription }}</div>
-                                <div class="col-span-1">{{ $foodItem->foodItemPrice }}</div>
+                                <div class="col-span-3">{{ $foodItem->foodItemName }}</div>
+                                <div class="col-span-2">₱ {{ $foodItem->foodItemPrice }}</div>
                             </div>
                         @endif
                         @php

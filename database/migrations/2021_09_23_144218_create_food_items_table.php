@@ -18,7 +18,7 @@ class CreateFoodItemsTable extends Migration
             $table->unsignedBigInteger('restAcc_id');
             $table->string('foodItemName');
             $table->mediumText('foodItemDescription');
-            $table->double('foodItemPrice');
+            $table->decimal('foodItemPrice', 5, 2);
             $table->string('foodItemImage');
             $table->timestamps();
             $table->foreign('restAcc_id')->references('id')->on('restaurant_accounts')->onDelete('cascade');

@@ -34,6 +34,7 @@ use Illuminate\Support\Facades\Session;
 use App\Mail\RestaurantFormAppreciation;
 use App\Mail\RestaurantPasswordChanged;
 use App\Mail\RestaurantUpdateEmail;
+use App\Models\PromoMechanics;
 use Illuminate\Auth\Notifications\ResetPassword;
 
 class RestaurantController extends Controller
@@ -46,6 +47,9 @@ class RestaurantController extends Controller
 
 
     // RENDER VIEWS
+    public function addPromoView(){
+        return view('restaurant.manageRestaurant.promo.promoAdd');
+    }
     public function resetPasswordView($token, $emailAddress){
         $checkIfExist = RestaurantResetPassword::where('token', $token)->where('emailAddress', $emailAddress)->where('resetStatus', 'Pending')->first();
         if($checkIfExist == null){
@@ -184,13 +188,13 @@ class RestaurantController extends Controller
     }
     public function editPromoView($id){
         $resAccid = Session::get('loginId');
-        $promo = Promo::where('restAcc_id', '=', $resAccid)
-                            ->where('id', '=', $id)
-                            ->first();
+        $promo = Promo::where('restAcc_id', $resAccid)->where('id', $id)->first();
+        $promoMechanics = PromoMechanics::where('promo_id', $id)->get();
         return view('restaurant.manageRestaurant.promo.promoEdit',[
             'promo' => $promo,
             'title' => 'Manage Promo',
-            'resAccid' => $resAccid
+            'resAccid' => $resAccid,
+            'promoMechanics' => $promoMechanics,
         ]);
     }
     public function editPostView($id){
@@ -430,6 +434,14 @@ class RestaurantController extends Controller
     
 
     // RENDER LOGICS
+    public function deletePromoMechanic($id, $currentPromoId){
+        $mechanics = PromoMechanics::where('promo_id', $currentPromoId)->first();
+
+        if($mechanics->id != $id){
+            PromoMechanics::where('id', $id)->delete();
+        }
+        return redirect('/restaurant/manage-restaurant/promo/edit/'.$currentPromoId);
+    }
     public function resetPassword(Request $request, $token, $emailAddress){
         $request->validate([
             'newPassword' => 'required|min:6|confirmed',
@@ -911,58 +923,162 @@ class RestaurantController extends Controller
     }
     public function editPromo(Request $request, $id){
         $restAccId = Session::get('loginId');
-        $promo = Promo::where('id', $id)
-                                ->where('restAcc_id', $restAccId)
-                                ->first();
-        $request->validate([
-            'promoTitle' => 'required',
-            'promoDescription' => 'required',
-            'promoMechanics' => 'required',
-        ]);
+        $promo = Promo::where('id', $id)->where('restAcc_id', $restAccId)->first();
+
         if($request->promoImage == null){
-            Promo::where('id', $id)
-            ->where('restAcc_id', $restAccId)
-            ->update([
+            $request->validate([
+                'promoTitle' => 'required',
+                'promoDescription' => 'required',
+                'promoMechanics.*' => 'required',
+                'promoStartDate' => 'required|date',
+                'promoEndDate' => 'required|date',
+            ],
+            [
+                'promoTitle.required' => "Title is required",
+                'promoDescription.required' => "Description is required",
+                'promoMechanics.*.required' => "Mechanics is required",
+                'promoStartDate.required' => "Start Date is required",
+                'promoStartDate.date' => "Start Date must be date",
+                'promoEndDate.required' => "End Date is required",
+                'promoEndDate.date' => "End Date must be date",
+            ]);
+
+            Promo::where('id', $id)->where('restAcc_id', $restAccId)->update([
                 'promoTitle' => $request->promoTitle,
                 'promoDescription' => $request->promoDescription,
-                'promoMechanics' => $request->promoMechanics,
+                'promoStartDate' => $request->promoStartDate,
+                'promoEndDate' => $request->promoEndDate,
             ]);
+
+            PromoMechanics::where('promo_id', $id)->delete();
+        
+            foreach ($request->promoMechanics as $promoMechanic){
+                if($promoMechanic != null){
+                    PromoMechanics::create([
+                        'promo_id' => $id,
+                        'promoMechanic' => $promoMechanic,
+                    ]);
+                }
+            }
+            
+            if($request->promoMechanicsEdit != null){
+                foreach ($request->promoMechanicsEdit as $promoMechanicEdit){
+                    if($promoMechanicEdit != null){
+                        PromoMechanics::create([
+                            'promo_id' => $id,
+                            'promoMechanic' => $promoMechanicEdit,
+                        ]);
+                    }
+                }
+            }
+
         } else {
+            $request->validate([
+                'promoTitle' => 'required',
+                'promoDescription' => 'required',
+                'promoMechanics.*' => 'required',
+                'promoStartDate' => 'required|date',
+                'promoEndDate' => 'required|date',
+                'promoImage' => 'required|mimes:jpeg,png,jpg|max:2048',
+            ],
+            [
+                'promoTitle.required' => "Title is required",
+                'promoDescription.required' => "Description is required",
+                'promoMechanics.*.required' => "Mechanics is required",
+                'promoStartDate.required' => "Start Date is required",
+                'promoStartDate.date' => "Start Date must be date",
+                'promoEndDate.required' => "End Date is required",
+                'promoEndDate.date' => "End Date must be date",
+                'promoImage.required' => 'Image is required',
+                'promoImage.mimes' => 'Image must be in jpeg, png and jpg format',
+                'promoImage.max' => 'Image must not be greater than 2mb',
+            ]);
             File::delete(public_path('uploads/restaurantAccounts/promo/'.$restAccId.'/'.$promo->promoImage));
             $promoImageName = time().'.'.$request->promoImage->extension();
             $request->promoImage->move(public_path('uploads/restaurantAccounts/promo/'.$restAccId), $promoImageName);
-            Promo::where('id', $id)
-            ->where('restAcc_id', $restAccId)
-            ->update([
+            
+            Promo::where('id', $id)->where('restAcc_id', $restAccId)->update([
                 'promoTitle' => $request->promoTitle,
                 'promoDescription' => $request->promoDescription,
-                'promoMechanics' => $request->promoMechanics,
+                'promoStartDate' => $request->promoStartDate,
+                'promoEndDate' => $request->promoEndDate,
                 'promoImage' => $promoImageName,
             ]);
+
+
+            PromoMechanics::where('promo_id', $id)->delete();
+        
+            foreach ($request->promoMechanics as $promoMechanic){
+                if($promoMechanic != null){
+                    PromoMechanics::create([
+                        'promo_id' => $id,
+                        'promoMechanic' => $promoMechanic,
+                    ]);
+                }
+            }
+            
+            if($request->promoMechanicsEdit != null){
+                foreach ($request->promoMechanicsEdit as $promoMechanicEdit){
+                    if($promoMechanicEdit != null){
+                        PromoMechanics::create([
+                            'promo_id' => $id,
+                            'promoMechanic' => $promoMechanicEdit,
+                        ]);
+                    }
+                }
+            }
+
         }
         $request->session()->flash('edited');
         return redirect('/restaurant/manage-restaurant/promo/edit/'.$id);
     }
     public function addPromo(Request $request){
         $id = Session::get('loginId');
+
         $request->validate([
             'promoTitle' => 'required',
             'promoDescription' => 'required',
-            'promoMechanics' => 'required',
-            'promoImage' => 'required',
+            'promoStartDate' => 'required|date',
+            'promoEndDate' => 'required|date',
+            'promoMechanics.0' => 'required',
+            'promoImage' => 'required|mimes:jpeg,png,jpg|max:2048',
+        ],
+        [
+            'promoTitle.required' => "Title is required",
+            'promoDescription.required' => "Description is required",
+            'promoStartDate.required' => "Start Date is required",
+            'promoStartDate.date' => "Start Date must be date",
+            'promoEndDate.required' => "End Date is required",
+            'promoEndDate.date' => "End Date must be date",
+            'promoMechanics.0.required' => "Mechanics is required",
+            'promoImage.required' => 'Image is required',
+            'promoImage.mimes' => 'Image must be in jpeg, png and jpg format',
+            'promoImage.max' => 'Image must not be greater than 2mb',
         ]);
 
         $promoImageName = time().'.'.$request->promoImage->extension();
-        $request->promoImage->move(public_path('uploads/restaurantAccounts/promo/'.$id), $promoImageName);
 
-        Promo::create([
+        $result = Promo::create([
             'restAcc_id' => $id,
             'promoPosted' => "Draft",
             'promoTitle' => $request->promoTitle,
             'promoDescription' => $request->promoDescription,
-            'promoMechanics' => $request->promoMechanics,
+            'promoStartDate' => $request->promoStartDate,
+            'promoEndDate' => $request->promoEndDate,
             'promoImage' => $promoImageName,
         ]);
+        
+        foreach ($request->promoMechanics as $promoMechanic){
+            if($promoMechanic != null){
+                PromoMechanics::create([
+                    'promo_id' => $result->id,
+                    'promoMechanic' => $promoMechanic,
+                ]);
+            }
+        }
+
+        $request->promoImage->move(public_path('uploads/restaurantAccounts/promo/'.$id), $promoImageName);
+
         $request->session()->flash('added');
         return redirect('/restaurant/manage-restaurant/promo');
     }
@@ -1444,15 +1560,20 @@ class RestaurantController extends Controller
     }
     public function editFoodItem(Request $request, $id){
         $restAccId = Session::get('loginId');
-        $foodItemData = FoodItem::where('id', $id)
-                                ->where('restAcc_id', $restAccId)
-                                ->first();
-        $request->validate([
-            'foodName' => 'required',
-            'foodDesc' => 'required',
-            'foodPrice' => 'required',
-        ]);
-        if($request->foodImage == null){
+        $foodItemData = FoodItem::where('id', $id)->where('restAcc_id', $restAccId)->first();
+        if($request->foodItemImage == null){
+            $request->validate([
+                'foodName' => 'required',
+                'foodDesc' => 'required',
+                'foodPrice' => 'required|numeric|min:0',
+            ],
+            [
+                'foodName.required' => 'Name is required',
+                'foodDesc.required' => 'Description is required',
+                'foodPrice.required' => 'Price is required',
+                'foodPrice.numeric' => 'Price must be number only',
+                'foodPrice.min' => 'Price must not be less than 0',
+            ]);
             FoodItem::where('id', $id)
             ->where('restAcc_id', $restAccId)
             ->update([
@@ -1460,10 +1581,28 @@ class RestaurantController extends Controller
                 'foodItemDescription' => $request->foodDesc,
                 'foodItemPrice' => $request->foodPrice,
             ]);
+            $request->session()->flash('edited');
+            return redirect('/restaurant/manage-restaurant/food-menu/food-item/edit/'.$id);
         } else {
+            $request->validate([
+                'foodName' => 'required',
+                'foodDesc' => 'required',
+                'foodPrice' => 'required|numeric|min:0',
+                'foodItemImage' => 'required|mimes:jpeg,png,jpg|max:2048',
+            ],
+            [
+                'foodName.required' => 'Name is required',
+                'foodDesc.required' => 'Description is required',
+                'foodPrice.required' => 'Price is required',
+                'foodPrice.numeric' => 'Price must be number only',
+                'foodPrice.min' => 'Price must not be less than 0',
+                'foodItemImage.required' => 'Image is required',
+                'foodItemImage.mimes' => 'Image must be in jpeg, png and jpg format',
+                'foodItemImage.max' => 'Image must not be greater than 2mb',
+            ]);
             File::delete(public_path('uploads/restaurantAccounts/foodItem/'.$restAccId.'/'.$foodItemData->foodItemImage));
-            $foodImageName = time().'.'.$request->foodImage->extension();
-            $request->foodImage->move(public_path('uploads/restaurantAccounts/foodItem/'.$restAccId), $foodImageName);
+            $foodImageName = time().'.'.$request->foodItemImage->extension();
+            $request->foodItemImage->move(public_path('uploads/restaurantAccounts/foodItem/'.$restAccId), $foodImageName);
             FoodItem::where('id', $id)
             ->where('restAcc_id', $restAccId)
             ->update([
@@ -1472,9 +1611,9 @@ class RestaurantController extends Controller
                 'foodItemPrice' => $request->foodPrice,
                 'foodItemImage' => $foodImageName,
             ]);
+            $request->session()->flash('edited');
+            return redirect('/restaurant/manage-restaurant/food-menu/food-item/edit/'.$id);
         }
-        $request->session()->flash('edited');
-        return redirect('/restaurant/manage-restaurant/food-menu/food-item/edit/'.$id);
     }
     public function deleteFoodSet($id){
         $restAccId = Session::get('loginId');
@@ -1492,7 +1631,9 @@ class RestaurantController extends Controller
         return redirect('/restaurant/manage-restaurant/food-menu/food-set/detail/'.$foodSetid);
     }
     public function addItemToFoodSet(Request $request){
+        $restAccId = Session::get('loginId');
         $checkIfExisting = 0;
+        $checkIfExsiting2 = 0;
         if(empty($request->foodItem)){
             $request->session()->flash('empty');
             return redirect('/restaurant/manage-restaurant/food-menu/food-set/detail/'.$request->foodSetId);
@@ -1505,6 +1646,15 @@ class RestaurantController extends Controller
                 if(!$data->isEmpty()){
                     $checkIfExisting++;
                 } else {
+                    $checkOrderSets = OrderSet::select('id')->where('restAcc_id', $restAccId)->get();
+                    foreach ($checkOrderSets as $checkOrderSet){
+                        $checkOrderSetItems = OrderSetFoodItem::where('orderSet_id', $checkOrderSet->id)->get();
+                        foreach ($checkOrderSetItems as $checkOrderSetItem){
+                            if($checkOrderSetItem->foodItem_id == $foodItemId){
+                                OrderSetFoodItem::where('id', $checkOrderSetItem->id)->delete();
+                            }
+                        }
+                    }
                     FoodSetItem::create([
                         'foodSet_id' => $request->foodSetId,
                         'foodItem_id' => $foodItemId

@@ -1,18 +1,36 @@
-// ADD FOOD ITEM FORM
-$( "#btn-add-item" ).click(function() {
-    document.querySelector(".create-form").classList.add("active");
-    document.querySelector(".overlay").classList.add("active");
-});
+// ADD MECHANICS
+function add_row_ingredient(){
+    var rowno = $("#ingredients_table tr").length;
+    rowno += 1;
 
-$(".overlay").click(function(){
-document.querySelector(".create-form").classList.remove("active");
-document.querySelector(".overlay").classList.remove("active");
-});
+    $("#ingredients_table tr:last").after(`
+        <tr id='ingr_row`+rowno+`'>
+            <td style="width:90%;"><textarea name="promoMechanics[]" class="w-full border border-gray-400 py-1 px-2 text-sm text-gray-700 focus:outline-none focus:border-black" placeholder="Enter Mechanics" rows="1"></textarea></td>
+            <td style="width:10%; padding-left: 5px;"><button class="mt-2 text-red-700 text-lg" onclick="delete_row_ingredient('ingr_row`+rowno+`')"><i class="far fa-trash-alt"></i></button></td>
+        </tr>
+    `);
+}
+function delete_row_ingredient(rowno){
+    $('#'+rowno).remove();
+}
 
-$(".create-form .close-btn").click(function(){
-document.querySelector(".create-form").classList.remove("active");
-document.querySelector(".overlay").classList.remove("active");
-});
+// EDIT MECHANICS
+function add_row_ingredient_edit(){
+    var rowno = $("#ingredients_table tr").length;
+    rowno += 1;
+
+    $("#ingredients_table tr:last").after(`
+        <tr id='ingr_row`+rowno+`'>
+            <td style="width:90%;"><textarea name="promoMechanicsEdit[]" class="w-full border border-gray-400 py-1 px-2 text-sm text-gray-700 focus:outline-none focus:border-black" placeholder="Enter Mechanics" rows="1"></textarea></td>
+            <td style="width:10%; padding-left: 5px;"><button class="mt-2 text-red-700 text-lg" onclick="delete_row_ingredient_edit('ingr_row`+rowno+`')"><i class="far fa-trash-alt"></i></button></td>
+        </tr>
+    `);
+}
+function delete_row_ingredient_edit(rowno){
+    $('#'+rowno).remove();
+}
+
+
 
 // PREVIEW IMAGE
 function previewFile(input){

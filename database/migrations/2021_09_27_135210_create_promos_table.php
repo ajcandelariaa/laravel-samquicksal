@@ -19,7 +19,8 @@ class CreatePromosTable extends Migration
             $table->string('promoPosted');
             $table->string('promoTitle');
             $table->mediumText('promoDescription');
-            $table->mediumText('promoMechanics');
+            $table->date('promoStartDate');
+            $table->date('promoEndDate');
             $table->string('promoImage');
             $table->timestamps();
             $table->foreign('restAcc_id')->references('id')->on('restaurant_accounts')->onDelete('cascade');
