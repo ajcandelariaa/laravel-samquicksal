@@ -2,27 +2,29 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\CustomerAccount;
-use App\Models\FoodItem;
-use App\Models\FoodSet;
-use App\Models\FoodSetItem;
-use App\Models\OrderSet;
-use App\Models\OrderSetFoodItem;
-use App\Models\OrderSetFoodSet;
 use App\Models\Post;
 use App\Models\Promo;
-use App\Models\RestaurantAccount;
-use App\Models\RestaurantRewardList;
-use App\Models\RestaurantTaskList;
+use App\Models\FoodSet;
+use App\Models\FoodItem;
+use App\Models\OrderSet;
 use App\Models\StampCard;
-use App\Models\StampCardTasks;
 use App\Models\StoreHour;
+use App\Models\FoodSetItem;
+use Illuminate\Http\Request;
+use App\Models\PromoMechanics;
+use App\Models\StampCardTasks;
+use Illuminate\Support\Carbon;
+use App\Models\CustomerAccount;
+use App\Models\OrderSetFoodSet;
 use App\Models\UnavailableDate;
+use App\Models\OrderSetFoodItem;
+use App\Models\CustomerStampCard;
+use App\Models\RestaurantAccount;
+use App\Models\RestaurantTaskList;
+use App\Models\RestaurantRewardList;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\RestaurantFormAppreciation;
-use App\Models\PromoMechanics;
 
 class CustomerController extends Controller
 {
@@ -140,13 +142,13 @@ class CustomerController extends Controller
                 foreach ($restaurantStoreHours as $restaurantStoreHour){
                     foreach (explode(",", $restaurantStoreHour->days) as $day){
                         if($this->convertDays($day) == date('l')){
-                            $currentTime = date("h:i");
+                            $currentTime = date("H:i");
                             if($currentTime < $restaurantStoreHour->openingTime || $currentTime > $restaurantStoreHour->closingTime){
                                 $rSchedule = "Closed Now";
                             } else {
                                 $openingTime = date("g:i a", strtotime($restaurantStoreHour->openingTime));
                                 $closingTime = date("g:i a", strtotime($restaurantStoreHour->closingTime));
-                                $rSchedule = "Open today at ".$currentTime." to ".$closingTime;
+                                $rSchedule = "Open today at ".$openingTime." to ".$closingTime;
                             }
                         }
                     }
@@ -414,13 +416,41 @@ class CustomerController extends Controller
         }
         return response()->json($finalData);
     }
-    public function getRestaurantChooseOrderSet($id){
+    public function getRestaurantChooseOrderSet($id, $custId){
         $finalData = array();
-        $restaurant = RestaurantAccount::select('rName')->where('id', $id)->first();
-        $orderSets = OrderSet::select('id', 'orderSetName', 'orderSetTagline', 'orderSetImage')->where('restAcc_id', $id)->get();
+        $finalRewardStatus = "";
+        $finalRewardType = "";
+        $finalRewardInput = "";
+
+        $restaurant = RestaurantAccount::select('rName', 'rTimeLimit', 'rCapacityPerTable')->where('id', $id)->first();
+        $orderSets = OrderSet::where('restAcc_id', $id)->get();
+        $getStamp = StampCard::select('stampValidity', 'stampReward_id')->where('restAcc_id', $id)->first();
+
+        if($getStamp == null){
+            $finalRewardStatus = "Incomplete";
+        } else {
+            $getReward = RestaurantRewardList::where('restAcc_id', $id)->where('id', $getStamp->stampReward_id)->first();
+
+            $checkIfComplete = CustomerStampCard::where('customer_id', $custId)
+                            ->where('restAcc_id', $id)
+                            ->where('stampValidity', $getStamp->stampValidity)
+                            ->where('claimed', "No")
+                            ->where('status', "Complete")->first();
+            if($checkIfComplete == null){
+                $finalRewardStatus = "Incomplete";
+                $finalRewardType = "";
+                $finalRewardInput = 0;
+            } else {
+                $finalRewardType = $getReward->rewardCode;
+                $finalRewardInput = $getReward->rewardInput;
+                $finalRewardStatus = "Complete";
+            }
+        }
+        
         foreach ($orderSets as $orderSet){
             array_push($finalData, [
                 'orderSetId' => $orderSet->id,
+                'orderSetPrice' => $orderSet->orderSetPrice,
                 'orderSetName' => $orderSet->orderSetName,
                 'orderSetTagline' => $orderSet->orderSetTagline,
                 'orderSetImage' => $this->ORDER_SET_IMAGE_PATH."/".$id."/".$orderSet->orderSetImage,
@@ -428,7 +458,58 @@ class CustomerController extends Controller
         }
         return response()->json([
             'restaurantName' => $restaurant->rName,
+            'rTimeLimit' => $restaurant->rTimeLimit,
+            'rCapacityPerTable' => $restaurant->rCapacityPerTable,
+            'rewardStatus' => $finalRewardStatus,
+            'rewardType' => $finalRewardType,
+            'rewardInput' => $finalRewardInput,
             'orderSets' => $finalData,
+        ]);
+    }
+    public function getReservationDateAndTimeForm($id){
+        $unavailableDates = UnavailableDate::select('unavailableDatesDate')->where('restAcc_id', $id)->get();
+        $currentDate = date('Y-m-d');
+        $storeDates = array();
+
+        for($i=0; $i<7; $i++){
+            $currentDateTime2 = date('Y-m-d', strtotime($currentDate. ' + 1 days'));
+            array_push($storeDates, $currentDateTime2);
+            $currentDate = $currentDateTime2;
+        }
+
+        if(!$unavailableDates->isEmpty()){
+            foreach ($unavailableDates as $unavailableDate){
+                if (($key = array_search($unavailableDate->unavailableDatesDate, $storeDates)) !== false) {
+                    unset($storeDates[$key]);
+                }
+            }
+        }
+
+        $newStoreDates = array_values($storeDates);
+        $storeDays = array();
+        foreach ($newStoreDates as $newStoreDate){
+            array_push($storeDays, date('l', strtotime($newStoreDate)));
+        }
+
+        $finalSchedule = array();
+        $storeHours = StoreHour::where('restAcc_id', $id)->get();
+        foreach($storeHours as $storeHour){
+            $openingTime = date("g:i a", strtotime($storeHour->openingTime));
+            $closingTime = date("g:i a", strtotime($storeHour->closingTime));
+            foreach (explode(",", $storeHour->days) as $day){
+                array_push($finalSchedule, [
+                    'Day' => $this->convertDays($day),
+                    'Opening' => $openingTime,
+                    'Closing' => $closingTime,
+                ]);
+            }
+        }
+
+
+        return response()->json([
+            'storeDates' => $storeDates,
+            'newStoreDates' => $newStoreDates,
+            'storeDays' => $storeDays,
         ]);
     }
     

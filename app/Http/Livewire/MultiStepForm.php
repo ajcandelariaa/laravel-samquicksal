@@ -8,8 +8,6 @@ use App\Models\RestaurantApplicant;
 use App\Mail\RestaurantFormAppreciation;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Session;
-use Illuminate\Support\Facades\DB;
-use Symfony\Component\HttpFoundation\Request;
 
 class MultiStepForm extends Component
 {
