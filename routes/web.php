@@ -26,6 +26,9 @@ Route::get('/restaurant', function () {
 // RESTAURANT ROUTES
 Route::get('/restaurant/register', [RestaurantController::class, 'registerView']);
 Route::post('/restaurant/register', [RestaurantController::class, 'addRestaurant']);
+
+Route::get('/restaurant/register2', [RestaurantController::class, 'registerView2']);
+Route::post('/restaurant/register2', [RestaurantController::class, 'register2']);
 Route::get('/restaurant/email-verification/{id}/{status}', [RestaurantController::class, 'verifyEmail']);
 
 Route::middleware(['restaurantLoggedIn'])->group(function(){
@@ -124,6 +127,16 @@ Route::middleware(['restaurantLoggedIn'])->group(function(){
     Route::get('/restaurant/manage-restaurant/offense/policy/delete/{id}', [RestaurantController::class, 'deletePolicy']);
     // -------CHECKLIST------------ //
     Route::get('/restaurant/manage-restaurant/checklist', [RestaurantController::class, 'manageRestaurantChecklistView']);
+    // -------CUSTOMER BOOKING------------ //
+    Route::get('/restaurant/live-transaction/customer-booking/queue', [RestaurantController::class, 'ltCustBookQListView']);
+    Route::get('/restaurant/live-transaction/customer-booking/queue/{id}', [RestaurantController::class, 'ltCustBookQParticularView']);
+    Route::get('/restaurant/live-transaction/customer-booking/queue/approve/{id}', [RestaurantController::class, 'ltCustBookQApprove']);
+    Route::get('/restaurant/live-transaction/customer-booking/queue/decline/{id}', [RestaurantController::class, 'ltCustBookQDecline']);
+    Route::get('/restaurant/live-transaction/customer-booking/reserve', [RestaurantController::class, 'ltCustBookRListView']);
+    Route::get('/restaurant/live-transaction/customer-booking/reserve/{id}', [RestaurantController::class, 'ltCustBookRParticularView']);
+    Route::get('/restaurant/live-transaction/customer-booking/reserve/approve/{id}', [RestaurantController::class, 'ltCustBookRApprove']);
+    Route::get('/restaurant/live-transaction/customer-booking/reserve/decline/{id}', [RestaurantController::class, 'ltCustBookRDecline']);
+
     
 
 });

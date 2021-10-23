@@ -34,6 +34,7 @@ use Illuminate\Support\Facades\Session;
 use App\Mail\RestaurantFormAppreciation;
 use App\Mail\RestaurantPasswordChanged;
 use App\Mail\RestaurantUpdateEmail;
+use App\Models\CustomerQueue;
 use App\Models\PromoMechanics;
 use Illuminate\Auth\Notifications\ResetPassword;
 
@@ -47,6 +48,25 @@ class RestaurantController extends Controller
 
 
     // RENDER VIEWS
+    public function ltCustBookRParticularView($id){
+        return view('restaurant.liveTransactions.customerBooking.reserveView');
+    }
+    public function ltCustBookQParticularView($id){
+        return view('restaurant.liveTransactions.customerBooking.queueView');
+    }
+    public function ltCustBookRListView(){
+        return view('restaurant.liveTransactions.customerBooking.reserveList');
+    }
+    public function ltCustBookQListView(){
+        $restAcc_id = Session::get('loginId');
+        $getDateToday = 
+        $customerQueues = CustomerQueue::where('restAcc_id', $restAcc_id)->where('status', 'pending')->get(); 
+
+        return view('restaurant.liveTransactions.customerBooking.queueList',[
+            'customerQueues' => $customerQueues,
+            'title' => 'Manage Customer Queue',
+        ]);
+    }
     public function addPromoView(){
         return view('restaurant.manageRestaurant.promo.promoAdd');
     }
@@ -416,6 +436,136 @@ class RestaurantController extends Controller
             'title' => 'Dashboard'
         ]);
     }
+    public function register2(Request $request){
+        $validatedData = $request->validate([
+            'fname' => 'required|regex:/^[\pL\s\-]+$/u',
+            'mname' => 'nullable|regex:/^[\pL\s\-]+$/u',
+            'lname' => 'required|regex:/^[\pL\s\-]+$/u',
+            'role' => 'required',
+            'birthDate' => 'required',
+            'gender' => 'required',
+            'address' => 'required',
+            'city' => 'required',
+            'postalCode' => 'required',
+            'state' => 'required',
+            'country' => 'required',
+            'emailAddress' => 'required|email|unique:restaurant_accounts,emailAddress',
+            'contactNumber' => 'required|digits:11',
+            'landlineNumber' => 'numeric|min:8',
+            'rName' => 'required',
+            'rBranch' => 'required',
+            'rAddress' => 'required',
+            'rCity' => 'required',
+            'rPostalCode' => 'required',
+            'rState' => 'required',
+            'rCountry' => 'required',
+            'bir' => 'required|mimes:pdf|max:12288',
+            'dti' => 'required|mimes:pdf|max:12288',
+            'mayorsPermit' => 'required|mimes:pdf|max:12288',
+            'staffValidId' => 'required|mimes:pdf|max:12288',
+        ], 
+        [
+            'fname.required' => 'First Name is required',
+            'fname.regex' => 'First Name must contain letters only',
+            'mname.regex' => 'Middle Name must contain letters only',
+            'lname.required' => 'Last Name is required',
+            'lname.regex' => 'Last Name must contain letters only',
+            'role.required' => 'Role is required',
+            'birthDate.required' => 'Birthday is required',
+            'gender.required' => 'Gender is required',
+            'address.required' => 'Address is required',
+            'city.required' => 'City is required',
+            'postalCode.required' => 'Postal/Zip Code is required',
+            'state.required' => 'State/Province is required',
+            'country.required' => 'Country is required',
+            'emailAddress.required' => 'Email Address is required',
+            'emailAddress.email' => 'Email Address must be a valid email',
+            'emailAddress.unique' => 'Email Address has already taken',
+            'contactNumber.required' => 'Contact Number is required',
+            'contactNumber.digits' => 'Contact Number must be 11 digits',
+            'landlineNumber.digits' => 'Landline Number must be 8 digits',
+            'rName.required' => 'Name is required',
+            'rBranch.required' => 'Branch is required',
+            'rAddress.required' => 'Address is required',
+            'rCity.required' => 'City is required',
+            'rPostalCode.required' => 'Postal/Zip Code is required',
+            'rState.required' => 'State/Province is required',
+            'rCountry.required' => 'Country is required',
+            'bir.required' => 'BIR Certificate of Registration is required',
+            'bir.mimes' => 'BIR Certificate of Registration must be in pdf format',
+            'bir.max' => 'BIR Certificate of Registration must be 12mb below',
+            'dti.required' => 'DTI Business Registration is required',
+            'dti.mimes' => 'DTI Business Registration must be in pdf format',
+            'dti.max' => 'DTI Business Registration must be 12mb below',
+            'mayorsPermit.required' => 'Mayor’s Permit is required',
+            'mayorsPermit.mimes' => 'Mayor’s Permit must be in pdf format',
+            'mayorsPermit.max' => 'Mayor’s Permit must be 12mb below',
+            'staffValidId.required' => 'Owner/Staff Valid ID is required',
+            'staffValidId.mimes' => 'Owner/Staff Valid ID must be in pdf format',
+            'staffValidId.max' => 'Owner/Staff Valid ID must be 12mb below',
+        ]);
+
+        $result = RestaurantApplicant::create([
+            'status' => 'Pending',
+            'fname' => $request->fname,
+            'mname' => $request->mname,
+            'lname' => $request->lname,
+            'address' => $request->address,
+            'city' => $request->city,
+            'postalCode' => $request->postalCode,
+            'state' => $request->state,
+            'country' => $request->country,
+            'role' => $request->role,
+            'birthDate' => $request->birthDate,
+            'gender' => $request->gender,
+            'contactNumber' => $request->contactNumber,
+            'landlineNumber' => $request->landlineNumber,
+            'emailAddress' => $request->emailAddress,
+
+            'rName' => $request->rName,
+            'rBranch' => $request->rBranch,
+            'rAddress' => $request->rAddress,
+            'rCity' => $request->rCity,
+            'rPostalCode' => $request->rPostalCode,
+            'rState' => $request->rState,
+            'rCountry' => $request->rCountry,
+
+            'bir' => "",
+            'dti' => "",
+            'mayorsPermit' => "",
+            'staffValidId' => "",
+        ]);
+        
+        $nextIdFolderName = $result->id;
+        $birName = 'BIR_'.str_replace(' ', '', $validatedData['bir']->getClientOriginalName());
+        $dtiName = 'DTI_'.str_replace(' ', '', $validatedData['dti']->getClientOriginalName());
+        $mayorsPermitName = 'MayorsPermit_'.str_replace(' ', '', $validatedData['mayorsPermit']->getClientOriginalName());
+        $staffValidIdName = 'ValidId_'.str_replace(' ', '', $validatedData['staffValidId']->getClientOriginalName());
+        
+        $request->bir->storeAs('uploads/restaurantApplicants/'.$nextIdFolderName, $birName, 'public');
+        $request->dti->storeAs('uploads/restaurantApplicants/'.$nextIdFolderName, $dtiName, 'public');
+        $request->mayorsPermit->storeAs('uploads/restaurantApplicants/'.$nextIdFolderName, $mayorsPermitName, 'public');
+        $request->staffValidId->storeAs('uploads/restaurantApplicants/'.$nextIdFolderName, $staffValidIdName, 'public');
+        
+        RestaurantApplicant::where('id', $nextIdFolderName)
+            ->update([
+            'bir' => $birName,
+            'dti' => $dtiName,
+            'mayorsPermit' => $mayorsPermitName,
+            'staffValidId' => $staffValidIdName
+        ]);
+
+        $details = [
+            'applicantName' => $request->fname.' '.$request->lname
+        ];
+
+        Mail::to($request->emailAddress)->send(new RestaurantFormAppreciation($details));
+        Session::flash('registered');
+        return redirect('/restaurant/register2');
+    }
+    public function registerView2(){
+        return view('restaurant.register2');
+    }
     public function registerView(){
         return view('restaurant.register');
     }
@@ -434,6 +584,18 @@ class RestaurantController extends Controller
     
 
     // RENDER LOGICS
+    public function ltCustBookRDecline($id){
+        
+    }
+    public function ltCustBookRApprove($id){
+        
+    }
+    public function ltCustBookQDecline($id){
+        
+    }
+    public function ltCustBookQApprove($id){
+        
+    }
     public function deletePromoMechanic($id, $currentPromoId){
         $mechanics = PromoMechanics::where('promo_id', $currentPromoId)->first();
 

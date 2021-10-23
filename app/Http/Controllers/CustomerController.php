@@ -25,6 +25,7 @@ use App\Models\RestaurantRewardList;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\RestaurantFormAppreciation;
+use App\Models\CustomerQueue;
 
 class CustomerController extends Controller
 {
@@ -648,6 +649,30 @@ class CustomerController extends Controller
             'contactNumberVerified' => $account->contactNumberVerified,
             'password' => $account->password,
             'profileImage' => $finalImageUrl,
+        ]);
+    }
+    public function submitQueueForm(Request $request){
+        CustomerQueue::create([
+            'customer_id' => $request->customer_id,
+            'restAcc_id' => $request->restAcc_id,
+            'orderSet_id' => $request->orderSet_id,
+            'status' => "Pending",
+            'cancellable' => "Yes",
+            'numberOfPersons' => $request->numberOfPersons,
+            'numberOfTables' => $request->numberOfTables,
+            'hoursOfStay' => $request->hoursOfStay,
+            'numberOfChildren' => $request->numberOfChildren,
+            'numberOfPwd' => $request->numberOfPwd,
+            'totalPwdChild' => $request->totalPwdChild,
+            'notes' => $request->notes,
+            'rewardStatus' => $request->rewardStatus,
+            'rewardType' => $request->rewardType,
+            'rewardInput' => $request->rewardInput,
+            'totalPrice' => $request->totalPrice,
+        ]);
+
+        return response()->json([
+            'status' => "Success"
         ]);
     }
 }

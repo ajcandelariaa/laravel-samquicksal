@@ -45,7 +45,8 @@ module.exports = {
       },
       height: {
         adminLoginBoxH: '527px',
-        adminLoginBoxH2: '800px'
+        adminLoginBoxH2: '800px',
+        height1Px: '1px',
       },
       fontSize: {
         circle: '0.50rem'
@@ -63,6 +64,7 @@ module.exports = {
         stampCardGrid: '150px 50px auto',
         checkListGrid: '180px 350px auto',
         checkListGrid2: '70px auto',
+        customerDetailsGrid: '200px auto auto',
       },
       boxShadow: {
         adminDownloadButton: '0px 3px 14px -9px rgba(0,0,0,0.75)'

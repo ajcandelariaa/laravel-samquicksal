@@ -32,6 +32,9 @@
                 <div class="grid items-center mt-8 {{ (request()->is('restaurant/dashboard*')) ? 'text-headerActiveTextColor bg-black' : 'text-white hover:bg-sideBarHoverBgColor' }}">
                     <a href="/restaurant/dashboard" class="pt-3 pb-3"><i class="fas fa-th-large w-10 ml-8"></i>Dashboard</a>
                 </div>
+                <div class="grid items-center mt-4 {{ (request()->is('restaurant/live-transaction*')) ? 'text-headerActiveTextColor bg-black' : 'text-white hover:bg-sideBarHoverBgColor' }}">
+                    <a href="/restaurant/live-transaction/customer-booking/queue" class="pt-3 pb-3 hover:text-gray-300"><i class="fas fa-podcast w-10 ml-8 hover:text-gray-300"></i>Live Transactions</a>
+                </div>
                 <div class="grid items-center mt-4 {{ (request()->is('restaurant/manage-restaurant*')) ? 'text-headerActiveTextColor bg-black' : 'text-white hover:bg-sideBarHoverBgColor' }}">
                     <a href="/restaurant/manage-restaurant/about/restaurant-information" class="pt-3 pb-3 hover:text-gray-300"><i class="fas fa-file-signature w-10 ml-8 hover:text-gray-300"></i>Manage Restaurant</a>
                 </div>

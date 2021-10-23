@@ -34,6 +34,7 @@ Route::get('/customer/get-account-info/{id}', [CustomerController::class, 'getCu
 
 Route::post('/customer/register-customer', [CustomerController::class, 'registerCustomer']);
 Route::post('/customer/login-customer', [CustomerController::class, 'loginCustomer']);
+Route::post('/customer/submit-queue-form', [CustomerController::class, 'submitQueueForm']);
 
 
 

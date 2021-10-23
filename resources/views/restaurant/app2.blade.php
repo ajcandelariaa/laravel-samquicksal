@@ -37,9 +37,15 @@
                         <i class="fas fa-th-large"></i>
                     </a>
                 </div>
+                <div class="grid items-center mt-4 text-white {{ (request()->is('restaurant/live-transaction*')) ? 'relative bg-black' : 'hover:bg-sideBarHoverBgColor' }}">
+                    <div class="{{ (request()->is('restaurant/live-transaction*')) ? 'h-full w-1 bg-headerActiveTextColor absolute left-0' : '' }}"></div>
+                    <a href="/restaurant/live-transaction/customer-booking/queue" class="pt-3 pb-3 text-center">
+                        <i class="fas fa-podcast"></i>
+                    </a>
+                </div>
                 <div class="grid items-center mt-4 text-white {{ (request()->is('restaurant/manage-restaurant*')) ? 'relative bg-black' : 'hover:bg-sideBarHoverBgColor' }}">
                     <div class="{{ (request()->is('restaurant/manage-restaurant*')) ? 'h-full w-1 bg-headerActiveTextColor absolute left-0' : '' }}"></div>
-                    <a href="/restaurant/manage-restaurant" class="pt-3 pb-3 text-center">
+                    <a href="/restaurant/manage-restaurant/about/restaurant-information" class="pt-3 pb-3 text-center">
                         <i class="fas fa-file-signature"></i>
                     </a>
                 </div>

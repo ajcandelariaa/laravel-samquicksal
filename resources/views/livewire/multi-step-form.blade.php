@@ -1,5 +1,6 @@
 <div class="w-3/5 mx-auto pt-10 pb-12">
     <form wire:submit.prevent="register" enctype="multipart/form-data">
+        @csrf
         <div class="relative">
             <div class="flex justify-between mb-10 font-semibold ">
                 <div class="px-5 py-3 z-10 rounded-xl {{ $currentStep == 1 ? 'bg-submitButton text-white border-2 border-submitButton' : 'border-2 border-multiStepBoxColor text-multiStepBoxColor bg-white' }}">1</div>
