@@ -131,12 +131,27 @@ Route::middleware(['restaurantLoggedIn'])->group(function(){
     Route::get('/restaurant/live-transaction/customer-booking/queue', [RestaurantController::class, 'ltCustBookQListView']);
     Route::get('/restaurant/live-transaction/customer-booking/queue/{id}', [RestaurantController::class, 'ltCustBookQParticularView']);
     Route::get('/restaurant/live-transaction/customer-booking/queue/approve/{id}', [RestaurantController::class, 'ltCustBookQApprove']);
-    Route::get('/restaurant/live-transaction/customer-booking/queue/decline/{id}', [RestaurantController::class, 'ltCustBookQDecline']);
+    Route::post('/restaurant/live-transaction/customer-booking/queue/decline/{id}', [RestaurantController::class, 'ltCustBookQDecline']);
     Route::get('/restaurant/live-transaction/customer-booking/reserve', [RestaurantController::class, 'ltCustBookRListView']);
     Route::get('/restaurant/live-transaction/customer-booking/reserve/{id}', [RestaurantController::class, 'ltCustBookRParticularView']);
     Route::get('/restaurant/live-transaction/customer-booking/reserve/approve/{id}', [RestaurantController::class, 'ltCustBookRApprove']);
-    Route::get('/restaurant/live-transaction/customer-booking/reserve/decline/{id}', [RestaurantController::class, 'ltCustBookRDecline']);
-
+    Route::post('/restaurant/live-transaction/customer-booking/reserve/decline/{id}', [RestaurantController::class, 'ltCustBookRDecline']);
+    // -------APPROVED CUSTOMER------------ //
+    Route::get('/restaurant/live-transaction/approved-customer/queue/add-walk-in', [RestaurantController::class, 'ltAppCustQAddWalkInView']);
+    Route::post('/restaurant/live-transaction/approved-customer/queue/add-walk-in', [RestaurantController::class, 'ltAppCustQAddWalkIn']);
+    Route::get('/restaurant/live-transaction/approved-customer/queue', [RestaurantController::class, 'ltAppCustQListView']);
+    Route::get('/restaurant/live-transaction/approved-customer/queue/{id}', [RestaurantController::class, 'ltAppCustQParticularView']);
+    Route::get('/restaurant/live-transaction/approved-customer/queue/no-show/{id}', [RestaurantController::class, 'ltAppCustQNoShow']);
+    Route::post('/restaurant/live-transaction/approved-customer/queue/admit/{id}', [RestaurantController::class, 'ltAppCustQAdmit']);
+    Route::get('/restaurant/live-transaction/approved-customer/queue/validate/{id}', [RestaurantController::class, 'ltAppCustQValidate']);
+    Route::get('/restaurant/live-transaction/approved-customer/reserve', [RestaurantController::class, 'ltAppCustRListView']);
+    Route::get('/restaurant/live-transaction/approved-customer/reserve/{id}', [RestaurantController::class, 'ltAppCustRParticularView']);
+    Route::get('/restaurant/live-transaction/approved-customer/reserve/no-show/{id}', [RestaurantController::class, 'ltAppCustRNoShow']);
+    Route::post('/restaurant/live-transaction/approved-customer/reserve/admit/{id}', [RestaurantController::class, 'ltAppCustRAdmit']);
+    // -------CUSTOMER ORDERING------------ //
+    Route::get('/restaurant/live-transaction/customer-ordering/list', [RestaurantController::class, 'ltCustOrderListView']);
+    Route::get('/restaurant/live-transaction/customer-ordering/list/{id}/order-request', [RestaurantController::class, 'ltCustOrderORPartView']);
+    Route::get('/restaurant/live-transaction/customer-ordering/list/{id}/order-summary', [RestaurantController::class, 'ltCustOrderOSPartView']);
     
 
 });

@@ -25,6 +25,7 @@ use App\Models\RestaurantRewardList;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\RestaurantFormAppreciation;
+use App\Models\CustomerNotification;
 use App\Models\CustomerQueue;
 
 class CustomerController extends Controller
@@ -588,7 +589,6 @@ class CustomerController extends Controller
                 'contactNumber' => $request->contactNumber,
                 'contactNumberVerified' => "No",
                 'password' => Hash::make($request->password),
-                'profileImage' => "",
             ]);
             
             if(!is_dir('uploads')){
@@ -650,14 +650,16 @@ class CustomerController extends Controller
             'password' => $account->password,
             'profileImage' => $finalImageUrl,
         ]);
+
     }
     public function submitQueueForm(Request $request){
+        $restaurant = RestaurantAccount::select('rName', 'rBranch', 'rAddress', 'rCity')->where('id', $request->restAcc_id)->first();
+        
         CustomerQueue::create([
             'customer_id' => $request->customer_id,
             'restAcc_id' => $request->restAcc_id,
             'orderSet_id' => $request->orderSet_id,
-            'status' => "Pending",
-            'cancellable' => "Yes",
+            'status' => "pending",
             'numberOfPersons' => $request->numberOfPersons,
             'numberOfTables' => $request->numberOfTables,
             'hoursOfStay' => $request->hoursOfStay,
@@ -669,6 +671,203 @@ class CustomerController extends Controller
             'rewardType' => $request->rewardType,
             'rewardInput' => $request->rewardInput,
             'totalPrice' => $request->totalPrice,
+            'queueDate' => date("Y-m-d"),
+        ]);
+
+        CustomerNotification::create([
+            'customer_id' => $request->customer_id,
+            'restAcc_id' => $request->restAcc_id,
+            'notificationType' => "Pending",
+            'notificationTitle' => "You have booked at $restaurant->rName $restaurant->rBranch",
+            'notificationDescription' => "$restaurant->rAddress, $restaurant->rCity",
+            'notificationStatus' => "Unread",
+        ]);
+
+        return response()->json([
+            'status' => "Success",
+        ]);
+    }
+    public function getCustomerNotification($id){
+        $notifications = CustomerNotification::where('customer_id', $id)->orderBy('id', 'DESC')->get();
+        $finalData = array();
+
+        foreach($notifications as $notification){
+            $finalImageUrl = "";
+            $currentTime = Carbon::now();
+            $getRLogo = RestaurantAccount::select('rLogo')->where('id', $notification->restAcc_id)->first();
+
+            if($notification->notificationType != "New Account"){
+                if($getRLogo->rLogo == null){
+                    $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+                } else {
+                    $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$notification->restAcc_id.'/'.$getRLogo->rLogo;
+                }
+            } else {
+                $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/samquicksalLogo.png';
+            }
+
+            $rAppstartTime = Carbon::parse($notification->created_at);
+            $rAppDiffSeconds = $currentTime->diffInSeconds($rAppstartTime);
+            $rAppDiffMinutes = $currentTime->diffInMinutes($rAppstartTime);
+            $rAppDiffHours = $currentTime->diffInHours($rAppstartTime);
+            $rAppDiffDays = $currentTime->diffInDays($rAppstartTime);
+
+            if($rAppDiffDays > 0){
+                if ($rAppDiffDays == 1){
+                    $rAppDiffTime = "1 day ago";
+                } else {
+                    $rAppDiffTime = "$rAppDiffDays days ago";
+                }
+            } else if ($rAppDiffHours > 0){
+                if ($rAppDiffHours == 1){
+                    $rAppDiffTime = "1 hour ago";
+                } else {
+                    $rAppDiffTime = "$rAppDiffHours hours ago";
+                }
+            } else if ($rAppDiffMinutes > 0){
+                if ($rAppDiffMinutes == 1){
+                    $rAppDiffTime = "1 minute ago";
+                } else {
+                    $rAppDiffTime = "$rAppDiffMinutes minutes ago";
+                }
+            } else {
+                if ($rAppDiffSeconds == 1){
+                    $rAppDiffTime = "1 second ago";
+                } else {
+                    $rAppDiffTime = "$rAppDiffSeconds seconds ago";
+                }
+            }
+
+            array_push($finalData,[
+                'id' => $notification->id,
+                'notificationType' => $notification->notificationType,
+                'notificationImage' => $finalImageUrl,
+                'notificationTitle' => $notification->notificationTitle,
+                'notificationDescription' => $notification->notificationDescription,
+                'notificationStatus' => $notification->notificationStatus,
+                'notificationTime' => $rAppDiffTime,
+            ]);
+        }
+
+        return response()->json($finalData);
+    }
+    public function getCustomerLiveStatus($id){
+        $getDateToday = date("Y-m-d");
+        $currentTime = Carbon::now();
+        $customerQueue = CustomerQueue::where('customer_id', $id)
+        ->where('queueDate', $getDateToday)
+        ->where('status', '!=', 'completed')
+        ->first();
+
+        if($customerQueue != null){
+            if($customerQueue->status == "pending"){
+                $rAppstartTime = Carbon::parse($customerQueue->created_at);
+                $rAppDiffSeconds = $currentTime->diffInSeconds($rAppstartTime);
+                $rAppDiffMinutes = $currentTime->diffInMinutes($rAppstartTime);
+
+                $rAppDiffMinutes = 15 - $rAppDiffMinutes;
+                $rAppDiffSeconds = (15 * 60) - $rAppDiffSeconds;
+
+                $liveStatusDescription = "Cancellation is void when time exceeds 15 minutes";
+                if ($rAppDiffMinutes > 1){
+                    $rAppDiffTime = $rAppDiffMinutes;
+                    $rAppDiffTimeLabel = "minutes";
+                } else if ($rAppDiffMinutes == 1) {
+                    if ($rAppDiffSeconds == 1){
+                        $rAppDiffTime = 1;
+                        $rAppDiffTimeLabel = "second";
+                    } else {
+                        $rAppDiffTime = $rAppDiffSeconds;
+                        $rAppDiffTimeLabel = "seconds";
+                    }
+                } else {
+                    $rAppDiffTime = 0;
+                    $rAppDiffTimeLabel = "second";
+                    $liveStatusDescription = "You can no longer cancel. Please wait for the approval of your booking.";
+                }
+                return response()->json([
+                    'liveStatusHeader' => "Cancellation Time",
+                    'liveStatusBody' => null,
+                    'liveStatusNumber' => $rAppDiffTime,
+                    'liveStatusNumberDesc' => $rAppDiffTimeLabel,
+                    'liveStatusDescription' => $liveStatusDescription,
+                ]);
+            } else if ($customerQueue->status == "approved"){
+                $countCustomersApproved = CustomerQueue::where('status', "approved")
+                ->where('queueDate', $getDateToday)
+                ->orderBy('totalPwdChild', 'DESC')
+                ->orderBy('created_at', 'ASC')
+                ->get();
+
+                $finalQueueNumber = 0;
+                $queueNumber = 0;
+                foreach ($countCustomersApproved as $countCustomerApproved){
+                    $queueNumber++;
+                    if($countCustomerApproved->customer_id == $id){
+                        $finalQueueNumber = $queueNumber;
+
+                        $endTime = Carbon::now();
+                        $rAppstartTime = Carbon::parse($countCustomerApproved->approvedDateTime);
+                        $rAppDiffMinutes = $endTime->diffInMinutes($rAppstartTime);
+        
+                        if($rAppDiffMinutes >= 15) {
+                            $cancellable = "yes";
+                            $desc = "Hey you’ve been in queue for a while, there is no table available yet. If you’d like to look for another restaurant you may do so.";
+                        } else {
+                            $cancellable = "no";
+                            $desc = "The queue number will serve as your number in the line. This will update from time to time. Your queue number may change due to prioritize PWD/Senior Citizen and Children below 7 years old.";
+                        }
+                    }
+                }
+                
+                
+                return response()->json([
+                    'liveStatusHeader' => "Queue Number",
+                    'liveStatusBody' => $cancellable,
+                    'liveStatusNumber' => $finalQueueNumber,
+                    'liveStatusNumberDesc' => null,
+                    'liveStatusDescription' => $desc,
+                ]);
+            } else if ($customerQueue->status == "validation") {
+
+            } else {
+                return response()->json([
+                    'liveStatusHeader' => null,
+                    'liveStatusBody' => null,
+                    'liveStatusNumber' => null,
+                    'liveStatusNumberDesc' => null,
+                    'liveStatusDescription' => null,
+                ]);
+            }
+        } else {
+            return response()->json([
+                'liveStatusHeader' => null,
+                'liveStatusBody' => null,
+                'liveStatusNumber' => null,
+                'liveStatusNumberDesc' => null,
+                'liveStatusDescription' => null,
+            ]);
+        }
+
+    }
+    public function cancelCustomerBooking($id){
+        $getDateToday = date("Y-m-d");
+        $customerQueue = CustomerQueue::where('customer_id', $id)->where('queueDate', $getDateToday)->where('status', '!=', 'completed')->first();
+        $restaurant = RestaurantAccount::select('rAddress', 'rCity')->where('id', $customerQueue->restAcc_id)->first();
+
+        CustomerQueue::where('id', $customerQueue->id)
+        ->update([
+            'status' => 'cancelled',
+            'cancelDateTime' => date('Y-m-d H:i:s'),
+        ]);
+
+        CustomerNotification::create([
+            'customer_id' => $customerQueue->customer_id,
+            'restAcc_id' => $customerQueue->restAcc_id,
+            'notificationType' => "Cancelled",
+            'notificationTitle' => "You have Cancelled your Booking!",
+            'notificationDescription' => "$restaurant->rAddress, $restaurant->rCity",
+            'notificationStatus' => "Unread",
         ]);
 
         return response()->json([

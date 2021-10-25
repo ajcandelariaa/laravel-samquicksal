@@ -30,6 +30,9 @@ Route::get('/customer/get-restaurants/get-date-time/{id}', [CustomerController::
 Route::get('/customer/get-restaurants/menu/{id}', [CustomerController::class, 'getRestaurantsMenuInfo']);
 Route::get('/customer/get-homepage-info/{id}', [CustomerController::class, 'getCustomerHomepageInfo']);
 Route::get('/customer/get-account-info/{id}', [CustomerController::class, 'getCustomerAccountInfo']);
+Route::get('/customer/get-notifications/{id}', [CustomerController::class, 'getCustomerNotification']);
+Route::get('/customer/get-live-status/{id}', [CustomerController::class, 'getCustomerLiveStatus']);
+Route::get('/customer/cancel-booking/{id}', [CustomerController::class, 'cancelCustomerBooking']);
 
 
 Route::post('/customer/register-customer', [CustomerController::class, 'registerCustomer']);

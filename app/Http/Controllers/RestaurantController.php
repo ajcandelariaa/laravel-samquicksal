@@ -22,7 +22,6 @@ use App\Mail\RestaurantVerified;
 use App\Models\OrderSetFoodItem;
 use App\Models\RestaurantAccount;
 use App\Models\RestaurantTaskList;
-use Illuminate\Support\Facades\DB;
 use App\Models\RestaurantApplicant;
 use App\Models\RestaurantRewardList;
 use Illuminate\Support\Facades\File;
@@ -34,37 +33,460 @@ use Illuminate\Support\Facades\Session;
 use App\Mail\RestaurantFormAppreciation;
 use App\Mail\RestaurantPasswordChanged;
 use App\Mail\RestaurantUpdateEmail;
+use App\Models\CustomerAccount;
+use App\Models\CustomerLOrder;
+use App\Models\CustomerLRequest;
+use App\Models\CustomerNotification;
+use App\Models\CustomerOrdering;
 use App\Models\CustomerQueue;
 use App\Models\PromoMechanics;
-use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Support\Carbon;
 
 class RestaurantController extends Controller
 {
     // FOR CHECKING THE EXPIRATION DATES OF STAMPS
     public function __construct(){}
 
+    public function convertMonths($month){
+        switch ($month) {
+            case '1':
+                return "January";
+                break;
+            case '2':
+                return "February";
+                break;
+            case '3':
+                return "March";
+                break;
+            case '4':
+                return "April";
+                break;
+            case '5':
+                return "May";
+                break;
+            case '6':
+                return "June";
+                break;
+            case '7':
+                return "July";
+                break;
+            case '8':
+                return "August";
+                break;
+            case '9':
+                return "September";
+                break;
+            case '10':
+                return "October";
+                break;
+            case '11':
+                return "November";
+                break;
+            case '12':
+                return "December";
+                break;
+            default:
+                return "";
+                break;
+        }
+    }
+
 
 
 
 
     // RENDER VIEWS
+    public function ltCustOrderOSPartView($id){
+        return view('restaurant.liveTransactions.customerOrdering.custOrderSum');
+    }
+    public function ltCustOrderORPartView($id){
+        return view('restaurant.liveTransactions.customerOrdering.custOrderReq');
+    }
+    public function ltCustOrderListView(){
+        $restAcc_id = Session::get('loginId');
+        $eatingCustomers = CustomerOrdering::where('restAcc_id', $restAcc_id)->where('status', 'eating')->get();
+        
+        $orders = array();
+        $requests = array();
+
+        foreach ($eatingCustomers as $eatingCustomer){
+            $countOrders = CustomerLOrder::where('custOrdering_id', $eatingCustomer->id)->where('orderDone', 'No')->count();
+            $countRequests = CustomerLRequest::where('custOrdering_id', $eatingCustomer->id)->where('requestDone', 'No')->count();
+
+            array_push($orders, $countOrders);
+            array_push($requests, $countRequests);
+        }
+        
+        return view('restaurant.liveTransactions.customerOrdering.custOrderingList', [
+            'eatingCustomers' => $eatingCustomers,
+            'orders' => $orders,
+            'requests' => $requests,
+        ]);
+    }
+    public function ltAppCustQAddWalkInView(){
+        $restAcc_id = Session::get('loginId');
+        $restaurant = RestaurantAccount::select('rTimeLimit', 'rCapacityPerTable')->where('id', $restAcc_id)->first();
+        $orderSets = OrderSet::where('restAcc_id', $restAcc_id)->get();
+
+
+        return view('restaurant.liveTransactions.approvedCustomer.addWalkin', [
+            'rTimeLimit' => $restaurant->rTimeLimit,
+            'rCapacityPerTable' => $restaurant->rCapacityPerTable,
+            'orderSets' => $orderSets,
+        ]);
+    }
+    public function ltAppCustRParticularView($id){
+        return view('restaurant.liveTransactions.approvedCustomer.reserveView');
+    }
+    public function ltAppCustRListView(){
+        return view('restaurant.liveTransactions.approvedCustomer.reserveList');
+    }
+    public function ltAppCustQParticularView($id){
+        $restAcc_id = Session::get('loginId');
+        $customerQueue = CustomerQueue::where('id', $id)
+        ->where('restAcc_id', $restAcc_id)
+        ->where(function ($query) {
+            $query->where('status', "approved")
+            ->orWhere('status', "validation");
+        })->first();
+
+        if($customerQueue != null && $customerQueue->customer_id != 0){
+            $customerInfo = CustomerAccount::where('id', $customerQueue->customer_id)->first();
+            $orderSet = OrderSet::where('id', $customerQueue->orderSet_id)->first();
+    
+            $countQueues = CustomerQueue::where('restAcc_id', $restAcc_id)
+                        ->where('status', 'approved')
+                        ->where('customer_id', $customerQueue->customer_id)
+                        ->count();
+    
+            $countCancelled = CustomerQueue::where('restAcc_id', $restAcc_id)
+                        ->where('status', 'cancelled')
+                        ->where('customer_id', $customerQueue->customer_id)
+                        ->count();
+    
+            $countNoShow = CustomerQueue::where('restAcc_id', $restAcc_id)
+                        ->where('status', 'no show')
+                        ->where('customer_id', $customerQueue->customer_id)
+                        ->count();
+    
+            $countRunaway = CustomerQueue::where('restAcc_id', $restAcc_id)
+                        ->where('status', 'runaway')
+                        ->where('customer_id', $customerQueue->customer_id)
+                        ->count();
+    
+            $bookTime = date('g:i a', strtotime($customerQueue->created_at));
+    
+            $bookDate = explode('-', date('Y-m-d', strtotime($customerQueue->created_at)));
+            $month1 = $this->convertMonths($bookDate[1]);
+            $year1 = $bookDate[0];
+            $day1  = $bookDate[2];
+    
+            $userSinceDate = explode('-', date('Y-m-d', strtotime($customerInfo->created_at)));
+            $month2 = $this->convertMonths($userSinceDate[1]);
+            $year2 = $userSinceDate[0];
+            $day2  = $userSinceDate[2];
+    
+            $finalReward = "None";
+            switch($customerQueue->rewardType){
+                case "DSCN": 
+                    $finalReward = "Discount $customerQueue->rewardInput in a Total Bill";
+                    break;
+                case "FRPE": 
+                    $finalReward = "Free $customerQueue->rewardInput person in a group";
+                    break;
+                case "HLF": 
+                    $finalReward = "Half in the group will be free";
+                    break;
+                case "ALL": 
+                    $finalReward = "All people in the group will be free";
+                    break;
+                default: 
+                    $finalReward = "None";
+            }
+    
+    
+            $seniorDiscount = $orderSet->orderSetPrice * ($customerQueue->numberOfPwd * 0.2);
+            $childrenDiscount = $orderSet->orderSetPrice * $customerQueue->numberOfChildren;
+
+            $getDateToday = date("Y-m-d");
+            $checkPriorities = CustomerQueue::where('restAcc_id', $restAcc_id)
+                            ->where(function ($query) {
+                                $query->where('status', "approved")
+                                ->orWhere('status', "validation");
+                            })
+                            ->where('queueDate', $getDateToday)
+                            ->orderBy('totalPwdChild', 'DESC')
+                            ->orderBy('created_at', 'ASC')->first();
+
+            $isPriority = false;
+            if($checkPriorities->id == $id){
+                $isPriority = true;
+            } else {
+                $isPriority = false;
+            }
+    
+            return view('restaurant.liveTransactions.approvedCustomer.queueView',[
+                'customerQueue' => $customerQueue,
+                'customerInfo' => $customerInfo,
+                'countQueues' => $countQueues,
+                'countCancelled' => $countCancelled,
+                'countNoShow' => $countNoShow,
+                'countRunaway' => $countRunaway,
+                'bookTime' => $bookTime,
+                'bookDate' => $month1." ".$day1.", ".$year1,
+                'userSinceDate' => $month2." ".$day2.", ".$year2,
+                'finalReward' => $finalReward,
+                'orderSet' => $orderSet,
+                'seniorDiscount' => $seniorDiscount,
+                'childrenDiscount' => $childrenDiscount,
+                'isPriority' => $isPriority,
+            ]);
+        } else {
+            $orderSet = OrderSet::where('id', $customerQueue->orderSet_id)->first();
+
+            $bookTime = date('g:i a', strtotime($customerQueue->created_at));
+    
+            $bookDate = explode('-', date('Y-m-d', strtotime($customerQueue->created_at)));
+            $month1 = $this->convertMonths($bookDate[1]);
+            $year1 = $bookDate[0];
+            $day1  = $bookDate[2];
+
+            $seniorDiscount = $orderSet->orderSetPrice * ($customerQueue->numberOfPwd * 0.2);
+            $childrenDiscount = $orderSet->orderSetPrice * $customerQueue->numberOfChildren;
+
+            $getDateToday = date("Y-m-d");
+            $checkPriorities = CustomerQueue::where('restAcc_id', $restAcc_id)
+                            ->where(function ($query) {
+                                $query->where('status', "approved")
+                                ->orWhere('status', "validation");
+                            })
+                            ->where('queueDate', $getDateToday)
+                            ->orderBy('totalPwdChild', 'DESC')
+                            ->orderBy('created_at', 'ASC')->first();
+
+            $isPriority = false;
+            if($checkPriorities->id == $id){
+                $isPriority = true;
+            } else {
+                $isPriority = false;
+            }
+    
+            return view('restaurant.liveTransactions.approvedCustomer.queueView',[
+                'customerQueue' => $customerQueue,
+                'countQueues' => "None",
+                'countCancelled' => "None",
+                'countNoShow' => "None",
+                'countRunaway' => "None",
+                'bookTime' => $bookTime,
+                'bookDate' => $month1." ".$day1.", ".$year1,
+                'finalReward' => "None",
+                'orderSet' => $orderSet,
+                'seniorDiscount' => $seniorDiscount,
+                'childrenDiscount' => $childrenDiscount,
+                'isPriority' => $isPriority,
+            ]);
+        }
+    }
+    public function ltAppCustQListView(){
+        $restAcc_id = Session::get('loginId');
+        $getDateToday = date("Y-m-d");
+        $customerNames = array();
+
+        $customerQueues = CustomerQueue::where('restAcc_id', $restAcc_id)
+                        ->where(function ($query) {
+                            $query->where('status', "approved")
+                            ->orWhere('status', "validation");
+                        })
+                        ->where('queueDate', $getDateToday)
+                        ->orderBy('totalPwdChild', 'DESC')
+                        ->orderBy('created_at', 'ASC')
+                        ->paginate(10);
+
+        if(!$customerQueues->isEmpty()){
+            foreach ($customerQueues as $customerQueue){
+                if($customerQueue->customer_id == 0){
+                    array_push($customerNames, $customerQueue->name);
+                } else {
+                    $getCustName = CustomerAccount::select('name')->where('id', $customerQueue->customer_id)->first();
+                    array_push($customerNames, $getCustName->name);
+                }
+            }
+        }
+
+        return view('restaurant.liveTransactions.approvedCustomer.queueList',[
+            'customerQueues' => $customerQueues,
+            'customerNames' => $customerNames,
+        ]);
+    }
+
+
     public function ltCustBookRParticularView($id){
         return view('restaurant.liveTransactions.customerBooking.reserveView');
-    }
-    public function ltCustBookQParticularView($id){
-        return view('restaurant.liveTransactions.customerBooking.queueView');
     }
     public function ltCustBookRListView(){
         return view('restaurant.liveTransactions.customerBooking.reserveList');
     }
+    public function ltCustBookQParticularView($id){
+        $restAcc_id = Session::get('loginId');
+        $customerQueue = CustomerQueue::where('id', $id)->where('restAcc_id', $restAcc_id)->where('status', 'pending')->first();
+        $customerInfo = CustomerAccount::where('id', $customerQueue->customer_id)->first();
+        $orderSet = OrderSet::where('id', $customerQueue->orderSet_id)->first();
+        $currentTime = Carbon::now();
+
+        $rAppstartTime = Carbon::parse($customerQueue->created_at);
+        $rAppDiffSeconds = $currentTime->diffInSeconds($rAppstartTime);
+        $rAppDiffMinutes = $currentTime->diffInMinutes($rAppstartTime);
+
+        $rAppDiffMinutes = 15 - $rAppDiffMinutes;
+        $rAppDiffSeconds = (15 * 60) - $rAppDiffSeconds;
+
+        if ($rAppDiffMinutes > 1){
+            $rAppDiffTime = "$rAppDiffMinutes minutes";
+        } else if ($rAppDiffMinutes == 1) {
+            if ($rAppDiffSeconds == 1){
+                $rAppDiffTime = "1 second";
+            } else {
+                $rAppDiffTime = "$rAppDiffSeconds seconds";
+            }
+        } else {
+            $rAppDiffTime = "0 second";
+        }
+
+        $countQueues = CustomerQueue::where('restAcc_id', $restAcc_id)
+                    ->where('status', 'approved')
+                    ->where('customer_id', $customerQueue->customer_id)
+                    ->count();
+
+        $countCancelled = CustomerQueue::where('restAcc_id', $restAcc_id)
+                    ->where('status', 'cancelled')
+                    ->where('customer_id', $customerQueue->customer_id)
+                    ->count();
+
+        $countNoShow = CustomerQueue::where('restAcc_id', $restAcc_id)
+                    ->where('status', 'no show')
+                    ->where('customer_id', $customerQueue->customer_id)
+                    ->count();
+
+        $countRunaway = CustomerQueue::where('restAcc_id', $restAcc_id)
+                    ->where('status', 'runaway')
+                    ->where('customer_id', $customerQueue->customer_id)
+                    ->count();
+
+        $bookTime = date('g:i a', strtotime($customerQueue->created_at));
+
+        $bookDate = explode('-', date('Y-m-d', strtotime($customerQueue->created_at)));
+        $month1 = $this->convertMonths($bookDate[1]);
+        $year1 = $bookDate[0];
+        $day1  = $bookDate[2];
+
+        $userSinceDate = explode('-', date('Y-m-d', strtotime($customerInfo->created_at)));
+        $month2 = $this->convertMonths($userSinceDate[1]);
+        $year2 = $userSinceDate[0];
+        $day2  = $userSinceDate[2];
+
+        $finalReward = "None";
+        switch($customerQueue->rewardType){
+            case "DSCN": 
+                $finalReward = "Discount $customerQueue->rewardInput in a Total Bill";
+                break;
+            case "FRPE": 
+                $finalReward = "Free $customerQueue->rewardInput person in a group";
+                break;
+            case "HLF": 
+                $finalReward = "Half in the group will be free";
+                break;
+            case "ALL": 
+                $finalReward = "All people in the group will be free";
+                break;
+            default: 
+                $finalReward = "None";
+        }
+
+
+        $seniorDiscount = $orderSet->orderSetPrice * ($customerQueue->numberOfPwd * 0.2);
+        $childrenDiscount = $orderSet->orderSetPrice * $customerQueue->numberOfChildren;
+
+        
+        $getDateToday = date("Y-m-d");
+        $checkPriorities = CustomerQueue::where('restAcc_id', $restAcc_id)
+                        ->where('status', 'pending')
+                        ->where('queueDate', $getDateToday)
+                        ->orderBy('totalPwdChild', 'DESC')
+                        ->orderBy('created_at', 'ASC')->first();
+
+        $isPriority = false;
+        if($checkPriorities->id == $id){
+            $isPriority = true;
+        } else {
+            $isPriority = false;
+        }
+
+        return view('restaurant.liveTransactions.customerBooking.queueView',[
+            'customerQueue' => $customerQueue,
+            'customerInfo' => $customerInfo,
+            'countQueues' => $countQueues,
+            'countCancelled' => $countCancelled,
+            'countNoShow' => $countNoShow,
+            'countRunaway' => $countRunaway,
+            'bookTime' => $bookTime,
+            'bookDate' => $month1." ".$day1.", ".$year1,
+            'userSinceDate' => $month2." ".$day2.", ".$year2,
+            'rAppDiffTime' => $rAppDiffTime,
+            'finalReward' => $finalReward,
+            'orderSet' => $orderSet,
+            'seniorDiscount' => $seniorDiscount,
+            'childrenDiscount' => $childrenDiscount,
+            'isPriority' => $isPriority,
+        ]);
+    }
     public function ltCustBookQListView(){
         $restAcc_id = Session::get('loginId');
-        $getDateToday = 
-        $customerQueues = CustomerQueue::where('restAcc_id', $restAcc_id)->where('status', 'pending')->get(); 
+        $getDateToday = date("Y-m-d");
+        $customerNames = array();
+        $customerTimeLimits = array();
+        $currentTime = Carbon::now();
+
+        $customerQueues = CustomerQueue::where('restAcc_id', $restAcc_id)
+                        ->where('status', 'pending')
+                        ->where('queueDate', $getDateToday)
+                        ->orderBy('totalPwdChild', 'DESC')
+                        ->orderBy('created_at', 'ASC')
+                        ->paginate(10);
+
+        if(!$customerQueues->isEmpty()){
+            foreach ($customerQueues as $customerQueue){
+                $getCustName = CustomerAccount::select('name')->where('id', $customerQueue->customer_id)->first();
+                array_push($customerNames, $getCustName->name);
+            }
+    
+            foreach ($customerQueues as $customerQueue){
+                $rAppstartTime = Carbon::parse($customerQueue->created_at);
+                $rAppDiffSeconds = $currentTime->diffInSeconds($rAppstartTime);
+                $rAppDiffMinutes = $currentTime->diffInMinutes($rAppstartTime);
+
+                $rAppDiffMinutes = 15 - $rAppDiffMinutes;
+                $rAppDiffSeconds = (15 * 60) - $rAppDiffSeconds;
+
+    
+                if ($rAppDiffMinutes > 1){
+                    $rAppDiffTime = "$rAppDiffMinutes minutes";
+                } else if ($rAppDiffMinutes == 1) {
+                    if ($rAppDiffSeconds == 1){
+                        $rAppDiffTime = "1 second";
+                    } else {
+                        $rAppDiffTime = "$rAppDiffSeconds seconds";
+                    }
+                } else {
+                    $rAppDiffTime = "0 second";
+                }
+                array_push($customerTimeLimits, $rAppDiffTime);
+            }
+        }
 
         return view('restaurant.liveTransactions.customerBooking.queueList',[
             'customerQueues' => $customerQueues,
-            'title' => 'Manage Customer Queue',
+            'customerNames' => $customerNames,
+            'customerTimeLimits' => $customerTimeLimits,
         ]);
     }
     public function addPromoView(){
@@ -583,18 +1005,217 @@ class RestaurantController extends Controller
 
     
 
+
+
+
+
+
+
+
+
+
     // RENDER LOGICS
+    public function ltAppCustQAddWalkIn(Request $request){
+        $restAcc_id = Session::get('loginId');
+
+        $request->validate([
+            'walkInName' => 'required',
+            'walkInPersons' => 'required',
+        ],
+        [
+            'walkInName.required' => 'Name is required',
+            'walkInPersons.required' => 'No. of Persons is required',
+        ]);
+
+
+        $orderSet = OrderSet::where('id', $request->walkInOrder)->first();
+        
+        $totalBill = $orderSet->orderSetPrice * $request->walkInPersons;
+        $seniorDiscount = $orderSet->orderSetPrice * ($request->walkInPwd * 0.2);
+        $childrenDiscount = $orderSet->orderSetPrice * $request->walkInChildren;
+        
+        $totalBill = $totalBill - ($seniorDiscount + $childrenDiscount);
+
+        $finalNoOfTables = "";
+        if($request->walkInPersons <= $request->capacityPerTable){
+            $finalNoOfTables = 1;
+        } else {
+            $x = intval($request->walkInPersons / $request->capacityPerTable);
+            $remainder = intval($request->walkInPersons % $request->capacityPerTable);
+            if($remainder > 0){
+                $x += 1;
+            }
+            $finalNoOfTables = $x;
+        }
+
+        CustomerQueue::create([
+            'customer_id' => 0,
+            'restAcc_id' => $restAcc_id,
+            'orderSet_id' => $request->walkInOrder,
+            'status' => "approved",
+            'name' => $request->walkInName,
+            'numberOfPersons' => $request->walkInPersons,
+            'numberOfTables' => $finalNoOfTables,
+            'hoursOfStay' => $request->walkInHoursOfStay,
+            'numberOfChildren' => $request->walkInChildren,
+            'numberOfPwd' => $request->walkInPwd,
+            'totalPwdChild' => ($request->walkInChildren + $request->walkInPwd),
+            'notes' => $request->walkInNotes,
+            'totalPrice' => $totalBill,
+            'queueDate' => date("Y-m-d"),
+        ]);
+
+        $request->session()->flash('walkInAdded');
+        return redirect('/restaurant/live-transaction/approved-customer/queue');
+    }
+    public function ltAppCustRAdmit($id){
+    }
+    public function ltAppCustRNoShow($id){
+        
+    }
+    public function ltAppCustQAdmit(Request $request, $id){
+        $restAcc_id = Session::get('loginId');
+        $request->validate([
+            'tableNumbers' => 'required',
+        ]);
+
+        $customerQueue = CustomerQueue::where('id', $id)->where('restAcc_id', $restAcc_id)->first();
+        
+        $tableNumbers = explode(',', $request->tableNumbers);
+        
+        $count = 0;
+        $storeNumbers = array();
+        foreach($tableNumbers as $tableNumber){
+            array_push($storeNumbers, (int)$tableNumber);
+            if (!is_numeric($tableNumber)) {
+                $count++;
+            }
+        }
+
+        if($count > 0){
+            $request->session()->flash('inputCorrectFormat');
+            return redirect('/restaurant/live-transaction/approved-customer/queue/'.$id);
+        } else {
+            if($customerQueue->numberOfTables != sizeOf($storeNumbers)){
+                $request->session()->flash('inputCorrectNumberOfTables');
+                return redirect('/restaurant/live-transaction/approved-customer/queue/'.$id);
+            } else {
+                $result = array_unique($storeNumbers);
+                if(sizeOf($result) != sizeOf($storeNumbers)){
+                    $request->session()->flash('mustBeDiffrentTables');
+                    return redirect('/restaurant/live-transaction/approved-customer/queue/'.$id);
+                } else {
+                    $finalTableNumber = "";
+                    for ($i=0; $i<count($storeNumbers); $i++){
+                        if($i == 0){
+                            $finalTableNumber = $storeNumbers[$i].',';
+                        } else if ($i == count($storeNumbers)-1){
+                            $finalTableNumber = $finalTableNumber.$storeNumbers[$i];
+                        } else {
+                            $finalTableNumber = $finalTableNumber.$storeNumbers[$i].',';
+                        }
+                    }
+        
+                    // dd($storeNumbers);
+                    $count2 = 0;
+                    $customerTables = CustomerOrdering::where('restAcc_id', $restAcc_id)->where('status', 'eating')->get();
+                    foreach ($customerTables as $customerTable){
+                        $customerTableNumbers = explode(',', $customerTable->tableNumbers);
+                        $result = array_intersect($storeNumbers, $customerTableNumbers);
+                        if($result != null){
+                            $count2++;
+                        }
+                    }
+                    if($count2 > 0){
+                        $request->session()->flash('tableExist');
+                        return redirect('/restaurant/live-transaction/approved-customer/queue/'.$id);
+                    } else {
+                        
+                    }
+                }
+            }
+        }
+        
+    }
+    public function ltAppCustQNoShow($id){
+        
+    }
+    public function ltAppCustQValidate($id){
+        $customerQueue = CustomerQueue::where('id', $id)->first();
+        $restaurant = RestaurantAccount::select('rName', 'rBranch', 'rAddress', 'rCity')->where('id', $customerQueue->restAcc_id)->first();
+
+        CustomerQueue::where('id', $id)
+        ->update([
+            'status' => 'validation',
+            'validationDateTime' => date('Y-m-d H:i:s'),
+        ]);
+
+        CustomerNotification::create([
+            'customer_id' => $customerQueue->customer_id,
+            'restAcc_id' => $customerQueue->restAcc_id,
+            'notificationType' => "Validation",
+            'notificationTitle' => "Please go to the front desk to Confirm your Booking ",
+            'notificationDescription' => "$restaurant->rAddress, $restaurant->rCity",
+            'notificationStatus' => "Unread",
+        ]);
+
+
+        Session::flash('validation');
+        return redirect('/restaurant/live-transaction/approved-customer/queue/'.$id);
+    }
+
+
     public function ltCustBookRDecline($id){
         
     }
     public function ltCustBookRApprove($id){
         
     }
-    public function ltCustBookQDecline($id){
-        
+    public function ltCustBookQDecline(Request $request, $id){
+        $customerQueue = CustomerQueue::where('id', $id)->first();
+        $restaurant = RestaurantAccount::select('rName', 'rBranch', 'rAddress', 'rCity')->where('id', $customerQueue->restAcc_id)->first();
+
+        CustomerQueue::where('id', $id)
+        ->update([
+            'status' => 'declined',
+            'declinedReason' => $request->reason,
+            'declinedDateTime' => date('Y-m-d H:i:s'),
+        ]);
+
+        CustomerNotification::create([
+            'customer_id' => $customerQueue->customer_id,
+            'restAcc_id' => $customerQueue->restAcc_id,
+            'notificationType' => "Approved",
+            'notificationTitle' => "Your Booking has been Declined!",
+            'notificationDescription' => "$restaurant->rAddress, $restaurant->rCity",
+            'notificationStatus' => "Unread",
+        ]);
+
+        Session::flash('declined');
+        return redirect('/restaurant/live-transaction/customer-booking/queue');
     }
     public function ltCustBookQApprove($id){
-        
+        $customerQueue = CustomerQueue::where('id', $id)->first();
+        $restaurant = RestaurantAccount::select('rName', 'rBranch', 'rAddress', 'rCity')->where('id', $customerQueue->restAcc_id)->first();
+
+        CustomerQueue::where('id', $id)
+        ->update([
+            'status' => 'approved',
+            'approvedDateTime' => date('Y-m-d H:i:s'),
+        ]);
+
+        CustomerNotification::create([
+            'customer_id' => $customerQueue->customer_id,
+            'restAcc_id' => $customerQueue->restAcc_id,
+            'notificationType' => "Approved",
+            'notificationTitle' => "Your Booking has been Approved",
+            'notificationDescription' => "$restaurant->rAddress, $restaurant->rCity",
+            'notificationStatus' => "Unread",
+        ]);
+
+
+        Session::flash('approved');
+        return redirect('/restaurant/live-transaction/customer-booking/queue');
     }
     public function deletePromoMechanic($id, $currentPromoId){
         $mechanics = PromoMechanics::where('promo_id', $currentPromoId)->first();

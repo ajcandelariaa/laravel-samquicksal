@@ -60,6 +60,14 @@
                             <a href="/restaurant/live-transaction/customer-booking/queue" class="ml-5 {{ (request()->is('restaurant/live-transaction/customer-booking/*')) ? 'text-manageRestaurantSidebarColorActive' : 'text-manageRestaurantSidebarColor hover:underline' }}"><i class="fas fa-file w-3 mr-3"></i> Customer Booking</a>
                             <div class="border-multiStepBoxBorder border-manageRestaurantHrColor mt-3"></div>
                         </div>
+                        <div class="text-sm mt-5 w-10/12 mx-auto">
+                            <a href="/restaurant/live-transaction/approved-customer/queue" class="ml-5 {{ (request()->is('restaurant/live-transaction/approved-customer/*')) ? 'text-manageRestaurantSidebarColorActive' : 'text-manageRestaurantSidebarColor hover:underline' }}"><i class="fas fa-file w-3 mr-3"></i> Approved Customer</a>
+                            <div class="border-multiStepBoxBorder border-manageRestaurantHrColor mt-3"></div>
+                        </div>
+                        <div class="text-sm mt-5 w-10/12 mx-auto">
+                            <a href="/restaurant/live-transaction/customer-ordering/list" class="ml-5 {{ (request()->is('restaurant/live-transaction/customer-ordering/*')) ? 'text-manageRestaurantSidebarColorActive' : 'text-manageRestaurantSidebarColor hover:underline' }}"><i class="fas fa-file w-3 mr-3"></i> Customer Ordering</a>
+                            <div class="border-multiStepBoxBorder border-manageRestaurantHrColor mt-3"></div>
+                        </div>
                     @endif
                 </div>
             </div>
@@ -68,6 +76,16 @@
                     <div class="grid grid-cols-2 gap-x-1 w-full px-1 mt-1 text-center font-bold uppercase">
                         <a href="/restaurant/live-transaction/customer-booking/queue" class="w-full py-3 rounded-sm {{ (request()->is('restaurant/live-transaction/customer-booking/queue*')) ? 'bg-tableBgHeader text-submitButton shadow-adminDownloadButton ' : 'bg-white text-manageRestaurantSidebarColor' }}">Customer Queue</a>
                         <a href="/restaurant/live-transaction/customer-booking/reserve" class="w-full py-3 rounded-sm {{ (request()->is('restaurant/live-transaction/customer-booking/reserve*')) ? 'bg-tableBgHeader text-submitButton shadow-adminDownloadButton ' : 'bg-white text-manageRestaurantSidebarColor' }}">Customer Reserve</a>
+                    </div>
+                @elseif (request()->is('restaurant/live-transaction/approved-customer/*'))
+                    <div class="grid grid-cols-2 gap-x-1 w-full px-1 mt-1 text-center font-bold uppercase">
+                        <a href="/restaurant/live-transaction/approved-customer/queue" class="w-full py-3 rounded-sm {{ (request()->is('restaurant/live-transaction/approved-customer/queue*')) ? 'bg-tableBgHeader text-submitButton shadow-adminDownloadButton ' : 'bg-white text-manageRestaurantSidebarColor' }}">Customer Queue</a>
+                        <a href="/restaurant/live-transaction/approved-customer/reserve" class="w-full py-3 rounded-sm {{ (request()->is('restaurant/live-transaction/approved-customer/reserve*')) ? 'bg-tableBgHeader text-submitButton shadow-adminDownloadButton ' : 'bg-white text-manageRestaurantSidebarColor' }}">Customer Reserve</a>
+                    </div>
+                @elseif (request()->is('restaurant/live-transaction/customer-ordering/list/*'))
+                    <div class="grid grid-cols-2 gap-x-1 w-full px-1 mt-1 text-center font-bold uppercase">
+                        <a href="order-request" class="w-full py-3 rounded-sm {{ (request()->is('*order-request')) ? 'bg-tableBgHeader text-submitButton shadow-adminDownloadButton ' : 'bg-white text-manageRestaurantSidebarColor' }}">Order & Request</a>
+                        <a href="order-summary" class="w-full py-3 rounded-sm {{ (request()->is('*order-summary')) ? 'bg-tableBgHeader text-submitButton shadow-adminDownloadButton ' : 'bg-white text-manageRestaurantSidebarColor' }}">Order Summary</a>
                     </div>
                 @endif
                 @yield('content')
@@ -78,6 +96,8 @@
         <script type="text/javascript" src="{{ asset('js/queueView.js') }}"></script>
     @elseif (request()->is('restaurant/live-transaction/customer-booking/reserve*'))
         <script type="text/javascript" src="{{ asset('js/reserveView.js') }}"></script>
+    @elseif (request()->is('restaurant/live-transaction/approved-customer/queue*'))
+        <script type="text/javascript" src="{{ asset('js/queueView2.js') }}"></script>
     @endif
 </body>
 </html>

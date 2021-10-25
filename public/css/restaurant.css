@@ -291,3 +291,47 @@
     border-radius:15px;
     cursor:pointer;
 }
+
+
+/* ADMIT QUEUE FORM */
+.booking .admit-form{
+    position:fixed;
+    top:-150%;
+    left:50%;
+    opacity:0;
+    transform:translate(-50%,-50%) scale(1.25);
+    width:40%;
+    padding:20px 30px;
+    background:#fff;
+    box-shadow:2px 2px 5px 5px rgba(0,0,0,0.15);
+    border-radius:10px;
+    transition:top 0ms ease-in-out 200ms, opacity 200ms ease-in-out 0ms, transform 200ms ease-in-out 0ms; 
+}
+.booking .overlay.active{
+    position:fixed;
+    top:0px;
+    left:0px;
+    width:100vw;
+    height:100vh;
+    background:rgba(0,0,0,0.8);
+    z-index:1;
+}
+.booking .admit-form.active{
+    top:50%;
+    opacity:1;
+    transform:translate(-50%,-50%) scale(1);
+    transition:top 0ms ease-in-out 0ms, opacity 200ms ease-in-out 0ms, transform 200ms ease-in-out 0ms;
+    z-index:2;
+}
+.booking .admit-form .close-btn{
+    position:absolute;
+    top:20px;
+    right:20px;
+    width:15px;
+    height:15px;
+    color:#000;
+    text-align:center;
+    line-height:15px;
+    border-radius:15px;
+    cursor:pointer;
+}

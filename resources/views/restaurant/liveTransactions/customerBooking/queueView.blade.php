@@ -2,15 +2,23 @@
 
 @section('content')
 <div class="container mx-auto font-Montserrat mb-10 booking">
-    <div class="w-11/12 mx-auto mt-10 pb-2">
+    <div class="w-11/12 mx-auto mt-10 pb-2 grid grid-cols-2">
         <a href="/restaurant/live-transaction/customer-booking/queue" class="text-submitButton uppercase font-bold"><i class="fas fa-chevron-left mr-2"></i>Back</a>
+        @if (!$isPriority)
+            <p class="text-submitButton uppercase font-bold text-right">Please validate the customer queue in order</p>
+        @endif
     </div>
     <div class="w-11/12 mx-auto mt-5 font-Montserrat bg-white">
         <div class="bg-manageRestaurantSidebarColorActive grid grid-cols-2 px-5 py-3 items-center">
             <div class="uppercase font-bold text-white text-xl py-3">BOOKING DETAILS</div>
             <div class="justify-self-end text-white py-3 ml-3">
-                <button id="btn-decline" class="px-8 py-2 bg-adminDeleteFormColor">Decline</button>
-                <a href="/restaurant/live-transaction/customer-booking/queue/approve/1" class="btn-approve px-8 py-2 bg-postedStatus ml-2">Approve</a>
+                @if (!$isPriority)
+                    <button type="button" class="px-8 py-2 bg-manageRestaurantSidebarColor cursor-not-allowed" disabled>Decline</button>
+                    <button type="button" class="px-8 py-2 bg-manageRestaurantSidebarColor cursor-not-allowed ml-2" disabled>Approve</button>
+                @else
+                    <button id="btn-decline" class="px-8 py-2 bg-adminDeleteFormColor">Decline</button>
+                    <a href="/restaurant/live-transaction/customer-booking/queue/approve/{{ $customerQueue->id }}" class="btn-approve px-8 py-2 bg-postedStatus ml-2">Approve</a>
+                @endif
             </div>
         </div>
         <div class="w-11/12 mx-auto py-10">
@@ -20,21 +28,25 @@
             <div class="bg-manageFoodItemHeaderBgColor py-5 shadow-adminDownloadButton">
                 <div class="w-10/12 mx-auto grid grid-cols-customerDetailsGrid items-center">
                     <div>
-                        <img src="{{ asset('images/user-default.png') }}" alt="customerImage" class="w-40 h-40 rounded-3xl">
+                        @if ($customerInfo->profileImage == null)
+                            <img src="{{ asset('images/user-default.png') }}" alt="customerImage" class="w-40 h-40 rounded-3xl">
+                        @else
+                            <img src="{{ asset('uploads/customerAccounts/logo/'.$customerInfo->id.'/'.$customerInfo->profileImage) }}" alt="customerImage" class="w-40 h-40 rounded-3xl">
+                        @endif
                     </div>
                     <div>
-                        <p class="mt-2">Name: <span class="font-bold">Bianca Beatrix R. Quicho</span></p>
-                        <p class="mt-2">Contact Number: <span class="font-bold">09123123123</span></p>
-                        <p class="mt-2">No. of Queues: <span class="font-bold">2</span></p>
-                        <p class="mt-2">No. of No Show: <span class="font-bold">3</span></p>
-                        <p class="mt-2">Booking Date: <span class="font-bold">October 21, 2021</span></p>
+                        <p class="mt-2">Name: <span class="font-bold">{{ $customerInfo->name }}</span></p>
+                        <p class="mt-2">Contact Number: <span class="font-bold">{{ $customerInfo->contactNumber }}</span></p>
+                        <p class="mt-2">No. of Queues: <span class="font-bold">{{ $countQueues }}</span></p>
+                        <p class="mt-2">No. of No Show: <span class="font-bold">{{ $countNoShow }}</span></p>
+                        <p class="mt-2">Booking Date: <span class="font-bold">{{ $bookDate }}</span></p>
                     </div>
                     <div>
-                        <p class="mt-2">Email: <span class="font-bold">trix0428@gmail.com</span></p>
-                        <p class="mt-2">User since: <span class="font-bold">September 20, 2021</span></p>
-                        <p class="mt-2">No. of Cancel: <span class="font-bold">6</span></p>
-                        <p class="mt-2">No. of Runaway: <span class="font-bold">0</span></p>
-                        <p class="mt-2">Booking Time: <span class="font-bold">10:00 AM</span></p>
+                        <p class="mt-2">Email: <span class="font-bold">{{ $customerInfo->emailAddress }}</span></p>
+                        <p class="mt-2">User since: <span class="font-bold">{{ $userSinceDate }}</span></p>
+                        <p class="mt-2">No. of Cancel: <span class="font-bold">{{ $countCancelled }}</span></p>
+                        <p class="mt-2">No. of Runaway: <span class="font-bold">{{ $countRunaway }}</span></p>
+                        <p class="mt-2">Booking Time: <span class="font-bold">{{ $bookTime }}</span></p>
                     </div>
                 </div>
             </div>
@@ -46,27 +58,27 @@
                     <div class="col-span-2">
                         <div class="grid grid-cols-2">
                             <div>
-                                <p class="mt-2">Order Set: <span class="font-bold">Order Set 399</span></p>
-                                <p class="mt-2">No. of Persons: <span class="font-bold">10</span></p>
-                                <p class="mt-2">Senior Citizen/PWD: <span class="font-bold">2</span></p>
-                                <p class="mt-2">Reward: <span class="font-bold">None</span></p>
+                                <p class="mt-2">Order Set: <span class="font-bold">{{ $orderSet->orderSetName }}</span></p>
+                                <p class="mt-2">No. of Persons: <span class="font-bold">{{ $customerQueue->numberOfPersons }}</span></p>
+                                <p class="mt-2">Senior Citizen/PWD: <span class="font-bold">{{ $customerQueue->numberOfPwd }}</span></p>
+                                <p class="mt-2">Reward: <span class="font-bold">{{ $finalReward }}</span></p>
                             </div>
                             <div>
-                                <p class="mt-2">Hours of Stay: <span class="font-bold">3 hours</span></p>
-                                <p class="mt-2">No. of Tables: <span class="font-bold">3</span></p>
-                                <p class="mt-2">Children (7 below): <span class="font-bold">2</span></p>
-                                <p class="mt-2">Cancellation Time Left: <span class="font-bold">2 minutes</span></p>
+                                <p class="mt-2">Hours of Stay: <span class="font-bold">{{ $customerQueue->hoursOfStay }} hours</span></p>
+                                <p class="mt-2">No. of Tables: <span class="font-bold">{{ $customerQueue->numberOfTables }}</span></p>
+                                <p class="mt-2">Children (7 below): <span class="font-bold">{{ $customerQueue->numberOfChildren }}</span></p>
+                                <p class="mt-2">Cancellation Time Left: <span class="font-bold">{{ $rAppDiffTime }}</span></p>
                             </div>
                         </div>
                         <div class="mt-5 border-multiStepBoxBorder w-10/12 p-4">
-                            <p>Notes: <span class="font-bold">Lorem ipsum dolor sit amet consectetur adipisicing elit. Placeat sunt, quasi fugit ipsum, cumque eum, voluptatem animi deleniti nam culpa labore qui laboriosam nulla dicta a non! Laudantium, voluptate tenetur!</span></p>
+                            <p>Notes: <span class="font-bold">{{ $customerQueue->notes }}</span></p>
                         </div>
                     </div>
                     <div class="col-span-1">
                         <div class="grid grid-cols-3 mt-2">
-                            <p class="col-span-1">Order Set 399</p>
-                            <p class="col-span-1 text-center">10x</p>
-                            <p class="justify-self-end col-span-1">3990.00 <span class="text-xs">Php</span></p>
+                            <p class="col-span-1">{{ $orderSet->orderSetName }}</p>
+                            <p class="col-span-1 text-center">{{ $customerQueue->numberOfPersons }}x</p>
+                            <p class="justify-self-end col-span-1">{{ (number_format(($customerQueue->numberOfPersons * $orderSet->orderSetPrice), 2)) }} <span class="text-xs">Php</span></p>
                         </div>
 
                         <div class="bg-sundayToSaturdayBoxColor h-height1Px my-2"></div>
@@ -86,21 +98,21 @@
                         <p class="text-manageRestaurantSidebarColor">Discount:</p>
                         <div class="grid grid-cols-3 mt-2">
                             <p class="col-span-1">Senior Citizen (20%)</p>
-                            <p class="col-span-1 text-center">2x</p>
-                            <p class="justify-self-end col-span-1">200.00 <span class="text-xs">Php</span></p>
+                            <p class="col-span-1 text-center">{{ $customerQueue->numberOfPwd }}x</p>
+                            <p class="justify-self-end col-span-1">{{ (number_format($seniorDiscount, 2)) }} <span class="text-xs">Php</span></p>
                         </div>
                         
                         <div class="grid grid-cols-3 mt-2">
                             <p class="col-span-1">Children (7 below)</p>
-                            <p class="col-span-1 text-center">0x</p>
-                            <p class="justify-self-end col-span-1">0.00 <span class="text-xs">Php</span></p>
+                            <p class="col-span-1 text-center">{{ $customerQueue->numberOfChildren }}x</p>
+                            <p class="justify-self-end col-span-1">{{ (number_format($childrenDiscount, 2)) }} <span class="text-xs">Php</span></p>
                         </div>
 
                         <div class="bg-sundayToSaturdayBoxColor h-height1Px my-2"></div>
 
                         <div class="grid grid-cols-2 mt-2">
                             <p class="col-span-1">Total Price</p>
-                            <p class="justify-self-end col-span-1"><span class="text-loginLandingPage text-lg font-bold">3790.00</span> <span class="text-xs">Php</span></p>
+                            <p class="justify-self-end col-span-1"><span class="text-loginLandingPage text-lg font-bold">{{ $customerQueue->totalPrice }}</span> <span class="text-xs">Php</span></p>
                         </div>
 
                     </div>
@@ -115,7 +127,7 @@
                 <button id="btn-close" class="close-btn text-xl font-bold">&times;</button>
             </div>
             <h1 class="text-center text-submitButton font-bold text-2xl font-Montserrat">Decline Customer Queue</h1>
-            <form action="" method="POST" id="declinedForm">
+            <form action="/restaurant/live-transaction/customer-booking/queue/decline/{{ $customerQueue->id }}" method="POST" id="declinedForm">
                 @csrf
                 <div class="w-11/12 mx-auto mt-10 text-center">
                     <textarea type="text" name="reason" placeholder="Please type your reason here" class="border rounded-md focus:border-black w-full py-3 px-2 text-sm focus:outline-non text-gray-700" rows="5" required></textarea>

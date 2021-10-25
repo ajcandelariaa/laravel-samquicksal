@@ -14,7 +14,7 @@ class CustomerQueue extends Model
         'restAcc_id',
         'orderSet_id',
         'status',
-        'cancellable',
+        'name',
         'numberOfPersons',
         'numberOfTables',
         'hoursOfStay',
@@ -26,5 +26,14 @@ class CustomerQueue extends Model
         'rewardType',
         'rewardInput',
         'totalPrice',
+        'queueDate',
+        'approvedDateTime',
+        'cancelDateTime',
+        'declinedDateTime',
+        'validationDateTime',
+        'tableSettingDateTime',
+        'eatingDateTime',
+        'declinedReason',
+        'cancelReason',
     ];
 }
