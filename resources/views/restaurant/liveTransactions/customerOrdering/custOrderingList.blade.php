@@ -22,7 +22,7 @@
                 @php
                     $count = 1
                 @endphp
-                @for ($i=0; $i<=sizeOf($eatingCustomers); $i++)
+                @for ($i=0; $i<sizeOf($eatingCustomers); $i++)
                     @if ($count % 2 == 0)
                         <div class="grid grid-cols-10 py-2 text-center bg-manageFoodItemHeaderBgColor">
                             <div class="col-span-1">{{ $count }}</div>
@@ -38,7 +38,7 @@
                             </div>
                         </div>
                     @else
-                        <div class="grid grid-cols-1011 py-2 text-center bg-white">
+                        <div class="grid grid-cols-10 py-2 text-center bg-white">
                             <div class="col-span-1">{{ $count }}</div>
                             <div class="col-span-2">{{ $eatingCustomers[$i]->tableNumbers }}</div>
                             <div class="col-span-2">{{ $eatingCustomers[$i]->custName }}</div>

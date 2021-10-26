@@ -65,6 +65,7 @@ module.exports = {
         checkListGrid: '180px 350px auto',
         checkListGrid2: '70px auto',
         customerDetailsGrid: '200px auto auto',
+        orderCustDetailsGrid: '100px auto',
       },
       boxShadow: {
         adminDownloadButton: '0px 3px 14px -9px rgba(0,0,0,0.75)'

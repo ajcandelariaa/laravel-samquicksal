@@ -100,7 +100,11 @@ class RestaurantController extends Controller
         return view('restaurant.liveTransactions.customerOrdering.custOrderSum');
     }
     public function ltCustOrderORPartView($id){
-        return view('restaurant.liveTransactions.customerOrdering.custOrderReq');
+        $restAcc_id = Session::get('loginId');
+        $customerOrdering = CustomerOrdering::where('id', $id)->where('restAcc_id', $restAcc_id)->where('status', 'eating')->first();
+        return view('restaurant.liveTransactions.customerOrdering.custOrderReq', [
+            'customerOrdering' => $customerOrdering,
+        ]);
     }
     public function ltCustOrderListView(){
         $restAcc_id = Session::get('loginId');
@@ -113,10 +117,15 @@ class RestaurantController extends Controller
             $countOrders = CustomerLOrder::where('custOrdering_id', $eatingCustomer->id)->where('orderDone', 'No')->count();
             $countRequests = CustomerLRequest::where('custOrdering_id', $eatingCustomer->id)->where('requestDone', 'No')->count();
 
+            if($countOrders == null){
+                $countOrders = 0;
+            }
+            if($countRequests == null){
+                $countRequests = 0;
+            }
             array_push($orders, $countOrders);
             array_push($requests, $countRequests);
         }
-        
         return view('restaurant.liveTransactions.customerOrdering.custOrderingList', [
             'eatingCustomers' => $eatingCustomers,
             'orders' => $orders,
@@ -1116,7 +1125,6 @@ class RestaurantController extends Controller
                         }
                     }
         
-                    // dd($storeNumbers);
                     $count2 = 0;
                     $customerTables = CustomerOrdering::where('restAcc_id', $restAcc_id)->where('status', 'eating')->get();
                     foreach ($customerTables as $customerTable){
@@ -1130,6 +1138,7 @@ class RestaurantController extends Controller
                         $request->session()->flash('tableExist');
                         return redirect('/restaurant/live-transaction/approved-customer/queue/'.$id);
                     } else {
+                        // UPDATE NA NG DATA
                         
                     }
                 }
