@@ -10,7 +10,25 @@
                 'success'
             );
         </script>
+    @elseif (session()->has('noShow'))
+        <script>
+            Swal.fire(
+                'Customer No Show',
+                '',
+                'success'
+            );
+        </script>
+    @elseif (session()->has('admitted'))
+        <script>
+            Swal.fire(
+                'Customer Admitted',
+                'Please grant the customer for an access of Ordering',
+                'success'
+            );
+        </script>
     @endif
+
+    
     <div class="w-11/12 mx-auto mt-10 font-Montserrat text-right">
         <a href="/restaurant/live-transaction/approved-customer/queue/add-walk-in" class="bg-submitButton text-white py-3 px-9">
             <i class="fas fa-plus mr-3"></i>Walk In

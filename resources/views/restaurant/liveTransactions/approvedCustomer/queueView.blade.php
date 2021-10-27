@@ -122,7 +122,9 @@
                         <div class="uppercase font-bold text-center text-xl py-4">QUEUE NUMBER</div>
                     </div>
                     <div class="bg-manageFoodItemHeaderBgColor py-5 shadow-adminDownloadButton text-center">
-                        <p class="text-9xl text-headerActiveTextColor font-bold">8</p>
+                        <p class="text-9xl text-headerActiveTextColor font-bold">
+                            {{ $finalQueueNumber }}
+                        </p>
                     </div>
                 </div>
             </div>

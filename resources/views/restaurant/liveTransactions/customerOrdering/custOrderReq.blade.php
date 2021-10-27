@@ -10,7 +10,7 @@
             <div class="uppercase font-bold text-white text-xl py-2">ORDERS & REQUESTS</div>
             <div class="justify-self-end text-white py-3 ml-3">
                 @if ($customerOrdering->grantedAccess == "No")
-                    <button id="btn-decline" class="px-8 py-2 bg-postedStatus">Grant Access</button>
+                    <button id="btn-access" class="px-8 py-2 bg-postedStatus">Grant Access</button>
                 @endif
             </div>
         </div>

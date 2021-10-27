@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateCustomerNotificationsTable extends Migration
+class CreateCustRestoRatingsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,15 +13,16 @@ class CreateCustomerNotificationsTable extends Migration
      */
     public function up()
     {
-        Schema::create('customer_notifications', function (Blueprint $table) {
+        Schema::create('cust_resto_ratings', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('customer_id');
             $table->unsignedBigInteger('restAcc_id');
-            $table->string('notificationType');
-            $table->string('notificationTitle');
-            $table->string('notificationDescription');
-            $table->string('notificationStatus');
+            $table->unsignedBigInteger('custOrdering_id');
+            $table->string('rating');
+            $table->string('comment');
+            $table->string('anonymous');
             $table->foreign('customer_id')->references('id')->on('customer_accounts')->onDelete('cascade');
+            $table->foreign('restAcc_id')->references('id')->on('restaurant_accounts')->onDelete('cascade');
             $table->timestamps();
         });
     }
@@ -33,6 +34,6 @@ class CreateCustomerNotificationsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('customer_notifications');
+        Schema::dropIfExists('cust_resto_ratings');
     }
 }

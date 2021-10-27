@@ -102,6 +102,17 @@ class RestaurantController extends Controller
     public function ltCustOrderORPartView($id){
         $restAcc_id = Session::get('loginId');
         $customerOrdering = CustomerOrdering::where('id', $id)->where('restAcc_id', $restAcc_id)->where('status', 'eating')->first();
+
+        // GET CUSTOMER DETAILS (name, order set name, table number, last order, last request)
+        
+        // GET CUSTOMER ORDERS AND REQUESTS yung mga di pa naseserve
+
+        // GET CUSTOMER WHO HAS ACCESS
+
+
+        $customerOrders = CustomerLOrder::where('custOrdering_id', $id)->get();
+        $customerRequests = "";
+
         return view('restaurant.liveTransactions.customerOrdering.custOrderReq', [
             'customerOrdering' => $customerOrdering,
         ]);
@@ -233,6 +244,21 @@ class RestaurantController extends Controller
             } else {
                 $isPriority = false;
             }
+
+            $countCustomersApproved = CustomerQueue::where('status', "approved")
+                ->where('queueDate', $getDateToday)
+                ->orderBy('totalPwdChild', 'DESC')
+                ->orderBy('created_at', 'ASC')
+                ->get();
+
+                $finalQueueNumber = 0;
+                $queueNumber = 0;
+                foreach ($countCustomersApproved as $countCustomerApproved){
+                    $queueNumber++;
+                    if($countCustomerApproved->id == $id){
+                        $finalQueueNumber = $queueNumber;
+                    }
+                }
     
             return view('restaurant.liveTransactions.approvedCustomer.queueView',[
                 'customerQueue' => $customerQueue,
@@ -249,6 +275,7 @@ class RestaurantController extends Controller
                 'seniorDiscount' => $seniorDiscount,
                 'childrenDiscount' => $childrenDiscount,
                 'isPriority' => $isPriority,
+                'finalQueueNumber' => $finalQueueNumber,
             ]);
         } else {
             $orderSet = OrderSet::where('id', $customerQueue->orderSet_id)->first();
@@ -1139,7 +1166,43 @@ class RestaurantController extends Controller
                         return redirect('/restaurant/live-transaction/approved-customer/queue/'.$id);
                     } else {
                         // UPDATE NA NG DATA
+                        $customerQueue = CustomerQueue::where('id', $id)->first();
+                        $restaurant = RestaurantAccount::select('rName', 'rBranch', 'rAddress', 'rCity')->where('id', $customerQueue->restAcc_id)->first();
                         
+                        if($customerQueue->name == null){
+                            $customer = CustomerAccount::select('name')->where('id', $customerQueue->customer_id)->first();
+                            $finaleCustName = $customer->name;
+                        } else {
+                            $finaleCustName = $customerQueue->name;
+                        }
+
+                        CustomerOrdering::create([
+                            'custBook_id' => $id,
+                            'restAcc_id' => $customerQueue->restAcc_id,
+                            'custName' => $finaleCustName,
+                            'custBookType' => "queue",
+                            'tableNumbers' => $finalTableNumber,
+                            'availableQrAccess' => $customerQueue->numberOfTables - 1,
+                            'grantedAccess' => "No",
+                            'status' => "eating",
+                        ]);
+
+                        CustomerQueue::where('id', $id)
+                        ->update([
+                            'status' => 'tableSettingUp',
+                        ]);
+
+                        CustomerNotification::create([
+                            'customer_id' => $customerQueue->customer_id,
+                            'restAcc_id' => $customerQueue->restAcc_id,
+                            'notificationType' => "Table Setting Up",
+                            'notificationTitle' => "Your Table is Setting up",
+                            'notificationDescription' => "$restaurant->rAddress, $restaurant->rCity",
+                            'notificationStatus' => "Unread",
+                        ]);
+                        
+                        $request->session()->flash('admitted');
+                        return redirect('/restaurant/live-transaction/approved-customer/queue');
                     }
                 }
             }
@@ -1147,7 +1210,25 @@ class RestaurantController extends Controller
         
     }
     public function ltAppCustQNoShow($id){
-        
+        $customerQueue = CustomerQueue::where('id', $id)->first();
+        $restaurant = RestaurantAccount::select('rName', 'rBranch', 'rAddress', 'rCity')->where('id', $customerQueue->restAcc_id)->first();
+
+        CustomerQueue::where('id', $id)
+        ->update([
+            'status' => 'noShow',
+        ]);
+
+        CustomerNotification::create([
+            'customer_id' => $customerQueue->customer_id,
+            'restAcc_id' => $customerQueue->restAcc_id,
+            'notificationType' => "No Show",
+            'notificationTitle' => "Your Booking is labelled as No Show",
+            'notificationDescription' => "$restaurant->rAddress, $restaurant->rCity",
+            'notificationStatus' => "Unread",
+        ]);
+
+        Session::flash('noShow');
+        return redirect('/restaurant/live-transaction/approved_customer/queue');
     }
     public function ltAppCustQValidate($id){
         $customerQueue = CustomerQueue::where('id', $id)->first();
@@ -1194,7 +1275,7 @@ class RestaurantController extends Controller
         CustomerNotification::create([
             'customer_id' => $customerQueue->customer_id,
             'restAcc_id' => $customerQueue->restAcc_id,
-            'notificationType' => "Approved",
+            'notificationType' => "Declined",
             'notificationTitle' => "Your Booking has been Declined!",
             'notificationDescription' => "$restaurant->rAddress, $restaurant->rCity",
             'notificationStatus' => "Unread",

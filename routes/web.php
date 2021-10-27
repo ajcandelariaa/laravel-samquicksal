@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\RestaurantController;
 use Illuminate\Support\Facades\Route;
 
@@ -188,4 +189,9 @@ Route::middleware(['adminLoggedOut'])->group(function(){
     Route::post('/admin/login', [AdminController::class, 'login']);
 });
 
+
+
+// CUSTOMER MOBILE APP ROUTES
+Route::get('/customer/forgot-password/{token}/{emailAddress}', [CustomerController::class, 'resetPasswordView']);
+Route::post('/customer/forgot-password/{token}/{emailAddress}', [CustomerController::class, 'resetPassword']);
 

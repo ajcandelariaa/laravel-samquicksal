@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\CustomerForgotPassword;
+use App\Mail\CustomerPasswordChanged;
 use App\Models\Post;
 use App\Models\Promo;
 use App\Models\FoodSet;
@@ -26,23 +28,29 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\RestaurantFormAppreciation;
 use App\Models\CustomerNotification;
+use App\Models\CustomerOrdering;
 use App\Models\CustomerQueue;
+use App\Models\CustomerReserve;
+use App\Models\CustomerResetPassword;
+use App\Models\Policy;
+use Illuminate\Contracts\Cache\Store;
 
 class CustomerController extends Controller
 {
-    public $RESTAURANT_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/logo";
-    public $CUSTOMER_IMAGE_PATH = "http://192.168.1.53:8000/uploads/customerAccounts/logo";
-    public $ACCOUNT_NO_IMAGE_PATH = "http://192.168.1.53:8000/images";
-    public $POST_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/post";
-    public $PROMO_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/promo";
-    public $ORDER_SET_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/orderSet";
+    // public $RESTAURANT_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/logo";
+    // public $CUSTOMER_IMAGE_PATH = "http://192.168.1.53:8000/uploads/customerAccounts/logo";
+    // public $ACCOUNT_NO_IMAGE_PATH = "http://192.168.1.53:8000/images";
+    // public $POST_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/post";
+    // public $PROMO_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/promo";
+    // public $ORDER_SET_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/orderSet";
 
     
-    // public $CUSTOMER_IMAGE_PATH = "https://www.samquicksal.com/uploads/customerAccounts/logo";
-    // public $ACCOUNT_NO_IMAGE_PATH = "https://www.samquicksal.com/images";
-    // public $POST_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/post";
-    // public $PROMO_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/promo";
-    // public $ORDER_SET_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/orderSet";
+    public $RESTAURANT_IMAGE_PATH = "https://www.samquicksal.com/uploads/customerAccounts/logo";
+    public $CUSTOMER_IMAGE_PATH = "https://www.samquicksal.com/uploads/customerAccounts/logo";
+    public $ACCOUNT_NO_IMAGE_PATH = "https://www.samquicksal.com/images";
+    public $POST_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/post";
+    public $PROMO_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/promo";
+    public $ORDER_SET_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/orderSet";
 
     public function convertDays($day){
         if ($day == "MO"){
@@ -179,7 +187,7 @@ class CustomerController extends Controller
     }
     // -------RESTAURANT ABOUT BY ID------------ //
     public function getRestaurantAboutInfo($id){
-        $account = RestaurantAccount::select('rName', 'rAddress', 'rLogo', 'rNumberOfTables')->where('id', $id)->first();
+        $account = RestaurantAccount::select('rName', 'rAddress', 'rLogo', 'rNumberOfTables', 'rCity', 'rBranch')->where('id', $id)->first();
         $posts = Post::where('restAcc_id', $id)->get();
 
         $storePosts = array();
@@ -190,9 +198,23 @@ class CustomerController extends Controller
             ]);
         }
 
+        $storePolicy = array();
+        $policies = Policy::where('restAcc_id', $id)->get();
+        if($policies->isEmpty()){
+            array_push($storePolicy,[
+                'policy' => "We do not have any policy as of now"
+            ]);
+        } else {
+            foreach ($policies as $policie){
+                array_push($storePolicy, [
+                    'policy' => $policie->policyDesc,
+                ]);
+            }
+        }
+
         $finalSchedule = array();
         $storeHours = StoreHour::where('restAcc_id', $id)->get();
-        foreach($storeHours as $storeHour){
+        foreach ($storeHours as $storeHour){
             $openingTime = date("g:i a", strtotime($storeHour->openingTime));
             $closingTime = date("g:i a", strtotime($storeHour->closingTime));
             foreach (explode(",", $storeHour->days) as $day){
@@ -203,7 +225,7 @@ class CustomerController extends Controller
                 ]);
             }
         }
-
+    
 
         $finalImageUrl = "";
         if ($account->rLogo == ""){
@@ -212,17 +234,50 @@ class CustomerController extends Controller
             $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$id.'/'. $account->rLogo;
         }
 
+        $getDateToday = date("Y-m-d");
+        $countCurrentTables = 0;
+        $countNumberOfPeople = 0;
+        $countReservedTable = 0;
+        $countQueueTable = 0;
+        $customerOrderings = CustomerOrdering::where('restAcc_id', $id)->where('status', 'eating')->get();
+        if(!$customerOrderings->isEmpty()){
+            foreach($customerOrderings as $customerOrdering){
+                if($customerOrdering->custBookType == "queue"){
+                    $customerQueue = CustomerQueue::select('numberOfPersons')->where('id', $customerOrdering->custBook_id)->first();
+                    $countCurrentTables += $customerQueue->numberOfTables;
+                    $countNumberOfPeople += $customerQueue->numberOfPersons;
+                } else {
+                    $customerQueue = CustomerReserve::select('numberOfPersons')->where('id', $customerOrdering->custBook_id)->first();
+                    $countCurrentTables += $customerQueue->numberOfTables;
+                    $countNumberOfPeople += $customerQueue->numberOfPersons;
+                }
+            }
+        }
+
+        $countQueueTables = CustomerQueue::select('numberOfTables')
+        ->where('restAcc_id', $id)
+        ->where('status', 'approved')
+        ->where('queueDate', $getDateToday)
+        ->sum('numberOfTables');
+        
+        $countReserveTables = CustomerReserve::select('numberOfTables')
+        ->where('restAcc_id', $id)
+        ->where('status', 'approved')
+        ->where('reserveDate', $getDateToday)
+        ->sum('numberOfTables');
+
         return response()->json([
             'rName' => $account->rName,
-            'rAddress' => $account->rAddress,
+            'rAddress' => "$account->rAddress, $account->rBranch, $account->rCity",
             'rImage' => $finalImageUrl,
             'rSchedule' => $finalSchedule,
             'rTableCapacity' => $account->rNumberOfTables,
-            'rTableStatus' => 5,
-            'rReservedTables' => 3,
-            'rNumberOfPeople' => 16,
-            'rNumberOfQueues' => 6,
+            'rTableStatus' => $countCurrentTables,
+            'rReservedTables' => $countReserveTables,
+            'rNumberOfPeople' => $countNumberOfPeople,
+            'rNumberOfQueues' => $countQueueTables,
             'rPosts' => $storePosts,
+            'rPolicy' => $storePolicy,
         ]);
     }
     // -------RESTAURANT ABOUT BY ID------------ //
@@ -581,6 +636,7 @@ class CustomerController extends Controller
             // ];
 
             // Mail::to($request->emailAddress)->send(new RestaurantFormAppreciation($details));
+            
 
             $customer = CustomerAccount::create([
                 'name' => $request->name,
@@ -606,6 +662,15 @@ class CustomerController extends Controller
             }
 
             mkdir('uploads/customerAccounts/logo/'.$customer->id);
+            
+            CustomerNotification::create([
+                'customer_id' => $customer->id,
+                'restAcc_id' => 0,
+                'notificationType' => "New Account",
+                'notificationTitle' => "Welcome to Samquicksal!",
+                'notificationDescription' => "Samquicksal",
+                'notificationStatus' => "Unread",
+            ]);
 
             return response()->json([
                 'id' => $customer->id,
@@ -615,10 +680,32 @@ class CustomerController extends Controller
     }
     // -------GET CUSTOMER HOMEPAGE INFO------------ //
     public function getCustomerHomepageInfo($id){
+        $getDateToday = date("Y-m-d");
         $account = CustomerAccount::select('name', 'emailAddress', 'profileImage')->where('id', $id)->first();
+        
+        $customerQueue = CustomerQueue::where('customer_id', $id)
+        ->where('queueDate', $getDateToday)
+        ->orderBy('created_at', 'DESC')
+        ->first();
+
+        //need naten malaman kung eating ba sya para mag redirect sa orderingUI pero kung hindi pa sya eating like ongoing to approve pa lang sya then show livestatus
+        if($customerQueue != null){
+            if($customerQueue->status == "eating"){
+                $status = "eating";
+            } else if ($customerQueue->status == "pending" 
+                        || $customerQueue->status == "approved" 
+                        || $customerQueue->status == "validation"
+                        || $customerQueue->status == "tableSettingUp") {
+                $status = "onGoing";
+            } else {
+                $status = "none";
+            }
+        } else {
+            $status = "none";
+        }
 
         $finalImageUrl = "";
-        if($account->profileImage == ""){
+        if($account->profileImage == null){
             $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/user-default.png';
         } else {
             $finalImageUrl = $this->CUSTOMER_IMAGE_PATH.'/'.$id.'/'. $account->profileImage;
@@ -628,7 +715,7 @@ class CustomerController extends Controller
             'name' => $account->name,
             'emailAddress' => $account->emailAddress,
             'profileImage' => $finalImageUrl,
-            'status' => "onGoing",
+            'status' => $status,
         ]);
     }
     public function getCustomerAccountInfo($id){
@@ -694,16 +781,18 @@ class CustomerController extends Controller
         foreach($notifications as $notification){
             $finalImageUrl = "";
             $currentTime = Carbon::now();
-            $getRLogo = RestaurantAccount::select('rLogo')->where('id', $notification->restAcc_id)->first();
+            
 
-            if($notification->notificationType != "New Account"){
+            if($notification->restAcc_id == 0){
+                $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/samquicksalLogo.png';
+            } else {
+                $getRLogo = RestaurantAccount::select('rLogo')->where('id', $notification->restAcc_id)->first();
+
                 if($getRLogo->rLogo == null){
                     $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
                 } else {
                     $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$notification->restAcc_id.'/'.$getRLogo->rLogo;
                 }
-            } else {
-                $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/samquicksalLogo.png';
             }
 
             $rAppstartTime = Carbon::parse($notification->created_at);
@@ -757,6 +846,7 @@ class CustomerController extends Controller
         $customerQueue = CustomerQueue::where('customer_id', $id)
         ->where('queueDate', $getDateToday)
         ->where('status', '!=', 'completed')
+        ->orderBy('created_at', 'DESC')
         ->first();
 
         if($customerQueue != null){
@@ -794,6 +884,7 @@ class CustomerController extends Controller
                 ]);
             } else if ($customerQueue->status == "approved"){
                 $countCustomersApproved = CustomerQueue::where('status', "approved")
+                
                 ->where('queueDate', $getDateToday)
                 ->orderBy('totalPwdChild', 'DESC')
                 ->orderBy('created_at', 'ASC')
@@ -820,7 +911,6 @@ class CustomerController extends Controller
                     }
                 }
                 
-                
                 return response()->json([
                     'liveStatusHeader' => "Queue Number",
                     'liveStatusBody' => $cancellable,
@@ -829,7 +919,45 @@ class CustomerController extends Controller
                     'liveStatusDescription' => $desc,
                 ]);
             } else if ($customerQueue->status == "validation") {
+                $rAppstartTime = Carbon::parse($customerQueue->validationDateTime);
+                $rAppDiffSeconds = $currentTime->diffInSeconds($rAppstartTime);
+                $rAppDiffMinutes = $currentTime->diffInMinutes($rAppstartTime);
 
+                $rAppDiffMinutes = 15 - $rAppDiffMinutes;
+                $rAppDiffSeconds = (15 * 60) - $rAppDiffSeconds;
+
+                $liveStatusDescription = "Please be at the front desk within the 15 minutes time limit to confirm and validate your booking. If you do not show up within the given time, your book will be void.";
+
+                if ($rAppDiffMinutes > 1){
+                    $rAppDiffTime = $rAppDiffMinutes;
+                    $rAppDiffTimeLabel = "minutes";
+                } else if ($rAppDiffMinutes == 1) {
+                    if ($rAppDiffSeconds == 1){
+                        $rAppDiffTime = 1;
+                        $rAppDiffTimeLabel = "second";
+                    } else {
+                        $rAppDiffTime = $rAppDiffSeconds;
+                        $rAppDiffTimeLabel = "seconds";
+                    }
+                } else {
+                    $rAppDiffTime = 0;
+                    $rAppDiffTimeLabel = "second";
+                }
+                return response()->json([
+                    'liveStatusHeader' => "Confirmation Time",
+                    'liveStatusBody' => null,
+                    'liveStatusNumber' => $rAppDiffTime,
+                    'liveStatusNumberDesc' => $rAppDiffTimeLabel,
+                    'liveStatusDescription' => $liveStatusDescription,
+                ]);
+            } else if ($customerQueue->status == "tableSettingUp") {
+                return response()->json([
+                    'liveStatusHeader' => "Note",
+                    'liveStatusBody' => "Your Table is Now Setting Up",
+                    'liveStatusNumber' => null,
+                    'liveStatusNumberDesc' => null,
+                    'liveStatusDescription' => "Your table is now setting up, please wait until you can access the ordering part",
+                ]);
             } else {
                 return response()->json([
                     'liveStatusHeader' => null,
@@ -852,7 +980,11 @@ class CustomerController extends Controller
     }
     public function cancelCustomerBooking($id){
         $getDateToday = date("Y-m-d");
-        $customerQueue = CustomerQueue::where('customer_id', $id)->where('queueDate', $getDateToday)->where('status', '!=', 'completed')->first();
+        $customerQueue = CustomerQueue::where('customer_id', $id)
+        ->where('queueDate', $getDateToday)
+        ->where('status', '!=', 'completed')
+        ->orderBy('created_at', 'DESC')
+        ->first();
         $restaurant = RestaurantAccount::select('rAddress', 'rCity')->where('id', $customerQueue->restAcc_id)->first();
 
         CustomerQueue::where('id', $customerQueue->id)
@@ -873,5 +1005,186 @@ class CustomerController extends Controller
         return response()->json([
             'status' => "Success"
         ]);
+    }
+
+    public function getNotificationPending($cust_id, $notif_id){
+        $notification = CustomerNotification::where('id', $notif_id)->where('customer_id', $cust_id)->first();
+        $restaurant = RestaurantAccount::select('rName', 'rBranch')->where('id', $notification->restAcc_id)->first();
+        
+        $customerQueue = CustomerQueue::where('customer_id', $cust_id)
+        ->where('restAcc_id', $notification->restAcc_id)
+        ->where('created_at', $notification->created_at)
+        ->first();
+
+        $orderSet = OrderSet::select('orderSetName')->where('id', $customerQueue->orderSet_id)->first();
+
+        if($customerQueue->status == "pending"){
+            $viewable = "yes";
+        } else {
+            $viewable = "no";
+        }
+
+        return response()->json([
+            'orderName' => $orderSet->orderSetName,
+            'numberOfPersons' => $customerQueue->numberOfPersons,
+            'numberOfTables' => $customerQueue->numberOfTables,
+            'hoursOfStay' => $customerQueue->hoursOfStay,
+            'numberOfChildren' => $customerQueue->numberOfChildren,
+            'numberOfPwd' => $customerQueue->numberOfPwd,
+            'note' => $customerQueue->notes,
+            'restaurant' => "$restaurant->rName $restaurant->rBranch",
+            'statusViewable' => $viewable,
+        ]);
+    }
+    public function getNotificationCancelled($cust_id, $notif_id){
+        $notification = CustomerNotification::where('id', $notif_id)->where('customer_id', $cust_id)->first();
+        $restaurant = RestaurantAccount::select('rName', 'rBranch')->where('id', $notification->restAcc_id)->first();
+        
+        $customerQueue = CustomerQueue::where('customer_id', $cust_id)
+        ->where('restAcc_id', $notification->restAcc_id)
+        ->where('cancelDateTime', $notification->created_at)
+        ->first();
+
+        return response()->json([
+            'cancelReason' => $customerQueue->cancelReason,
+            'restaurant' => "$restaurant->rName $restaurant->rBranch",
+        ]);
+    }
+    public function getNotificationDeclined($cust_id, $notif_id){
+        $notification = CustomerNotification::where('id', $notif_id)->where('customer_id', $cust_id)->first();
+        $restaurant = RestaurantAccount::select('rName', 'rBranch')->where('id', $notification->restAcc_id)->first();
+        
+        $customerQueue = CustomerQueue::where('customer_id', $cust_id)
+        ->where('restAcc_id', $notification->restAcc_id)
+        ->where('declinedDateTime', $notification->created_at)
+        ->first();
+
+        return response()->json([
+            'declinedReason' => $customerQueue->declinedReason,
+            'restaurant' => "$restaurant->rName $restaurant->rBranch",
+        ]);
+    }
+    public function getNotificationApproved($cust_id, $notif_id){
+        $notification = CustomerNotification::where('id', $notif_id)->where('customer_id', $cust_id)->first();
+        $restaurant = RestaurantAccount::select('rName', 'rBranch')->where('id', $notification->restAcc_id)->first();
+        
+        $customerQueue = CustomerQueue::where('customer_id', $cust_id)
+        ->where('restAcc_id', $notification->restAcc_id)
+        ->where('approvedDateTime', $notification->created_at)
+        ->first();
+
+        if($customerQueue->status == "approved"){
+            $viewable = "yes";
+        } else {
+            $viewable = "no";
+        }
+
+        return response()->json([
+            'restaurant' => "$restaurant->rName $restaurant->rBranch",
+            'statusViewable' => $viewable,
+        ]);
+    }
+    public function getNotificationNoShow($cust_id, $notif_id){
+        $notification = CustomerNotification::where('id', $notif_id)->where('customer_id', $cust_id)->first();
+        $restaurant = RestaurantAccount::select('rName', 'rBranch')->where('id', $notification->restAcc_id)->first();
+
+        return response()->json([
+            'restaurant' => "$restaurant->rName $restaurant->rBranch",
+        ]);
+    }
+    public function getNotificationRunaway($cust_id, $notif_id){
+        $notification = CustomerNotification::where('id', $notif_id)->where('customer_id', $cust_id)->first();
+        $restaurant = RestaurantAccount::select('rName', 'rBranch')->where('id', $notification->restAcc_id)->first();
+        
+        return response()->json([
+            'restaurant' => "$restaurant->rName $restaurant->rBranch",
+        ]);
+    }
+
+
+
+
+    public function forgotPassword(Request $request){
+        $request->validate([
+            'emailAddress' => 'required|email',
+        ]);
+        $findEmailAddress = CustomerAccount::where('emailAddress', $request->emailAddress)->first();
+        if($findEmailAddress == null){
+            return response()->json([
+                'status' => "emailNotExist",
+            ]);
+        } else {
+            $token = substr(str_shuffle("0123456789abcdefghijklmnopqrstvwxyz"), 0, 12).time().$findEmailAddress->id;
+            $details = [
+                'link' => env('APP_URL') . '/customer/forgot-password/'.$token.'/'.$request->emailAddress,
+            ];
+            Mail::to($request->emailAddress)->send(new CustomerForgotPassword($details));
+            CustomerResetPassword::create([
+                'emailAddress' => $request->emailAddress,
+                'token' => $token,
+                'resetStatus' => 'Pending',
+            ]);
+            
+            CustomerNotification::create([
+                'customer_id' => $findEmailAddress->id,
+                'restAcc_id' => 0,
+                'notificationType' => "Forgot Password",
+                'notificationTitle' => "Your password reset link has been sent to your meail",
+                'notificationDescription' => "Samquicksal",
+                'notificationStatus' => "Unread",
+            ]);
+            
+            return response()->json([
+                'status' => "success",
+            ]);
+        }
+    }
+
+    public function resetPasswordView($token, $emailAddress){
+        $checkIfExist = CustomerResetPassword::where('token', $token)->where('emailAddress', $emailAddress)->where('resetStatus', 'Pending')->first();
+        if($checkIfExist == null){
+            abort(404);
+        } else {
+            return view('customer.resetPassword',[
+                'token' => $token,
+                'emailAddress' => $emailAddress,
+            ]);
+        }
+    }
+    public function resetPassword(Request $request, $token, $emailAddress){
+        $findEmailAddress = CustomerAccount::where('emailAddress', $request->emailAddress)->first();
+        $request->validate([
+            'newPassword' => 'required|min:6|confirmed',
+            'newPassword_confirmation' => 'required',
+        ],
+        [
+            'newPassword.required' => 'New Password is required',
+            'newPassword.min' => 'New Password must contain at least 6 characters',
+            'newPassword.confirmed' => 'New Password does not match Confirm Password',
+            'newPassword_confirmation.required' => 'Confirm Password is required',
+        ]);
+
+        Mail::to($emailAddress)->send(new CustomerPasswordChanged());
+        $hashPassword = Hash::make($request->newPassword);
+        CustomerAccount::where('emailAddress', $emailAddress)
+        ->update([
+            'password' => $hashPassword
+        ]);
+        CustomerResetPassword::where('emailAddress', $emailAddress)->where('token', $token)
+        ->update([
+            'resetStatus' => "Changed"
+        ]);
+        
+        CustomerNotification::create([
+            'customer_id' => $findEmailAddress->id,
+            'restAcc_id' => 0,
+            'notificationType' => "Password Changed",
+            'notificationTitle' => "Your Password has been changed successfully",
+            'notificationDescription' => "Samquicksal",
+            'notificationStatus' => "Unread",
+        ]);
+        $request->session()->flash('passwordUpdated');
+        return redirect('/');
+    
     }
 }

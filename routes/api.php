@@ -34,10 +34,18 @@ Route::get('/customer/get-notifications/{id}', [CustomerController::class, 'getC
 Route::get('/customer/get-live-status/{id}', [CustomerController::class, 'getCustomerLiveStatus']);
 Route::get('/customer/cancel-booking/{id}', [CustomerController::class, 'cancelCustomerBooking']);
 
+Route::get('/customer/get-notifications/pending/{cust_id}/{notif_id}', [CustomerController::class, 'getNotificationPending']);
+Route::get('/customer/get-notifications/cancelled/{cust_id}/{notif_id}', [CustomerController::class, 'getNotificationCancelled']);
+Route::get('/customer/get-notifications/declined/{cust_id}/{notif_id}', [CustomerController::class, 'getNotificationDeclined']);
+Route::get('/customer/get-notifications/approved/{cust_id}/{notif_id}', [CustomerController::class, 'getNotificationApproved']);
+Route::get('/customer/get-notifications/no-show/{cust_id}/{notif_id}', [CustomerController::class, 'getNotificationNoShow']);
+Route::get('/customer/get-notifications/runaway/{cust_id}/{notif_id}', [CustomerController::class, 'getNotificationRunaway']);
+
 
 Route::post('/customer/register-customer', [CustomerController::class, 'registerCustomer']);
 Route::post('/customer/login-customer', [CustomerController::class, 'loginCustomer']);
 Route::post('/customer/submit-queue-form', [CustomerController::class, 'submitQueueForm']);
+Route::post('/customer/forgot-password', [CustomerController::class, 'forgotPassword']);
 
 
 
