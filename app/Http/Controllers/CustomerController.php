@@ -37,20 +37,47 @@ use Illuminate\Contracts\Cache\Store;
 
 class CustomerController extends Controller
 {
-    // public $RESTAURANT_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/logo";
-    // public $CUSTOMER_IMAGE_PATH = "http://192.168.1.53:8000/uploads/customerAccounts/logo";
-    // public $ACCOUNT_NO_IMAGE_PATH = "http://192.168.1.53:8000/images";
-    // public $POST_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/post";
-    // public $PROMO_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/promo";
-    // public $ORDER_SET_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/orderSet";
+    public $RESTAURANT_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/logo";
+    public $CUSTOMER_IMAGE_PATH = "http://192.168.1.53:8000/uploads/customerAccounts/logo";
+    public $ACCOUNT_NO_IMAGE_PATH = "http://192.168.1.53:8000/images";
+    public $POST_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/post";
+    public $PROMO_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/promo";
+    public $ORDER_SET_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/orderSet";
 
     
-    public $RESTAURANT_IMAGE_PATH = "https://www.samquicksal.com/uploads/customerAccounts/logo";
-    public $CUSTOMER_IMAGE_PATH = "https://www.samquicksal.com/uploads/customerAccounts/logo";
-    public $ACCOUNT_NO_IMAGE_PATH = "https://www.samquicksal.com/images";
-    public $POST_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/post";
-    public $PROMO_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/promo";
-    public $ORDER_SET_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/orderSet";
+    // public $RESTAURANT_IMAGE_PATH = "https://www.samquicksal.com/uploads/customerAccounts/logo";
+    // public $CUSTOMER_IMAGE_PATH = "https://www.samquicksal.com/uploads/customerAccounts/logo";
+    // public $ACCOUNT_NO_IMAGE_PATH = "https://www.samquicksal.com/images";
+    // public $POST_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/post";
+    // public $PROMO_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/promo";
+    // public $ORDER_SET_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/orderSet";
+    public function sendFirebaseNotification($to, $notification, $data){
+        $server_key = env('FIREBASE_SERVER_KEY');
+        $url = "https://fcm.googleapis.com/fcm/send";
+        $fields = json_encode(array(
+            'to' => $to,
+            'notification' => $notification,
+            'data' => $data,
+        ));
+
+        $ch = curl_init();
+
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, ($fields));
+
+        $headers = array();
+        $headers[] = 'Authorization: key ='.$server_key;
+        $headers[] = 'Content-type: application/json';
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+
+        $result = curl_exec($ch);
+        if(curl_errno($ch)){
+            echo 'Error: ' . curl_error($ch);
+        }
+        curl_close($ch);
+    }
 
     public function convertDays($day){
         if ($day == "MO"){
@@ -237,19 +264,17 @@ class CustomerController extends Controller
         $getDateToday = date("Y-m-d");
         $countCurrentTables = 0;
         $countNumberOfPeople = 0;
-        $countReservedTable = 0;
-        $countQueueTable = 0;
         $customerOrderings = CustomerOrdering::where('restAcc_id', $id)->where('status', 'eating')->get();
         if(!$customerOrderings->isEmpty()){
             foreach($customerOrderings as $customerOrdering){
                 if($customerOrdering->custBookType == "queue"){
-                    $customerQueue = CustomerQueue::select('numberOfPersons')->where('id', $customerOrdering->custBook_id)->first();
+                    $customerQueue = CustomerQueue::select('numberOfPersons', 'numberOfTables')->where('id', $customerOrdering->custBook_id)->first();
                     $countCurrentTables += $customerQueue->numberOfTables;
                     $countNumberOfPeople += $customerQueue->numberOfPersons;
                 } else {
-                    $customerQueue = CustomerReserve::select('numberOfPersons')->where('id', $customerOrdering->custBook_id)->first();
-                    $countCurrentTables += $customerQueue->numberOfTables;
-                    $countNumberOfPeople += $customerQueue->numberOfPersons;
+                    $customerReserve = CustomerReserve::select('numberOfPersons', 'numberOfTables')->where('id', $customerOrdering->custBook_id)->first();
+                    $countCurrentTables += $customerReserve->numberOfTables;
+                    $countNumberOfPeople += $customerReserve->numberOfPersons;
                 }
             }
         }
@@ -592,6 +617,7 @@ class CustomerController extends Controller
         $request->validate([
             'emailAddress' => 'required',
             'password' => 'required',
+            'deviceToken' => 'required',
         ]);
         $account = CustomerAccount::where('emailAddress', $request->emailAddress)->first();
         if(empty($account)){
@@ -601,6 +627,10 @@ class CustomerController extends Controller
             ]);
         } else {
             if(Hash::check($request->password, $account->password)){
+                CustomerAccount::where('id', $account->id)
+                ->update([
+                    'deviceToken' => $request->deviceToken
+                ]);
                 return response()->json([
                     'id' => $account->id,
                     'status' => "Login Successfully",
@@ -620,6 +650,7 @@ class CustomerController extends Controller
             'emailAddress' => 'required',
             'contactNumber' => 'required',
             'password' => 'required',
+            'deviceToken' => 'required',
         ]);
 
         $existingAccount = CustomerAccount::where('emailAddress', $request->emailAddress)->first();
@@ -645,6 +676,7 @@ class CustomerController extends Controller
                 'contactNumber' => $request->contactNumber,
                 'contactNumberVerified' => "No",
                 'password' => Hash::make($request->password),
+                'deviceToken' => $request->deviceToken,
             ]);
             
             if(!is_dir('uploads')){
@@ -741,6 +773,8 @@ class CustomerController extends Controller
     }
     public function submitQueueForm(Request $request){
         $restaurant = RestaurantAccount::select('rName', 'rBranch', 'rAddress', 'rCity')->where('id', $request->restAcc_id)->first();
+        $customer = CustomerAccount::select('deviceToken')->where('id', $request->customer_id)->first();
+
         
         CustomerQueue::create([
             'customer_id' => $request->customer_id,
@@ -757,11 +791,12 @@ class CustomerController extends Controller
             'rewardStatus' => $request->rewardStatus,
             'rewardType' => $request->rewardType,
             'rewardInput' => $request->rewardInput,
+            'rewardClaimed' => $request->rewardClaimed,
             'totalPrice' => $request->totalPrice,
             'queueDate' => date("Y-m-d"),
         ]);
 
-        CustomerNotification::create([
+        $notif = CustomerNotification::create([
             'customer_id' => $request->customer_id,
             'restAcc_id' => $request->restAcc_id,
             'notificationType' => "Pending",
@@ -769,6 +804,20 @@ class CustomerController extends Controller
             'notificationDescription' => "$restaurant->rAddress, $restaurant->rCity",
             'notificationStatus' => "Unread",
         ]);
+
+        
+        if($customer != null){
+            $to = $customer->deviceToken;
+            $notification = array(
+                'title' => "You have booked at $restaurant->rName $restaurant->rBranch",
+                'body' => "$restaurant->rAddress, $restaurant->rCity",
+            );
+            $data = array(
+                'notificationType' => "Pending",
+                'notificationId' => $notif->id,
+            );
+            $this->sendFirebaseNotification($to, $notification, $data);
+        }
 
         return response()->json([
             'status' => "Success",
@@ -887,7 +936,7 @@ class CustomerController extends Controller
                 
                 ->where('queueDate', $getDateToday)
                 ->orderBy('totalPwdChild', 'DESC')
-                ->orderBy('created_at', 'ASC')
+                ->orderBy('approvedDateTime', 'ASC')
                 ->get();
 
                 $finalQueueNumber = 0;
@@ -901,7 +950,7 @@ class CustomerController extends Controller
                         $rAppstartTime = Carbon::parse($countCustomerApproved->approvedDateTime);
                         $rAppDiffMinutes = $endTime->diffInMinutes($rAppstartTime);
         
-                        if($rAppDiffMinutes >= 15) {
+                        if($rAppDiffMinutes >= 5) {
                             $cancellable = "yes";
                             $desc = "Hey you’ve been in queue for a while, there is no table available yet. If you’d like to look for another restaurant you may do so.";
                         } else {
@@ -985,7 +1034,9 @@ class CustomerController extends Controller
         ->where('status', '!=', 'completed')
         ->orderBy('created_at', 'DESC')
         ->first();
+        
         $restaurant = RestaurantAccount::select('rAddress', 'rCity')->where('id', $customerQueue->restAcc_id)->first();
+        $customer = CustomerAccount::select('deviceToken')->where('id', $id)->first();
 
         CustomerQueue::where('id', $customerQueue->id)
         ->update([
@@ -993,7 +1044,7 @@ class CustomerController extends Controller
             'cancelDateTime' => date('Y-m-d H:i:s'),
         ]);
 
-        CustomerNotification::create([
+        $notif = CustomerNotification::create([
             'customer_id' => $customerQueue->customer_id,
             'restAcc_id' => $customerQueue->restAcc_id,
             'notificationType' => "Cancelled",
@@ -1001,6 +1052,20 @@ class CustomerController extends Controller
             'notificationDescription' => "$restaurant->rAddress, $restaurant->rCity",
             'notificationStatus' => "Unread",
         ]);
+
+        
+        if($customer != null){
+            $to = $customer->deviceToken;
+            $notification = array(
+                'title' => "You have Cancelled your Booking!",
+                'body' => "$restaurant->rAddress, $restaurant->rCity",
+            );
+            $data = array(
+                'notificationType' => "Cancelled",
+                'notificationId' => $notif->id,
+            );
+            $this->sendFirebaseNotification($to, $notification, $data);
+        }
 
         return response()->json([
             'status' => "Success"
@@ -1103,7 +1168,21 @@ class CustomerController extends Controller
 
 
 
+    public function updateDeviceToken(Request $request){
+        $request->validate([
+            'cust_id' => 'required',
+            'deviceToken' => 'required',
+        ]);
 
+        CustomerAccount::where('id', $request->cust_id)
+        ->update([
+            'deviceToken' => $request->deviceToken,
+        ]);
+
+        return response()->json([
+            'status' => 'success',
+        ]);
+    }
     public function forgotPassword(Request $request){
         $request->validate([
             'emailAddress' => 'required|email',
@@ -1185,6 +1264,214 @@ class CustomerController extends Controller
         ]);
         $request->session()->flash('passwordUpdated');
         return redirect('/');
-    
     }
+
+    public function getBookingHistory($cust_id){
+        $storeBookingHistory = array();
+
+        $customerQueues = CustomerQueue::where('customer_id', $cust_id)
+        ->where(function ($query) {
+            $query->where('status', "declined")
+            ->orWhere('status', "cancelled")
+            ->orWhere('status', "noshow")
+            ->orWhere('status', "runaway")
+            ->orWhere('status', "completed");
+        })->orderBy('created_at', 'DESC')->get();
+        
+        $customerReserves = CustomerReserve::where('customer_id', $cust_id)
+        ->where(function ($query) {
+            $query->where('status', "declined")
+            ->orWhere('status', "cancelled")
+            ->orWhere('status', "noshow")
+            ->orWhere('status', "runaway")
+            ->orWhere('status', "completed");
+        })->orderBy('created_at', 'DESC')->get();
+
+        if(!$customerQueues->isEmpty()){
+            foreach($customerQueues as $customerQueue){
+                $restaurant = RestaurantAccount::select('id', 'rLogo', 'rName', 'rAddress', 'rCity')->where('id', $customerQueue->restAcc_id)->first();
+                
+                if ($restaurant->rLogo == ""){
+                    $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+                } else {
+                    $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
+                }
+
+                array_push($storeBookingHistory, [
+                    'bookId' => $customerQueue->id,
+                    'rLogo' => $finalImageUrl,
+                    'rName' => $restaurant->rName,
+                    'rAddress' => "$restaurant->rAddress, $restaurant->rCity",
+                    "bookDate" => "$customerQueue->queueDate",
+                    "bookStatus" => $customerQueue->status,
+                    "bookType" => "queue",
+                ]);
+            }
+        }
+
+        if(!$customerReserves->isEmpty()){
+            foreach($customerReserves as $customerReserve){
+                $restaurant = RestaurantAccount::select('rLogo', 'rName', 'rAddress', 'rCity')->where('id', $customerReserve->restAcc_id)->first();
+                
+                if ($restaurant->rLogo == ""){
+                    $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+                } else {
+                    $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
+                }
+    
+                array_push($storeBookingHistory, [
+                    'bookId' => $customerReserve->id,
+                    'rLogo' => $finalImageUrl,
+                    'rName' => $restaurant->rName,
+                    'rAddress' => "$restaurant->rAddress, $restaurant->rCity",
+                    "bookDate" => "$customerReserve->reserveDate",
+                    "bookStatus" => $customerReserve->status,
+                    "bookType" => "reserve",
+                ]);
+            }
+        }
+        
+        if($storeBookingHistory == null){
+            return response()->json($storeBookingHistory);
+        } else {
+
+            usort($storeBookingHistory, function($a, $b) {
+                return strtotime($a['bookDate']) - strtotime($b['bookDate']);
+            });
+
+            $finalStoreBookingHistory = array();
+            foreach($storeBookingHistory as $temp){
+                $bookDate = explode('-', $temp['bookDate']);
+                $year = $bookDate[0];
+                $month = $this->convertMonths($bookDate[1]);
+                $day  = $bookDate[2];
+
+                array_push($finalStoreBookingHistory, [
+                    'bookId' => $temp['bookId'],
+                    'rLogo' => $temp['rLogo'],
+                    'rName' => $temp['rName'],
+                    'rAddress' => $temp['rAddress'],
+                    "bookDate" => "$month $day, $year",
+                    "bookStatus" => $temp['bookStatus'],
+                    "bookType" => $temp['bookType'],
+                ]); 
+            }
+            return response()->json($finalStoreBookingHistory);
+        }
+    }
+
+
+    // BOOKING DETAILS
+    public function getBookingHistoryCancelled(Request $request){
+        if($request->book_type == "queue"){
+            $customerQueue = CustomerQueue::where('id', $request->book_id)->where('customer_id', $request->cust_id)->first();
+            $restaurant = RestaurantAccount::select('rName', 'rAddress', 'rBranch', 'rCity')->where('id', $customerQueue->restAcc_id)->first();
+            $orderSet = OrderSet::select('orderSetName')->where('id', $customerQueue->orderSet_id)->where('restAcc_id', $customerQueue->restAcc_id)->first();
+            
+            $bookDate = explode('-', $customerQueue->queueDate);
+            $year = $bookDate[0];
+            $month = $this->convertMonths($bookDate[1]);
+            $day  = $bookDate[2];
+            $bookTime = date("g:i a", strtotime($customerQueue->created_at->toTimeString()));
+
+            if($customerQueue->status == "cancelled"){
+                $finalReason = ($customerQueue->cancelReason) ? "$customerQueue->cancelReason" : "None";
+            } else if ($customerQueue->status == "declined"){
+                $finalReason = ($customerQueue->declinedReason) ? "$customerQueue->declinedReason" : "None";
+            } else {
+                $finalReason = "None";
+            }
+
+            $finalReward = "None";
+            if($customerQueue->rewardStatus == "Complete"){
+                switch($customerQueue->rewardType){
+                    case "DSCN": 
+                        $finalReward = "Discount $customerQueue->rewardInput% in a Total Bill";
+                        break;
+                    case "FRPE": 
+                        $finalReward = "Free $customerQueue->rewardInput person in a group";
+                        break;
+                    case "HLF": 
+                        $finalReward = "Half in the group will be free";
+                        break;
+                    case "ALL": 
+                        $finalReward = "All people in the group will be free";
+                        break;
+                    default: 
+                        $finalReward = "None";
+                }
+            }
+
+            return response()->json([
+                'bookDate' => "$month $day, $year",
+                'bookTime' => $bookTime,
+                'rName' => $restaurant->rName,
+                'rAddress' => "$restaurant->rAddress, $restaurant->rBranch, $restaurant->rCity",
+                'orderName' => $orderSet->orderSetName,
+                'hoursOfStay' => "$customerQueue->hoursOfStay hours",
+                'numberOfPwd' => $customerQueue->numberOfPwd,
+                'numberOfChildren' => $customerQueue->totalPwdChild,
+                'reward' => $finalReward,
+                'rewardClaimed' => ($customerQueue->rewardClaimed) ? $customerQueue->rewardClaimed : "N/A",
+                'bookingType' => "Queue",
+                'notes' => ($customerQueue->notes) ? "$customerQueue->notes" : "None",
+                'reason' => $finalReason,
+            ]);
+        } else {
+            $customerReserve = CustomerReserve::where('id', $request->book_id)->where('customer_id', $request->cust_id)->first();
+            $restaurant = RestaurantAccount::select('rName', 'rAddress', 'rBranch', 'rCity')->where('id', $customerReserve->restAcc_id)->first();
+            $orderSet = OrderSet::select('orderSetName')->where('id', $customerReserve->orderSet_id)->where('restAcc_id', $customerReserve->restAcc_id)->first();
+            
+            $bookDate = explode('-', $customerReserve->reserveDate);
+            $year = $bookDate[0];
+            $month = $this->convertMonths($bookDate[1]);
+            $day  = $bookDate[2];
+            $bookTime = date("g:i a", strtotime($customerReserve->created_at->toTimeString()));
+
+            if($customerReserve->status == "cancelled"){
+                $finalReason = ($customerReserve->cancelReason) ? "$customerReserve->cancelReason" : "None";
+            } else if ($customerReserve->status == "declined"){
+                $finalReason = ($customerReserve->declinedReason) ? "$customerReserve->declinedReason" : "None";
+            } else {
+                $finalReason = "None";
+            }
+
+            $finalReward = "None";
+            if($customerReserve->rewardStatus == "Complete"){
+                switch($customerReserve->rewardType){
+                    case "DSCN": 
+                        $finalReward = "Discount $customerReserve->rewardInput% in a Total Bill";
+                        break;
+                    case "FRPE": 
+                        $finalReward = "Free $customerReserve->rewardInput person in a group";
+                        break;
+                    case "HLF": 
+                        $finalReward = "Half in the group will be free";
+                        break;
+                    case "ALL": 
+                        $finalReward = "All people in the group will be free";
+                        break;
+                    default: 
+                        $finalReward = "None";
+                }
+            }
+
+            return response()->json([
+                'bookDate' => "$month $day, $year",
+                'bookTime' => $bookTime,
+                'rName' => $restaurant->rName,
+                'rAddress' => "$restaurant->rAddress, $restaurant->rBranch, $restaurant->rCity",
+                'orderName' => $orderSet->orderSetName,
+                'hoursOfStay' => "$customerReserve->hoursOfStay hours",
+                'numberOfPwd' => $customerReserve->numberOfPwd,
+                'numberOfChildren' => $customerReserve->totalPwdChild,
+                'reward' => $finalReward,
+                'rewardClaimed' => ($customerReserve->rewardClaimed) ? $customerReserve->rewardClaimed : "N/A",
+                'bookingType' => "Reserve",
+                'notes' => ($customerReserve->notes) ? "$customerReserve->notes" : "None",
+                'reason' => $finalReason,
+            ]);
+        }
+    }
+    
 }

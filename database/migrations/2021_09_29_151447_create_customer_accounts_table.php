@@ -21,6 +21,7 @@ class CreateCustomerAccountsTable extends Migration
             $table->string('contactNumber');
             $table->string('contactNumberVerified');
             $table->string('password');
+            $table->mediumText('deviceToken');
             $table->string('profileImage')->nullable();
             $table->timestamps();
         });

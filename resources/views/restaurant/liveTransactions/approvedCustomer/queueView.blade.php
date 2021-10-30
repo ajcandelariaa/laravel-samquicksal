@@ -26,6 +26,14 @@
                 'error'
             );
         </script>
+    @elseif (session()->has('inputCorrectTableNumber'))
+        <script>
+            Swal.fire(
+                'Please input the corret Table Number',
+                '',
+                'error'
+            );
+        </script>
     @elseif (session()->has('mustBeDiffrentTables'))
         <script>
             Swal.fire(
@@ -48,6 +56,12 @@
         <a href="/restaurant/live-transaction/approved-customer/queue" class="text-submitButton uppercase font-bold"><i class="fas fa-chevron-left mr-2"></i>Back</a>
         @if (!$isPriority)
             <p class="text-submitButton uppercase font-bold text-right">Please validate the customer queue in order</p>
+        @elseif ($remainingTables < $customerQueue->numberOfTables)
+            <p class="text-submitButton uppercase font-bold text-right">Please wait for another table to checkout</p>
+        @endif
+
+        @if ($customerQueue->status == "validation")
+            <p class="text-submitButton uppercase font-bold text-right">Validation Time Left: {{ $validationTimeLeft }}</p>
         @endif
     </div>
     <div class="w-11/12 mx-auto mt-5 font-Montserrat bg-white">
@@ -57,6 +71,8 @@
 
                 @if ($customerQueue->status == "approved")
                     @if (!$isPriority)
+                        <button type="button" class="px-8 py-2 bg-manageRestaurantSidebarColor cursor-not-allowed" disabled>Validate</button>
+                    @elseif ($remainingTables < $customerQueue->numberOfTables)
                         <button type="button" class="px-8 py-2 bg-manageRestaurantSidebarColor cursor-not-allowed" disabled>Validate</button>
                     @else
                         <a href="/restaurant/live-transaction/approved-customer/queue/validate/{{ $customerQueue->id }}" class="btn-validate px-8 py-2 bg-postedStatus ml-2">Validate</a>
@@ -99,18 +115,22 @@
                                     </span></p>
                                 @if ($customerQueue->customer_id != 0)
                                     <p class="mt-2">Contact Number: <span class="font-bold">{{ $customerInfo->contactNumber }}</span></p>
-                                    <p class="mt-2">No. of Queues: <span class="font-bold">{{ $countQueues }}</span></p>
-                                    <p class="mt-2">No. of No Show: <span class="font-bold">{{ $countNoShow }}</span></p>
+                                @else
+                                    <p class="mt-2">Contact Number: <span class="font-bold">N/A</span></p>
                                 @endif
+                                <p class="mt-2">No. of Queues: <span class="font-bold">{{ $countQueues }}</span></p>
+                                <p class="mt-2">No. of No Show: <span class="font-bold">{{ $countNoShow }}</span></p>
                                 <p class="mt-2">Booking Date: <span class="font-bold">{{ $bookDate }}</span></p>
                             </div>
                             <div>
                                 @if ($customerQueue->customer_id != 0)
                                     <p class="mt-2">Email: <span class="font-bold">{{ $customerInfo->emailAddress }}</span></p>
-                                    <p class="mt-2">User since: <span class="font-bold">{{ $userSinceDate }}</span></p>
-                                    <p class="mt-2">No. of Cancel: <span class="font-bold">{{ $countCancelled }}</span></p>
-                                    <p class="mt-2">No. of Runaway: <span class="font-bold">{{ $countRunaway }}</span></p>
+                                @else
+                                    <p class="mt-2">Email: <span class="font-bold">N/A</span></p>
                                 @endif
+                                <p class="mt-2">User since: <span class="font-bold">{{ $userSinceDate }}</span></p>
+                                <p class="mt-2">No. of Cancel: <span class="font-bold">{{ $countCancelled }}</span></p>
+                                <p class="mt-2">No. of Runaway: <span class="font-bold">{{ $countRunaway }}</span></p>
                                 <p class="mt-2">Booking Time: <span class="font-bold">{{ $bookTime }}</span></p>
                             </div>
                         </div>
@@ -141,6 +161,9 @@
                                 <p class="mt-2">No. of Persons: <span class="font-bold">{{ $customerQueue->numberOfPersons }}</span></p>
                                 <p class="mt-2">Senior Citizen/PWD: <span class="font-bold">{{ $customerQueue->numberOfPwd }}</span></p>
                                 <p class="mt-2">Reward: <span class="font-bold">{{ $finalReward }}</span></p>
+                                @if ($customerQueue->rewardClaimed != null)
+                                    <p class="mt-2">Reward Claimed: <span class="font-bold">{{ $customerQueue->rewardClaimed }}</span></p>
+                                @endif
                             </div>
                             <div>
                                 <p class="mt-2">Hours of Stay: <span class="font-bold">{{ $customerQueue->hoursOfStay }} hours</span></p>
@@ -185,6 +208,13 @@
                             <p class="col-span-1 text-center">{{ $customerQueue->numberOfChildren }}x</p>
                             <p class="justify-self-end col-span-1">{{ (number_format($childrenDiscount, 2)) }} <span class="text-xs">Php</span></p>
                         </div>
+                        
+                        @if ($customerQueue->rewardClaimed == "Yes")
+                            <div class="grid grid-cols-2 mt-2">
+                                <p class="col-span-1">Reward ({{ $finalReward }})</p>
+                                <p class="justify-self-end col-span-1">{{ (number_format($rewardDiscount, 2)) }} <span class="text-xs">Php</span></p>
+                            </div>
+                        @endif
 
                         <div class="bg-sundayToSaturdayBoxColor h-height1Px my-2"></div>
 

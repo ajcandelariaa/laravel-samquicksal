@@ -41,7 +41,7 @@
         
         <div class="grid grid-rows-1 gap-y-2">
             <div class="grid grid-cols-9 pt-4 pb-2 text-center">
-                <div class="col-span-1">No.</div>
+                <div class="col-span-1">Queue No.</div>
                 <div class="col-span-2">Type</div>
                 <div class="col-span-2">Name</div>
                 <div class="col-span-1">Persons</div>

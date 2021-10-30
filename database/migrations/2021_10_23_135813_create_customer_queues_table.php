@@ -30,6 +30,7 @@ class CreateCustomerQueuesTable extends Migration
             $table->string('rewardStatus')->nullable();
             $table->string('rewardType')->nullable();
             $table->integer('rewardInput')->nullable();
+            $table->string('rewardClaimed')->nullable();
             $table->decimal('totalPrice', 10, 2);
             $table->date('queueDate');
             $table->dateTIme('approvedDateTime')->nullable();

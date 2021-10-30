@@ -25,6 +25,7 @@ class CustomerQueue extends Model
         'rewardStatus',
         'rewardType',
         'rewardInput',
+        'rewardClaimed',
         'totalPrice',
         'queueDate',
         'approvedDateTime',

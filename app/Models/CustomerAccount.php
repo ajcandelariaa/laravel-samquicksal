@@ -17,5 +17,6 @@ class CustomerAccount extends Model
         'contactNumberVerified',
         'password',
         'profileImage',
+        'deviceToken',
     ];
 }

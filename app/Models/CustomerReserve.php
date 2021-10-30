@@ -26,6 +26,7 @@ class CustomerReserve extends Model
         'rewardStatus',
         'rewardType',
         'rewardInput',
+        'rewardClaimed',
         'totalPrice',
         'approvedDateTime',
         'cancelDateTime',

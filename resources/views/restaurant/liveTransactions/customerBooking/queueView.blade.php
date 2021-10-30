@@ -5,7 +5,7 @@
     <div class="w-11/12 mx-auto mt-10 pb-2 grid grid-cols-2">
         <a href="/restaurant/live-transaction/customer-booking/queue" class="text-submitButton uppercase font-bold"><i class="fas fa-chevron-left mr-2"></i>Back</a>
         @if (!$isPriority)
-            <p class="text-submitButton uppercase font-bold text-right">Please validate the customer queue in order</p>
+            <p class="text-submitButton uppercase font-bold text-right">You need to approve/decline first the highest priority</p>
         @endif
     </div>
     <div class="w-11/12 mx-auto mt-5 font-Montserrat bg-white">
@@ -62,6 +62,9 @@
                                 <p class="mt-2">No. of Persons: <span class="font-bold">{{ $customerQueue->numberOfPersons }}</span></p>
                                 <p class="mt-2">Senior Citizen/PWD: <span class="font-bold">{{ $customerQueue->numberOfPwd }}</span></p>
                                 <p class="mt-2">Reward: <span class="font-bold">{{ $finalReward }}</span></p>
+                                @if ($customerQueue->rewardClaimed != null)
+                                    <p class="mt-2">Reward Claimed: <span class="font-bold">{{ $customerQueue->rewardClaimed }}</span></p>
+                                @endif
                             </div>
                             <div>
                                 <p class="mt-2">Hours of Stay: <span class="font-bold">{{ $customerQueue->hoursOfStay }} hours</span></p>
@@ -107,11 +110,18 @@
                             <p class="col-span-1 text-center">{{ $customerQueue->numberOfChildren }}x</p>
                             <p class="justify-self-end col-span-1">{{ (number_format($childrenDiscount, 2)) }} <span class="text-xs">Php</span></p>
                         </div>
+                        
+                        @if ($customerQueue->rewardClaimed == "Yes")
+                            <div class="grid grid-cols-2 mt-2">
+                                <p class="col-span-1">Reward ({{ $finalReward }})</p>
+                                <p class="justify-self-end col-span-1">{{ (number_format($rewardDiscount, 2)) }} <span class="text-xs">Php</span></p>
+                            </div>
+                        @endif
 
                         <div class="bg-sundayToSaturdayBoxColor h-height1Px my-2"></div>
 
                         <div class="grid grid-cols-2 mt-2">
-                            <p class="col-span-1">Total Price</p>
+                            <p class="col-span-1">Estimated Total Price</p>
                             <p class="justify-self-end col-span-1"><span class="text-loginLandingPage text-lg font-bold">{{ $customerQueue->totalPrice }}</span> <span class="text-xs">Php</span></p>
                         </div>
 

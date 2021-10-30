@@ -41,11 +41,19 @@ Route::get('/customer/get-notifications/approved/{cust_id}/{notif_id}', [Custome
 Route::get('/customer/get-notifications/no-show/{cust_id}/{notif_id}', [CustomerController::class, 'getNotificationNoShow']);
 Route::get('/customer/get-notifications/runaway/{cust_id}/{notif_id}', [CustomerController::class, 'getNotificationRunaway']);
 
+Route::get('/customer/get-booking-history/{cust_id}', [CustomerController::class, 'getBookingHistory']);
+Route::post('/customer/get-booking-history/cancelled', [CustomerController::class, 'getBookingHistoryCancelled']);
+
+
+
+
+
 
 Route::post('/customer/register-customer', [CustomerController::class, 'registerCustomer']);
 Route::post('/customer/login-customer', [CustomerController::class, 'loginCustomer']);
 Route::post('/customer/submit-queue-form', [CustomerController::class, 'submitQueueForm']);
 Route::post('/customer/forgot-password', [CustomerController::class, 'forgotPassword']);
+Route::post('/customer/update-device-token', [CustomerController::class, 'updateDeviceToken']);
 
 
 

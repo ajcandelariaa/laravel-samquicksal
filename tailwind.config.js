@@ -67,6 +67,9 @@ module.exports = {
         customerDetailsGrid: '200px auto auto',
         orderCustDetailsGrid: '100px auto',
       },
+      gridTemplateRows:{
+        customerOrderingTableRow: '20px auto 50px',
+      },
       boxShadow: {
         adminDownloadButton: '0px 3px 14px -9px rgba(0,0,0,0.75)'
       },
