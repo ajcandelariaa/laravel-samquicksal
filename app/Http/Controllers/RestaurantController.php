@@ -45,6 +45,10 @@ use App\Mail\RestaurantFormAppreciation;
 
 class RestaurantController extends Controller
 {
+    public $RESTAURANT_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/logo";
+    public $ACCOUNT_NO_IMAGE_PATH = "http://192.168.1.53:8000/images";
+
+
     // FOR CHECKING THE EXPIRATION DATES OF STAMPS
     public function __construct(){}
 
@@ -1494,7 +1498,7 @@ class RestaurantController extends Controller
     }
     public function ltCustBookQDecline(Request $request, $id){
         $customerQueue = CustomerQueue::where('id', $id)->first();
-        $restaurant = RestaurantAccount::select('rName', 'rBranch', 'rAddress', 'rCity')->where('id', $customerQueue->restAcc_id)->first();
+        $restaurant = RestaurantAccount::select('id', 'rName', 'rBranch', 'rAddress', 'rCity', 'rLogo')->where('id', $customerQueue->restAcc_id)->first();
         $customer = CustomerAccount::select('deviceToken')->where('id', $customerQueue->customer_id)->first();
 
         CustomerQueue::where('id', $id)
@@ -1513,6 +1517,12 @@ class RestaurantController extends Controller
             'notificationStatus' => "Unread",
         ]);
 
+        $finalImageUrl = "";
+        if ($restaurant->rLogo == ""){
+            $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+        } else {
+            $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
+        }
 
         if($customer != null){
             $to = $customer->deviceToken;
@@ -1523,6 +1533,7 @@ class RestaurantController extends Controller
             $data = array(
                 'notificationType' => "Declined",
                 'notificationId' => $notif->id,
+                'notificationRLogo' => $finalImageUrl,
             );
             $this->sendFirebaseNotification($to, $notification, $data);
         }

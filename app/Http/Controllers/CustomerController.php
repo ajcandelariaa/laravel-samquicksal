@@ -38,8 +38,8 @@ use Illuminate\Contracts\Cache\Store;
 class CustomerController extends Controller
 {
     public $RESTAURANT_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/logo";
-    public $CUSTOMER_IMAGE_PATH = "http://192.168.1.53:8000/uploads/customerAccounts/logo";
     public $ACCOUNT_NO_IMAGE_PATH = "http://192.168.1.53:8000/images";
+    public $CUSTOMER_IMAGE_PATH = "http://192.168.1.53:8000/uploads/customerAccounts/logo";
     public $POST_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/post";
     public $PROMO_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/promo";
     public $ORDER_SET_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/orderSet";
@@ -695,7 +695,7 @@ class CustomerController extends Controller
 
             mkdir('uploads/customerAccounts/logo/'.$customer->id);
             
-            CustomerNotification::create([
+            $notif = CustomerNotification::create([
                 'customer_id' => $customer->id,
                 'restAcc_id' => 0,
                 'notificationType' => "New Account",
@@ -703,6 +703,22 @@ class CustomerController extends Controller
                 'notificationDescription' => "Samquicksal",
                 'notificationStatus' => "Unread",
             ]);
+
+            $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/samquicksalLogo.png';
+            
+            if($customer != null){
+                $to = $customer->deviceToken;
+                $notification = array(
+                    'title' => "Hi $customer->name, Welcome to Samquicksal!",
+                    'body' => "Are you ready to Dine-in? You can do it anytime! Just find the restaurant that you want to eat then your’re good to go! Don’t forget to give them a rating! Thank you and enjoy using our app.",
+                );
+                $data = array(
+                    'notificationType' => "New Account",
+                    'notificationId' => $notif->id,
+                    'notificationRLogo' => $finalImageUrl,
+                );
+                $this->sendFirebaseNotification($to, $notification, $data);
+            }
 
             return response()->json([
                 'id' => $customer->id,
@@ -772,7 +788,7 @@ class CustomerController extends Controller
 
     }
     public function submitQueueForm(Request $request){
-        $restaurant = RestaurantAccount::select('rName', 'rBranch', 'rAddress', 'rCity')->where('id', $request->restAcc_id)->first();
+        $restaurant = RestaurantAccount::select('id', 'rName', 'rBranch', 'rAddress', 'rCity', 'rLogo')->where('id', $request->restAcc_id)->first();
         $customer = CustomerAccount::select('deviceToken')->where('id', $request->customer_id)->first();
 
         
@@ -805,16 +821,23 @@ class CustomerController extends Controller
             'notificationStatus' => "Unread",
         ]);
 
+        $finalImageUrl = "";
+        if ($restaurant->rLogo == ""){
+            $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+        } else {
+            $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
+        }
         
         if($customer != null){
             $to = $customer->deviceToken;
             $notification = array(
-                'title' => "You have booked at $restaurant->rName $restaurant->rBranch",
-                'body' => "$restaurant->rAddress, $restaurant->rCity",
+                'title' => "$restaurant->rName, $restaurant->rBranch",
+                'body' => "Thank your for booking with us, please wait for your form to validate!",
             );
             $data = array(
                 'notificationType' => "Pending",
                 'notificationId' => $notif->id,
+                'notificationRLogo' => $finalImageUrl,
             );
             $this->sendFirebaseNotification($to, $notification, $data);
         }
@@ -1035,7 +1058,7 @@ class CustomerController extends Controller
         ->orderBy('created_at', 'DESC')
         ->first();
         
-        $restaurant = RestaurantAccount::select('rAddress', 'rCity')->where('id', $customerQueue->restAcc_id)->first();
+        $restaurant = RestaurantAccount::select('id', 'rAddress', 'rCity', 'rLogo', 'rName', 'rBranch')->where('id', $customerQueue->restAcc_id)->first();
         $customer = CustomerAccount::select('deviceToken')->where('id', $id)->first();
 
         CustomerQueue::where('id', $customerQueue->id)
@@ -1053,16 +1076,24 @@ class CustomerController extends Controller
             'notificationStatus' => "Unread",
         ]);
 
+        $finalImageUrl = "";
+        if ($restaurant->rLogo == ""){
+            $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+        } else {
+            $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
+        }
+
         
         if($customer != null){
             $to = $customer->deviceToken;
             $notification = array(
-                'title' => "You have Cancelled your Booking!",
-                'body' => "$restaurant->rAddress, $restaurant->rCity",
+                'title' => "$restaurant->rName, $restaurant->rBranch",
+                'body' => "You have Cancelled your Booking, Thank you and we hope to see you again!",
             );
             $data = array(
                 'notificationType' => "Cancelled",
                 'notificationId' => $notif->id,
+                'notificationRLogo' => $finalImageUrl,
             );
             $this->sendFirebaseNotification($to, $notification, $data);
         }
@@ -1204,14 +1235,30 @@ class CustomerController extends Controller
                 'resetStatus' => 'Pending',
             ]);
             
-            CustomerNotification::create([
+            $notif = CustomerNotification::create([
                 'customer_id' => $findEmailAddress->id,
                 'restAcc_id' => 0,
                 'notificationType' => "Forgot Password",
-                'notificationTitle' => "Your password reset link has been sent to your meail",
+                'notificationTitle' => "Your password reset link has been sent to your email",
                 'notificationDescription' => "Samquicksal",
                 'notificationStatus' => "Unread",
             ]);
+
+            $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/samquicksalLogo.png';
+            
+            if($findEmailAddress != null){
+                $to = $findEmailAddress->deviceToken;
+                $notification = array(
+                    'title' => "Forgot Password",
+                    'body' => "Your password reset link has been sent to your email",
+                );
+                $data = array(
+                    'notificationType' => "Forgot Password",
+                    'notificationId' => $notif->id,
+                    'notificationRLogo' => $finalImageUrl,
+                );
+                $this->sendFirebaseNotification($to, $notification, $data);
+            }
             
             return response()->json([
                 'status' => "success",
@@ -1254,7 +1301,7 @@ class CustomerController extends Controller
             'resetStatus' => "Changed"
         ]);
         
-        CustomerNotification::create([
+        $notif = CustomerNotification::create([
             'customer_id' => $findEmailAddress->id,
             'restAcc_id' => 0,
             'notificationType' => "Password Changed",
@@ -1262,6 +1309,23 @@ class CustomerController extends Controller
             'notificationDescription' => "Samquicksal",
             'notificationStatus' => "Unread",
         ]);
+
+        $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/samquicksalLogo.png';
+            
+        if($findEmailAddress != null){
+            $to = $findEmailAddress->deviceToken;
+            $notification = array(
+                'title' => "Password Changed",
+                'body' => "Your Password has been changed successfully, you can now login again",
+            );
+            $data = array(
+                'notificationType' => "Password Changed",
+                'notificationId' => $notif->id,
+                'notificationRLogo' => $finalImageUrl,
+            );
+            $this->sendFirebaseNotification($to, $notification, $data);
+        }
+
         $request->session()->flash('passwordUpdated');
         return redirect('/');
     }
@@ -1276,7 +1340,7 @@ class CustomerController extends Controller
             ->orWhere('status', "noshow")
             ->orWhere('status', "runaway")
             ->orWhere('status', "completed");
-        })->orderBy('created_at', 'DESC')->get();
+        })->get();
         
         $customerReserves = CustomerReserve::where('customer_id', $cust_id)
         ->where(function ($query) {
@@ -1285,7 +1349,7 @@ class CustomerController extends Controller
             ->orWhere('status', "noshow")
             ->orWhere('status', "runaway")
             ->orWhere('status', "completed");
-        })->orderBy('created_at', 'DESC')->get();
+        })->get();
 
         if(!$customerQueues->isEmpty()){
             foreach($customerQueues as $customerQueue){
@@ -1305,6 +1369,7 @@ class CustomerController extends Controller
                     "bookDate" => "$customerQueue->queueDate",
                     "bookStatus" => $customerQueue->status,
                     "bookType" => "queue",
+                    "created_at" => $customerQueue->created_at,
                 ]);
             }
         }
@@ -1327,6 +1392,7 @@ class CustomerController extends Controller
                     "bookDate" => "$customerReserve->reserveDate",
                     "bookStatus" => $customerReserve->status,
                     "bookType" => "reserve",
+                    "created_at" => $customerReserve->created_at,
                 ]);
             }
         }
@@ -1336,7 +1402,7 @@ class CustomerController extends Controller
         } else {
 
             usort($storeBookingHistory, function($a, $b) {
-                return strtotime($a['bookDate']) - strtotime($b['bookDate']);
+                return strtotime($b['created_at']) - strtotime($a['created_at']);
             });
 
             $finalStoreBookingHistory = array();
