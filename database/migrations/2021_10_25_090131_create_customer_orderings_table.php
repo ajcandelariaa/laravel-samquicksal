@@ -23,6 +23,7 @@ class CreateCustomerOrderingsTable extends Migration
             $table->integer('availableQrAccess');
             $table->string('grantedAccess');
             $table->string('status');
+            $table->date('orderingDate');
             $table->foreign('restAcc_id')->references('id')->on('restaurant_accounts')->onDelete('cascade');
             $table->timestamps();
         });

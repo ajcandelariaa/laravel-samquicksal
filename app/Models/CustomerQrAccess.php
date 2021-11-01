@@ -5,18 +5,16 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class CustomerLOrder extends Model
+class CustomerQrAccess extends Model
 {
     use HasFactory;
 
     protected $fillable = [
         'custOrdering_id',
-        'cust_id',
+        'mainCust_id',
+        'subCust_id',
         'tableNumber',
-        'foodItem_id',
-        'foodItemName',
-        'quantity',
-        'price',
-        'orderDone',
+        'status',
+        'accessDate',
     ];
 }

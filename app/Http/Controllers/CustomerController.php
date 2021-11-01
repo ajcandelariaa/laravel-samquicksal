@@ -27,8 +27,10 @@ use App\Models\RestaurantRewardList;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\RestaurantFormAppreciation;
+use App\Models\CustomerLOrder;
 use App\Models\CustomerNotification;
 use App\Models\CustomerOrdering;
+use App\Models\CustomerQrAccess;
 use App\Models\CustomerQueue;
 use App\Models\CustomerReserve;
 use App\Models\CustomerResetPassword;
@@ -43,6 +45,8 @@ class CustomerController extends Controller
     public $POST_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/post";
     public $PROMO_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/promo";
     public $ORDER_SET_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/orderSet";
+    public $FOOD_SET_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/foodSet";
+    public $FOOD_ITEM_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/foodItem";
 
     
     // public $RESTAURANT_IMAGE_PATH = "https://www.samquicksal.com/uploads/customerAccounts/logo";
@@ -444,7 +448,7 @@ class CustomerController extends Controller
                     array_push($foodItems, $foodItemName->foodItemName);
                 }
                 array_push($foodSets, [
-                    'foodSetName' => "Others",
+                    'foodSetName' => "Add-on/s (Not Free)",
                     'foodItem' => $foodItems,
                 ]);
             }
@@ -1538,6 +1542,207 @@ class CustomerController extends Controller
                 'reason' => $finalReason,
             ]);
         }
+    }
+    public function getOrderingFoodSets($cust_id){
+        $customerQueue = CustomerQueue::where('customer_id', $cust_id)->where('status', 'eating')->first();
+        $customerReserve = CustomerReserve::where('customer_id', $cust_id)->where('status', 'eating')->first();
+
+        $finalFoodSets = array();
+        $orderSetId = null;
+        $restAccId = null;
+        if($customerQueue != null){
+            $restAccId = $customerQueue->restAcc_id;
+            $orderSetId = $customerQueue->orderSet_id;
+            $foodSets = OrderSetFoodSet::where('orderSet_id', $customerQueue->orderSet_id)->get();
+            $foodItems = OrderSetFoodItem::where('orderSet_id', $customerQueue->orderSet_id)->get();
+            
+            foreach($foodSets as $foodSet){
+                $getFoodSet = FoodSet::where('id', $foodSet->foodSet_id)->first();
+                array_push($finalFoodSets, [
+                    'foodSetId' => $foodSet->foodSet_id,
+                    'foodSetImage' => $this->FOOD_SET_IMAGE_PATH.'/'.$getFoodSet->restAcc_id.'/'. $getFoodSet->foodSetImage,
+                    'foodSetName' => $getFoodSet->foodSetName,
+                    'foodSetDescription' => $getFoodSet->foodSetDescription,
+                ]);
+            }
+            
+            if(!$foodItems->isEmpty()){
+                array_push($finalFoodSets, [
+                    'foodSetId' => 0,
+                    'foodSetImage' => $this->ACCOUNT_NO_IMAGE_PATH."/add_ons_img.png",
+                    'foodSetName' => "Add Ons",
+                    'foodSetDescription' => "Add ons contain price",
+                ]);
+            }
+        } else if($customerReserve != null){
+            $restAccId = $customerReserve->restAcc_id;
+            $orderSetId = $customerReserve->orderSet_id;
+            $foodSets = OrderSetFoodSet::where('orderSet_id', $customerReserve->orderSet_id)->get();
+            $foodItems = OrderSetFoodItem::where('orderSet_id', $customerReserve->orderSet_id)->get();
+            
+            foreach($foodSets as $foodSet){
+                $getFoodSet = FoodSet::where('id', $foodSet->foodSet_id)->first();
+                array_push($finalFoodSets, [
+                    'foodSetId' => $foodSet->foodSet_id,
+                    'foodSetImage' => $this->FOOD_SET_IMAGE_PATH.'/'.$getFoodSet->restAcc_id.'/'. $getFoodSet->foodSetImage,
+                    'foodSetName' => $getFoodSet->foodSetName,
+                    'foodSetDescription' => $getFoodSet->foodSetDescription,
+                ]);
+            }
+            
+            if(!$foodItems->isEmpty()){
+                array_push($finalFoodSets, [
+                    'foodSetId' => 0,
+                    'foodSetImage' => $this->ACCOUNT_NO_IMAGE_PATH."/add_ons_img.png",
+                    'foodSetName' => "Add Ons",
+                    'foodSetDescription' => "Add ons contain price",
+                ]);
+            }
+        } else {}
+        return response()->json([
+            'restAccId' => $restAccId,
+            'orderSetId' => $orderSetId,
+            'foodSets' => $finalFoodSets,
+        ]);
+    }
+    public function getOrderingFoodItems($restAcc_id, $orderSet_id, $foodSet_id){
+        $finalFoodItems = array();
+        if($foodSet_id == 0){
+            $foodItems = OrderSetFoodItem::where('orderSet_id', $orderSet_id)->get();
+            foreach ($foodItems as $foodItem){
+                $food = FoodItem::where('id', $foodItem->foodItem_id)->where('restAcc_id', $restAcc_id)->first();
+                array_push($finalFoodItems, [
+                    'foodItemId' => $food->id,
+                    'foodItemName' => $food->foodItemName,
+                    'foodItemDescription' => $food->foodItemDescription,
+                    'foodItemPrice' => "$food->foodItemPrice",
+                    'foodItemImage' => $this->FOOD_ITEM_IMAGE_PATH.'/'.$restAcc_id.'/'. $food->foodItemImage,
+                    'foodItemType' => "not free"
+                ]);
+            }
+        } else {
+            $foodItems = FoodSetItem::where('foodSet_id', $foodSet_id)->get();
+            foreach ($foodItems as $foodItem){
+                $food = FoodItem::where('id', $foodItem->foodItem_id)->where('restAcc_id', $restAcc_id)->first();
+                array_push($finalFoodItems, [
+                    'foodItemId' => $food->id,
+                    'foodItemName' => $food->foodItemName,
+                    'foodItemDescription' => $food->foodItemDescription,
+                    'foodItemPrice' => "0.00",
+                    'foodItemImage' => $this->FOOD_ITEM_IMAGE_PATH.'/'.$restAcc_id.'/'. $food->foodItemImage,
+                    'foodItemType' => "free"
+                ]);
+            }
+        }
+
+        return response()->json($finalFoodItems);
+    }
+    public function orderingAddFoodItem(Request $request){
+        $customerQueue = CustomerQueue::where('customer_id', $request->cust_id)->where('status', 'eating')->first();
+        $customerReserve = CustomerReserve::where('customer_id', $request->cust_id)->where('status', 'eating')->first();
+
+        // $customerQrAccess = CustomerQrAccess::where('subCust_id', $cust_id)->first();
+
+        $finalStatus = "";
+        if($customerQueue != null){
+             $customerOrdering = CustomerOrdering::where('custBook_id', $customerQueue->id)->first();
+             $countQuantity = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)->where('orderDone', "Processing")->sum('quantity');
+
+             if($countQuantity >= 5){
+                $finalStatus = "Item max limit";
+             } else {
+                $customerOrderCount = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)
+                ->where('orderDone', "Processing")
+                ->where('foodItem_id', $request->foodItemId)
+                ->first();
+
+                if($customerOrderCount == null){
+                    $tableNumber = explode(',', $customerOrdering->tableNumbers);
+                    CustomerLOrder::create([
+                        'custOrdering_id' => $customerOrdering->id,
+                        'cust_id' => $request->cust_id,
+                        'tableNumber' => $tableNumber[0],
+                        'foodItem_id' => $request->foodItemId,
+                        'foodItemName' => $request->foodName,
+                        'quantity' => 1,
+                        'price' => $request->foodPrice,
+                        'orderDone' => "Processing",
+                    ]);
+                    $finalStatus = "Item Added";
+                } else {
+                    CustomerLOrder::where('custOrdering_id', $customerOrdering->id)
+                    ->where('orderDone', "Processing")
+                    ->where('foodItem_id', $request->foodItemId)
+                    ->update([
+                        'quantity' => $customerOrderCount->quantity + 1,
+                        'price' => $customerOrderCount->price * 2,
+                    ]);
+                    $finalStatus = "Item Updated";
+                }
+             }
+             
+        } else if ($customerReserve != null){
+            $customerOrdering = CustomerOrdering::where('custBook_id', $customerReserve->id)->first();
+             $countQuantity = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)->where('orderDone', "Processing")->sum('quantity');
+
+             if($countQuantity >= 5){
+                $finalStatus = "Item max limit";
+             } else {
+                $customerOrderCount = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)
+                ->where('orderDone', "Processing")
+                ->where('foodItem_id', $request->foodItemId)
+                ->first();
+
+                if($customerOrderCount == null){
+                    $tableNumber = explode(',', $customerOrdering->tableNumbers);
+                    CustomerLOrder::create([
+                        'custOrdering_id' => $customerOrdering->id,
+                        'cust_id' => $request->cust_id,
+                        'tableNumber' => $tableNumber[0],
+                        'foodItem_id' => $request->foodItemId,
+                        'foodItemName' => $request->foodName,
+                        'quantity' => 1,
+                        'price' => $request->foodPrice,
+                        'orderDone' => "Processing",
+                    ]);
+                    $finalStatus = "Item Added";
+                } else {
+                    CustomerLOrder::where('custOrdering_id', $customerOrdering->id)
+                    ->where('orderDone', "Processing")
+                    ->where('foodItem_id', $request->foodItemId)
+                    ->update([
+                        'quantity' => $customerOrderCount->quantity + 1,
+                        'price' => $customerOrderCount->price * 2,
+                    ]);
+                    $finalStatus = "Item Updated";
+                }
+             }
+        } else {
+            $finalStatus = "Error";
+        }
+
+        return response()->json([
+            'status' => "$finalStatus"
+        ]);
+    }
+    public function getOrderingOrders($cust_id){
+        $customerOrders = CustomerLOrder::where('cust_id', $cust_id)->where('orderDone', "Processing")->get();
+        $finalCustomerOrders = array();
+
+        if(!$customerOrders->isEmpty()){
+            foreach ($customerOrders as $customerOrder){
+                array_push($finalCustomerOrders, [
+                    'custLOrder_id' => $customerOrder->id,
+                    'foodItemName' => $customerOrder->foodItemName,
+                    'quantity' => $customerOrder->quantity,
+                    'price' => $customerOrder->price,
+                ]);
+            }
+        } else {
+            $finalCustomerOrders = null;
+        }
+
+        return response()->json($finalCustomerOrders);
     }
     
 }

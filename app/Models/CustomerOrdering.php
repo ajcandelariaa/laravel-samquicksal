@@ -18,5 +18,6 @@ class CustomerOrdering extends Model
         'availableQrAccess',
         'grantedAccess',
         'status',
+        'orderingDate',
     ];
 }

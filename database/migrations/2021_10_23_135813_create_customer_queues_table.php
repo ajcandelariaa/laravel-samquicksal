@@ -32,6 +32,10 @@ class CreateCustomerQueuesTable extends Migration
             $table->integer('rewardInput')->nullable();
             $table->string('rewardClaimed')->nullable();
             $table->decimal('totalPrice', 10, 2);
+            $table->integer('childrenDiscount')->nullable();
+            $table->decimal('additionalDiscount', 10, 2)->nullable();
+            $table->decimal('promoDiscount', 10, 2)->nullable();
+            $table->decimal('offenseCharges', 10, 2)->nullable();
             $table->date('queueDate');
             $table->dateTIme('approvedDateTime')->nullable();
             $table->dateTIme('cancelDateTime')->nullable();
@@ -39,6 +43,8 @@ class CreateCustomerQueuesTable extends Migration
             $table->dateTIme('validationDateTime')->nullable();
             $table->dateTIme('tableSettingDateTime')->nullable();
             $table->dateTIme('eatingDateTime')->nullable();
+            $table->dateTIme('checkoutDateTime')->nullable();
+            $table->dateTIme('completeDateTime')->nullable();
             $table->string('declinedReason')->nullable();
             $table->string('cancelReason')->nullable();
             $table->foreign('restAcc_id')->references('id')->on('restaurant_accounts')->onDelete('cascade');

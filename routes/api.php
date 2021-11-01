@@ -45,6 +45,11 @@ Route::get('/customer/get-booking-history/{cust_id}', [CustomerController::class
 Route::post('/customer/get-booking-history/cancelled', [CustomerController::class, 'getBookingHistoryCancelled']);
 
 
+Route::get('/customer/ordering/food-set/{cust_id}', [CustomerController::class, 'getOrderingFoodSets']);
+Route::get('/customer/ordering/food-item/{restAcc_id}/{orderSet_id}/{foodSet_id}', [CustomerController::class, 'getOrderingFoodItems']);
+
+Route::get('/customer/ordering/orders/{cust_id}', [CustomerController::class, 'getOrderingOrders']);
+Route::post('/customer/ordering/food-item/add', [CustomerController::class, 'orderingAddFoodItem']);
 
 
 

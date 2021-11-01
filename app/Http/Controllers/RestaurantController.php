@@ -42,6 +42,7 @@ use App\Mail\RestaurantPasswordChanged;
 use App\Models\RestaurantResetPassword;
 use Illuminate\Support\Facades\Session;
 use App\Mail\RestaurantFormAppreciation;
+use App\Models\CustomerQrAccess;
 
 class RestaurantController extends Controller
 {
@@ -129,29 +130,320 @@ class RestaurantController extends Controller
 
     // RENDER VIEWS
     public function ltCustOrderOSPartView($id){
-        return view('restaurant.liveTransactions.customerOrdering.custOrderSum');
+        $restAcc_id = Session::get('loginId');
+        $getDateToday = date('Y-m-d');
+        $customerOrdering = CustomerOrdering::where('id', $id)
+        ->where('restAcc_id', $restAcc_id)
+        ->where('status', 'eating')
+        ->where('orderingDate', $getDateToday)
+        ->first();
+
+        if($customerOrdering->custBookType == "queue"){
+            $customerQueue = CustomerQueue::where('id', $customerOrdering->custBook_id)
+            ->where('restAcc_id', $restAcc_id)
+            ->first();
+
+            $orderSet = OrderSet::where('id', $customerQueue->orderSet_id)
+            ->where('restAcc_id', $restAcc_id)
+            ->first();
+
+            
+            $orderSetName = $orderSet->orderSetName;
+            $customerBook = $customerQueue;
+
+            $customer = CustomerAccount::select('profileImage', 'id')->where('id', $customerQueue->customer_id)->first();
+            
+        } else {
+            $customerReserve = CustomerReserve::where('id', $customerOrdering->custBook_id)
+            ->where('restAcc_id', $restAcc_id)
+            ->first();
+
+            $orderSet = OrderSet::where('id', $customerReserve->orderSet_id)
+            ->where('restAcc_id', $restAcc_id)
+            ->first();
+
+            $orderSetName = $orderSet->orderSetName;
+            $customerBook = $customerReserve;
+
+            $customer = CustomerAccount::select('profileImage', 'id')->where('id', $customerReserve->customer_id)->first();
+        }
+
+        $customerOrders = CustomerLOrder::where('custOrdering_id', $id)->where('orderDone', 'Yes')->get();
+        $customerRequests = CustomerLRequest::where('custOrdering_id', $id)->where('requestDone', 'Yes')->get();
+
+        $endTime = Carbon::now();
+        $customerTOrders = CustomerLOrder::select('created_at')->where('custOrdering_id', $id)->latest('created_at')->first();
+        $customerTRequests = CustomerLRequest::select('created_at')->where('custOrdering_id', $id)->latest('created_at')->first();
+
+
+        if($customerTOrders != null){
+            $rAppstartTime = Carbon::parse($customerTOrders->created_at);
+            $rAppDiffSeconds = $endTime->diffInSeconds($rAppstartTime);
+            $rAppDiffMinutes = $endTime->diffInMinutes($rAppstartTime);
+            $rAppDiffHours = $endTime->diffInHours($rAppstartTime);
+
+            if ($rAppDiffHours > 0){
+                if ($rAppDiffHours == 1){
+                    $rAppDiffTime = "1 hour ago";
+                } else {
+                    $rAppDiffTime = "$rAppDiffHours hours ago";
+                }
+            } else if ($rAppDiffMinutes > 0){
+                if ($rAppDiffMinutes == 1){
+                    $rAppDiffTime = "1 minute ago";
+                } else {
+                    $rAppDiffTime = "$rAppDiffMinutes minutes ago";
+                }
+            } else {
+                if ($rAppDiffSeconds == 1){
+                    $rAppDiffTime = "1 second ago";
+                } else {
+                    $rAppDiffTime = "$rAppDiffSeconds seconds ago";
+                }
+            }
+        } else {
+            $rAppDiffTime = "None";
+        }
+        
+
+        if($customerTRequests != null){
+            $rAppstartTime2 = Carbon::parse($customerTRequests->created_at);
+            $rAppDiffSeconds2 = $endTime->diffInSeconds($rAppstartTime2);
+            $rAppDiffMinutes2 = $endTime->diffInMinutes($rAppstartTime2);
+            $rAppDiffHours2 = $endTime->diffInHours($rAppstartTime2);
+            
+            if ($rAppDiffHours2 > 0){
+                if ($rAppDiffHours2 == 1){
+                    $rAppDiffTime2 = "1 hour ago";
+                } else {
+                    $rAppDiffTime2 = "$rAppDiffHours2 hours ago";
+                }
+            } else if ($rAppDiffMinutes2 > 0){
+                if ($rAppDiffMinutes2 == 1){
+                    $rAppDiffTime2 = "1 minute ago";
+                } else {
+                    $rAppDiffTime2 = "$rAppDiffMinutes2 minutes ago";
+                }
+            } else {
+                if ($rAppDiffSeconds2 == 1){
+                    $rAppDiffTime2 = "1 second ago";
+                } else {
+                    $rAppDiffTime2 = "$rAppDiffSeconds2 seconds ago";
+                }
+            }
+        } else {
+            $rAppDiffTime2 = "None";
+        }
+        
+        $mainTable = explode(',', $customerOrdering->tableNumbers);
+
+        $addOns = CustomerLOrder::where('custOrdering_id', $id)->where('orderDone', 'Yes')->count('price');
+        $subTotal = ($orderSet->orderSetPrice * $customerBook->numberOfPersons) + $addOns;
+
+        $finalReward = "None";
+        $rewardDiscount = 0.00;
+        if($customerBook->rewardStatus == "Complete"){
+            switch($customerBook->rewardType){
+                case "DSCN": 
+                    $finalReward = "Discount $customerBook->rewardInput% in a Total Bill";
+                    $rewardDiscount = ($customerBook->numberOfPersons * $orderSet->orderSetPrice) * ($customerBook->rewardInput / 100);
+                    break;
+                case "FRPE": 
+                    $finalReward = "Free $customerBook->rewardInput person in a group";
+                    $rewardDiscount = $orderSet->orderSetPrice * $customerBook->rewardInput;
+                    break;
+                case "HLF": 
+                    $finalReward = "Half in the group will be free";
+                    $rewardDiscount = ($customerBook->numberOfPersons * $orderSet->orderSetPrice) / 2;
+                    break;
+                case "ALL": 
+                    $finalReward = "All people in the group will be free";
+                    $rewardDiscount = $customerBook->numberOfPersons * $orderSet->orderSetPrice;
+                    break;
+                default: 
+                    $finalReward = "None";
+            }
+        }
+
+        $seniorDiscount = $orderSet->orderSetPrice * ($customerBook->numberOfPwd * 0.2);
+        $childrenDiscount = $orderSet->orderSetPrice * ($customerBook->numberOfChildren * ($customerBook->childrenDiscount / 100));
+        $totalPrice = $subTotal - (
+            $rewardDiscount + 
+            $seniorDiscount + 
+            $childrenDiscount + 
+            $customerBook->additionalDiscount + 
+            $customerBook->promoDiscount +
+            $customerBook->offenseCharges 
+        );
+        
+        return view('restaurant.liveTransactions.customerOrdering.custOrderSum', [
+            'customerOrdering' => $customerOrdering,
+            'customerOrders' => $customerOrders,
+            'customerRequests' => $customerRequests,
+            'order' => $orderSetName,
+            'orderSet' => $orderSet,
+            'rAppDiffTime' => $rAppDiffTime,
+            'rAppDiffTime2' => $rAppDiffTime2,
+            'customerImage' => $customer,
+            'customerBook' => $customerBook,
+            'subTotal' => $subTotal,
+            'seniorDiscount' => $seniorDiscount,
+            'childrenDiscount' => $childrenDiscount,
+            'rewardDiscount' => $rewardDiscount,
+            'finalReward' => $finalReward,
+            'subTotal' => $subTotal,
+            'totalPrice' => $totalPrice,
+            'mainTable' => $mainTable[0],
+        ]);
+
     }
     public function ltCustOrderORPartView($id){
         $restAcc_id = Session::get('loginId');
-        $customerOrdering = CustomerOrdering::where('id', $id)->where('restAcc_id', $restAcc_id)->where('status', 'eating')->first();
+        $getDateToday = date('Y-m-d');
+        $customerOrdering = CustomerOrdering::where('id', $id)
+        ->where('restAcc_id', $restAcc_id)
+        ->where('status', 'eating')
+        ->where('orderingDate', $getDateToday)
+        ->first();
 
-        // GET CUSTOMER DETAILS (name, order set name, table number, last order, last request)
+        $customerQrAccess = CustomerQrAccess::where('custOrdering_id', $id)
+        ->where('accessDate', $getDateToday)
+        ->get();
+
+        $finalCustomerAccess = array();
+        if($customerQrAccess->isEmpty()){
+            foreach($customerQrAccess as $customerQr){
+                $customer = CustomerAccount::where('id', $customerQr->subCust_id)->first();
+
+                $userSinceDate = explode('-', date('Y-m-d', strtotime($customer->created_at)));
+                $month2 = $this->convertMonths($userSinceDate[1]);
+                $year2 = $userSinceDate[0];
+                $day2  = $userSinceDate[2];
+
+                array_push($finalCustomerAccess, [
+                    'custName' => $customer->name,
+                    'tableNumber' => $customerQr->tableNumber,
+                    'userSince' => "$month2 $day2, $year2",
+                ]);
+            }
+        }
         
-        // GET CUSTOMER ORDERS AND REQUESTS yung mga di pa naseserve
+        if($customerOrdering->custBookType == "queue"){
+            $customerQueue = CustomerQueue::select('orderSet_id', 'customer_id')
+            ->where('id', $customerOrdering->custBook_id)
+            ->where('restAcc_id', $restAcc_id)
+            ->first();
 
-        // GET CUSTOMER WHO HAS ACCESS
+            $orderSet = OrderSet::select('orderSetName')
+            ->where('id', $customerQueue->orderSet_id)
+            ->where('restAcc_id', $restAcc_id)
+            ->first();
+            
+            $orderSetName = $orderSet->orderSetName;
+
+            $customer = CustomerAccount::select('profileImage', 'id')->where('id', $customerQueue->customer_id)->first();
+            
+        } else {
+            $customerReserve = CustomerReserve::select('orderSet_id', 'customer_id')
+            ->where('id', $customerOrdering->custBook_id)
+            ->where('restAcc_id', $restAcc_id)
+            ->first();
+
+            $orderSet = OrderSet::select('orderSetName')
+            ->where('id', $customerReserve->orderSet_id
+            )->where('restAcc_id', $restAcc_id)
+            ->first();
+
+            $orderSetName = $orderSet->orderSetName;
+
+            $customer = CustomerAccount::select('profileImage', 'id')->where('id', $customerReserve->customer_id)->first();
+        }
+
+        $customerOrders = CustomerLOrder::where('custOrdering_id', $id)->where('orderDone', 'No')->get();
+        $customerRequests = CustomerLRequest::where('custOrdering_id', $id)->where('requestDone', 'No')->get();
+
+        $endTime = Carbon::now();
+        $customerTOrders = CustomerLOrder::select('created_at')->where('custOrdering_id', $id)->latest('created_at')->first();
+        $customerTRequests = CustomerLRequest::select('created_at')->where('custOrdering_id', $id)->latest('created_at')->first();
+
+        if($customerTOrders != null){
+            $rAppstartTime = Carbon::parse($customerTOrders->created_at);
+            $rAppDiffSeconds = $endTime->diffInSeconds($rAppstartTime);
+            $rAppDiffMinutes = $endTime->diffInMinutes($rAppstartTime);
+            $rAppDiffHours = $endTime->diffInHours($rAppstartTime);
+
+            if ($rAppDiffHours > 0){
+                if ($rAppDiffHours == 1){
+                    $rAppDiffTime = "1 hour ago";
+                } else {
+                    $rAppDiffTime = "$rAppDiffHours hours ago";
+                }
+            } else if ($rAppDiffMinutes > 0){
+                if ($rAppDiffMinutes == 1){
+                    $rAppDiffTime = "1 minute ago";
+                } else {
+                    $rAppDiffTime = "$rAppDiffMinutes minutes ago";
+                }
+            } else {
+                if ($rAppDiffSeconds == 1){
+                    $rAppDiffTime = "1 second ago";
+                } else {
+                    $rAppDiffTime = "$rAppDiffSeconds seconds ago";
+                }
+            }
+        } else {
+            $rAppDiffTime = "None";
+        }
+        
+
+        if($customerTRequests != null){
+            $rAppstartTime2 = Carbon::parse($customerTRequests->created_at);
+            $rAppDiffSeconds2 = $endTime->diffInSeconds($rAppstartTime2);
+            $rAppDiffMinutes2 = $endTime->diffInMinutes($rAppstartTime2);
+            $rAppDiffHours2 = $endTime->diffInHours($rAppstartTime2);
+            
+            if ($rAppDiffHours2 > 0){
+                if ($rAppDiffHours2 == 1){
+                    $rAppDiffTime2 = "1 hour ago";
+                } else {
+                    $rAppDiffTime2 = "$rAppDiffHours2 hours ago";
+                }
+            } else if ($rAppDiffMinutes2 > 0){
+                if ($rAppDiffMinutes2 == 1){
+                    $rAppDiffTime2 = "1 minute ago";
+                } else {
+                    $rAppDiffTime2 = "$rAppDiffMinutes2 minutes ago";
+                }
+            } else {
+                if ($rAppDiffSeconds2 == 1){
+                    $rAppDiffTime2 = "1 second ago";
+                } else {
+                    $rAppDiffTime2 = "$rAppDiffSeconds2 seconds ago";
+                }
+            }
+        } else {
+            $rAppDiffTime2 = "None";
+        }
 
 
-        $customerOrders = CustomerLOrder::where('custOrdering_id', $id)->get();
-        $customerRequests = "";
+        $mainTable = explode(',', $customerOrdering->tableNumbers);
 
         return view('restaurant.liveTransactions.customerOrdering.custOrderReq', [
             'customerOrdering' => $customerOrdering,
+            'customerOrders' => $customerOrders,
+            'customerRequests' => $customerRequests,
+            'order' => $orderSetName,
+            'rAppDiffTime' => $rAppDiffTime,
+            'rAppDiffTime2' => $rAppDiffTime2,
+            'customer' => $customer,
+            'finalCustomerAccess' => $finalCustomerAccess,
+            'mainTable' => $mainTable[0],
         ]);
     }
     public function ltCustOrderListView(){
         $restAcc_id = Session::get('loginId');
-        $eatingCustomers = CustomerOrdering::where('restAcc_id', $restAcc_id)->where('status', 'eating')->get();
+        $getDateToday = date('Y-m-d');
+        $eatingCustomers = CustomerOrdering::where('restAcc_id', $restAcc_id)->where('status', 'eating')->where('orderingDate', $getDateToday)->get();
         $restaurant = RestaurantAccount::select('rNumberOfTables')->where('id', $restAcc_id)->first();
 
         $customers = array();
@@ -1274,6 +1566,68 @@ class RestaurantController extends Controller
 
 
     // RENDER LOGICS
+    public function ltCustOrderApplyDiscounts(Request $request, $id){
+        $restAcc_id = Session::get('loginId');
+        // LAGyAN NA MUNA NG VALIDATION
+        $customerOrder = CustomerOrdering::where('id', $id)->where('restAcc_id', $restAcc_id)->first();
+        if($customerOrder->custBookType == "queue"){
+            CustomerQueue::where('id', $customerOrder->custBook_id)
+            ->update([
+                'numberOfPwd' => $request->numberOfPwd,
+                'numberOfChildren' => $request->numberOfChildren,
+                'childrenDiscount' => $request->childrenDiscount,
+                'additionalDiscount' => $request->additionalDiscount,
+                'promoDiscount' => $request->promoDiscount,
+                'offenseCharges' => $request->offenseCharges,
+            ]);
+        } else {
+            CustomerReserve::where('id', $customerOrder->custBook_id)
+            ->update([
+                'numberOfPwd' => $request->numberOfPwd,
+                'numberOfChildren' => $request->numberOfChildren,
+                'childrenDiscount' => $request->childrenDiscount,
+                'additionalDiscount' => $request->additionalDiscount,
+                'promoDiscount' => $request->promoDiscount,
+                'offenseCharges' => $request->offenseCharges,
+            ]);
+        }
+        Session::flash('discounted');
+        return redirect('/restaurant/live-transaction/customer-ordering/list/'.$id.'/order-summary');
+    }
+    public function ltCustOrderGrantAccess($id){
+        $restAcc_id = Session::get('loginId');
+        $getDateToday = date('Y-m-d');
+        $customerOrder = CustomerOrdering::where('id', $id)->where('orderingDate', $getDateToday)->first();
+        $restaurant = RestaurantAccount::where('id', $customerOrder->restAcc_id)->first();
+        if($customerOrder->custBookType == "queue"){
+            $customer = CustomerQueue::where('id', $customerOrder->custBook_id)->first();
+            CustomerQueue::where('id', $customerOrder->custBook_id)
+            ->update([
+                'status' => 'eating'
+            ]);
+        } else {
+            $customer = CustomerReserve::where('id', $customerOrder->custBook_id)->first();
+            CustomerReserve::where('id', $customerOrder->custBook_id)
+            ->update([
+                'status' => 'eating'
+            ]);
+        }
+        CustomerOrdering::where('id', $id)->where('orderingDate', $getDateToday)
+        ->update([
+            'grantedAccess' => "Yes"
+        ]);
+        
+        CustomerNotification::create([
+            'customer_id' => $customer->customer_id,
+            'restAcc_id' => $restAcc_id,
+            'notificationType' => "Table is Ready",
+            'notificationTitle' => "Your table is now Ready. Enjoy your meal!",
+            'notificationDescription' => "$restaurant->rAddress, $restaurant->rCity",
+            'notificationStatus' => "Unread",
+        ]);
+        Session::flash('grantedAccess');
+        return redirect('/restaurant/live-transaction/customer-ordering/list/'.$id.'/order-request');
+    }
     public function ltAppCustQAddWalkIn(Request $request){
         $restAcc_id = Session::get('loginId');
 
@@ -1337,9 +1691,10 @@ class RestaurantController extends Controller
         $request->validate([
             'tableNumbers' => 'required',
         ]);
+        $getDateToday = date('Y-m-d');
 
         $restaurant = RestaurantAccount::select('rNumberOfTables')->where('id', $restAcc_id)->first();
-        $customerQueue = CustomerQueue::where('id', $id)->where('restAcc_id', $restAcc_id)->first();
+        $customerQueue = CustomerQueue::where('id', $id)->where('restAcc_id', $restAcc_id)->where('queueDate', $getDateToday)->first();
         
         $tableNumbers = explode(',', $request->tableNumbers);
         
@@ -1375,18 +1730,25 @@ class RestaurantController extends Controller
                         return redirect('/restaurant/live-transaction/approved-customer/queue/'.$id);
                     } else {
                         $finalTableNumber = "";
-                        for ($i=0; $i<count($storeNumbers); $i++){
-                            if($i == 0){
-                                $finalTableNumber = $storeNumbers[$i].',';
-                            } else if ($i == count($storeNumbers)-1){
-                                $finalTableNumber = $finalTableNumber.$storeNumbers[$i];
-                            } else {
-                                $finalTableNumber = $finalTableNumber.$storeNumbers[$i].',';
+                        if(sizeOf($storeNumbers) == 1){
+                            $finalTableNumber = $storeNumbers[0];
+                        } else {
+                            for ($i=0; $i<count($storeNumbers); $i++){
+                                if($i == 0){
+                                    $finalTableNumber = $storeNumbers[$i].',';
+                                } else if ($i == count($storeNumbers)-1){
+                                    $finalTableNumber = $finalTableNumber.$storeNumbers[$i];
+                                } else {
+                                    $finalTableNumber = $finalTableNumber.$storeNumbers[$i].',';
+                                }
                             }
                         }
             
                         $count2 = 0;
-                        $customerTables = CustomerOrdering::where('restAcc_id', $restAcc_id)->where('status', 'eating')->get();
+                        $customerTables = CustomerOrdering::where('restAcc_id', $restAcc_id)
+                        ->where('status', 'eating')
+                        ->where('orderingDate', $getDateToday)
+                        ->get();
                         foreach ($customerTables as $customerTable){
                             $customerTableNumbers = explode(',', $customerTable->tableNumbers);
                             $result = array_intersect($storeNumbers, $customerTableNumbers);
@@ -1418,6 +1780,7 @@ class RestaurantController extends Controller
                                 'availableQrAccess' => $customerQueue->numberOfTables - 1,
                                 'grantedAccess' => "No",
                                 'status' => "eating",
+                                'orderingDate' => date('Y-m-d'),
                             ]);
 
                             CustomerQueue::where('id', $id)

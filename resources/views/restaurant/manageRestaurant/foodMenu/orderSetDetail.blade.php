@@ -191,7 +191,7 @@
                                                     <img src="{{ asset('uploads/restaurantAccounts/foodSet/'.$id.'/'.$foodSet->foodSetImage) }}" alt="foodSetImage" class="w-8 h-7">
                                                 </div>
                                                 <div class="col-span-3">{{ $foodSet->foodSetName }}</div>
-                                                <div class="col-span-2">₱ {{ $foodSet->foodSetPrice }}</div>
+                                                <div class="col-span-2">₱ 0.00</div>
                                                 <div class="col-span-1">
                                                     <a href="/restaurant/manage-restaurant/food-menu/food-set/detail/{{ $foodSet->id }}" target="_blank"><i class="fas fa-eye"></i></a>
                                                 </div>
@@ -206,7 +206,7 @@
                                                     <img src="{{ asset('uploads/restaurantAccounts/foodSet/'.$id.'/'.$foodSet->foodSetImage) }}" alt="foodSetImage" class="w-8 h-7">
                                                 </div>
                                                 <div class="col-span-3">{{ $foodSet->foodSetName }}</div>
-                                                <div class="col-span-2">₱ {{ $foodSet->foodSetPrice }}</div>
+                                                <div class="col-span-2">₱ 0.00</div>
                                                 <div class="col-span-1">
                                                     <a href="/restaurant/manage-restaurant/food-menu/food-set/detail/{{ $foodSet->id }}" target="_blank"><i class="fas fa-eye"></i></a>
                                                 </div>
@@ -236,7 +236,7 @@
             <div class="col-span-1">
                 <div class="w-full mt-10 mb-12 rounded-2xl shadow-adminDownloadButton bg-adminViewAccountHeaderColor2">
                     <div class="rounded-t-2xl bg-manageRestaurantSidebarColorActive w-full flex justify-between items-center px-4 py-3">
-                        <div class="text-white font-bold uppercase text-xl">Food Items</div>
+                        <div class="text-white font-bold uppercase text-xl">Food Items / Add-ons</div>
                         <div class="">
                             <button id="btn-add-food-item" class="bg-submitButton text-white w-36 h-9 rounded-md"><i class="fas fa-plus mr-3"></i>Food Item</button>
                         </div>
@@ -343,7 +343,7 @@
                                 </div>
                                 <div class="col-span-1">{{ $count }}</div>
                                 <div class="col-span-3">{{ $foodSet->foodSetName }}</div>
-                                <div class="col-span-2">₱ {{ $foodSet->foodSetPrice }}</div>
+                                <div class="col-span-2">₱ 0.00</div>
                             </div>
                         @else
                             <div class="bg-white grid grid-cols-10 justify-items-center items-center h-10 px-5 mb-2">
@@ -356,7 +356,7 @@
                                 </div>
                                 <div class="col-span-1">{{ $count }}</div>
                                 <div class="col-span-3">{{ $foodSet->foodSetName }}</div>
-                                <div class="col-span-2">₱ {{ $foodSet->foodSetPrice }}</div>
+                                <div class="col-span-2">₱ 0.00</div>
                             </div>
                         @endif
                         @php

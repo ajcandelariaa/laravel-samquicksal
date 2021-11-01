@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateCustomerLOrdersTable extends Migration
+class CreateCustomerQrAccessesTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,16 +13,14 @@ class CreateCustomerLOrdersTable extends Migration
      */
     public function up()
     {
-        Schema::create('customer_l_orders', function (Blueprint $table) {
+        Schema::create('customer_qr_accesses', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('custOrdering_id');
-            $table->unsignedBigInteger('cust_id');
+            $table->unsignedBigInteger('mainCust_id');
+            $table->unsignedBigInteger('subCust_id');
             $table->string('tableNumber');
-            $table->unsignedBigInteger('foodItem_id');
-            $table->string('foodItemName');
-            $table->integer('quantity');
-            $table->decimal('price', 5, 2);
-            $table->string('orderDone');
+            $table->string('status');
+            $table->date('accessDate');
             $table->timestamps();
         });
     }
@@ -34,6 +32,6 @@ class CreateCustomerLOrdersTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('customer_l_orders');
+        Schema::dropIfExists('customer_qr_accesses');
     }
 }
