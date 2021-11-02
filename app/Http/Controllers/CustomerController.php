@@ -28,6 +28,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\RestaurantFormAppreciation;
 use App\Models\CustomerLOrder;
+use App\Models\CustomerLRequest;
 use App\Models\CustomerNotification;
 use App\Models\CustomerOrdering;
 use App\Models\CustomerQrAccess;
@@ -1675,7 +1676,7 @@ class CustomerController extends Controller
                     ->where('foodItem_id', $request->foodItemId)
                     ->update([
                         'quantity' => $customerOrderCount->quantity + 1,
-                        'price' => $customerOrderCount->price * 2,
+                        'price' => ($customerOrderCount->price / $customerOrderCount->quantity) * ($customerOrderCount->quantity + 1),
                     ]);
                     $finalStatus = "Item Updated";
                 }
@@ -1743,6 +1744,144 @@ class CustomerController extends Controller
         }
 
         return response()->json($finalCustomerOrders);
+    }
+    public function orderingUpdateFoodItem(Request $request){
+        $finalStatus = null;
+        if($request->updateType == "delete"){
+            CustomerLOrder::where('id', $request->custLOrder_id)->delete();
+            $finalStatus = "Item Removed";
+        } else if ($request->updateType == "add"){
+            $getCustomerId = CustomerLOrder::where('id', $request->custLOrder_id)->first();
+            $countQuantity = CustomerLOrder::where('cust_id', $getCustomerId->cust_id)->where('orderDone', "Processing")->sum('quantity');
+            if($countQuantity >= 5){
+                $finalStatus = "Item max limit";
+            } else {
+                CustomerLOrder::where('id', $request->custLOrder_id)
+                ->where('orderDone', "Processing")
+                ->update([
+                    'quantity' => $getCustomerId->quantity + 1,
+                    'price' => ($getCustomerId->price / $getCustomerId->quantity) * ($getCustomerId->quantity + 1),
+                ]);
+                $finalStatus = "Item Increased";
+            }
+        } else {
+            $getCustomerId = CustomerLOrder::where('id', $request->custLOrder_id)->first();
+            if($getCustomerId->quantity == 1){
+                $finalStatus = "Minimum quantity is 1";
+            } else {
+                CustomerLOrder::where('id', $request->custLOrder_id)
+                ->where('orderDone', "Processing")
+                ->update([
+                    'quantity' => $getCustomerId->quantity - 1,
+                    'price' => ($getCustomerId->price / $getCustomerId->quantity) * ($getCustomerId->quantity - 1),
+                ]);
+                $finalStatus = "Item Decreased";
+            }
+        }
+        return response()->json([
+            'status' => "$finalStatus",
+        ]);
+    }
+    public function orderingSubmitOrders($cust_id){
+        CustomerLOrder::where('cust_id', $cust_id)->where('orderDone', "Processing")
+        ->update([
+            'orderDone' => "No",
+            'orderSubmitDT' => date('Y-m-d H:i:s'),
+        ]);
+        
+        return response()->json([
+            'status' => "Order Submitted, Kindly wait for the staff to come to you. Thanks!",
+        ]);
+    }
+    public function getOrderingAssistHist($cust_id){
+        $finalAssistance = array();
+        $customerRequests = CustomerLRequest::where('cust_id', $cust_id)->get();
+
+        foreach($customerRequests as $customerRequest){
+            $time = date("g:i A", strtotime($customerRequest->created_at->format('H:i')));
+            
+            array_push($finalAssistance, [
+                'requestType' => $customerRequest->request,
+                'requestTime' => $time,
+            ]);
+        }
+        
+        return response()->json($finalAssistance);
+    }
+
+    public function orderingAddAssistance(Request $request){
+        $finalStatus = null;
+        $customerQueue = CustomerQueue::where('customer_id', $request->cust_id)->where('status', 'eating')->first();
+        $customerReserve = CustomerReserve::where('customer_id', $request->cust_id)->where('status', 'eating')->first();
+
+        if($customerQueue != null){
+            $customerOrdering = CustomerOrdering::where('custBook_id', $customerQueue->id)->first();
+            $tableNumber = explode(',', $customerOrdering->tableNumbers);
+
+            CustomerLRequest::create([
+                'custOrdering_id' => $customerOrdering->id,
+                'cust_id' => $request->cust_id,
+                'tableNumber' => $tableNumber[0],
+                'request' => $request->requestType,
+                'requestDone' => "No",
+                'requestSubmitDT' => date('Y-m-d H:i:s'),
+            ]);
+            $finalStatus = "Request sent! Kindly wait for the staff to come to your table. Thank you!";
+        } else if ($customerReserve != null){
+            $customerOrdering = CustomerOrdering::where('custBook_id', $customerReserve->id)->first();
+            $tableNumber = explode(',', $customerOrdering->tableNumbers);
+
+            CustomerLRequest::create([
+                'custOrdering_id' => $customerOrdering->id,
+                'cust_id' => $request->cust_id,
+                'tableNumber' => $tableNumber[0],
+                'request' => $request->requestType,
+                'requestDone' => "No",
+                'requestSubmitDT' => date('Y-m-d H:i:s'),
+            ]);
+            $finalStatus = "Request sent! Kindly wait for the staff to come to your table. Thank you!";
+        } else {
+            $finalStatus = "Error";
+        }
+
+        return response()->json([
+            'status' => $finalStatus,
+        ]);
+    }
+    public function getOrderingBill($cust_id){
+        $finalOrders = array();
+
+        $customerQueue = CustomerQueue::where('customer_id', $cust_id)->where('status', 'eating')->first();
+        $customerReserve = CustomerReserve::where('customer_id', $cust_id)->where('status', 'eating')->first();
+
+        if($customerQueue != null){
+            
+        } else if ($customerReserve != null){
+        
+        } else {
+            $finalStatus = "Error";
+        }
+
+
+
+        return response()->json([
+            'orderSetName' => '399',
+            'numberOfPersons' => 10,
+            'orderSetPriceTotal' => '3990.00',
+            'orders' => $finalOrders,
+            'subtotal' => 3990.00,
+            'numberOfPwd' => 1,
+            'pwdDiscount' => 1,
+            'childrenPercentage' => 1,
+            'numberOfChildren' => 1,
+            'childrenDiscount' => 1,
+            'promoDiscount' => 1,
+            'additionalDiscount' => 1,
+            'rewardName' => 1,
+            'rewardDiscount' => 1,
+            'offenseCharge' => 1,
+            'totalPrice' => 1,
+        ]);
     }
     
 }

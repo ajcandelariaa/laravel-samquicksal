@@ -11,8 +11,10 @@ class CustomerLRequest extends Model
 
     protected $fillable = [
         'custOrdering_id',
+        'cust_id',
         'tableNumber',
         'request',
         'requestDone',
+        'requestSubmitDT',
     ];
 }

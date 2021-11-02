@@ -111,9 +111,9 @@
                         @else
                             @foreach ($customerOrders as $customerOrder)
                                 <div class="grid grid-cols-3 mt-2">
-                                    <p class="col-span-1">{{ $customerOrder->foodItem }}</p>
+                                    <p class="col-span-1">{{ $customerOrder->foodItemName }}</p>
                                     <p class="col-span-1 text-center">{{ $customerOrder->quantity }}x</p>
-                                    <p class="justify-self-end col-span-1 font-bold">{{ (number_format($customerOrder->quantity, 2, '.')) }} <span class="text-xs text-manageRestaurantSidebarColor font-normal">Php</span></p>
+                                    <p class="justify-self-end col-span-1 font-bold">{{ (number_format($customerOrder->price, 2, '.')) }} <span class="text-xs text-manageRestaurantSidebarColor font-normal">Php</span></p>
                                 </div>
                             @endforeach
                         @endif

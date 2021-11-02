@@ -17,3 +17,31 @@ $('#btn-access').on('click', function(e){
         }
     })
 })
+
+
+$(document).ready(function() {
+    $('#select-all').click(function() {
+        var checked = this.checked;
+        $('input[type="checkbox"]').each(function() {
+        this.checked = checked;
+    });
+    })
+});
+
+// SERVE CUSTOMER
+$('#serveForm').submit(function(e) {
+    e.preventDefault();
+    Swal.fire({
+        title: 'Done Serving?',
+        text: 'Are you done serving these food to the customer?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes'
+    }).then((result) =>{
+        if(result.value){
+          e.currentTarget.submit();
+        }
+    });
+});

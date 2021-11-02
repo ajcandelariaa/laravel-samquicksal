@@ -37,6 +37,7 @@ module.exports = {
         adminBgColor: '#E5E5E5',
         adminDeleteFormColor: '#91001B',
         boxPeach: '#F2B4B4',
+        fadedPink: '#efb8b8',
       },
       width: {
         adminLoginBoxW: '800px',
@@ -49,7 +50,13 @@ module.exports = {
         height1Px: '1px',
       },
       fontSize: {
-        circle: '0.50rem'
+        circle: '0.50rem',
+        xxs: '0.60rem',
+      },
+      animation:{
+        spin: 'spin 6s linear infinite',
+        wiggle: 'wiggle 1s ease-in-out infinite',
+        blob: 'blob 7s infinite',
       },
       gridTemplateColumns: {
         adminViewAccountGridSize: '120px minmax(120px, 1fr) auto',
@@ -81,7 +88,21 @@ module.exports = {
       },
       fontFamily:{
         Montserrat: ['Montserrat', 'sans-serif'],
-        Roboto: ['Roboto', 'sans-serif']
+        Roboto: ['Roboto', 'sans-serif'],
+        Molle: ['Molle', 'sans-serif'],
+      },
+      keyframes: {
+        blob: {
+        '0%': { transform: 'translate(0px, 0px) scale(1)'},
+        '33%': { transform: 'translate(30px, -50px) scale(1.1)'},
+        '66%': { transform: 'translate(-20px, 20px) scale(0.9)'},
+        '100%': { transform: 'translate(0px, 0px) scale(1)'},
+
+        },
+        wiggle: {
+          '0%, 100%': { transform: 'rotate(-6deg)' },
+          '50%': { transform: 'rotate(6deg)' },
+        },
       },
     },
   },

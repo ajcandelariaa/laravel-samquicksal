@@ -172,12 +172,12 @@ class RestaurantController extends Controller
         $customerRequests = CustomerLRequest::where('custOrdering_id', $id)->where('requestDone', 'Yes')->get();
 
         $endTime = Carbon::now();
-        $customerTOrders = CustomerLOrder::select('created_at')->where('custOrdering_id', $id)->latest('created_at')->first();
-        $customerTRequests = CustomerLRequest::select('created_at')->where('custOrdering_id', $id)->latest('created_at')->first();
+        $customerTOrders = CustomerLOrder::select('orderSubmitDT')->where('custOrdering_id', $id)->latest('orderSubmitDT')->first();
+        $customerTRequests = CustomerLRequest::select('requestSubmitDT')->where('custOrdering_id', $id)->latest('requestSubmitDT')->first();
 
 
         if($customerTOrders != null){
-            $rAppstartTime = Carbon::parse($customerTOrders->created_at);
+            $rAppstartTime = Carbon::parse($customerTOrders->orderSubmitDT);
             $rAppDiffSeconds = $endTime->diffInSeconds($rAppstartTime);
             $rAppDiffMinutes = $endTime->diffInMinutes($rAppstartTime);
             $rAppDiffHours = $endTime->diffInHours($rAppstartTime);
@@ -207,7 +207,7 @@ class RestaurantController extends Controller
         
 
         if($customerTRequests != null){
-            $rAppstartTime2 = Carbon::parse($customerTRequests->created_at);
+            $rAppstartTime2 = Carbon::parse($customerTRequests->requestSubmitDT);
             $rAppDiffSeconds2 = $endTime->diffInSeconds($rAppstartTime2);
             $rAppDiffMinutes2 = $endTime->diffInMinutes($rAppstartTime2);
             $rAppDiffHours2 = $endTime->diffInHours($rAppstartTime2);
@@ -237,7 +237,7 @@ class RestaurantController extends Controller
         
         $mainTable = explode(',', $customerOrdering->tableNumbers);
 
-        $addOns = CustomerLOrder::where('custOrdering_id', $id)->where('orderDone', 'Yes')->count('price');
+        $addOns = CustomerLOrder::where('custOrdering_id', $id)->where('orderDone', 'Yes')->sum('price');
         $subTotal = ($orderSet->orderSetPrice * $customerBook->numberOfPersons) + $addOns;
 
         $finalReward = "None";
@@ -363,11 +363,11 @@ class RestaurantController extends Controller
         $customerRequests = CustomerLRequest::where('custOrdering_id', $id)->where('requestDone', 'No')->get();
 
         $endTime = Carbon::now();
-        $customerTOrders = CustomerLOrder::select('created_at')->where('custOrdering_id', $id)->latest('created_at')->first();
-        $customerTRequests = CustomerLRequest::select('created_at')->where('custOrdering_id', $id)->latest('created_at')->first();
+        $customerTOrders = CustomerLOrder::select('orderSubmitDT')->where('custOrdering_id', $id)->latest('orderSubmitDT')->first();
+        $customerTRequests = CustomerLRequest::select('requestSubmitDT')->where('custOrdering_id', $id)->latest('requestSubmitDT')->first();
 
         if($customerTOrders != null){
-            $rAppstartTime = Carbon::parse($customerTOrders->created_at);
+            $rAppstartTime = Carbon::parse($customerTOrders->orderSubmitDT);
             $rAppDiffSeconds = $endTime->diffInSeconds($rAppstartTime);
             $rAppDiffMinutes = $endTime->diffInMinutes($rAppstartTime);
             $rAppDiffHours = $endTime->diffInHours($rAppstartTime);
@@ -397,7 +397,7 @@ class RestaurantController extends Controller
         
 
         if($customerTRequests != null){
-            $rAppstartTime2 = Carbon::parse($customerTRequests->created_at);
+            $rAppstartTime2 = Carbon::parse($customerTRequests->requestSubmitDT);
             $rAppDiffSeconds2 = $endTime->diffInSeconds($rAppstartTime2);
             $rAppDiffMinutes2 = $endTime->diffInMinutes($rAppstartTime2);
             $rAppDiffHours2 = $endTime->diffInHours($rAppstartTime2);
@@ -427,9 +427,23 @@ class RestaurantController extends Controller
 
 
         $mainTable = explode(',', $customerOrdering->tableNumbers);
+        
+        $finalCustomerOrders = array();
+        foreach($customerOrders as $customerOrder){
+            $food = FoodItem::where('id', $customerOrder->foodItem_id)->first();
+            array_push($finalCustomerOrders, [
+                'orderId' => $customerOrder->id,
+                'foodItemImage' => $food->foodItemImage,
+                'foodItemName' => $customerOrder->foodItemName,
+                'quantity' => $customerOrder->quantity,
+                'price' => $customerOrder->price,
+                'tableNumber' => $customerOrder->tableNumber,
+            ]);
+        }
 
         return view('restaurant.liveTransactions.customerOrdering.custOrderReq', [
             'customerOrdering' => $customerOrdering,
+            'finalCustomerOrders' => $finalCustomerOrders,
             'customerOrders' => $customerOrders,
             'customerRequests' => $customerRequests,
             'order' => $orderSetName,
@@ -437,6 +451,7 @@ class RestaurantController extends Controller
             'rAppDiffTime2' => $rAppDiffTime2,
             'customer' => $customer,
             'finalCustomerAccess' => $finalCustomerAccess,
+            'restAcc_id' => $restAcc_id,
             'mainTable' => $mainTable[0],
         ]);
     }
@@ -1566,6 +1581,29 @@ class RestaurantController extends Controller
 
 
     // RENDER LOGICS
+    public function ltCustOrderORRequestDone($id, $request_id){
+        CustomerLRequest::where('id', $request_id)->where('custOrdering_id', $id)
+        ->update([
+            'requestDone' => "Yes"
+        ]);
+        Session::flash('requestDone');
+        return redirect('/restaurant/live-transaction/customer-ordering/list/'.$id.'/order-request');
+    }
+    public function ltCustOrderORServe(Request $request, $id){
+        if($request->order == null){
+            $request->session()->flash('selectAtLeastOne');
+            return redirect('/restaurant/live-transaction/customer-ordering/list/'.$id.'/order-request');
+        } else {
+            foreach($request->order as $orderId){
+                CustomerLOrder::where('id', $orderId)->where('custOrdering_id', $id)
+                ->update([
+                    'orderDone' => "Yes"
+                ]);
+            }
+            $request->session()->flash('servedComplete');
+            return redirect('/restaurant/live-transaction/customer-ordering/list/'.$id.'/order-request');
+        }
+    }
     public function ltCustOrderApplyDiscounts(Request $request, $id){
         $restAcc_id = Session::get('loginId');
         // LAGyAN NA MUNA NG VALIDATION
@@ -1599,32 +1637,60 @@ class RestaurantController extends Controller
         $getDateToday = date('Y-m-d');
         $customerOrder = CustomerOrdering::where('id', $id)->where('orderingDate', $getDateToday)->first();
         $restaurant = RestaurantAccount::where('id', $customerOrder->restAcc_id)->first();
+        $customerId = "";
         if($customerOrder->custBookType == "queue"){
             $customer = CustomerQueue::where('id', $customerOrder->custBook_id)->first();
             CustomerQueue::where('id', $customerOrder->custBook_id)
             ->update([
                 'status' => 'eating'
             ]);
+            $customerId = $customer->customer_id;
         } else {
             $customer = CustomerReserve::where('id', $customerOrder->custBook_id)->first();
             CustomerReserve::where('id', $customerOrder->custBook_id)
             ->update([
                 'status' => 'eating'
             ]);
+            $customerId = $customer->customer_id;
         }
+
         CustomerOrdering::where('id', $id)->where('orderingDate', $getDateToday)
         ->update([
             'grantedAccess' => "Yes"
         ]);
         
-        CustomerNotification::create([
-            'customer_id' => $customer->customer_id,
+        $notif = CustomerNotification::create([
+            'customer_id' => $customerId,
             'restAcc_id' => $restAcc_id,
             'notificationType' => "Table is Ready",
             'notificationTitle' => "Your table is now Ready. Enjoy your meal!",
             'notificationDescription' => "$restaurant->rAddress, $restaurant->rCity",
             'notificationStatus' => "Unread",
         ]);
+
+        $customerAccount = CustomerAccount::where('id', $customerId)->first();
+        
+        $finalImageUrl = "";
+        if ($restaurant->rLogo == ""){
+            $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+        } else {
+            $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
+        }
+
+        if($customerAccount != null){
+            $to = $customerAccount->deviceToken;
+            $notification = array(
+                'title' => "$restaurant->rAddress, $restaurant->rCity",
+                'body' => "Your table is now Ready. Enjoy your meal!",
+            );
+            $data = array(
+                'notificationType' => "Table is Ready",
+                'notificationId' => $notif->id,
+                'notificationRLogo' => $finalImageUrl,
+            );
+            $this->sendFirebaseNotification($to, $notification, $data);
+        }
+
         Session::flash('grantedAccess');
         return redirect('/restaurant/live-transaction/customer-ordering/list/'.$id.'/order-request');
     }
@@ -1762,10 +1828,10 @@ class RestaurantController extends Controller
                         } else {
                             // UPDATE NA NG DATA
                             $customerQueue = CustomerQueue::where('id', $id)->first();
-                            $restaurant = RestaurantAccount::select('rName', 'rBranch', 'rAddress', 'rCity')->where('id', $customerQueue->restAcc_id)->first();
+                            $restaurant = RestaurantAccount::select('rName', 'rBranch', 'rAddress', 'rCity', 'rLogo', 'id')->where('id', $customerQueue->restAcc_id)->first();
                             
                             if($customerQueue->name == null){
-                                $customer = CustomerAccount::select('name')->where('id', $customerQueue->customer_id)->first();
+                                $customer = CustomerAccount::where('id', $customerQueue->customer_id)->first();
                                 $finaleCustName = $customer->name;
                             } else {
                                 $finaleCustName = $customerQueue->name;
@@ -1789,7 +1855,7 @@ class RestaurantController extends Controller
                                 'tableSettingDateTime' => date('Y-m-d H:i:s'),
                             ]);
 
-                            CustomerNotification::create([
+                            $notif = CustomerNotification::create([
                                 'customer_id' => $customerQueue->customer_id,
                                 'restAcc_id' => $customerQueue->restAcc_id,
                                 'notificationType' => "Table Setting Up",
@@ -1797,6 +1863,28 @@ class RestaurantController extends Controller
                                 'notificationDescription' => "$restaurant->rAddress, $restaurant->rCity",
                                 'notificationStatus' => "Unread",
                             ]);
+
+
+                            $finalImageUrl = "";
+                            if ($restaurant->rLogo == ""){
+                                $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+                            } else {
+                                $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
+                            }
+
+                            if($customer != null){
+                                $to = $customer->deviceToken;
+                                $notification = array(
+                                    'title' => "$restaurant->rAddress, $restaurant->rCity",
+                                    'body' => "Your Table is now preparing",
+                                );
+                                $data = array(
+                                    'notificationType' => "Table Setting Up",
+                                    'notificationId' => $notif->id,
+                                    'notificationRLogo' => $finalImageUrl,
+                                );
+                                $this->sendFirebaseNotification($to, $notification, $data);
+                            }
                             
                             $request->session()->flash('admitted');
                             return redirect('/restaurant/live-transaction/approved-customer/queue');
@@ -1809,14 +1897,15 @@ class RestaurantController extends Controller
     }
     public function ltAppCustQNoShow($id){
         $customerQueue = CustomerQueue::where('id', $id)->first();
-        $restaurant = RestaurantAccount::select('rName', 'rBranch', 'rAddress', 'rCity')->where('id', $customerQueue->restAcc_id)->first();
+        $restaurant = RestaurantAccount::select('rName', 'rBranch', 'rAddress', 'rCity', 'rLogo', 'id')->where('id', $customerQueue->restAcc_id)->first();
+        $customer = CustomerAccount::where('id', $customerQueue->customer_id)->first();
 
         CustomerQueue::where('id', $id)
         ->update([
             'status' => 'noShow',
         ]);
 
-        CustomerNotification::create([
+        $notif = CustomerNotification::create([
             'customer_id' => $customerQueue->customer_id,
             'restAcc_id' => $customerQueue->restAcc_id,
             'notificationType' => "No Show",
@@ -1825,12 +1914,35 @@ class RestaurantController extends Controller
             'notificationStatus' => "Unread",
         ]);
 
+        
+        $finalImageUrl = "";
+        if ($restaurant->rLogo == ""){
+            $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+        } else {
+            $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
+        }
+        
+        if($customer != null){
+            $to = $customer->deviceToken;
+            $notification = array(
+                'title' => "$restaurant->rName, $restaurant->rBranch",
+                'body' => "Your Booking is labelled as No Show",
+            );
+            $data = array(
+                'notificationType' => "No Show",
+                'notificationId' => $notif->id,
+                'notificationRLogo' => $finalImageUrl,
+            );
+            $this->sendFirebaseNotification($to, $notification, $data);
+        }
+
         Session::flash('noShow');
         return redirect('/restaurant/live-transaction/approved_customer/queue');
     }
     public function ltAppCustQValidate($id){
         $customerQueue = CustomerQueue::where('id', $id)->first();
-        $restaurant = RestaurantAccount::select('rName', 'rBranch', 'rAddress', 'rCity')->where('id', $customerQueue->restAcc_id)->first();
+        $restaurant = RestaurantAccount::select('rName', 'rBranch', 'rAddress', 'rCity', 'rLogo', 'id')->where('id', $customerQueue->restAcc_id)->first();
+        $customer = CustomerAccount::where('id', $customerQueue->customer_id)->first();
 
         CustomerQueue::where('id', $id)
         ->update([
@@ -1838,15 +1950,36 @@ class RestaurantController extends Controller
             'validationDateTime' => date('Y-m-d H:i:s'),
         ]);
 
-        CustomerNotification::create([
+        $notif = CustomerNotification::create([
             'customer_id' => $customerQueue->customer_id,
             'restAcc_id' => $customerQueue->restAcc_id,
             'notificationType' => "Validation",
-            'notificationTitle' => "Please go to the front desk to Confirm your Booking ",
+            'notificationTitle' => "Please go to the front desk to Confirm your Booking",
             'notificationDescription' => "$restaurant->rAddress, $restaurant->rCity",
             'notificationStatus' => "Unread",
         ]);
 
+
+        $finalImageUrl = "";
+        if ($restaurant->rLogo == ""){
+            $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+        } else {
+            $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
+        }
+        
+        if($customer != null){
+            $to = $customer->deviceToken;
+            $notification = array(
+                'title' => "$restaurant->rName, $restaurant->rBranch",
+                'body' => "Please go to the front desk to Confirm your Booking",
+            );
+            $data = array(
+                'notificationType' => "Validation",
+                'notificationId' => $notif->id,
+                'notificationRLogo' => $finalImageUrl,
+            );
+            $this->sendFirebaseNotification($to, $notification, $data);
+        }
 
         Session::flash('validation');
         return redirect('/restaurant/live-transaction/approved-customer/queue/'.$id);
@@ -1907,7 +2040,8 @@ class RestaurantController extends Controller
     }
     public function ltCustBookQApprove($id){
         $customerQueue = CustomerQueue::where('id', $id)->first();
-        $restaurant = RestaurantAccount::select('rName', 'rBranch', 'rAddress', 'rCity')->where('id', $customerQueue->restAcc_id)->first();
+        $restaurant = RestaurantAccount::select('rName', 'rBranch', 'rAddress', 'rCity', 'id', 'rLogo')->where('id', $customerQueue->restAcc_id)->first();
+        $customer = CustomerAccount::select('deviceToken')->where('id', $customerQueue->customer_id)->first();
 
         CustomerQueue::where('id', $id)
         ->update([
@@ -1915,7 +2049,7 @@ class RestaurantController extends Controller
             'approvedDateTime' => date('Y-m-d H:i:s'),
         ]);
 
-        CustomerNotification::create([
+        $notif = CustomerNotification::create([
             'customer_id' => $customerQueue->customer_id,
             'restAcc_id' => $customerQueue->restAcc_id,
             'notificationType' => "Approved",
@@ -1924,6 +2058,27 @@ class RestaurantController extends Controller
             'notificationStatus' => "Unread",
         ]);
 
+
+        $finalImageUrl = "";
+        if ($restaurant->rLogo == ""){
+            $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+        } else {
+            $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
+        }
+        
+        if($customer != null){
+            $to = $customer->deviceToken;
+            $notification = array(
+                'title' => "$restaurant->rName, $restaurant->rBranch",
+                'body' => "Your Booking has been Approved",
+            );
+            $data = array(
+                'notificationType' => "Approved",
+                'notificationId' => $notif->id,
+                'notificationRLogo' => $finalImageUrl,
+            );
+            $this->sendFirebaseNotification($to, $notification, $data);
+        }
 
         Session::flash('approved');
         return redirect('/restaurant/live-transaction/customer-booking/queue');

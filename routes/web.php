@@ -152,6 +152,8 @@ Route::middleware(['restaurantLoggedIn'])->group(function(){
     // -------CUSTOMER ORDERING------------ //
     Route::get('/restaurant/live-transaction/customer-ordering/list', [RestaurantController::class, 'ltCustOrderListView']);
     Route::get('/restaurant/live-transaction/customer-ordering/list/{id}/order-request', [RestaurantController::class, 'ltCustOrderORPartView']);
+    Route::get('/restaurant/live-transaction/customer-ordering/list/{id}/order-request/request-done/{request_id}', [RestaurantController::class, 'ltCustOrderORRequestDone']);
+    Route::post('/restaurant/live-transaction/customer-ordering/list/{id}/order-request', [RestaurantController::class, 'ltCustOrderORServe']);
     Route::get('/restaurant/live-transaction/customer-ordering/list/{id}/order-summary', [RestaurantController::class, 'ltCustOrderOSPartView']);
     Route::post('/restaurant/live-transaction/customer-ordering/list/{id}/order-summary', [RestaurantController::class, 'ltCustOrderApplyDiscounts']);
     Route::get('/restaurant/live-transaction/customer-ordering/list/{id}/order-request/grant-access', [RestaurantController::class, 'ltCustOrderGrantAccess']);

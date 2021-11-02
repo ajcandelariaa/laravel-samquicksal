@@ -18,5 +18,6 @@ class CustomerLOrder extends Model
         'quantity',
         'price',
         'orderDone',
+        'orderSubmitDT',
     ];
 }

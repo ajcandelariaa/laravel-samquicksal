@@ -49,7 +49,12 @@ Route::get('/customer/ordering/food-set/{cust_id}', [CustomerController::class, 
 Route::get('/customer/ordering/food-item/{restAcc_id}/{orderSet_id}/{foodSet_id}', [CustomerController::class, 'getOrderingFoodItems']);
 
 Route::get('/customer/ordering/orders/{cust_id}', [CustomerController::class, 'getOrderingOrders']);
+Route::get('/customer/ordering/orders/submit/{cust_id}', [CustomerController::class, 'orderingSubmitOrders']);
 Route::post('/customer/ordering/food-item/add', [CustomerController::class, 'orderingAddFoodItem']);
+Route::post('/customer/ordering/food-item/update', [CustomerController::class, 'orderingUpdateFoodItem']);
+Route::post('/customer/ordering/assistance', [CustomerController::class, 'orderingAddAssistance']);
+Route::get('/customer/ordering/assistance/history/{cust_id}', [CustomerController::class, 'getOrderingAssistHist']);
+Route::get('/customer/ordering/bill/{cust_id}', [CustomerController::class, 'getOrderingBill']);
 
 
 

@@ -16,9 +16,11 @@ class CreateCustomerLRequestsTable extends Migration
         Schema::create('customer_l_requests', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('custOrdering_id');
+            $table->unsignedBigInteger('cust_id');
             $table->string('tableNumber');
             $table->string('request');
             $table->string('requestDone');
+            $table->dateTIme('requestSubmitDT')->nullable();
             $table->timestamps();
         });
     }

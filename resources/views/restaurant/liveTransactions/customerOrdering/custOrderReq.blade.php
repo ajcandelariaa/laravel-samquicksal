@@ -10,6 +10,30 @@
                 'success'
             );
         </script>
+    @elseif (session()->has('selectAtLeastOne'))
+        <script>
+            Swal.fire(
+                'Please select at least one item',
+                '',
+                'error'
+            );
+        </script>
+    @elseif (session()->has('servedComplete'))
+        <script>
+            Swal.fire(
+                'Served Complete',
+                '',
+                'success'
+            );
+        </script>
+    @elseif (session()->has('requestDone'))
+        <script>
+            Swal.fire(
+                'Request Complete',
+                '',
+                'success'
+            );
+        </script>
     @endif
     <div class="w-11/12 mx-auto mt-10 pb-2 grid grid-cols-2">
         <a href="/restaurant/live-transaction/customer-ordering/list" class="text-submitButton uppercase font-bold"><i class="fas fa-chevron-left mr-2"></i>Back</a>
@@ -55,7 +79,7 @@
                             @foreach ($customerRequests as $customerRequest)
                                 <div class="grid grid-cols-2 items-center">
                                     <p class="col-span-1">Table {{ $customerRequest->tableNumber }}: {{ $customerRequest->request }}</p>
-                                    <a href="" class="underline text-purple-500 hover:text-purple-900 justify-self-end">Request Done</a>
+                                    <a href="/restaurant/live-transaction/customer-ordering/list/{{ $customerOrdering->id }}/order-request/request-done/{{ $customerRequest->id }}" class="underline text-purple-500 hover:text-purple-900 justify-self-end">Request Done</a>
                                 </div>
                                 <hr class="my-2 border-solid border-gray-500">
                             @endforeach
@@ -65,13 +89,12 @@
             </div>
 
 
-            <form action="">
+            <form action="/restaurant/live-transaction/customer-ordering/list/{{ $customerOrdering->id }}/order-request" method="POST" id="serveForm">
+                @csrf
                 <div class="grid grid-cols-2 mt-10 items-center">
                     <div class="uppercase font-bold text-lg py-2 col-span-1">CURRENT CUSTOMER ORDER</div>
                     <div class="justify-self-end col-span-1">
-                        @if ($customerOrders->isEmpty())
-                            {{-- <button type="button" class="px-12 py-1 bg-manageRestaurantSidebarColor text-white cursor-not-allowed" disabled>Serve</button> --}}
-                        @else
+                        @if (!$customerOrders->isEmpty())
                             <span class="text-xs text-gray-500 mr-4 italic">Click this button once you are done serving</span>
                             <button class="px-12 py-1 bg-postedStatus text-white">Serve</button>
                         @endif
@@ -99,36 +122,36 @@
                         @php
                             $count = 1;
                         @endphp
-                        @foreach ($customerOrders as $customerOrder)
+                        @for ($i=0; $i<sizeOf($finalCustomerOrders); $i++)
                             @if ($count % 2 == 0)
                                 <div class="bg-manageFoodItemHeaderBgColor grid grid-cols-6 text-center px-3 items-center">
                                     <div class="col-span-1 py-2">
-                                        <input type="checkbox" name="select-all" id="select-all" class="mr-2 inline"> 
-                                        <img src="{{ asset('images/user-default.png') }}" alt="foodItem" class="w-10 h-10 inline">
+                                        <input type="checkbox" name="order[]" value="{{ $finalCustomerOrders[$i]['orderId'] }}" class="mr-2 inline"> 
+                                        <img src="{{ asset('uploads/restaurantAccounts/foodItem/'.$restAcc_id.'/'.$finalCustomerOrders[$i]['foodItemImage']) }}" alt="foodItem" class="w-10 h-10 inline">
                                     </div>
-                                    <div class="col-span-1">1</div>
-                                    <div class="col-span-1">Plain Pork</div>
-                                    <div class="col-span-1">2x</div>
-                                    <div class="col-span-1">0</div>
-                                    <div class="col-span-1">1</div>
+                                    <div class="col-span-1">{{ $count }}</div>
+                                    <div class="col-span-1">{{ $finalCustomerOrders[$i]['foodItemName'] }}</div>
+                                    <div class="col-span-1">{{ $finalCustomerOrders[$i]['quantity'] }}x</div>
+                                    <div class="col-span-1">{{ $finalCustomerOrders[$i]['price'] }}</div>
+                                    <div class="col-span-1">{{ $finalCustomerOrders[$i]['tableNumber'] }}</div>
                                 </div>
                             @else
                                 <div class="bg-white grid grid-cols-6 text-center px-3 items-center">
                                     <div class="col-span-1 py-2">
-                                        <input type="checkbox" name="select-all" id="select-all" class="mr-2 inline"> 
-                                        <img src="{{ asset('images/user-default.png') }}" alt="foodItem" class="w-10 h-10 inline">
+                                        <input type="checkbox" name="order[]" value="{{ $finalCustomerOrders[$i]['orderId'] }}" class="mr-2 inline"> 
+                                        <img src="{{ asset('uploads/restaurantAccounts/foodItem/'.$restAcc_id.'/'.$finalCustomerOrders[$i]['foodItemImage']) }}" alt="foodItem" class="w-10 h-10 inline">
                                     </div>
-                                    <div class="col-span-1">1</div>
-                                    <div class="col-span-1">Plain Pork</div>
-                                    <div class="col-span-1">2x</div>
-                                    <div class="col-span-1">0</div>
-                                    <div class="col-span-1">1</div>
+                                    <div class="col-span-1">{{ $count }}</div>
+                                    <div class="col-span-1">{{ $finalCustomerOrders[$i]['foodItemName'] }}</div>
+                                    <div class="col-span-1">{{ $finalCustomerOrders[$i]['quantity'] }}x</div>
+                                    <div class="col-span-1">{{ $finalCustomerOrders[$i]['price'] }}</div>
+                                    <div class="col-span-1">{{ $finalCustomerOrders[$i]['tableNumber'] }}</div>
                                 </div>
                             @endif
                         @php
                             $count++
                         @endphp
-                        @endforeach
+                        @endfor
                     @endif
                 </div>
             </form>

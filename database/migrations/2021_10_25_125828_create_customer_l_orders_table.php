@@ -23,6 +23,7 @@ class CreateCustomerLOrdersTable extends Migration
             $table->integer('quantity');
             $table->decimal('price', 5, 2);
             $table->string('orderDone');
+            $table->dateTIme('orderSubmitDT')->nullable();
             $table->timestamps();
         });
     }

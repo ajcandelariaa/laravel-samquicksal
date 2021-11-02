@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Molle:ital@1&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
     <link rel="stylesheet" href="{{ asset('css/restaurant.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/restaurant.css2') }}">
+    <link rel="stylesheet" href="{{ asset('css/restaurant2.css') }}">
     <link rel="stylesheet" href="{{ asset('css/main.scss') }}">
     <title>Samquicksal</title>
     <link rel="icon" href="{{ asset('images/samquicksalLogo.png') }}">
@@ -172,7 +172,7 @@
             {{-- sample --}}
             <div class=" sm:w-8/12 md:w-5/12 lg:w-4/12 xl:w-5/12 px-4 ml-auto mr-auto col fade-in ">
               <div class="relative flex flex-col min-w-0 break-words w-full mb-6 shadow-lg rounded-lg bg-darkerSubmitButton">
-                <img src="{{ asset('images/restaurant1.png') }}" alt="restaurant1" class="sm:w-full md:w-full lg:w-full xl:w-full align-middle rounded-t-lg"/>
+                <img src="{{ asset('images/restaurant1.png') }}" alt="restaurant" class="sm:w-full md:w-full lg:w-full xl:w-full align-middle rounded-t-lg"/>
                 <blockquote class="relative p-4 sm:p-5 md:p-3 lg:p-4 xl:p-8 lg:mb-0 xl:mb-4">
                   <svg preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 583 95" class="absolute left-0 w-full block" style="height: 95px; top: -94px;">
                     <polygon points="-30,95 583,95 583,65" class="text-darkerSubmitButton fill-current"></polygon>
