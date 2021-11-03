@@ -2121,6 +2121,7 @@ class CustomerController extends Controller
             'amount' => $finalAmount,
             'restGCashQr' => $finalRestGCQr,
             'status' => $finalStatus,
+            'filename' => $restaurant->rGcashQrCodeImage,
         ]);
     }
     public function getOrderingRatingFeedback($cust_id){
@@ -2293,5 +2294,224 @@ class CustomerController extends Controller
             'status' => "sucess"
         ]);
     }
-    
+
+    public function getStampCards($cust_id){
+        $finalStampCards = array();
+
+        $customerStamps = CustomerStampCard::where('customer_id', $cust_id)->orderBy('id', "DESC")->get();
+        if(!$customerStamps->isEmpty()){
+            foreach($customerStamps as $customerStamp){
+                $restaurant = RestaurantAccount::select('id', 'rLogo', 'rName', 'rBranch')->where('id', $customerStamp->restAcc_id)->first();
+
+                $finalImageUrl = "";
+                if ($restaurant->rLogo == ""){
+                    $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+                } else {
+                    $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
+                }
+
+                $validity = explode('-', $customerStamp->stampValidity);
+                $month = $this->convertMonths($validity[1]);
+                $year = $validity[0];
+                $day = $validity[2];
+
+                array_push($finalStampCards, [
+                    'stamp_id' => $customerStamp->id,
+                    'rLogo' => $finalImageUrl,
+                    'stampReward' => $customerStamp->stampReward,
+                    'rAddress' => "$restaurant->rName, $restaurant->rBranch",
+                    'stampValidity' => "Valid until: $month $day, $year",
+                    'stampClaimed' => $customerStamp->claimed,
+                    'currentNumStamp' => $customerStamp->currentStamp,
+                    'stampCapacity' => $customerStamp->stampCapacity,
+                ]);
+            }
+        } else {
+            $finalStampCards = null;
+        }
+        return response()->json($finalStampCards);
+    }
+
+    public function getStampCardDetails($stamp_id){
+        $finalStampTasks = array();
+        $finalStampDoneTasks = array();
+
+        $stampCard = CustomerStampCard::where('id', $stamp_id)->first();
+        $stampTasks = CustomerStampTasks::where('customerStampCard_id', $stamp_id)->get();
+        foreach($stampTasks as $stampTask){
+            array_push($finalStampTasks, $stampTask->taskName);
+        }
+
+        $stampDoneTasks = CustomerTasksDone::where('customerStampCard_id', $stamp_id)->get();
+        foreach($stampDoneTasks as $stampDoneTask){
+            
+            $stampDoneTaskDate = explode('-', $stampDoneTask->taskAccomplishDate);
+            $month = $this->convertMonths($stampDoneTaskDate[1]);
+            $year = $stampDoneTaskDate[0];
+            $day = $stampDoneTaskDate[2];
+
+            array_push($finalStampDoneTasks, [
+                'taskName' => $stampDoneTask->taskName,
+                'taskDate' => "$month $day, $year",
+            ]);
+        }
+
+
+        $validity = explode('-', $stampCard->stampValidity);
+        $month = $this->convertMonths($validity[1]);
+        $year = $validity[0];
+        $day = $validity[2];
+
+        return response()->json([
+            'stampReward' => $stampCard->stampReward,
+            'stampValidity' => "Valid until: $month $day, $year",
+            'stampTasks' => $finalStampTasks,
+            'stampDoneTasks' => $finalStampDoneTasks,
+        ]);
+    }
+    public function getBookingHistoryComplete(Request $request){
+        if($request->book_type == "queue"){
+            $customerQueue = CustomerQueue::where('id', $request->book_id)->where('customer_id', $request->cust_id)->first();
+            $restaurant = RestaurantAccount::select('rName', 'rAddress', 'rBranch', 'rCity')->where('id', $customerQueue->restAcc_id)->first();
+
+            $bookDate = explode('-', $customerQueue->queueDate);
+            $year = $bookDate[0];
+            $month = $this->convertMonths($bookDate[1]);
+            $day  = $bookDate[2];
+            $checkIn = date("g:i a", strtotime($customerQueue->eatingDateTime));
+            $checkOut = date("g:i a", strtotime($customerQueue->completeDateTime));
+
+            $customerOrdering = CustomerOrdering::where('custBook_id', $customerQueue->id)->where('custBookType', "queue")->first();
+
+
+
+
+            $finalOrders = array();
+            $orderSet = OrderSet::where('id', $customerQueue->orderSet_id)->first();
+            $orders = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)->get();
+
+            $orderTotalPrice = 0.0;
+            foreach ($orders as $order){
+                $orderTotalPrice += $order->price;
+                array_push($finalOrders, [
+                    'foodItemName' => $order->foodItemName,
+                    'quantity' => $order->quantity,
+                    'price' => (number_format($order->price, 2, '.'))
+                ]);
+            }
+
+            $finalReward = "None";
+            $rewardDiscount = 0.00;
+            if($customerQueue->rewardStatus == "Complete" && $customerQueue->rewardClaimed == "Yes"){
+                switch($customerQueue->rewardType){
+                    case "DSCN": 
+                        $finalReward = "Discount $customerQueue->rewardInput% in a Total Bill";
+                        $rewardDiscount = ($customerQueue->numberOfPersons * $orderSet->orderSetPrice) * ($customerQueue->rewardInput / 100);
+                        break;
+                    case "FRPE": 
+                        $finalReward = "Free $customerQueue->rewardInput person in a group";
+                        $rewardDiscount = $orderSet->orderSetPrice * $customerQueue->rewardInput;
+                        break;
+                    case "HLF": 
+                        $finalReward = "Half in the group will be free";
+                        $rewardDiscount = ($customerQueue->numberOfPersons * $orderSet->orderSetPrice) / 2;
+                        break;
+                    case "ALL": 
+                        $finalReward = "All people in the group will be free";
+                        $rewardDiscount = $customerQueue->numberOfPersons * $orderSet->orderSetPrice;
+                        break;
+                    default: 
+                        $finalReward = "None";
+                }
+            }
+
+            $seniorDiscount = $orderSet->orderSetPrice * ($customerQueue->numberOfPwd * 0.2);
+            $childrenDiscount = $orderSet->orderSetPrice * ($customerQueue->numberOfChildren * ($customerQueue->childrenDiscount / 100));
+            $subTotal = ($customerQueue->numberOfPersons * $orderSet->orderSetPrice) + $orderTotalPrice;
+
+            $totalPrice = $subTotal - (
+                $rewardDiscount + 
+                $seniorDiscount + 
+                $childrenDiscount + 
+                $customerQueue->additionalDiscount + 
+                $customerQueue->promoDiscount +
+                $customerQueue->offenseCharges 
+            );
+
+            return response()->json([
+                'bookDate' => "$month $day, $year",
+                'checkIn' => $checkIn,
+                'checkOut' => $checkOut,
+                'rName' => $restaurant->rName,
+                'rAddress' => "$restaurant->rAddress, $restaurant->rBranch, $restaurant->rCity",
+                'tableNumber' => $customerOrdering->tableNumbers,
+                'numberOfPersons' => $customerQueue->numberOfPersons,
+                'bookingType' => "Queue",
+
+                'orderSetName' => $orderSet->orderSetName,
+                'numberOfPersons' => $customerQueue->numberOfPersons,
+                'orderSetPriceTotal' => (number_format($customerQueue->numberOfPersons * $orderSet->orderSetPrice, 2, '.')),
+                'orders' => $finalOrders,
+                'subtotal' => (number_format($subTotal, 2, '.')),
+                'numberOfPwd' => $customerQueue->numberOfPwd,
+                'pwdDiscount' =>  (number_format($seniorDiscount, 2, '.')),
+                'childrenPercentage' => $customerQueue->childrenDiscount,
+                'numberOfChildren' => $customerQueue->numberOfChildren,
+                'childrenDiscount' => (number_format($childrenDiscount, 2, '.')),
+                'promoDiscount' => (number_format($customerQueue->promoDiscount, 2, '.')),
+                'additionalDiscount' => (number_format($customerQueue->additionalDiscount, 2, '.')),
+                'rewardName' => $finalReward,
+                'rewardDiscount' => (number_format($rewardDiscount, 2, '.')),
+                'offenseCharge' => (number_format($customerQueue->offenseCharges, 2, '.')),
+                'totalPrice' => (number_format($totalPrice, 2, '.')),
+            ]);
+        }
+    }
+    public function getRestaurantsReviews($rest_id){
+        $finalCustReviews = array();
+
+        $reviews = CustRestoRating::where('restAcc_id', $rest_id)->orderBy('id', "DESC")->get();
+        $countReviews = 0;
+        $sumRating = 0.0;
+        foreach($reviews as $review){
+            $countReviews++;
+            $sumRating += $review->rating;
+            $date = strtotime($review->created_at);
+            if($review->anonymous == "Yes"){
+                array_push($finalCustReviews, [
+                    'custImage' => $this->ACCOUNT_NO_IMAGE_PATH.'/user-default.png',
+                    'custName' => "Anonymous",
+                    'custRating' => $review->rating,
+                    'custComment' => $review->comment,
+                    'custRateDate' => date('M j ', $date),
+                ]);
+            } else {
+                $customer = CustomerAccount::where('id', $review->customer_id)->first();
+
+                $finalImageUrl = "";
+                if($customer->profileImage == null){
+                    $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/user-default.png';
+                } else {
+                    $finalImageUrl = $this->CUSTOMER_IMAGE_PATH.'/'.$customer->id.'/'. $customer->profileImage;
+                }
+
+                array_push($finalCustReviews, [
+                    'custImage' => $finalImageUrl,
+                    'custName' => $customer->name,
+                    'custRating' => $review->rating,
+                    'custComment' => $review->comment,
+                    'custRateDate' => date('M j ', $date),
+                ]);
+            }
+            
+        }
+
+        $averageRating = $sumRating / $countReviews;
+
+        return response()->json([
+            'averageRating' => (number_format($averageRating, 1, '.')),
+            'countReviews' => $countReviews,
+            'custReviews' => $finalCustReviews,
+        ]);
+    }
 }

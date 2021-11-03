@@ -24,6 +24,7 @@ Route::get('/customer/restaurants', [CustomerController::class, 'getListOfRestau
 Route::get('/customer/promos', [CustomerController::class, 'getListOfPromos']);
 Route::get('/customer/get-restaurants/about/{id}', [CustomerController::class, 'getRestaurantAboutInfo']);
 Route::get('/customer/get-restaurants/rewards/{id}', [CustomerController::class, 'getRestaurantsRewardsInfo']);
+Route::get('/customer/get-restaurants/reviews/{rest_id}', [CustomerController::class, 'getRestaurantsReviews']);
 Route::get('/customer/get-restaurants/promo/detail/{promoId}/{restaurantId}', [CustomerController::class, 'getRestaurantsPromoDetailInfo']);
 Route::get('/customer/get-restaurants/choose-order-set/{id}/{custId}', [CustomerController::class, 'getRestaurantChooseOrderSet']);
 Route::get('/customer/get-restaurants/get-date-time/{id}', [CustomerController::class, 'getReservationDateAndTimeForm']);
@@ -43,11 +44,12 @@ Route::get('/customer/get-notifications/runaway/{cust_id}/{notif_id}', [Customer
 
 Route::get('/customer/get-booking-history/{cust_id}', [CustomerController::class, 'getBookingHistory']);
 Route::post('/customer/get-booking-history/cancelled', [CustomerController::class, 'getBookingHistoryCancelled']);
+Route::post('/customer/get-booking-history/complete', [CustomerController::class, 'getBookingHistoryComplete']);
+
 
 
 Route::get('/customer/ordering/food-set/{cust_id}', [CustomerController::class, 'getOrderingFoodSets']);
 Route::get('/customer/ordering/food-item/{restAcc_id}/{orderSet_id}/{foodSet_id}', [CustomerController::class, 'getOrderingFoodItems']);
-
 Route::get('/customer/ordering/orders/{cust_id}', [CustomerController::class, 'getOrderingOrders']);
 Route::get('/customer/ordering/orders/submit/{cust_id}', [CustomerController::class, 'orderingSubmitOrders']);
 Route::post('/customer/ordering/food-item/add', [CustomerController::class, 'orderingAddFoodItem']);
@@ -60,6 +62,10 @@ Route::get('/customer/ordering/checkout/status/{cust_id}', [CustomerController::
 Route::get('/customer/ordering/gcash/status/{cust_id}', [CustomerController::class, 'getOrderingGCashStatus']);
 Route::get('/customer/ordering/checkout/rating-feedback/{cust_id}', [CustomerController::class, 'getOrderingRatingFeedback']);
 Route::post('/customer/ordering/checkout/rating-feedback/submit', [CustomerController::class, 'ratingFeedbackSubmit']);
+
+
+Route::get('/customer/get-stamp-cards/{cust_id}', [CustomerController::class, 'getStampCards']);
+Route::get('/customer/get-stamp-cards/details/{stamp_id}', [CustomerController::class, 'getStampCardDetails']);
 
 
 
