@@ -45,3 +45,45 @@ $('#serveForm').submit(function(e) {
         }
     });
 });
+
+
+// RUNAWAY CUSTOMER
+$('#btn-runaway').on('click', function(e){
+    e.preventDefault();
+    const href = $(this).attr('href')
+
+    Swal.fire({
+        title: 'Runaway?',
+        text: 'Are you sure this customer did not pay?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes'
+    }).then((result) =>{
+        if(result.value){
+            document.location.href = href;
+        }
+    })
+})
+
+
+// COMPLETE CUSTOMER
+$('#btn-complete').on('click', function(e){
+    e.preventDefault();
+    const href = $(this).attr('href')
+
+    Swal.fire({
+        title: 'Complete?',
+        text: 'Are you sure this customer is done eating?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes'
+    }).then((result) =>{
+        if(result.value){
+            document.location.href = href;
+        }
+    })
+})

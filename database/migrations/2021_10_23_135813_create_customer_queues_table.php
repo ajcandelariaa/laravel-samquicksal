@@ -19,6 +19,8 @@ class CreateCustomerQueuesTable extends Migration
             $table->unsignedBigInteger('restAcc_id');
             $table->unsignedBigInteger('orderSet_id');
             $table->string('status');
+            $table->string('checkoutStatus')->nullable();
+            $table->string('gcashCheckoutReceipt')->nullable();
             $table->string('name')->nullable();
             $table->integer('numberOfPersons');
             $table->integer('numberOfTables');

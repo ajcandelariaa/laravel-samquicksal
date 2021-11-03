@@ -2,6 +2,23 @@
 
 @section('content')
 <div class="container mx-auto">
+    @if (session()->has('completed'))
+        <script>
+            Swal.fire(
+                'Customer Completed',
+                '',
+                'success'
+            );
+        </script>
+    @elseif (session()->has('runaway'))
+        <script>
+            Swal.fire(
+                'Customer Runaway',
+                '',
+                'success'
+            );
+        </script>
+    @endif
     <div class="w-11/12 mx-auto mt-10 font-Montserrat bg-white pb-2 mb-10">
         <div class="bg-manageRestaurantSidebarColorActive">
             <div class="uppercase font-bold text-white text-center text-xl py-3">Table Status</div>

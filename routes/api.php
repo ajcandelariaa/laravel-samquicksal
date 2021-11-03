@@ -53,8 +53,13 @@ Route::get('/customer/ordering/orders/submit/{cust_id}', [CustomerController::cl
 Route::post('/customer/ordering/food-item/add', [CustomerController::class, 'orderingAddFoodItem']);
 Route::post('/customer/ordering/food-item/update', [CustomerController::class, 'orderingUpdateFoodItem']);
 Route::post('/customer/ordering/assistance', [CustomerController::class, 'orderingAddAssistance']);
+Route::post('/customer/ordering/checkout', [CustomerController::class, 'orderingCheckout']);
 Route::get('/customer/ordering/assistance/history/{cust_id}', [CustomerController::class, 'getOrderingAssistHist']);
 Route::get('/customer/ordering/bill/{cust_id}', [CustomerController::class, 'getOrderingBill']);
+Route::get('/customer/ordering/checkout/status/{cust_id}', [CustomerController::class, 'getOrderingCheckoutStatus']);
+Route::get('/customer/ordering/gcash/status/{cust_id}', [CustomerController::class, 'getOrderingGCashStatus']);
+Route::get('/customer/ordering/checkout/rating-feedback/{cust_id}', [CustomerController::class, 'getOrderingRatingFeedback']);
+Route::post('/customer/ordering/checkout/rating-feedback/submit', [CustomerController::class, 'ratingFeedbackSubmit']);
 
 
 

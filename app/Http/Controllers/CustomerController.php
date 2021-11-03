@@ -2,10 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Mail\CustomerForgotPassword;
-use App\Mail\CustomerPasswordChanged;
 use App\Models\Post;
 use App\Models\Promo;
+use App\Models\Policy;
 use App\Models\FoodSet;
 use App\Models\FoodItem;
 use App\Models\OrderSet;
@@ -13,30 +12,34 @@ use App\Models\StampCard;
 use App\Models\StoreHour;
 use App\Models\FoodSetItem;
 use Illuminate\Http\Request;
+use App\Models\CustomerQueue;
+use App\Models\CustomerLOrder;
 use App\Models\PromoMechanics;
 use App\Models\StampCardTasks;
 use Illuminate\Support\Carbon;
 use App\Models\CustomerAccount;
+use App\Models\CustomerReserve;
 use App\Models\OrderSetFoodSet;
 use App\Models\UnavailableDate;
+use App\Models\CustomerLRequest;
+use App\Models\CustomerOrdering;
+use App\Models\CustomerQrAccess;
 use App\Models\OrderSetFoodItem;
 use App\Models\CustomerStampCard;
+use App\Models\CustomerTasksDone;
 use App\Models\RestaurantAccount;
+use App\Models\CustomerStampTasks;
 use App\Models\RestaurantTaskList;
+use App\Mail\CustomerForgotPassword;
+use App\Models\CustomerNotification;
 use App\Models\RestaurantRewardList;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
-use App\Mail\RestaurantFormAppreciation;
-use App\Models\CustomerLOrder;
-use App\Models\CustomerLRequest;
-use App\Models\CustomerNotification;
-use App\Models\CustomerOrdering;
-use App\Models\CustomerQrAccess;
-use App\Models\CustomerQueue;
-use App\Models\CustomerReserve;
+use App\Mail\CustomerPasswordChanged;
 use App\Models\CustomerResetPassword;
-use App\Models\Policy;
 use Illuminate\Contracts\Cache\Store;
+use App\Mail\RestaurantFormAppreciation;
+use App\Models\CustRestoRating;
 
 class CustomerController extends Controller
 {
@@ -48,6 +51,7 @@ class CustomerController extends Controller
     public $ORDER_SET_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/orderSet";
     public $FOOD_SET_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/foodSet";
     public $FOOD_ITEM_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/foodItem";
+    public $RESTAURANT_GCASH_QR_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/gcashQr";
 
     
     // public $RESTAURANT_IMAGE_PATH = "https://www.samquicksal.com/uploads/customerAccounts/logo";
@@ -201,8 +205,8 @@ class CustomerController extends Controller
             }
 
             $finalImageUrl = "";
-            if ($restaurant->rLogo == ""){$finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
-                
+            if ($restaurant->rLogo == ""){
+                $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
             } else {
                 $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
             }
@@ -743,16 +747,30 @@ class CustomerController extends Controller
 
         //need naten malaman kung eating ba sya para mag redirect sa orderingUI pero kung hindi pa sya eating like ongoing to approve pa lang sya then show livestatus
         if($customerQueue != null){
-            if($customerQueue->status == "eating"){
-                $status = "eating";
-            } else if ($customerQueue->status == "pending" 
-                        || $customerQueue->status == "approved" 
-                        || $customerQueue->status == "validation"
-                        || $customerQueue->status == "tableSettingUp") {
-                $status = "onGoing";
+            if($customerQueue->checkoutStatus == null){
+                if($customerQueue->status == "eating"){
+                    $status = "eating";
+                } else if ($customerQueue->status == "pending" 
+                            || $customerQueue->status == "approved" 
+                            || $customerQueue->status == "validation"
+                            || $customerQueue->status == "tableSettingUp") {
+                    $status = "onGoing";
+                } else {
+                    $status = "none";
+                }
             } else {
-                $status = "none";
+                if($customerQueue->checkoutStatus == "gcashCheckout" || $customerQueue->checkoutStatus == "gcashIncorretFormat"){
+                    $status = "gcashCheckout";
+                } else if($customerQueue->checkoutStatus == "gcashCheckoutValidation" 
+                || $customerQueue->checkoutStatus == "cashCheckoutValidation" || $customerQueue->checkoutStatus == "gcashInsufficientAmount"){
+                    $status = "checkoutValidation";
+                } else if($customerQueue->checkoutStatus == "customerFeedback"){
+                    $status = "customerFeedback";
+                } else {
+                    $status = "none";
+                }
             }
+            
         } else {
             $status = "none";
         }
@@ -814,6 +832,10 @@ class CustomerController extends Controller
             'rewardInput' => $request->rewardInput,
             'rewardClaimed' => $request->rewardClaimed,
             'totalPrice' => $request->totalPrice,
+            'childrenDiscount' => 0,
+            'additionalDiscount' => 0.00,
+            'promoDiscount' => 0.00,
+            'offenseCharges' => 0.00,
             'queueDate' => date("Y-m-d"),
         ]);
 
@@ -1790,7 +1812,7 @@ class CustomerController extends Controller
         ]);
         
         return response()->json([
-            'status' => "Order Submitted, Kindly wait for the staff to come to you. Thanks!",
+            'status' => "Order Submitted, Kindly wait for your order. Thanks!",
         ]);
     }
     public function getOrderingAssistHist($cust_id){
@@ -1849,38 +1871,426 @@ class CustomerController extends Controller
         ]);
     }
     public function getOrderingBill($cust_id){
-        $finalOrders = array();
-
         $customerQueue = CustomerQueue::where('customer_id', $cust_id)->where('status', 'eating')->first();
         $customerReserve = CustomerReserve::where('customer_id', $cust_id)->where('status', 'eating')->first();
 
         if($customerQueue != null){
-            
+            $finalOrders = array();
+            $orderSet = OrderSet::where('id', $customerQueue->orderSet_id)->first();
+            $customerOrdering = CustomerOrdering::where('custBook_id', $customerQueue->id)->first();
+            $orders = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)->get();
+
+            $orderTotalPrice = 0.0;
+            foreach ($orders as $order){
+                $orderTotalPrice += $order->price;
+                array_push($finalOrders, [
+                    'foodItemName' => $order->foodItemName,
+                    'quantity' => $order->quantity,
+                    'price' => (number_format($order->price, 2, '.'))
+                ]);
+            }
+
+            $finalReward = "None";
+            $rewardDiscount = 0.00;
+            if($customerQueue->rewardStatus == "Complete" && $customerQueue->rewardClaimed == "Yes"){
+                switch($customerQueue->rewardType){
+                    case "DSCN": 
+                        $finalReward = "Discount $customerQueue->rewardInput% in a Total Bill";
+                        $rewardDiscount = ($customerQueue->numberOfPersons * $orderSet->orderSetPrice) * ($customerQueue->rewardInput / 100);
+                        break;
+                    case "FRPE": 
+                        $finalReward = "Free $customerQueue->rewardInput person in a group";
+                        $rewardDiscount = $orderSet->orderSetPrice * $customerQueue->rewardInput;
+                        break;
+                    case "HLF": 
+                        $finalReward = "Half in the group will be free";
+                        $rewardDiscount = ($customerQueue->numberOfPersons * $orderSet->orderSetPrice) / 2;
+                        break;
+                    case "ALL": 
+                        $finalReward = "All people in the group will be free";
+                        $rewardDiscount = $customerQueue->numberOfPersons * $orderSet->orderSetPrice;
+                        break;
+                    default: 
+                        $finalReward = "None";
+                }
+            }
+
+            $seniorDiscount = $orderSet->orderSetPrice * ($customerQueue->numberOfPwd * 0.2);
+            $childrenDiscount = $orderSet->orderSetPrice * ($customerQueue->numberOfChildren * ($customerQueue->childrenDiscount / 100));
+            $subTotal = ($customerQueue->numberOfPersons * $orderSet->orderSetPrice) + $orderTotalPrice;
+
+            $totalPrice = $subTotal - (
+                $rewardDiscount + 
+                $seniorDiscount + 
+                $childrenDiscount + 
+                $customerQueue->additionalDiscount + 
+                $customerQueue->promoDiscount +
+                $customerQueue->offenseCharges 
+            );
+
+            return response()->json([
+                'orderSetName' => $orderSet->orderSetName,
+                'numberOfPersons' => $customerQueue->numberOfPersons,
+                'orderSetPriceTotal' => (number_format($customerQueue->numberOfPersons * $orderSet->orderSetPrice, 2, '.')),
+                'orders' => $finalOrders,
+                'subtotal' => (number_format($subTotal, 2, '.')),
+                'numberOfPwd' => $customerQueue->numberOfPwd,
+                'pwdDiscount' =>  (number_format($seniorDiscount, 2, '.')),
+                'childrenPercentage' => $customerQueue->childrenDiscount,
+                'numberOfChildren' => $customerQueue->numberOfChildren,
+                'childrenDiscount' => (number_format($childrenDiscount, 2, '.')),
+                'promoDiscount' => (number_format($customerQueue->promoDiscount, 2, '.')),
+                'additionalDiscount' => (number_format($customerQueue->additionalDiscount, 2, '.')),
+                'rewardName' => $finalReward,
+                'rewardDiscount' => (number_format($rewardDiscount, 2, '.')),
+                'offenseCharge' => (number_format($customerQueue->offenseCharges, 2, '.')),
+                'totalPrice' => (number_format($totalPrice, 2, '.')),
+            ]);
         } else if ($customerReserve != null){
-        
+            $finalOrders = array();
+            $orderSet = OrderSet::where('id', $customerReserve->orderSet_id)->first();
+            $customerOrdering = CustomerOrdering::where('custBook_id', $customerReserve->id)->first();
+            $orders = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)->get();
+
+            $orderTotalPrice = 0.0;
+            foreach ($orders as $order){
+                $orderTotalPrice += $order->price;
+                array_push($finalOrders, [
+                    'foodItemName' => $order->foodItemName,
+                    'quantity' => $order->quantity,
+                    'price' => (number_format($order->price, 2, '.'))
+                ]);
+            }
+
+            $finalReward = "None";
+            $rewardDiscount = 0.00;
+            if($customerReserve->rewardStatus == "Complete" && $customerReserve->rewardClaimed == "Yes"){
+                switch($customerReserve->rewardType){
+                    case "DSCN": 
+                        $finalReward = "Discount $customerReserve->rewardInput% in a Total Bill";
+                        $rewardDiscount = ($customerReserve->numberOfPersons * $orderSet->orderSetPrice) * ($customerReserve->rewardInput / 100);
+                        break;
+                    case "FRPE": 
+                        $finalReward = "Free $customerReserve->rewardInput person in a group";
+                        $rewardDiscount = $orderSet->orderSetPrice * $customerReserve->rewardInput;
+                        break;
+                    case "HLF": 
+                        $finalReward = "Half in the group will be free";
+                        $rewardDiscount = ($customerReserve->numberOfPersons * $orderSet->orderSetPrice) / 2;
+                        break;
+                    case "ALL": 
+                        $finalReward = "All people in the group will be free";
+                        $rewardDiscount = $customerReserve->numberOfPersons * $orderSet->orderSetPrice;
+                        break;
+                    default: 
+                        $finalReward = "None";
+                }
+            }
+
+            $seniorDiscount = $orderSet->orderSetPrice * ($customerReserve->numberOfPwd * 0.2);
+            $childrenDiscount = $orderSet->orderSetPrice * ($customerReserve->numberOfChildren * ($customerReserve->childrenDiscount / 100));
+            $subTotal = ($customerReserve->numberOfPersons * $orderSet->orderSetPrice) + $orderTotalPrice;
+
+            $totalPrice = $subTotal - (
+                $rewardDiscount + 
+                $seniorDiscount + 
+                $childrenDiscount + 
+                $customerReserve->additionalDiscount + 
+                $customerReserve->promoDiscount +
+                $customerReserve->offenseCharges 
+            );
+
+            return response()->json([
+                'orderSetName' => $orderSet->orderSetName,
+                'numberOfPersons' => $customerReserve->numberOfPersons,
+                'orderSetPriceTotal' => (number_format($customerReserve->numberOfPersons * $orderSet->orderSetPrice, 2, '.')),
+                'orders' => $finalOrders,
+                'subtotal' => (number_format($subTotal, 2, '.')),
+                'numberOfPwd' => $customerReserve->numberOfPwd,
+                'pwdDiscount' =>  (number_format($seniorDiscount, 2, '.')),
+                'childrenPercentage' => $customerReserve->childrenDiscount,
+                'numberOfChildren' => $customerReserve->numberOfChildren,
+                'childrenDiscount' => (number_format($childrenDiscount, 2, '.')),
+                'promoDiscount' => (number_format($customerReserve->promoDiscount, 2, '.')),
+                'additionalDiscount' => (number_format($customerReserve->additionalDiscount, 2, '.')),
+                'rewardName' => $finalReward,
+                'rewardDiscount' => (number_format($rewardDiscount, 2, '.')),
+                'offenseCharge' => (number_format($customerReserve->offenseCharges, 2, '.')),
+                'totalPrice' => (number_format($totalPrice, 2, '.')),
+            ]);
+        } else {
+            $finalStatus = "Error";
+        }
+    }
+
+    public function orderingCheckout(Request $request){
+        //  DAPAT DITO KAPAG MAG CHECHECKOUT, mawaalan na ng access yung mga subcustomer
+        $finalStatus = null;
+        $customerQueue = CustomerQueue::where('customer_id', $request->cust_id)->where('status', 'eating')->first();
+        $customerReserve = CustomerReserve::where('customer_id', $request->cust_id)->where('status', 'eating')->first();
+
+        if($customerQueue != null){
+            $customerOrdering = CustomerOrdering::where('custBook_id', $customerQueue->id)->first();
+            $tableNumber = explode(',', $customerOrdering->tableNumbers);
+
+            if($request->requestType == "Cash Payment"){
+                CustomerQueue::where('id', $customerOrdering->id)
+                ->update([
+                    'checkoutStatus' => 'cashCheckoutValidation',
+                ]);
+                $finalStatus = "Cash Payment";
+            } else {
+                CustomerQueue::where('id', $customerOrdering->id)
+                ->update([
+                    'checkoutStatus' => 'gcashCheckout',
+                ]);
+                $finalStatus = "GCash Payment";
+            }
+
+            CustomerLRequest::create([
+                'custOrdering_id' => $customerOrdering->id,
+                'cust_id' => $request->cust_id,
+                'tableNumber' => $tableNumber[0],
+                'request' => $request->requestType,
+                'requestDone' => "No",
+                'requestSubmitDT' => date('Y-m-d H:i:s'),
+            ]);
+        } else if ($customerReserve != null){
+            $customerOrdering = CustomerOrdering::where('custBook_id', $customerReserve->id)->first();
+            $tableNumber = explode(',', $customerOrdering->tableNumbers);
+
+            CustomerLRequest::create([
+                'custOrdering_id' => $customerOrdering->id,
+                'cust_id' => $request->cust_id,
+                'tableNumber' => $tableNumber[0],
+                'request' => $request->requestType,
+                'requestDone' => "No",
+                'requestSubmitDT' => date('Y-m-d H:i:s'),
+            ]);
+            $finalStatus = "Request sent! Kindly wait for the staff to come to your table. Thank you!";
         } else {
             $finalStatus = "Error";
         }
 
+        return response()->json([
+            'status' => $finalStatus,
+        ]);
+    }
+    public function getOrderingCheckoutStatus($cust_id){
+        $finalStatus = null;
+        $customerQueue = CustomerQueue::where('customer_id', $cust_id)->where('status', 'eating')
+        ->where(function ($query) {
+            $query->where('checkoutStatus', "cashCheckoutValidation")
+            ->orWhere('checkoutStatus', "gcashCheckoutValidation")
+            ->orWhere('checkoutStatus', "gcashInsufficientAmount");
+        })->first();
 
+        $customerReserve = CustomerReserve::where('customer_id', $cust_id)->where('status', 'eating')->first();
+
+        if($customerQueue != null){
+            $finalStatus = $customerQueue->checkoutStatus;
+        } else if ($customerReserve != null){
+            $finalStatus = $customerReserve->checkoutStatus;
+        } else {
+            $finalStatus = "Error";
+        }
 
         return response()->json([
-            'orderSetName' => '399',
-            'numberOfPersons' => 10,
-            'orderSetPriceTotal' => '3990.00',
-            'orders' => $finalOrders,
-            'subtotal' => 3990.00,
-            'numberOfPwd' => 1,
-            'pwdDiscount' => 1,
-            'childrenPercentage' => 1,
-            'numberOfChildren' => 1,
-            'childrenDiscount' => 1,
-            'promoDiscount' => 1,
-            'additionalDiscount' => 1,
-            'rewardName' => 1,
-            'rewardDiscount' => 1,
-            'offenseCharge' => 1,
-            'totalPrice' => 1,
+            'status' => $finalStatus
+        ]);
+    }
+    public function getOrderingGCashStatus($cust_id){
+        $finalAmount = null;
+        $finalRestGCQr = null;
+        $finalStatus = null;
+
+        $customerQueue = CustomerQueue::where('customer_id', $cust_id)->where('status', 'eating')
+        ->where(function ($query) {
+            $query->where('checkoutStatus', "gcashCheckout")
+            ->orWhere('checkoutStatus', "gcashIncorretFormat");
+        })->first();
+
+        if($customerQueue != null){
+            $restaurant = RestaurantAccount::select('rGcashQrCodeImage', 'id')->where('id', $customerQueue->restAcc_id)->first();
+            $finalAmount = (number_format($customerQueue->totalPrice, 2, '.'));
+            $finalRestGCQr = $this->RESTAURANT_GCASH_QR_IMAGE_PATH."/".$restaurant->id."/".$restaurant->rGcashQrCodeImage;
+            $finalStatus = $customerQueue->checkoutStatus;
+        }
+
+        return response()->json([
+            'amount' => $finalAmount,
+            'restGCashQr' => $finalRestGCQr,
+            'status' => $finalStatus,
+        ]);
+    }
+    public function getOrderingRatingFeedback($cust_id){
+        $finalStatus = null;
+
+        $customerQueue = CustomerQueue::where('customer_id', $cust_id)->where('status', 'completed')->where('checkoutStatus', "customerFeedback")->first();
+        // $customerReserve = CustomerReserve::where('customer_id', $cust_id)->where('status', 'completed')->where('checkoutStatus', "customerFeedback")->first();
+
+        if($customerQueue != null){
+            $restaurant = RestaurantAccount::select('rName', 'rBranch')->where('id', $customerQueue->restAcc_id)->first();
+            $finalStatus = "$restaurant->rName, $restaurant->rBranch";
+        }
+
+        return response()->json([
+            'rName' => $finalStatus
+        ]);
+    }
+    public function ratingFeedbackSubmit(Request $request){
+        $getDateToday = date("Y-m-d");
+        $customerQueue = CustomerQueue::where('customer_id', $request->cust_id)->where('status', 'completed')->where('checkoutStatus', "customerFeedback")->first();
+        // $customerReserve = CustomerReserve::where('customer_id', $request->cust_id)->where('status', 'complete')->first();
+
+        if($request->type == "not now"){
+            if($customerQueue != null){
+                CustomerQueue::where('customer_id', $request->cust_id)->where('status', 'completed')->where('checkoutStatus', "customerFeedback")
+                ->update([
+                    'checkoutStatus' => "completed"
+                ]);
+            }
+        } else {
+            if($customerQueue != null){
+                $customerOrdering = CustomerOrdering::where('custBook_id', $customerQueue->id)->first();
+                $restaurant = RestaurantAccount::where('id', $customerQueue->restAcc_id)->first();
+                $stampCard = StampCard::where('restAcc_id', $customerQueue->restAcc_id)->first();
+
+                if($stampCard != null){
+                    if($getDateToday <= $stampCard->stampValidity){
+                        $custStampCard = CustomerStampCard::where('customer_id', $customerQueue->customer_id)
+                        ->where('restAcc_id', $restaurant->id)
+                        ->where('stampValidity', $stampCard->stampValidity)
+                        ->where('claimed', "No")
+                        ->where('status', "Incomplete")
+                        ->first();
+
+                        $storeTasks = array();
+                        $storeDoneTasks = array();
+
+                        if($custStampCard != null){
+                            $stampCardTasks = StampCardTasks::where('stampCards_id', $stampCard->id)->get();
+                            
+                            foreach($stampCardTasks as $stampCardTask){
+                                $task = RestaurantTaskList::where('id', $stampCardTask->restaurantTaskLists_id)->first();
+                                if($task->taskCode == "FDBK"){
+                                    array_push($storeTasks, "Give a feedback/review per visit");
+                                    array_push($storeDoneTasks, "Give a feedback/review per visit");
+                                }
+                            }
+
+                            $currentStamp = $custStampCard->currentStamp + sizeof($storeDoneTasks);
+                            if($currentStamp >= $stampCard->stampCapacity){
+                                $stampStatus = "Complete";
+                                $currentStamp = $stampCard->stampCapacity;
+                            } else {
+                                $stampStatus = "Incomplete";
+                            }
+
+                            CustomerStampCard::where('id', $custStampCard->id)
+                            ->update([
+                                'status' => $stampStatus,
+                                'claimed' => "No",
+                                'currentStamp' => $currentStamp,
+                            ]);
+
+                            foreach($storeDoneTasks as $storeDoneTask){
+                                CustomerTasksDone::create([
+                                    'customer_id' => $customerQueue->customer_id,
+                                    'customerStampCard_id' => $custStampCard->id,
+                                    'taskName' => $storeDoneTask,
+                                    'taskAccomplishDate' => $getDateToday,
+                                ]);
+                            }
+
+                        } else {
+                            $stampCardTasks = StampCardTasks::where('stampCards_id', $stampCard->id)->get();
+                            foreach($stampCardTasks as $stampCardTask){
+                                $task = RestaurantTaskList::where('id', $stampCardTask->restaurantTaskLists_id)->first();
+                                if($task->taskCode == "FDBK"){
+                                    array_push($storeTasks, "Give a feedback/review per visit");
+                                    array_push($storeDoneTasks, "Give a feedback/review per visit");
+                                }
+                            }
+                            
+                            $stampReward = RestaurantRewardList::where('restAcc_id', $customerQueue->restAcc_id)->where('id', $stampCard->stampReward_id)->first();
+
+                            switch($stampReward->rewardCode){
+                                case "DSCN": 
+                                    $finalReward = "Discount $stampReward->rewardInput% in a Total Bill";
+                                    break;
+                                case "FRPE": 
+                                    $finalReward = "Free $stampReward->rewardInput person in a group";
+                                    break;
+                                case "HLF": 
+                                    $finalReward = "Half in the group will be free";
+                                    break;
+                                case "ALL": 
+                                    $finalReward = "All people in the group will be free";
+                                    break;
+                                default: 
+                                    $finalReward = "None";
+                            }
+
+                            $finalStampCapac = sizeof($storeDoneTasks);
+                            if(sizeof($storeDoneTasks) >= $stampCard->stampCapacity){
+                                $finalStampCapac = $stampCard->stampCapacity;
+                            }
+
+                            $custStampCardNew = CustomerStampCard::create([
+                                'customer_id' => $customerQueue->customer_id,
+                                'restAcc_id' => $customerQueue->restAcc_id,
+                                'status' => "Incomplete",
+                                'claimed' => "No",
+                                'currentStamp' => $finalStampCapac,
+                                'stampReward' => $finalReward,
+                                'stampValidity' => $stampCard->stampValidity,
+                                'stampCapacity' => $stampCard->stampCapacity,
+                            ]);
+
+                            foreach($storeTasks as $storeTask){
+                                CustomerStampTasks::create([
+                                    'customerStampCard_id' => $custStampCardNew->id,
+                                    'taskName' => $storeTask,
+                                ]);
+                            }
+
+                            foreach($storeDoneTasks as $storeDoneTask){
+                                CustomerTasksDone::create([
+                                    'customer_id' => $customerQueue->customer_id,
+                                    'customerStampCard_id' => $custStampCardNew->id,
+                                    'taskName' => $storeDoneTask,
+                                    'taskAccomplishDate' => $getDateToday,
+                                ]);
+                            }
+                        }
+                    }
+                }
+
+                CustRestoRating::create([
+                    'customer_id' => $customerQueue->customer_id,
+                    'restAcc_id' => $customerQueue->restAcc_id,
+                    'custOrdering_id' => $customerOrdering->id,
+                    'rating' => $request->rating,
+                    'comment' => $request->comment,
+                    'anonymous' => $request->anonymous,
+                ]);
+
+                CustomerQueue::where('customer_id', $request->cust_id)->where('status', 'completed')->where('checkoutStatus', "customerFeedback")
+                ->update([
+                    'checkoutStatus' => "completed",
+                ]);
+            }
+        }
+
+        
+        // hanaping yung customerOrderingId
+        // icheck kung may stamp card ba ng task yung restaurant na yon
+        // ipasok tong rating sa database
+        //update customer queue or reserve
+        //push notification
+        return response()->json([
+            'status' => "sucess"
         ]);
     }
     

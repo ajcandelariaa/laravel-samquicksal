@@ -18,8 +18,8 @@
         <div class="bg-manageRestaurantSidebarColorActive grid grid-cols-2 px-5 py-1 items-center">
             <div class="uppercase font-bold text-white text-xl py-2">ORDER SUMMARY</div>
             <div class="justify-self-end text-white py-3 ml-3">
-                <button id="btn-decline" class="px-8 py-2 bg-headerActiveTextColor mr-2">Runaway</button>
-                <button id="btn-decline" class="px-8 py-2 bg-postedStatus">Checkout</button>
+                <a href="/restaurant/live-transaction/customer-ordering/list/{{ $customerOrdering->id }}/order-summary/runaway" id="btn-runaway" class="px-8 py-2 bg-headerActiveTextColor mr-2">Runaway</a>
+                <a href="/restaurant/live-transaction/customer-ordering/list/{{ $customerOrdering->id }}/order-summary/complete" id="btn-complete" class="px-8 py-2 bg-postedStatus">Completed</a>
             </div>
         </div>
         <div class="w-11/12 mx-auto py-10">
@@ -54,6 +54,7 @@
                         <div class="py-5 w-11/12 mx-auto">
                             <p class="text-center">Please validate Number of Senior Citizen/PWD and Childen below 7.</p>
     
+                            <input type="hidden" name="totalPrice" value="{{ $totalPrice }}">
                             <div class="grid grid-cols-2 items-center mt-10">
                                 <p class="col-span-1">Number of Senior</p>
                                 <input type="number" min="0" value="{{ $customerBook->numberOfPwd }}"name="numberOfPwd" class="border focus:border-black py-1 px-2 text-sm focus:outline-non text-gray-700">

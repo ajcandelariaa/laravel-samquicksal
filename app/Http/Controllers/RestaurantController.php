@@ -43,6 +43,9 @@ use App\Models\RestaurantResetPassword;
 use Illuminate\Support\Facades\Session;
 use App\Mail\RestaurantFormAppreciation;
 use App\Models\CustomerQrAccess;
+use App\Models\CustomerStampCard;
+use App\Models\CustomerStampTasks;
+use App\Models\CustomerTasksDone;
 
 class RestaurantController extends Controller
 {
@@ -242,7 +245,7 @@ class RestaurantController extends Controller
 
         $finalReward = "None";
         $rewardDiscount = 0.00;
-        if($customerBook->rewardStatus == "Complete"){
+        if($customerBook->rewardStatus == "Complete" && $customerQueue->rewardClaimed == "Yes"){
             switch($customerBook->rewardType){
                 case "DSCN": 
                     $finalReward = "Discount $customerBook->rewardInput% in a Total Bill";
@@ -641,7 +644,7 @@ class RestaurantController extends Controller
     
             $finalReward = "None";
             $rewardDiscount = null;
-            if($customerQueue->rewardStatus == "Complete"){
+            if($customerQueue->rewardStatus == "Complete" && $customerQueue->rewardClaimed == "Yes"){
                 switch($customerQueue->rewardType){
                     case "DSCN": 
                         $finalReward = "Discount $customerQueue->rewardInput% in a Total Bill";
@@ -944,7 +947,7 @@ class RestaurantController extends Controller
 
         $finalReward = "None";
         $rewardDiscount = null;
-        if($customerQueue->rewardStatus == "Complete"){
+        if($customerQueue->rewardStatus == "Complete" && $customerQueue->rewardClaimed == "Yes"){
             switch($customerQueue->rewardType){
                 case "DSCN": 
                     $finalReward = "Discount $customerQueue->rewardInput% in a Total Bill";
@@ -1581,6 +1584,278 @@ class RestaurantController extends Controller
 
 
     // RENDER LOGICS
+    public function ltCustOrderOSComplete($id){
+        $getDateToday = date("Y-m-d");
+
+        $customerOrdering = CustomerOrdering::where('id', $id)->where('status', 'eating')->first();
+        $customerLOrders = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)->where('orderDone', "Yes")->get();
+        $addOnQuantity = 0;
+        foreach($customerLOrders as $customerLOrder){
+            if($customerLOrder->price != 0.00){
+                $addOnQuantity += $customerLOrder->quantity;
+            }
+        }
+
+        if($customerOrdering->custBookType == "queue"){
+            //check muna kung clinaime nya
+            $customerQueue = CustomerQueue::where('id', $customerOrdering->custBook_id)->where('status', 'eating')->first();
+            
+            $eatingTime = date("H:i", strtotime($customerQueue->eatingDateTime));
+            // dd(date("H:i", strtotime("5:00 am")));
+            $restaurant = RestaurantAccount::where('id', $customerQueue->restAcc_id)->first();
+            //check muna kung may stamp card na inimplement yung restaurant
+            $stampCard = StampCard::where('restAcc_id', $customerQueue->restAcc_id)->first();
+            if($stampCard != null){
+                //kung meron icompare yung validity date sa current date, kapag sobra meaning tapos na yon di na valid.
+                if($getDateToday <= $stampCard->stampValidity){
+                    //valid pa, so check kung yung validitiy at restaccid is same sa custoemr stamp card
+                    $custStampCard = CustomerStampCard::where('customer_id', $customerQueue->customer_id)
+                    ->where('restAcc_id', $restaurant->id)
+                    ->where('stampValidity', $stampCard->stampValidity)
+                    ->where('claimed', "No")
+                    ->where('status', "Incomplete")
+                    ->first();
+
+                    // CHECK MUNA KUNG ANO MGA NAGING REWARD
+                    $storeTasks = array();
+                    $storeDoneTasks = array();
+                    if($custStampCard != null){
+                        //then iupdate mag update lang, mag add ng mga tasks
+                        $stampCardTasks = StampCardTasks::where('stampCards_id', $stampCard->id)->get();
+                        foreach($stampCardTasks as $stampCardTask){
+                            $task = RestaurantTaskList::where('id', $stampCardTask->restaurantTaskLists_id)->first();
+                            switch($task->taskCode){
+                                case "SPND":
+                                    if($customerQueue->totalPrice >= $task->taskInput){
+                                        array_push($storeDoneTasks, "Spend ".$task->taskInput." pesos in 1 visit only");
+                                    }
+                                    break;
+                                case "BRNG":
+                                    if($customerQueue->numberOfPersons >= $task->taskInput){
+                                        array_push($storeDoneTasks, "Bring ".$task->taskInput." friends in our store");
+                                    }
+                                    break;
+                                case "ORDR":
+                                    if($addOnQuantity >= $task->taskInput){
+                                        array_push($storeDoneTasks, "Order ".$task->taskInput." add on/s per visit");
+                                    }
+                                    break;
+                                case "VST":
+                                    array_push($storeDoneTasks, "Visit in our store");
+                                    break;
+                                case "FDBK":
+                                    array_push($storeTasks, "Give a feedback/review per visit");
+                                    break;
+                                case "PUGC":
+                                    if($customerQueue->gcashCheckoutReceipt != null){
+                                        array_push($storeDoneTasks, "Pay using gcash");
+                                    }
+                                    break;
+                                case "LUDN":
+                                    if("11:00" >= $eatingTime && "14:00" <= $eatingTime){
+                                        array_push($storeDoneTasks, "Eat during lunch/dinner hours");
+                                    } else if("17:00" >= $eatingTime && "22:00" <= $eatingTime){
+                                        array_push($storeDoneTasks, "Eat during lunch/dinner hours");
+                                    } else {}
+                                    break;
+                                default: 
+                            }
+                        }
+
+                        $currentStamp = $custStampCard->currentStamp + sizeof($storeDoneTasks);
+                        if($currentStamp >= $stampCard->stampCapacity){
+                            $stampStatus = "Complete";
+                            $currentStamp = $stampCard->stampCapacity;
+                        } else {
+                            $stampStatus = "Incomplete";
+                        }
+
+                        CustomerStampCard::where('id', $custStampCard->id)
+                        ->update([
+                            'status' => $stampStatus,
+                            'claimed' => "No",
+                            'currentStamp' => $currentStamp,
+                        ]);
+
+                        foreach($storeDoneTasks as $storeDoneTask){
+                            CustomerTasksDone::create([
+                                'customer_id' => $customerQueue->customer_id,
+                                'customerStampCard_id' => $custStampCard->id,
+                                'taskName' => $storeDoneTask,
+                                'taskAccomplishDate' => $getDateToday,
+                            ]);
+                        }
+
+                    } else {
+                        //mag add din pati sa mga tasks
+                        $stampCardTasks = StampCardTasks::where('stampCards_id', $stampCard->id)->get();
+                        foreach($stampCardTasks as $stampCardTask){
+                            $task = RestaurantTaskList::where('id', $stampCardTask->restaurantTaskLists_id)->first();
+                            switch($task->taskCode){
+                                case "SPND":
+                                    array_push($storeTasks, "Spend ".$task->taskInput." pesos in 1 visit only");
+                                    if($customerQueue->totalPrice >= $task->taskInput){
+                                        array_push($storeDoneTasks, "Spend ".$task->taskInput." pesos in 1 visit only");
+                                    }
+                                    break;
+                                case "BRNG":
+                                    array_push($storeTasks, "Bring ".$task->taskInput." friends in our store");
+                                    if($customerQueue->numberOfPersons >= $task->taskInput){
+                                        array_push($storeDoneTasks, "Bring ".$task->taskInput." friends in our store");
+                                    }
+                                    break;
+                                case "ORDR":
+                                    array_push($storeTasks, "Order ".$task->taskInput." add on/s per visit");
+                                    if($addOnQuantity >= $task->taskInput){
+                                        array_push($storeDoneTasks, "Order ".$task->taskInput." add on/s per visit");
+                                    }
+                                    break;
+                                case "VST":
+                                    array_push($storeTasks, "Visit in our store");
+                                    array_push($storeDoneTasks, "Visit in our store");
+                                    break;
+                                case "FDBK":
+                                    array_push($storeTasks, "Give a feedback/review per visit");
+                                    break;
+                                case "PUGC":
+                                    array_push($storeTasks, "Pay using gcash");
+                                    if($customerQueue->gcashCheckoutReceipt != null){
+                                        array_push($storeDoneTasks, "Pay using gcash");
+                                    }
+                                    break;
+                                case "LUDN":
+                                    // dd($time > date("H:i", strtotime("10:00 am")));
+                                    //11:00am - 2:00pm (lunch)
+                                    //5:00pm - 10:00pm (dinner)
+                                    array_push($storeTasks, "Eat during lunch/dinner hours");
+                                    if("11:00" >= $eatingTime && "14:00" <= $eatingTime){
+                                        array_push($storeDoneTasks, "Eat during lunch/dinner hours");
+                                    } else if("17:00" >= $eatingTime && "22:00" <= $eatingTime){
+                                        array_push($storeDoneTasks, "Eat during lunch/dinner hours");
+                                    } else {}
+                                    break;
+                                default: 
+                            }
+                        }
+
+                        $stampReward = RestaurantRewardList::where('restAcc_id', $customerQueue->restAcc_id)->where('id', $stampCard->stampReward_id)->first();
+
+                        switch($stampReward->rewardCode){
+                            case "DSCN": 
+                                $finalReward = "Discount $stampReward->rewardInput% in a Total Bill";
+                                break;
+                            case "FRPE": 
+                                $finalReward = "Free $stampReward->rewardInput person in a group";
+                                break;
+                            case "HLF": 
+                                $finalReward = "Half in the group will be free";
+                                break;
+                            case "ALL": 
+                                $finalReward = "All people in the group will be free";
+                                break;
+                            default: 
+                                $finalReward = "None";
+                        }
+
+                        $finalStampCapac = sizeof($storeDoneTasks);
+                        if(sizeof($storeDoneTasks) >= $stampCard->stampCapacity){
+                            $finalStampCapac = $stampCard->stampCapacity;
+                        }
+
+                        $custStampCardNew = CustomerStampCard::create([
+                            'customer_id' => $customerQueue->customer_id,
+                            'restAcc_id' => $customerQueue->restAcc_id,
+                            'status' => "Incomplete",
+                            'claimed' => "No",
+                            'currentStamp' => $finalStampCapac,
+                            'stampReward' => $finalReward,
+                            'stampValidity' => $stampCard->stampValidity,
+                            'stampCapacity' => $stampCard->stampCapacity,
+                        ]);
+
+                        foreach($storeTasks as $storeTask){
+                            CustomerStampTasks::create([
+                                'customerStampCard_id' => $custStampCardNew->id,
+                                'taskName' => $storeTask,
+                            ]);
+                        }
+
+                        foreach($storeDoneTasks as $storeDoneTask){
+                            CustomerTasksDone::create([
+                                'customer_id' => $customerQueue->customer_id,
+                                'customerStampCard_id' => $custStampCardNew->id,
+                                'taskName' => $storeDoneTask,
+                                'taskAccomplishDate' => $getDateToday,
+                            ]);
+                        }
+
+                    }
+                    
+                    if($customerQueue->rewardClaimed == "Yes"){
+                        CustomerStampCard::where('id', $custStampCard->id)
+                        ->update([
+                            'claimed' => "Yes",
+                        ]);
+                    }
+
+                }
+
+            }
+
+            CustomerOrdering::where('id', $id)->where('status', 'eating')
+            ->update([
+                'status' => "checkout",
+            ]);
+
+            CustomerQueue::where('id', $customerOrdering->custBook_id)->where('status', 'eating')
+            ->update([
+                'status' => "completed",
+                'checkoutStatus' => "customerFeedback",
+                'completeDateTime' => date("Y-m-d H:i:s"),
+            ]);
+
+            $notif = CustomerNotification::create([
+                'customer_id' => $customerQueue->customer_id,
+                'restAcc_id' => $customerQueue->restAcc_id,
+                'notificationType' => "Complete",
+                'notificationTitle' => "Your payment is successful! Thank you for dining! You may give us a rating and share your experience.",
+                'notificationDescription' => "$restaurant->rAddress, $restaurant->rCity",
+                'notificationStatus' => "Unread",
+            ]);
+    
+            $customerAccount = CustomerAccount::where('id', $customerQueue->customer_id)->first();
+            
+            $finalImageUrl = "";
+            if ($restaurant->rLogo == ""){
+                $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+            } else {
+                $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
+            }
+    
+            if($customerAccount != null){
+                $to = $customerAccount->deviceToken;
+                $notification = array(
+                    'title' => "$restaurant->rAddress, $restaurant->rCity",
+                    'body' => "Your payment is successful! Thank you for dining! You may give us a rating and share your experience.",
+                );
+                $data = array(
+                    'notificationType' => "Complete",
+                    'notificationId' => $notif->id,
+                    'notificationRLogo' => $finalImageUrl,
+                );
+                $this->sendFirebaseNotification($to, $notification, $data);
+            }
+    
+            Session::flash('completed');
+            return redirect('/restaurant/live-transaction/customer-ordering/list');
+
+
+        } else {
+        }
+    }
+    public function ltCustOrderOSRunaway($id){
+
+    }
     public function ltCustOrderORRequestDone($id, $request_id){
         CustomerLRequest::where('id', $request_id)->where('custOrdering_id', $id)
         ->update([
@@ -1617,6 +1892,7 @@ class RestaurantController extends Controller
                 'additionalDiscount' => $request->additionalDiscount,
                 'promoDiscount' => $request->promoDiscount,
                 'offenseCharges' => $request->offenseCharges,
+                'totalPrice' => $request->totalPrice,
             ]);
         } else {
             CustomerReserve::where('id', $customerOrder->custBook_id)
@@ -1626,7 +1902,7 @@ class RestaurantController extends Controller
                 'childrenDiscount' => $request->childrenDiscount,
                 'additionalDiscount' => $request->additionalDiscount,
                 'promoDiscount' => $request->promoDiscount,
-                'offenseCharges' => $request->offenseCharges,
+                'totalPrice' => $request->totalPrice,
             ]);
         }
         Session::flash('discounted');
@@ -1642,14 +1918,16 @@ class RestaurantController extends Controller
             $customer = CustomerQueue::where('id', $customerOrder->custBook_id)->first();
             CustomerQueue::where('id', $customerOrder->custBook_id)
             ->update([
-                'status' => 'eating'
+                'status' => 'eating',
+                'eatingDateTime' => date("Y-m-d H:i:s")
             ]);
             $customerId = $customer->customer_id;
         } else {
             $customer = CustomerReserve::where('id', $customerOrder->custBook_id)->first();
             CustomerReserve::where('id', $customerOrder->custBook_id)
             ->update([
-                'status' => 'eating'
+                'status' => 'eating',
+                'eatingDateTime' => date("Y-m-d H:i:s")
             ]);
             $customerId = $customer->customer_id;
         }
