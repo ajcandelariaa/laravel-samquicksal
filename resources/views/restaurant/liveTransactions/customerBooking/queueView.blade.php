@@ -37,7 +37,7 @@
                     <div>
                         <p class="mt-2">Name: <span class="font-bold">{{ $customerInfo->name }}</span></p>
                         <p class="mt-2">Contact Number: <span class="font-bold">{{ $customerInfo->contactNumber }}</span></p>
-                        <p class="mt-2">No. of Queues: <span class="font-bold">{{ $countQueues }}</span></p>
+                        <p class="mt-2">No. of Book: <span class="font-bold">{{ $countQueues }}</span></p>
                         <p class="mt-2">No. of No Show: <span class="font-bold">{{ $countNoShow }}</span></p>
                         <p class="mt-2">Booking Date: <span class="font-bold">{{ $bookDate }}</span></p>
                     </div>
@@ -87,7 +87,7 @@
                         <div class="bg-sundayToSaturdayBoxColor h-height1Px my-2"></div>
 
                         <div class="grid grid-cols-2 mt-2">
-                            <p class="col-span-1">Service Fee</p>
+                            <p class="col-span-1">Service Fee (0%)</p>
                             <p class="justify-self-end col-span-1">0.00 <span class="text-xs">Php</span></p>
                         </div>
 
@@ -106,7 +106,7 @@
                         </div>
                         
                         <div class="grid grid-cols-3 mt-2">
-                            <p class="col-span-1">Children (7 below)</p>
+                            <p class="col-span-1">Children (0%)</p>
                             <p class="col-span-1 text-center">{{ $customerQueue->numberOfChildren }}x</p>
                             <p class="justify-self-end col-span-1">{{ (number_format($childrenDiscount, 2)) }} <span class="text-xs">Php</span></p>
                         </div>

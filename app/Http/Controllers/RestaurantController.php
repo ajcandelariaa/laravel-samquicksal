@@ -141,6 +141,7 @@ class RestaurantController extends Controller
         ->where('orderingDate', $getDateToday)
         ->first();
 
+        $gcashReceipt = null;
         if($customerOrdering->custBookType == "queue"){
             $customerQueue = CustomerQueue::where('id', $customerOrdering->custBook_id)
             ->where('restAcc_id', $restAcc_id)
@@ -155,7 +156,7 @@ class RestaurantController extends Controller
             $customerBook = $customerQueue;
 
             $customer = CustomerAccount::select('profileImage', 'id')->where('id', $customerQueue->customer_id)->first();
-            
+            $gcashReceipt = $customerQueue->gcashCheckoutReceipt;
         } else {
             $customerReserve = CustomerReserve::where('id', $customerOrdering->custBook_id)
             ->where('restAcc_id', $restAcc_id)
@@ -169,6 +170,7 @@ class RestaurantController extends Controller
             $customerBook = $customerReserve;
 
             $customer = CustomerAccount::select('profileImage', 'id')->where('id', $customerReserve->customer_id)->first();
+            $gcashReceipt = $customerReserve->gcashCheckoutReceipt;
         }
 
         $customerOrders = CustomerLOrder::where('custOrdering_id', $id)->where('orderDone', 'Yes')->get();
@@ -245,7 +247,7 @@ class RestaurantController extends Controller
 
         $finalReward = "None";
         $rewardDiscount = 0.00;
-        if($customerBook->rewardStatus == "Complete" && $customerQueue->rewardClaimed == "Yes"){
+        if($customerBook->rewardStatus == "Complete" && $customerBook->rewardClaimed == "Yes"){
             switch($customerBook->rewardType){
                 case "DSCN": 
                     $finalReward = "Discount $customerBook->rewardInput% in a Total Bill";
@@ -297,6 +299,7 @@ class RestaurantController extends Controller
             'subTotal' => $subTotal,
             'totalPrice' => $totalPrice,
             'mainTable' => $mainTable[0],
+            'gcashReceipt' => $gcashReceipt,
         ]);
 
     }
@@ -578,10 +581,268 @@ class RestaurantController extends Controller
         ]);
     }
     public function ltAppCustRParticularView($id){
-        return view('restaurant.liveTransactions.approvedCustomer.reserveView');
+        $restAcc_id = Session::get('loginId');
+        $customerReserve = CustomerReserve::where('id', $id)
+        ->where('restAcc_id', $restAcc_id)
+        ->where(function ($query) {
+            $query->where('status', "approved")
+            ->orWhere('status', "validation");
+        })->first();
+
+        $restaurant = RestaurantAccount::select('rNumberOfTables')->where('id', $restAcc_id)->first();
+        $totalTables = 0;
+        $customerOrderings = CustomerOrdering::where('restAcc_id', $restAcc_id)->where('status', 'eating')->get();
+        if(!$customerOrderings->isEmpty()){
+            foreach($customerOrderings as $customerOrdering){
+                if($customerOrdering->custBookType == "queue"){
+                    $customerQueue2 = CustomerQueue::select('numberOfTables')->where('id', $customerOrdering->custBook_id)->first();
+                    $totalTables += $customerQueue2->numberOfTables;
+                } else {
+                    $customerReserve2 = CustomerReserve::select('numberOfTables')->where('id', $customerOrdering->custBook_id)->first();
+                    $totalTables += $customerReserve2->numberOfTables;
+                }
+            }
+        }
+
+        $customerInfo = CustomerAccount::where('id', $customerReserve->customer_id)->first();
+        $orderSet = OrderSet::where('id', $customerReserve->orderSet_id)->first();
+    
+        $countBook1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('customer_id', $customerReserve->customer_id)->count();
+        $countBook2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('customer_id', $customerReserve->customer_id)->count();
+
+        $countCancelled1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('status', 'cancelled')->where('customer_id', $customerReserve->customer_id)->count();
+        $countCancelled2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('status', 'cancelled')->where('customer_id', $customerReserve->customer_id)->count();
+
+        $countNoShow1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('status', 'noShow')->where('customer_id', $customerReserve->customer_id)->count();
+        $countNoShow2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('status', 'noShow')->where('customer_id', $customerReserve->customer_id)->count();
+
+        $countRunaway1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('status', 'runaway')->where('customer_id', $customerReserve->customer_id)->count();
+        $countRunaway2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('status', 'runaway')->where('customer_id', $customerReserve->customer_id)->count();
+
+        $countQueues = $countBook1 + $countBook2;
+        $countCancelled = $countCancelled1 + $countCancelled2;
+        $countNoShow = $countNoShow1 + $countNoShow2;
+        $countRunaway = $countRunaway1 + $countRunaway2;
+
+        $bookTime = date('g:i a', strtotime($customerReserve->created_at));
+
+        $bookDate = explode('-', date('Y-m-d', strtotime($customerReserve->created_at)));
+        $month1 = $this->convertMonths($bookDate[1]);
+        $year1 = $bookDate[0];
+        $day1  = $bookDate[2];
+
+        $userSinceDate = explode('-', date('Y-m-d', strtotime($customerInfo->created_at)));
+        $month2 = $this->convertMonths($userSinceDate[1]);
+        $year2 = $userSinceDate[0];
+        $day2  = $userSinceDate[2];
+
+        $finalReward = "None";
+        $rewardDiscount = null;
+        if($customerReserve->rewardStatus == "Complete" && $customerReserve->rewardClaimed == "Yes"){
+            switch($customerReserve->rewardType){
+                case "DSCN": 
+                    $finalReward = "Discount $customerReserve->rewardInput% in a Total Bill";
+                    $rewardDiscount = ($customerReserve->numberOfPersons * $orderSet->orderSetPrice) * ($customerReserve->rewardInput / 100);
+                    break;
+                case "FRPE": 
+                    $finalReward = "Free $customerReserve->rewardInput person in a group";
+                    $rewardDiscount = $orderSet->orderSetPrice * $customerReserve->rewardInput;
+                    break;
+                case "HLF": 
+                    $finalReward = "Half in the group will be free";
+                    $rewardDiscount = ($customerReserve->numberOfPersons * $orderSet->orderSetPrice) / 2;
+                    break;
+                case "ALL": 
+                    $finalReward = "All people in the group will be free";
+                    $rewardDiscount = $customerReserve->numberOfPersons * $orderSet->orderSetPrice;
+                    break;
+                default: 
+                    $finalReward = "None";
+            }
+        }
+
+        $seniorDiscount = $orderSet->orderSetPrice * ($customerReserve->numberOfPwd * 0.2);
+        $childrenDiscount = 0.0;
+
+        $dateTime = date("Y-m-d H:i:s", strtotime("$customerReserve->reserveDate $customerReserve->reserveTime"));
+        $endTime = Carbon::parse($dateTime);
+        $currentTime = Carbon::now();
+
+        $rAppDiffSeconds = $endTime->diffInSeconds($currentTime);
+        $rAppDiffMinutes = $endTime->diffInMinutes($currentTime);
+        $rAppDiffHours = $endTime->diffInHours($currentTime);
+        $rAppDiffDays = $endTime->diffInDays($currentTime);
+
+
+        if($rAppDiffDays > 0){
+            if ($rAppDiffDays == 1){
+                $rAppDiffTime = "1";
+                $rAppDiffTimeLabel = "day left";
+            } else {
+                $rAppDiffTime = "$rAppDiffDays";
+                $rAppDiffTimeLabel = "days left";
+            }
+        } else if ($rAppDiffHours > 0){
+            if ($rAppDiffHours == 1){
+                $rAppDiffTime = "1";
+                $rAppDiffTimeLabel = "hour left";
+            } else {
+                $rAppDiffTime = "$rAppDiffHours";
+                $rAppDiffTimeLabel = "hours left";
+            }
+        } else if ($rAppDiffMinutes > 0){
+            if ($rAppDiffMinutes == 1){
+                $rAppDiffTime = "1";
+                $rAppDiffTimeLabel = "minute left";
+            } else {
+                $rAppDiffTime = "$rAppDiffMinutes";
+                $rAppDiffTimeLabel = "minutes left";
+            }
+        } else {
+            if ($rAppDiffSeconds == 1){
+                $rAppDiffTime = "1";
+                $rAppDiffTimeLabel = "second left";
+            } else {
+                $rAppDiffTime = "$rAppDiffSeconds";
+                $rAppDiffTimeLabel = "seconds left";
+            }
+        }
+
+        if($endTime < $currentTime){
+            $rAppDiffTime = 0;
+            $rAppDiffTimeLabel = "second left";
+        }
+
+        $remainingTables = $restaurant->rNumberOfTables - $totalTables;
+
+        $canValidate = false;
+        if(($rAppDiffTime <= 15 && ($rAppDiffTimeLabel == "minutes left" || $rAppDiffTimeLabel == "minute left")) || 
+            ($rAppDiffTime <= 60 && ($rAppDiffTimeLabel == "seconds left" || $rAppDiffTimeLabel == "second left")) ){
+            $canValidate = true;
+        }
+
+        $reserveDate = explode('-', $customerReserve->reserveDate);
+        $month3 = $this->convertMonths($reserveDate[1]);
+        $year3 = $reserveDate[0];
+        $day3  = $reserveDate[2];
+
+        $validationTimeLeft = null;
+        if($customerReserve->status == "validation"){
+            $currentTime = Carbon::now();
+            $rAppstartTime = Carbon::parse($customerReserve->validationDateTime);
+            $rAppDiffSeconds = $currentTime->diffInSeconds($rAppstartTime);
+            $rAppDiffMinutes = $currentTime->diffInMinutes($rAppstartTime);
+
+            $rAppDiffMinutes = 15 - $rAppDiffMinutes;
+            $rAppDiffSeconds = (15 * 60) - $rAppDiffSeconds;
+
+            if ($rAppDiffMinutes > 1){
+                $validationTimeLeft = "$rAppDiffMinutes minutes";
+            } else if ($rAppDiffMinutes == 1) {
+                if ($rAppDiffSeconds == 1){
+                    $validationTimeLeft = "1 second";
+                } else {
+                    $validationTimeLeft = "$rAppDiffSeconds seconds";
+                }
+            } else {
+                $validationTimeLeft = "0 second";
+            }
+        }
+
+        return view('restaurant.liveTransactions.approvedCustomer.reserveView',[
+            'customerReserve' => $customerReserve,
+            'customerInfo' => $customerInfo,
+            'countQueues' => $countQueues,
+            'countCancelled' => $countCancelled,
+            'countNoShow' => $countNoShow,
+            'countRunaway' => $countRunaway,
+            'bookTime' => $bookTime,
+            'bookDate' => $month1." ".$day1.", ".$year1,
+            'userSinceDate' => $month2." ".$day2.", ".$year2,
+            'finalReward' => $finalReward,
+            'orderSet' => $orderSet,
+            'rewardDiscount' => $rewardDiscount,
+            'seniorDiscount' => $seniorDiscount,
+            'childrenDiscount' => $childrenDiscount,
+            'remainingTables' => $remainingTables,
+            'validationTimeLeft' => $validationTimeLeft,
+            'rAppDiffTime' => $rAppDiffTime,
+            'rAppDiffTimeLabel' => $rAppDiffTimeLabel,
+            'reserveDate' => $month3." ".$day3.", ".$year3,
+            'canValidate' => $canValidate,
+        ]);
+        
     }
     public function ltAppCustRListView(){
-        return view('restaurant.liveTransactions.approvedCustomer.reserveList');
+        $restAcc_id = Session::get('loginId');
+
+        $customerReserves = CustomerReserve::where('restAcc_id', $restAcc_id)
+        ->where(function ($query) {
+            $query->where('status', "approved")
+            ->orWhere('status', "validation");
+        })
+        ->orderBy('reserveDate', 'ASC')
+        ->paginate(10);
+
+        $storeDate = array();
+        $storeDateTimeLeft = array();
+        $customerNames = array();
+        if(!$customerReserves->isEmpty()){
+            foreach ($customerReserves as $customerReserve){
+                $getCustName = CustomerAccount::select('name')->where('id', $customerReserve->customer_id)->first();
+                array_push($customerNames, $getCustName->name);
+
+                $reserveDate = explode('-', date('Y-m-d', strtotime($customerReserve->reserveDate)));
+                $month1 = $this->convertMonths($reserveDate[1]);
+                $year1 = $reserveDate[0];
+                $day1  = $reserveDate[2];
+                array_push($storeDate, "$month1 $day1, $year1");
+
+                $dateTime = date("Y-m-d H:i:s", strtotime("$customerReserve->reserveDate $customerReserve->reserveTime"));
+                $endTime = Carbon::parse($dateTime);
+                $currentTime = Carbon::now();
+
+                $rAppDiffSeconds = $endTime->diffInSeconds($currentTime);
+                $rAppDiffMinutes = $endTime->diffInMinutes($currentTime);
+                $rAppDiffHours = $endTime->diffInHours($currentTime);
+                $rAppDiffDays = $endTime->diffInDays($currentTime);
+
+                if($rAppDiffDays > 0){
+                    if ($rAppDiffDays == 1){
+                        $rAppDiffTime = "1 day left";
+                    } else {
+                        $rAppDiffTime = "$rAppDiffDays days left";
+                    }
+                } else if ($rAppDiffHours > 0){
+                    if ($rAppDiffHours == 1){
+                        $rAppDiffTime = "1 hour left";
+                    } else {
+                        $rAppDiffTime = "$rAppDiffHours hours left";
+                    }
+                } else if ($rAppDiffMinutes > 0){
+                    if ($rAppDiffMinutes == 1){
+                        $rAppDiffTime = "1 minute left";
+                    } else {
+                        $rAppDiffTime = "$rAppDiffMinutes minutes left";
+                    }
+                } else {
+                    if ($rAppDiffSeconds == 1){
+                        $rAppDiffTime = "1 second left";
+                    } else {
+                        $rAppDiffTime = "$rAppDiffSeconds seconds left";
+                    }
+                }
+                array_push($storeDateTimeLeft, $rAppDiffTime);
+            }
+        }
+
+        return view('restaurant.liveTransactions.approvedCustomer.reserveList',[
+            'customerReserves' => $customerReserves,
+            'customerNames' => $customerNames,
+            'storeDateTimeLeft' => $storeDateTimeLeft,
+            'storeDate' => $storeDate,
+        ]);
+
     }
     public function ltAppCustQParticularView($id){
         $restAcc_id = Session::get('loginId');
@@ -610,25 +871,22 @@ class RestaurantController extends Controller
             $customerInfo = CustomerAccount::where('id', $customerQueue->customer_id)->first();
             $orderSet = OrderSet::where('id', $customerQueue->orderSet_id)->first();
     
-            $countQueues = CustomerQueue::where('restAcc_id', $restAcc_id)
-                        ->where('status', 'approved')
-                        ->where('customer_id', $customerQueue->customer_id)
-                        ->count();
-    
-            $countCancelled = CustomerQueue::where('restAcc_id', $restAcc_id)
-                        ->where('status', 'cancelled')
-                        ->where('customer_id', $customerQueue->customer_id)
-                        ->count();
-    
-            $countNoShow = CustomerQueue::where('restAcc_id', $restAcc_id)
-                        ->where('status', 'noShow')
-                        ->where('customer_id', $customerQueue->customer_id)
-                        ->count();
-    
-            $countRunaway = CustomerQueue::where('restAcc_id', $restAcc_id)
-                        ->where('status', 'runaway')
-                        ->where('customer_id', $customerQueue->customer_id)
-                        ->count();
+            $countBook1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('customer_id', $customerQueue->customer_id)->count();
+            $countBook2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('customer_id', $customerQueue->customer_id)->count();
+
+            $countCancelled1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('status', 'cancelled')->where('customer_id', $customerQueue->customer_id)->count();
+            $countCancelled2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('status', 'cancelled')->where('customer_id', $customerQueue->customer_id)->count();
+
+            $countNoShow1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('status', 'noShow')->where('customer_id', $customerQueue->customer_id)->count();
+            $countNoShow2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('status', 'noShow')->where('customer_id', $customerQueue->customer_id)->count();
+
+            $countRunaway1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('status', 'runaway')->where('customer_id', $customerQueue->customer_id)->count();
+            $countRunaway2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('status', 'runaway')->where('customer_id', $customerQueue->customer_id)->count();
+
+            $countQueues = $countBook1 + $countBook2;
+            $countCancelled = $countCancelled1 + $countCancelled2;
+            $countNoShow = $countNoShow1 + $countNoShow2;
+            $countRunaway = $countRunaway1 + $countRunaway2;
     
             $bookTime = date('g:i a', strtotime($customerQueue->created_at));
     
@@ -882,10 +1140,165 @@ class RestaurantController extends Controller
 
 
     public function ltCustBookRParticularView($id){
-        return view('restaurant.liveTransactions.customerBooking.reserveView');
+        $restAcc_id = Session::get('loginId');
+        $customerReserve = CustomerReserve::where('id', $id)->where('restAcc_id', $restAcc_id)->where('status', 'pending')->first();
+        $customerInfo = CustomerAccount::where('id', $customerReserve->customer_id)->first();
+        $orderSet = OrderSet::where('id', $customerReserve->orderSet_id)->first();
+
+        $currentTime = Carbon::now();
+        $rAppstartTime = Carbon::parse($customerReserve->created_at);
+        $rAppDiffSeconds = $currentTime->diffInSeconds($rAppstartTime);
+        $rAppDiffMinutes = $currentTime->diffInMinutes($rAppstartTime);
+
+        $rAppDiffMinutes = 15 - $rAppDiffMinutes;
+        $rAppDiffSeconds = (15 * 60) - $rAppDiffSeconds;
+
+        if ($rAppDiffMinutes > 1){
+            $rAppDiffTime = "$rAppDiffMinutes minutes";
+        } else if ($rAppDiffMinutes == 1) {
+            if ($rAppDiffSeconds == 1){
+                $rAppDiffTime = "1 second";
+            } else {
+                $rAppDiffTime = "$rAppDiffSeconds seconds";
+            }
+        } else {
+            $rAppDiffTime = "0 second";
+        }
+
+        $countBook1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('customer_id', $customerReserve->customer_id)->count();
+        $countBook2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('customer_id', $customerReserve->customer_id)->count();
+
+        $countCancelled1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('status', 'cancelled')->where('customer_id', $customerReserve->customer_id)->count();
+        $countCancelled2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('status', 'cancelled')->where('customer_id', $customerReserve->customer_id)->count();
+
+        $countNoShow1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('status', 'noShow')->where('customer_id', $customerReserve->customer_id)->count();
+        $countNoShow2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('status', 'noShow')->where('customer_id', $customerReserve->customer_id)->count();
+
+        $countRunaway1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('status', 'runaway')->where('customer_id', $customerReserve->customer_id)->count();
+        $countRunaway2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('status', 'runaway')->where('customer_id', $customerReserve->customer_id)->count();
+
+        $countQueues = $countBook1 + $countBook2;
+        $countCancelled = $countCancelled1 + $countCancelled2;
+        $countNoShow = $countNoShow1 + $countNoShow2;
+        $countRunaway = $countRunaway1 + $countRunaway2;
+
+        $bookTime = date('g:i a', strtotime($customerReserve->created_at));
+
+        $bookDate = explode('-', date('Y-m-d', strtotime($customerReserve->created_at)));
+        $month1 = $this->convertMonths($bookDate[1]);
+        $year1 = $bookDate[0];
+        $day1  = $bookDate[2];
+
+        $userSinceDate = explode('-', date('Y-m-d', strtotime($customerInfo->created_at)));
+        $month2 = $this->convertMonths($userSinceDate[1]);
+        $year2 = $userSinceDate[0];
+        $day2  = $userSinceDate[2];
+        
+        $reserveDate = explode('-', $customerReserve->reserveDate);
+        $month3 = $this->convertMonths($reserveDate[1]);
+        $year3 = $reserveDate[0];
+        $day3  = $reserveDate[2];
+
+        $finalReward = "None";
+        $rewardDiscount = null;
+        if($customerReserve->rewardStatus == "Complete" && $customerReserve->rewardClaimed == "Yes"){
+            switch($customerReserve->rewardType){
+                case "DSCN": 
+                    $finalReward = "Discount $customerReserve->rewardInput% in a Total Bill";
+                    $rewardDiscount = ($customerReserve->numberOfPersons * $orderSet->orderSetPrice) * ($customerReserve->rewardInput / 100);
+                    break;
+                case "FRPE": 
+                    $finalReward = "Free $customerReserve->rewardInput person in a group";
+                    $rewardDiscount = $orderSet->orderSetPrice * $customerReserve->rewardInput;
+                    break;
+                case "HLF": 
+                    $finalReward = "Half in the group will be free";
+                    $rewardDiscount = ($customerReserve->numberOfPersons * $orderSet->orderSetPrice) / 2;
+                    break;
+                case "ALL": 
+                    $finalReward = "All people in the group will be free";
+                    $rewardDiscount = $customerReserve->numberOfPersons * $orderSet->orderSetPrice;
+                    break;
+                default: 
+                    $finalReward = "None";
+            }
+        }
+
+        $seniorDiscount = $orderSet->orderSetPrice * ($customerReserve->numberOfPwd * 0.2);
+        $childrenDiscount = 0.0;
+
+        return view('restaurant.liveTransactions.customerBooking.reserveView',[
+            'customerReserve' => $customerReserve,
+            'customerInfo' => $customerInfo,
+            'countQueues' => $countQueues,
+            'countCancelled' => $countCancelled,
+            'countNoShow' => $countNoShow,
+            'countRunaway' => $countRunaway,
+            'bookTime' => $bookTime,
+            'bookDate' => $month1." ".$day1.", ".$year1,
+            'userSinceDate' => $month2." ".$day2.", ".$year2,
+            'reserveDate' => $month3." ".$day3.", ".$year3,
+            'rAppDiffTime' => $rAppDiffTime,
+            'finalReward' => $finalReward,
+            'orderSet' => $orderSet,
+            'rewardDiscount' => $rewardDiscount,
+            'seniorDiscount' => $seniorDiscount,
+            'childrenDiscount' => $childrenDiscount,
+        ]);
     }
     public function ltCustBookRListView(){
-        return view('restaurant.liveTransactions.customerBooking.reserveList');
+        $restAcc_id = Session::get('loginId');
+        $customerNames = array();
+        $customerTimeLimits = array();
+        $currentTime = Carbon::now();
+
+        $customerReserves = CustomerReserve::where('restAcc_id', $restAcc_id)
+        ->where('status', 'pending')
+        ->orderBy('reserveDate', 'ASC')
+        ->paginate(10);
+
+        $storeResDate = array();
+        if(!$customerReserves->isEmpty()){
+            foreach ($customerReserves as $customerReserve){
+                $getCustName = CustomerAccount::select('name')->where('id', $customerReserve->customer_id)->first();
+                $bookDate = explode('-', date('Y-m-d', strtotime($customerReserve->reserveDate)));
+                $month1 = $this->convertMonths($bookDate[1]);
+                $year1 = $bookDate[0];
+                $day1  = $bookDate[2];
+
+                array_push($storeResDate, "$month1 $day1, $year1");
+                array_push($customerNames, $getCustName->name);
+                
+            }
+    
+            foreach ($customerReserves as $customerReserve){
+                $rAppstartTime = Carbon::parse($customerReserve->created_at);
+                $rAppDiffSeconds = $currentTime->diffInSeconds($rAppstartTime);
+                $rAppDiffMinutes = $currentTime->diffInMinutes($rAppstartTime);
+
+                $rAppDiffMinutes = 15 - $rAppDiffMinutes;
+                $rAppDiffSeconds = (15 * 60) - $rAppDiffSeconds;
+
+                if ($rAppDiffMinutes > 1){
+                    $rAppDiffTime = "$rAppDiffMinutes minutes";
+                } else if ($rAppDiffMinutes == 1) {
+                    if ($rAppDiffSeconds == 1){
+                        $rAppDiffTime = "1 second";
+                    } else {
+                        $rAppDiffTime = "$rAppDiffSeconds seconds";
+                    }
+                } else {
+                    $rAppDiffTime = "0 second";
+                }
+                array_push($customerTimeLimits, $rAppDiffTime);
+            }
+        }
+        return view('restaurant.liveTransactions.customerBooking.reserveList',[
+            'customerReserves' => $customerReserves,
+            'customerNames' => $customerNames,
+            'customerTimeLimits' => $customerTimeLimits,
+            'storeResDate' => $storeResDate,
+        ]);
     }
     public function ltCustBookQParticularView($id){
         $restAcc_id = Session::get('loginId');
@@ -913,25 +1326,24 @@ class RestaurantController extends Controller
             $rAppDiffTime = "0 second";
         }
 
-        $countQueues = CustomerQueue::where('restAcc_id', $restAcc_id)
-                    ->where('status', 'approved')
-                    ->where('customer_id', $customerQueue->customer_id)
-                    ->count();
+        
 
-        $countCancelled = CustomerQueue::where('restAcc_id', $restAcc_id)
-                    ->where('status', 'cancelled')
-                    ->where('customer_id', $customerQueue->customer_id)
-                    ->count();
+        $countBook1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('customer_id', $customerQueue->customer_id)->count();
+        $countBook2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('customer_id', $customerQueue->customer_id)->count();
 
-        $countNoShow = CustomerQueue::where('restAcc_id', $restAcc_id)
-                    ->where('status', 'noShow')
-                    ->where('customer_id', $customerQueue->customer_id)
-                    ->count();
+        $countCancelled1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('status', 'cancelled')->where('customer_id', $customerQueue->customer_id)->count();
+        $countCancelled2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('status', 'cancelled')->where('customer_id', $customerQueue->customer_id)->count();
 
-        $countRunaway = CustomerQueue::where('restAcc_id', $restAcc_id)
-                    ->where('status', 'runaway')
-                    ->where('customer_id', $customerQueue->customer_id)
-                    ->count();
+        $countNoShow1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('status', 'noShow')->where('customer_id', $customerQueue->customer_id)->count();
+        $countNoShow2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('status', 'noShow')->where('customer_id', $customerQueue->customer_id)->count();
+
+        $countRunaway1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('status', 'runaway')->where('customer_id', $customerQueue->customer_id)->count();
+        $countRunaway2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('status', 'runaway')->where('customer_id', $customerQueue->customer_id)->count();
+
+        $countQueues = $countBook1 + $countBook2;
+        $countCancelled = $countCancelled1 + $countCancelled2;
+        $countNoShow = $countNoShow1 + $countNoShow2;
+        $countRunaway = $countRunaway1 + $countRunaway2;
 
         $bookTime = date('g:i a', strtotime($customerQueue->created_at));
 
@@ -1601,7 +2013,6 @@ class RestaurantController extends Controller
             $customerQueue = CustomerQueue::where('id', $customerOrdering->custBook_id)->where('status', 'eating')->first();
             
             $eatingTime = date("H:i", strtotime($customerQueue->eatingDateTime));
-            // dd(date("H:i", strtotime("5:00 am")));
             $restaurant = RestaurantAccount::where('id', $customerQueue->restAcc_id)->first();
             //check muna kung may stamp card na inimplement yung restaurant
             $stampCard = StampCard::where('restAcc_id', $customerQueue->restAcc_id)->first();
@@ -1612,15 +2023,13 @@ class RestaurantController extends Controller
                     $custStampCard = CustomerStampCard::where('customer_id', $customerQueue->customer_id)
                     ->where('restAcc_id', $restaurant->id)
                     ->where('stampValidity', $stampCard->stampValidity)
-                    ->where('claimed', "No")
-                    ->where('status', "Incomplete")
                     ->first();
 
                     // CHECK MUNA KUNG ANO MGA NAGING REWARD
                     $storeTasks = array();
                     $storeDoneTasks = array();
                     if($custStampCard != null){
-                        //then iupdate mag update lang, mag add ng mga tasks
+                        //then iupdate mag update lang, mag add ng mga tasks done
                         $stampCardTasks = StampCardTasks::where('stampCards_id', $stampCard->id)->get();
                         foreach($stampCardTasks as $stampCardTask){
                             $task = RestaurantTaskList::where('id', $stampCardTask->restaurantTaskLists_id)->first();
@@ -1851,9 +2260,362 @@ class RestaurantController extends Controller
 
 
         } else {
+            //check muna kung clinaime nya
+            $customerReserve = CustomerReserve::where('id', $customerOrdering->custBook_id)->where('status', 'eating')->first();
+            
+            $eatingTime = date("H:i", strtotime($customerReserve->eatingDateTime));
+            $restaurant = RestaurantAccount::where('id', $customerReserve->restAcc_id)->first();
+            //check muna kung may stamp card na inimplement yung restaurant
+            $stampCard = StampCard::where('restAcc_id', $customerReserve->restAcc_id)->first();
+            if($stampCard != null){
+                //kung meron icompare yung validity date sa current date, kapag sobra meaning tapos na yon di na valid.
+                if($getDateToday <= $stampCard->stampValidity){
+                    //valid pa, so check kung yung validitiy at restaccid is same sa custoemr stamp card
+                    $custStampCard = CustomerStampCard::where('customer_id', $customerReserve->customer_id)
+                    ->where('restAcc_id', $restaurant->id)
+                    ->where('stampValidity', $stampCard->stampValidity)
+                    ->first();
+
+                    // CHECK MUNA KUNG ANO MGA NAGING REWARD
+                    $storeTasks = array();
+                    $storeDoneTasks = array();
+                    if($custStampCard != null){
+                        //then iupdate mag update lang, mag add ng mga tasks done
+                        $stampCardTasks = StampCardTasks::where('stampCards_id', $stampCard->id)->get();
+                        foreach($stampCardTasks as $stampCardTask){
+                            $task = RestaurantTaskList::where('id', $stampCardTask->restaurantTaskLists_id)->first();
+                            switch($task->taskCode){
+                                case "SPND":
+                                    if($customerReserve->totalPrice >= $task->taskInput){
+                                        array_push($storeDoneTasks, "Spend ".$task->taskInput." pesos in 1 visit only");
+                                    }
+                                    break;
+                                case "BRNG":
+                                    if($customerReserve->numberOfPersons >= $task->taskInput){
+                                        array_push($storeDoneTasks, "Bring ".$task->taskInput." friends in our store");
+                                    }
+                                    break;
+                                case "ORDR":
+                                    if($addOnQuantity >= $task->taskInput){
+                                        array_push($storeDoneTasks, "Order ".$task->taskInput." add on/s per visit");
+                                    }
+                                    break;
+                                case "VST":
+                                    array_push($storeDoneTasks, "Visit in our store");
+                                    break;
+                                case "FDBK":
+                                    array_push($storeTasks, "Give a feedback/review per visit");
+                                    break;
+                                case "PUGC":
+                                    if($customerReserve->gcashCheckoutReceipt != null){
+                                        array_push($storeDoneTasks, "Pay using gcash");
+                                    }
+                                    break;
+                                case "LUDN":
+                                    if("11:00" >= $eatingTime && "14:00" <= $eatingTime){
+                                        array_push($storeDoneTasks, "Eat during lunch/dinner hours");
+                                    } else if("17:00" >= $eatingTime && "22:00" <= $eatingTime){
+                                        array_push($storeDoneTasks, "Eat during lunch/dinner hours");
+                                    } else {}
+                                    break;
+                                default: 
+                            }
+                        }
+
+                        $currentStamp = $custStampCard->currentStamp + sizeof($storeDoneTasks);
+                        if($currentStamp >= $stampCard->stampCapacity){
+                            $stampStatus = "Complete";
+                            $currentStamp = $stampCard->stampCapacity;
+                        } else {
+                            $stampStatus = "Incomplete";
+                        }
+
+                        CustomerStampCard::where('id', $custStampCard->id)
+                        ->update([
+                            'status' => $stampStatus,
+                            'claimed' => "No",
+                            'currentStamp' => $currentStamp,
+                        ]);
+
+                        foreach($storeDoneTasks as $storeDoneTask){
+                            CustomerTasksDone::create([
+                                'customer_id' => $customerReserve->customer_id,
+                                'customerStampCard_id' => $custStampCard->id,
+                                'taskName' => $storeDoneTask,
+                                'taskAccomplishDate' => $getDateToday,
+                            ]);
+                        }
+
+                    } else {
+                        //mag add din pati sa mga tasks
+                        $stampCardTasks = StampCardTasks::where('stampCards_id', $stampCard->id)->get();
+                        foreach($stampCardTasks as $stampCardTask){
+                            $task = RestaurantTaskList::where('id', $stampCardTask->restaurantTaskLists_id)->first();
+                            switch($task->taskCode){
+                                case "SPND":
+                                    array_push($storeTasks, "Spend ".$task->taskInput." pesos in 1 visit only");
+                                    if($customerReserve->totalPrice >= $task->taskInput){
+                                        array_push($storeDoneTasks, "Spend ".$task->taskInput." pesos in 1 visit only");
+                                    }
+                                    break;
+                                case "BRNG":
+                                    array_push($storeTasks, "Bring ".$task->taskInput." friends in our store");
+                                    if($customerReserve->numberOfPersons >= $task->taskInput){
+                                        array_push($storeDoneTasks, "Bring ".$task->taskInput." friends in our store");
+                                    }
+                                    break;
+                                case "ORDR":
+                                    array_push($storeTasks, "Order ".$task->taskInput." add on/s per visit");
+                                    if($addOnQuantity >= $task->taskInput){
+                                        array_push($storeDoneTasks, "Order ".$task->taskInput." add on/s per visit");
+                                    }
+                                    break;
+                                case "VST":
+                                    array_push($storeTasks, "Visit in our store");
+                                    array_push($storeDoneTasks, "Visit in our store");
+                                    break;
+                                case "FDBK":
+                                    array_push($storeTasks, "Give a feedback/review per visit");
+                                    break;
+                                case "PUGC":
+                                    array_push($storeTasks, "Pay using gcash");
+                                    if($customerReserve->gcashCheckoutReceipt != null){
+                                        array_push($storeDoneTasks, "Pay using gcash");
+                                    }
+                                    break;
+                                case "LUDN":
+                                    // dd($time > date("H:i", strtotime("10:00 am")));
+                                    //11:00am - 2:00pm (lunch)
+                                    //5:00pm - 10:00pm (dinner)
+                                    array_push($storeTasks, "Eat during lunch/dinner hours");
+                                    if("11:00" >= $eatingTime && "14:00" <= $eatingTime){
+                                        array_push($storeDoneTasks, "Eat during lunch/dinner hours");
+                                    } else if("17:00" >= $eatingTime && "22:00" <= $eatingTime){
+                                        array_push($storeDoneTasks, "Eat during lunch/dinner hours");
+                                    } else {}
+                                    break;
+                                default: 
+                            }
+                        }
+
+                        $stampReward = RestaurantRewardList::where('restAcc_id', $customerReserve->restAcc_id)->where('id', $stampCard->stampReward_id)->first();
+
+                        switch($stampReward->rewardCode){
+                            case "DSCN": 
+                                $finalReward = "Discount $stampReward->rewardInput% in a Total Bill";
+                                break;
+                            case "FRPE": 
+                                $finalReward = "Free $stampReward->rewardInput person in a group";
+                                break;
+                            case "HLF": 
+                                $finalReward = "Half in the group will be free";
+                                break;
+                            case "ALL": 
+                                $finalReward = "All people in the group will be free";
+                                break;
+                            default: 
+                                $finalReward = "None";
+                        }
+
+                        $finalStampCapac = sizeof($storeDoneTasks);
+                        if(sizeof($storeDoneTasks) >= $stampCard->stampCapacity){
+                            $finalStampCapac = $stampCard->stampCapacity;
+                        }
+
+                        $custStampCardNew = CustomerStampCard::create([
+                            'customer_id' => $customerReserve->customer_id,
+                            'restAcc_id' => $customerReserve->restAcc_id,
+                            'status' => "Incomplete",
+                            'claimed' => "No",
+                            'currentStamp' => $finalStampCapac,
+                            'stampReward' => $finalReward,
+                            'stampValidity' => $stampCard->stampValidity,
+                            'stampCapacity' => $stampCard->stampCapacity,
+                        ]);
+
+                        foreach($storeTasks as $storeTask){
+                            CustomerStampTasks::create([
+                                'customerStampCard_id' => $custStampCardNew->id,
+                                'taskName' => $storeTask,
+                            ]);
+                        }
+
+                        foreach($storeDoneTasks as $storeDoneTask){
+                            CustomerTasksDone::create([
+                                'customer_id' => $customerReserve->customer_id,
+                                'customerStampCard_id' => $custStampCardNew->id,
+                                'taskName' => $storeDoneTask,
+                                'taskAccomplishDate' => $getDateToday,
+                            ]);
+                        }
+
+                    }
+                    
+                    if($customerReserve->rewardClaimed == "Yes"){
+                        CustomerStampCard::where('id', $custStampCard->id)
+                        ->update([
+                            'claimed' => "Yes",
+                        ]);
+                    }
+
+                }
+
+            }
+
+            CustomerOrdering::where('id', $id)->where('status', 'eating')
+            ->update([
+                'status' => "checkout",
+            ]);
+
+            CustomerReserve::where('id', $customerOrdering->custBook_id)->where('status', 'eating')
+            ->update([
+                'status' => "completed",
+                'checkoutStatus' => "customerFeedback",
+                'completeDateTime' => date("Y-m-d H:i:s"),
+            ]);
+
+            $notif = CustomerNotification::create([
+                'customer_id' => $customerReserve->customer_id,
+                'restAcc_id' => $customerReserve->restAcc_id,
+                'notificationType' => "Complete",
+                'notificationTitle' => "Your payment is successful! Thank you for dining! You may give us a rating and share your experience.",
+                'notificationDescription' => "$restaurant->rAddress, $restaurant->rCity",
+                'notificationStatus' => "Unread",
+            ]);
+    
+            $customerAccount = CustomerAccount::where('id', $customerReserve->customer_id)->first();
+            
+            $finalImageUrl = "";
+            if ($restaurant->rLogo == ""){
+                $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+            } else {
+                $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
+            }
+    
+            if($customerAccount != null){
+                $to = $customerAccount->deviceToken;
+                $notification = array(
+                    'title' => "$restaurant->rAddress, $restaurant->rCity",
+                    'body' => "Your payment is successful! Thank you for dining! You may give us a rating and share your experience.",
+                );
+                $data = array(
+                    'notificationType' => "Complete",
+                    'notificationId' => $notif->id,
+                    'notificationRLogo' => $finalImageUrl,
+                );
+                $this->sendFirebaseNotification($to, $notification, $data);
+            }
+    
+            Session::flash('completed');
+            return redirect('/restaurant/live-transaction/customer-ordering/list');
+
+
         }
     }
     public function ltCustOrderOSRunaway($id){
+        $getDateToday = date("Y-m-d");
+        $customerOrdering = CustomerOrdering::where('id', $id)->where('status', 'eating')->first();
+
+        if($customerOrdering->custBookType == "queue"){
+            $customerQueue = CustomerQueue::where('id', $customerOrdering->custBook_id)->where('status', 'eating')->first();
+            $restaurant = RestaurantAccount::where('id', $customerQueue->restAcc_id)->first();
+
+            CustomerOrdering::where('id', $id)->where('status', 'eating')
+            ->update([
+                'status' => "checkout",
+            ]);
+
+            CustomerQueue::where('id', $customerOrdering->custBook_id)->where('status', 'eating')
+            ->update([
+                'status' => "runaway",
+                'checkoutStatus' => "runaway",
+                'runawayDateTime' => date("Y-m-d H:i:s"),
+            ]);
+
+            $notif = CustomerNotification::create([
+                'customer_id' => $customerQueue->customer_id,
+                'restAcc_id' => $customerQueue->restAcc_id,
+                'notificationType' => "Runaway",
+                'notificationTitle' => "You have left without Paying",
+                'notificationDescription' => "$restaurant->rAddress, $restaurant->rCity",
+                'notificationStatus' => "Unread",
+            ]);
+            
+            $customerAccount = CustomerAccount::where('id', $customerQueue->customer_id)->first();
+
+            $finalImageUrl = "";
+            if ($restaurant->rLogo == ""){
+                $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+            } else {
+                $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
+            }
+
+            if($customerAccount != null){
+                $to = $customerAccount->deviceToken;
+                $notification = array(
+                    'title' => "$restaurant->rAddress, $restaurant->rCity",
+                    'body' => "You have left without Paying!",
+                );
+                $data = array(
+                    'notificationType' => "Runaway",
+                    'notificationId' => $notif->id,
+                    'notificationRLogo' => $finalImageUrl,
+                );
+                $this->sendFirebaseNotification($to, $notification, $data);
+            }
+
+            Session::flash('runaway');
+            return redirect('/restaurant/live-transaction/customer-ordering/list');
+        } else {
+            $customerReserve = CustomerReserve::where('id', $customerOrdering->custBook_id)->where('status', 'eating')->first();
+            $restaurant = RestaurantAccount::where('id', $customerReserve->restAcc_id)->first();
+            CustomerOrdering::where('id', $id)->where('status', 'eating')
+            ->update([
+                'status' => "checkout",
+            ]);
+
+            CustomerReserve::where('id', $customerOrdering->custBook_id)->where('status', 'eating')
+            ->update([
+                'status' => "runaway",
+                'checkoutStatus' => "runaway",
+                'runawayDateTime' => date("Y-m-d H:i:s"),
+            ]);
+
+            $notif = CustomerNotification::create([
+                'customer_id' => $customerReserve->customer_id,
+                'restAcc_id' => $customerReserve->restAcc_id,
+                'notificationType' => "Runaway",
+                'notificationTitle' => "You have left without Paying",
+                'notificationDescription' => "$restaurant->rAddress, $restaurant->rCity",
+                'notificationStatus' => "Unread",
+            ]);
+            
+            $customerAccount = CustomerAccount::where('id', $customerReserve->customer_id)->first();
+
+            $finalImageUrl = "";
+            if ($restaurant->rLogo == ""){
+                $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+            } else {
+                $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
+            }
+
+            if($customerAccount != null){
+                $to = $customerAccount->deviceToken;
+                $notification = array(
+                    'title' => "$restaurant->rAddress, $restaurant->rCity",
+                    'body' => "You have left without Paying!",
+                );
+                $data = array(
+                    'notificationType' => "Runaway",
+                    'notificationId' => $notif->id,
+                    'notificationRLogo' => $finalImageUrl,
+                );
+                $this->sendFirebaseNotification($to, $notification, $data);
+            }
+
+            Session::flash('runaway');
+            return redirect('/restaurant/live-transaction/customer-ordering/list');
+        }
 
     }
     public function ltCustOrderORRequestDone($id, $request_id){
@@ -1902,6 +2664,7 @@ class RestaurantController extends Controller
                 'childrenDiscount' => $request->childrenDiscount,
                 'additionalDiscount' => $request->additionalDiscount,
                 'promoDiscount' => $request->promoDiscount,
+                'offenseCharges' => $request->offenseCharges,
                 'totalPrice' => $request->totalPrice,
             ]);
         }
@@ -2025,10 +2788,190 @@ class RestaurantController extends Controller
         $request->session()->flash('walkInAdded');
         return redirect('/restaurant/live-transaction/approved-customer/queue');
     }
-    public function ltAppCustRAdmit($id){
+    public function ltAppCustRAdmit(Request $request, $id){
+        $restAcc_id = Session::get('loginId');
+        $request->validate([
+            'tableNumbers' => 'required',
+        ]);
+        $getDateToday = date('Y-m-d');
+
+        $customerReserve = CustomerReserve::where('id', $id)->where('restAcc_id', $restAcc_id)->where('reserveDate', $getDateToday)->first();
+        $restaurant = RestaurantAccount::select('rName', 'rBranch', 'rAddress', 'rCity', 'rLogo', 'id', 'rNumberOfTables')->where('id', $customerReserve->restAcc_id)->first();
+
+        $tableNumbers = explode(',', $request->tableNumbers);
+
+        $count = 0;
+        $storeNumbers = array();
+        foreach($tableNumbers as $tableNumber){
+            array_push($storeNumbers, (int)$tableNumber);
+            if (!is_numeric($tableNumber) || $tableNumber <= 0) {
+                $count++;
+            }
+        }
+        if($count > 0){
+            $request->session()->flash('inputCorrectFormat');
+            return redirect('/restaurant/live-transaction/approved-customer/reserve/'.$id);
+        } else {
+            if($customerReserve->numberOfTables != sizeOf($storeNumbers)){
+                $request->session()->flash('inputCorrectNumberOfTables');
+                return redirect('/restaurant/live-transaction/approved-customer/reserve/'.$id);
+            } else {
+                $countError = 0;
+                foreach($storeNumbers as $storeNumber){
+                    if($storeNumber > $restaurant->rNumberOfTables){
+                        $countError++;
+                    }
+                }
+                if($countError > 0){
+                    $request->session()->flash('inputCorrectTableNumber');
+                    return redirect('/restaurant/live-transaction/approved-customer/reserve/'.$id);
+                } else {
+                    $result = array_unique($storeNumbers);
+                    if(sizeOf($result) != sizeOf($storeNumbers)){
+                        $request->session()->flash('mustBeDiffrentTables');
+                        return redirect('/restaurant/live-transaction/approved-customer/reserve/'.$id);
+                    } else {
+                        $finalTableNumber = "";
+                        if(sizeOf($storeNumbers) == 1){
+                            $finalTableNumber = $storeNumbers[0];
+                        } else {
+                            for ($i=0; $i<count($storeNumbers); $i++){
+                                if($i == 0){
+                                    $finalTableNumber = $storeNumbers[$i].',';
+                                } else if ($i == count($storeNumbers)-1){
+                                    $finalTableNumber = $finalTableNumber.$storeNumbers[$i];
+                                } else {
+                                    $finalTableNumber = $finalTableNumber.$storeNumbers[$i].',';
+                                }
+                            }
+                        }
+            
+                        $count2 = 0;
+                        $customerTables = CustomerOrdering::where('restAcc_id', $restAcc_id)
+                        ->where('status', 'eating')
+                        ->where('orderingDate', $getDateToday)
+                        ->get();
+                        foreach ($customerTables as $customerTable){
+                            $customerTableNumbers = explode(',', $customerTable->tableNumbers);
+                            $result = array_intersect($storeNumbers, $customerTableNumbers);
+                            if($result != null){
+                                $count2++;
+                            }
+                        }
+                        if($count2 > 0){
+                            $request->session()->flash('tableExist');
+                            return redirect('/restaurant/live-transaction/approved-customer/reserve/'.$id);
+                        } else {
+                            // UPDATE NA NG DATA
+                            $restaurant = RestaurantAccount::select('rName', 'rBranch', 'rAddress', 'rCity', 'rLogo', 'id')->where('id', $customerReserve->restAcc_id)->first();
+                            
+                            if($customerReserve->name == null){
+                                $customer = CustomerAccount::where('id', $customerReserve->customer_id)->first();
+                                $finaleCustName = $customer->name;
+                            } else {
+                                $finaleCustName = $customerReserve->name;
+                            }
+
+                            CustomerOrdering::create([
+                                'custBook_id' => $id,
+                                'restAcc_id' => $customerReserve->restAcc_id,
+                                'custName' => $finaleCustName,
+                                'custBookType' => "reserve",
+                                'tableNumbers' => $finalTableNumber,
+                                'availableQrAccess' => $customerReserve->numberOfTables - 1,
+                                'grantedAccess' => "No",
+                                'status' => "eating",
+                                'orderingDate' => date('Y-m-d'),
+                            ]);
+
+                            CustomerReserve::where('id', $id)
+                            ->update([
+                                'status' => 'tableSettingUp',
+                                'tableSettingDateTime' => date('Y-m-d H:i:s'),
+                            ]);
+
+                            $notif = CustomerNotification::create([
+                                'customer_id' => $customerReserve->customer_id,
+                                'restAcc_id' => $customerReserve->restAcc_id,
+                                'notificationType' => "Table Setting Up",
+                                'notificationTitle' => "Your Table is Setting up",
+                                'notificationDescription' => "$restaurant->rAddress, $restaurant->rCity",
+                                'notificationStatus' => "Unread",
+                            ]);
+
+                            $finalImageUrl = "";
+                            if ($restaurant->rLogo == ""){
+                                $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+                            } else {
+                                $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
+                            }
+
+                            if($customer != null){
+                                $to = $customer->deviceToken;
+                                $notification = array(
+                                    'title' => "$restaurant->rAddress, $restaurant->rCity",
+                                    'body' => "Your Table is now being prepared",
+                                );
+                                $data = array(
+                                    'notificationType' => "Table Setting Up",
+                                    'notificationId' => $notif->id,
+                                    'notificationRLogo' => $finalImageUrl,
+                                );
+                                $this->sendFirebaseNotification($to, $notification, $data);
+                            }
+
+                            $request->session()->flash('admitted');
+                            return redirect('/restaurant/live-transaction/approved-customer/reserve');
+                        }
+                    }
+                }
+            }
+        }
     }
     public function ltAppCustRNoShow($id){
+        $customerReserve = CustomerReserve::where('id', $id)->first();
+        $restaurant = RestaurantAccount::select('rName', 'rBranch', 'rAddress', 'rCity', 'rLogo', 'id')->where('id', $customerReserve->restAcc_id)->first();
+        $customer = CustomerAccount::where('id', $customerReserve->customer_id)->first();
+
+        CustomerReserve::where('id', $id)
+        ->update([
+            'status' => 'noShow',
+        ]);
+
         
+        $notif = CustomerNotification::create([
+            'customer_id' => $customerReserve->customer_id,
+            'restAcc_id' => $customerReserve->restAcc_id,
+            'notificationType' => "No Show",
+            'notificationTitle' => "Your Booking is labelled as No Show",
+            'notificationDescription' => "$restaurant->rAddress, $restaurant->rCity",
+            'notificationStatus' => "Unread",
+        ]);
+
+        $finalImageUrl = "";
+        if ($restaurant->rLogo == ""){
+            $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+        } else {
+            $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
+        }
+        
+        if($customer != null){
+            $to = $customer->deviceToken;
+            $notification = array(
+                'title' => "$restaurant->rName, $restaurant->rBranch",
+                'body' => "Your Booking is labelled as No Show",
+            );
+            $data = array(
+                'notificationType' => "No Show",
+                'notificationId' => $notif->id,
+                'notificationRLogo' => $finalImageUrl,
+            );
+            $this->sendFirebaseNotification($to, $notification, $data);
+        }
+
+        Session::flash('noShow');
+        return redirect('/restaurant/live-transaction/approved-customer/reserve');
+
     }
     public function ltAppCustQAdmit(Request $request, $id){
         $restAcc_id = Session::get('loginId');
@@ -2037,8 +2980,8 @@ class RestaurantController extends Controller
         ]);
         $getDateToday = date('Y-m-d');
 
-        $restaurant = RestaurantAccount::select('rNumberOfTables')->where('id', $restAcc_id)->first();
         $customerQueue = CustomerQueue::where('id', $id)->where('restAcc_id', $restAcc_id)->where('queueDate', $getDateToday)->first();
+        $restaurant = RestaurantAccount::select('rName', 'rBranch', 'rAddress', 'rCity', 'rLogo', 'id', 'rNumberOfTables')->where('id', $customerQueue->restAcc_id)->first();
         
         $tableNumbers = explode(',', $request->tableNumbers);
         
@@ -2105,9 +3048,6 @@ class RestaurantController extends Controller
                             return redirect('/restaurant/live-transaction/approved-customer/queue/'.$id);
                         } else {
                             // UPDATE NA NG DATA
-                            $customerQueue = CustomerQueue::where('id', $id)->first();
-                            $restaurant = RestaurantAccount::select('rName', 'rBranch', 'rAddress', 'rCity', 'rLogo', 'id')->where('id', $customerQueue->restAcc_id)->first();
-                            
                             if($customerQueue->name == null){
                                 $customer = CustomerAccount::where('id', $customerQueue->customer_id)->first();
                                 $finaleCustName = $customer->name;
@@ -2154,7 +3094,7 @@ class RestaurantController extends Controller
                                 $to = $customer->deviceToken;
                                 $notification = array(
                                     'title' => "$restaurant->rAddress, $restaurant->rCity",
-                                    'body' => "Your Table is now preparing",
+                                    'body' => "Your Table is now being prepared",
                                 );
                                 $data = array(
                                     'notificationType' => "Table Setting Up",
@@ -2215,7 +3155,51 @@ class RestaurantController extends Controller
         }
 
         Session::flash('noShow');
-        return redirect('/restaurant/live-transaction/approved_customer/queue');
+        return redirect('/restaurant/live-transaction/approved-customer/queue');
+    }
+    public function ltAppCustRValidate($id){
+        $customerReserve = CustomerReserve::where('id', $id)->first();
+        $restaurant = RestaurantAccount::select('rName', 'rBranch', 'rAddress', 'rCity', 'rLogo', 'id')->where('id', $customerReserve->restAcc_id)->first();
+        $customer = CustomerAccount::where('id', $customerReserve->customer_id)->first();
+
+        CustomerReserve::where('id', $id)
+        ->update([
+            'status' => 'validation',
+            'validationDateTime' => date('Y-m-d H:i:s'),
+        ]);
+
+        $notif = CustomerNotification::create([
+            'customer_id' => $customerReserve->customer_id,
+            'restAcc_id' => $customerReserve->restAcc_id,
+            'notificationType' => "Validation",
+            'notificationTitle' => "Please go to the front desk to Confirm your Booking",
+            'notificationDescription' => "$restaurant->rAddress, $restaurant->rCity",
+            'notificationStatus' => "Unread",
+        ]);
+
+        $finalImageUrl = "";
+        if ($restaurant->rLogo == ""){
+            $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+        } else {
+            $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
+        }
+
+        if($customer != null){
+            $to = $customer->deviceToken;
+            $notification = array(
+                'title' => "$restaurant->rName, $restaurant->rBranch",
+                'body' => "Please go to the front desk to Confirm your Booking",
+            );
+            $data = array(
+                'notificationType' => "Validation",
+                'notificationId' => $notif->id,
+                'notificationRLogo' => $finalImageUrl,
+            );
+            $this->sendFirebaseNotification($to, $notification, $data);
+        }
+
+        Session::flash('validation');
+        return redirect('/restaurant/live-transaction/approved-customer/reserve/'.$id);
     }
     public function ltAppCustQValidate($id){
         $customerQueue = CustomerQueue::where('id', $id)->first();
@@ -2264,11 +3248,95 @@ class RestaurantController extends Controller
     }
 
 
-    public function ltCustBookRDecline($id){
-        
+    public function ltCustBookRDecline(Request $request, $id){
+        $customerReserve = CustomerReserve::where('id', $id)->first();
+        $restaurant = RestaurantAccount::select('id', 'rName', 'rBranch', 'rAddress', 'rCity', 'rLogo')->where('id', $customerReserve->restAcc_id)->first();
+        $customer = CustomerAccount::select('deviceToken')->where('id', $customerReserve->customer_id)->first();
+
+        CustomerReserve::where('id', $id)
+        ->update([
+            'status' => 'declined',
+            'declinedReason' => $request->reason,
+            'declinedDateTime' => date('Y-m-d H:i:s'),
+        ]);
+
+        $notif = CustomerNotification::create([
+            'customer_id' => $customerReserve->customer_id,
+            'restAcc_id' => $customerReserve->restAcc_id,
+            'notificationType' => "Declined",
+            'notificationTitle' => "Your Booking has been Declined!",
+            'notificationDescription' => "$restaurant->rAddress, $restaurant->rCity",
+            'notificationStatus' => "Unread",
+        ]);
+
+        $finalImageUrl = "";
+        if ($restaurant->rLogo == ""){
+            $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+        } else {
+            $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
+        }
+
+        if($customer != null){
+            $to = $customer->deviceToken;
+            $notification = array(
+                'title' => "Your Booking has been Declined!",
+                'body' => "$restaurant->rAddress, $restaurant->rCity",
+            );
+            $data = array(
+                'notificationType' => "Declined",
+                'notificationId' => $notif->id,
+                'notificationRLogo' => $finalImageUrl,
+            );
+            $this->sendFirebaseNotification($to, $notification, $data);
+        }
+
+        Session::flash('declined');
+        return redirect('/restaurant/live-transaction/customer-booking/reserve');
+
     }
     public function ltCustBookRApprove($id){
+        $customerReserve = CustomerReserve::where('id', $id)->first();
+        $restaurant = RestaurantAccount::select('rName', 'rBranch', 'rAddress', 'rCity', 'id', 'rLogo')->where('id', $customerReserve->restAcc_id)->first();
+        $customer = CustomerAccount::select('deviceToken')->where('id', $customerReserve->customer_id)->first();
+
+        CustomerReserve::where('id', $id)
+        ->update([
+            'status' => 'approved',
+            'approvedDateTime' => date('Y-m-d H:i:s'),
+        ]);
+
+        $notif = CustomerNotification::create([
+            'customer_id' => $customerReserve->customer_id,
+            'restAcc_id' => $customerReserve->restAcc_id,
+            'notificationType' => "Approved",
+            'notificationTitle' => "Your Booking has been Approved",
+            'notificationDescription' => "$restaurant->rAddress, $restaurant->rCity",
+            'notificationStatus' => "Unread",
+        ]);
+
+        $finalImageUrl = "";
+        if ($restaurant->rLogo == ""){
+            $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+        } else {
+            $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
+        }
         
+        if($customer != null){
+            $to = $customer->deviceToken;
+            $notification = array(
+                'title' => "$restaurant->rName, $restaurant->rBranch",
+                'body' => "Your Booking has been Approved",
+            );
+            $data = array(
+                'notificationType' => "Approved",
+                'notificationId' => $notif->id,
+                'notificationRLogo' => $finalImageUrl,
+            );
+            $this->sendFirebaseNotification($to, $notification, $data);
+        }
+
+        Session::flash('approved');
+        return redirect('/restaurant/live-transaction/customer-booking/reserve');
     }
     public function ltCustBookQDecline(Request $request, $id){
         $customerQueue = CustomerQueue::where('id', $id)->first();

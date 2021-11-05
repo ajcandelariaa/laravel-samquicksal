@@ -164,9 +164,7 @@
                             <p class="justify-self-end col-span-1 font-bold">{{ (number_format($customerBook->promoDiscount, 2, '.')) }} <span class="text-xs text-manageRestaurantSidebarColor font-normal">Php</span></p>
                         </div>
 
-
                         <hr class="my-3">
-
                         
                         <div class="mt-2">
                             <p class="col-span-1 text-manageRestaurantSidebarColor">Charges</p>
@@ -188,7 +186,11 @@
                 </div>
 
 
+                @if ($gcashReceipt == null)
 
+                @else
+                    
+                @endif
                 <div class="col-span-1 bg-manageFoodItemHeaderBgColor shadow-adminDownloadButton">
                     <div class="uppercase font-bold text-center text-lg py-2 bg-adminViewAccountHeaderColor2">GCASH PAYMENT</div>
                     <div class="py-5 w-11/12 mx-auto">
@@ -196,10 +198,17 @@
 
 
                         <div class="text-center">
-                            <button class="px-10 py-1 bg-manageRestaurantSidebarColorActive text-white mt-10">Download</button>
+                            <button class="px-10 py-1 w-72 bg-manageRestaurantSidebarColorActive text-white mt-10">Download</button>
+                        </div>
+                        
+                        <div class="text-center">
+                            <button class="px-10 py-1 w-72 bg-manageRestaurantSidebarColorActive text-white mt-10">Inssuficient Amount</button>
+                        </div>
+                        
+                        <div class="text-center">
+                            <button class="px-10 py-1 w-72 bg-manageRestaurantSidebarColorActive text-white mt-10">Invalid Receipt</button>
                         </div>
                     </div>
-
                 </div>
 
 

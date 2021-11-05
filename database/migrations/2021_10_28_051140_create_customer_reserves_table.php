@@ -19,6 +19,8 @@ class CreateCustomerReservesTable extends Migration
             $table->unsignedBigInteger('restAcc_id');
             $table->unsignedBigInteger('orderSet_id');
             $table->string('status');
+            $table->string('checkoutStatus')->nullable();
+            $table->string('gcashCheckoutReceipt')->nullable();
             $table->date('reserveDate');
             $table->string('reserveTime');
             $table->integer('numberOfPersons');
@@ -44,6 +46,7 @@ class CreateCustomerReservesTable extends Migration
             $table->dateTIme('tableSettingDateTime')->nullable();
             $table->dateTIme('eatingDateTime')->nullable();
             $table->dateTIme('checkoutDateTime')->nullable();
+            $table->dateTIme('runawayDateTime')->nullable();
             $table->dateTIme('completeDateTime')->nullable();
             $table->string('declinedReason')->nullable();
             $table->string('cancelReason')->nullable();

@@ -41,6 +41,7 @@ class CustomerQueue extends Model
         'tableSettingDateTime',
         'eatingDateTime',
         'checkoutDateTime',
+        'runawayDateTime',
         'completeDateTime',
         'declinedReason',
         'cancelReason',

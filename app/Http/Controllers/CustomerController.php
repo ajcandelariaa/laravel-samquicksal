@@ -476,7 +476,7 @@ class CustomerController extends Controller
         $promos = Promo::orderBy('id', 'DESC')->where('promoPosted', "Posted")->get();
 
         foreach ($promos as $promo){
-            $restaurantInfo = RestaurantAccount::select('id', 'rLogo', 'rAddress')->where('id', $promo->restAcc_id)->first();
+            $restaurantInfo = RestaurantAccount::select('id', 'rLogo', 'rAddress', 'rBranch', 'rCity')->where('id', $promo->restAcc_id)->first();
             $finalImageUrl = "";
             if ($restaurantInfo->rLogo == ""){
                 $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
@@ -497,7 +497,7 @@ class CustomerController extends Controller
         
             array_push($finalData, [
                 'restaurantImage' => $finalImageUrl,
-                'restaurantAddress' => $restaurantInfo->rAddress,
+                'restaurantAddress' => "$restaurantInfo->rAddress, $restaurantInfo->rBranch, $restaurantInfo->rCity",
                 'restaurantId' => $restaurantInfo->id,
                 'promoId' => $promo->id,
                 'promoTitle' => $promo->promoTitle,
@@ -557,50 +557,88 @@ class CustomerController extends Controller
             'orderSets' => $finalData,
         ]);
     }
-    public function getReservationDateAndTimeForm($id){
-        $unavailableDates = UnavailableDate::select('unavailableDatesDate')->where('restAcc_id', $id)->get();
+    public function getReservationDateAndTimeForm($rest_id){
+        $unavailableDates = UnavailableDate::select('unavailableDatesDate')->where('restAcc_id', $rest_id)->get();
         $currentDate = date('Y-m-d');
-        $storeDates = array();
 
+        $storeSevenDates = array();
+
+        // GET 7 days starting tomorrow
         for($i=0; $i<7; $i++){
             $currentDateTime2 = date('Y-m-d', strtotime($currentDate. ' + 1 days'));
-            array_push($storeDates, $currentDateTime2);
+            array_push($storeSevenDates, $currentDateTime2);
             $currentDate = $currentDateTime2;
         }
 
+        // IF MAY Sinet na unavailable date tas babanga sa 7 days then do this
         if(!$unavailableDates->isEmpty()){
             foreach ($unavailableDates as $unavailableDate){
-                if (($key = array_search($unavailableDate->unavailableDatesDate, $storeDates)) !== false) {
-                    unset($storeDates[$key]);
+                if (($key = array_search($unavailableDate->unavailableDatesDate, $storeSevenDates)) !== false) {
+                    unset($storeSevenDates[$key]);
                 }
             }
         }
 
-        $newStoreDates = array_values($storeDates);
-        $storeDays = array();
-        foreach ($newStoreDates as $newStoreDate){
-            array_push($storeDays, date('l', strtotime($newStoreDate)));
+        $modUDFStoreSevenDates = array_values($storeSevenDates);
+        $storeDaysBFModUD = array();
+        foreach ($modUDFStoreSevenDates as $modUDFStoreSevenDate){
+            array_push($storeDaysBFModUD, date('l', strtotime($modUDFStoreSevenDate)));
         }
+        
 
-        $finalSchedule = array();
-        $storeHours = StoreHour::where('restAcc_id', $id)->get();
-        foreach($storeHours as $storeHour){
-            $openingTime = date("g:i a", strtotime($storeHour->openingTime));
-            $closingTime = date("g:i a", strtotime($storeHour->closingTime));
-            foreach (explode(",", $storeHour->days) as $day){
-                array_push($finalSchedule, [
-                    'Day' => $this->convertDays($day),
-                    'Opening' => $openingTime,
-                    'Closing' => $closingTime,
-                ]);
+        $restAvailableDaysBFSH = array();
+        $restOPCLTime = array();
+        $restStoreHours = StoreHour::where('restAcc_id', $rest_id)->get();
+        foreach($restStoreHours as $restStoreHour){
+            foreach (explode(",", $restStoreHour->days) as $day){
+                $storeTempTime = array();
+                
+                $currentTime = $restStoreHour->openingTime;
+                $endTime = $restStoreHour->closingTime;
+
+                $time1 = strtotime($currentTime);
+                $time2 = strtotime($endTime);
+                $difference = round(abs($time2 - $time1) / 3600,2);
+
+                $count = 0;
+                while($count <= $difference-2){
+                    array_push($storeTempTime, date("g:i A", strtotime($currentTime)));
+                    $currentTime = date('H:i', strtotime($currentTime) + 60*60);
+                    $count++;
+                }
+
+                array_push($restAvailableDaysBFSH, $this->convertDays($day));
+                array_push($restOPCLTime, $storeTempTime);
             }
         }
 
+        $modDaysBFRAD = array();
+        $modDatesBFRAD = array();
+        $modTimeBFRAT = array();
+        for($i=0; $i<sizeOf($storeDaysBFModUD); $i++){
+            for($j=0; $j<sizeOf($restAvailableDaysBFSH); $j++){
+                if($restAvailableDaysBFSH[$j] == $storeDaysBFModUD[$i]){
+                    array_push($modDaysBFRAD, $restAvailableDaysBFSH[$j]);
+                    array_push($modDatesBFRAD, $modUDFStoreSevenDates[$i]);
+                    array_push($modTimeBFRAT, $restOPCLTime[$j]);
+                }
+            }
+        }
+
+        $storeTrueDates = array();
+        for($i=0; $i<sizeOf($modDatesBFRAD); $i++){
+            $trueDate = explode('-', $modDatesBFRAD[$i]);
+            $year = $trueDate[0];
+            $month = $this->convertMonths($trueDate[1]);
+            $day  = $trueDate[2];
+            array_push($storeTrueDates, "$month $day, $year ($modDaysBFRAD[$i])");
+        }
 
         return response()->json([
-            'storeDates' => $storeDates,
-            'newStoreDates' => $newStoreDates,
-            'storeDays' => $storeDays,
+            'modDaysBFRAD' => $modDaysBFRAD,
+            'modDatesBFRAD' => $modDatesBFRAD,
+            'storeTrueDates' => $storeTrueDates,
+            'modTimeBFRAT' => $modTimeBFRAT,
         ]);
     }
     
@@ -742,10 +780,23 @@ class CustomerController extends Controller
         
         $customerQueue = CustomerQueue::where('customer_id', $id)
         ->where('queueDate', $getDateToday)
+        ->where('status', '!=', 'cancelled')
+        ->where('status', '!=', 'declined')
+        ->where('status', '!=', 'noShow')
+        ->where('status', '!=', 'runaway')
+        ->where('status', '!=', 'completed')
         ->orderBy('created_at', 'DESC')
         ->first();
 
-        //need naten malaman kung eating ba sya para mag redirect sa orderingUI pero kung hindi pa sya eating like ongoing to approve pa lang sya then show livestatus
+        $customerReserve = CustomerReserve::where('customer_id', $id)
+        ->where('status', '!=', 'cancelled')
+        ->where('status', '!=', 'declined')
+        ->where('status', '!=', 'noShow')
+        ->where('status', '!=', 'runaway')
+        ->where('status', '!=', 'completed')
+        ->orderBy('created_at', 'DESC')
+        ->first();
+
         if($customerQueue != null){
             if($customerQueue->checkoutStatus == null){
                 if($customerQueue->status == "eating"){
@@ -771,6 +822,30 @@ class CustomerController extends Controller
                 }
             }
             
+        } else if ($customerReserve != null) { 
+            if($customerReserve->checkoutStatus == null){
+                if($customerReserve->status == "eating"){
+                    $status = "eating";
+                } else if ($customerReserve->status == "pending" 
+                            || $customerReserve->status == "approved" 
+                            || $customerReserve->status == "validation"
+                            || $customerReserve->status == "tableSettingUp") {
+                    $status = "onGoing";
+                } else {
+                    $status = "none";
+                }
+            } else {
+                if($customerReserve->checkoutStatus == "gcashCheckout" || $customerReserve->checkoutStatus == "gcashIncorretFormat"){
+                    $status = "gcashCheckout";
+                } else if($customerReserve->checkoutStatus == "gcashCheckoutValidation" 
+                || $customerReserve->checkoutStatus == "cashCheckoutValidation" || $customerReserve->checkoutStatus == "gcashInsufficientAmount"){
+                    $status = "checkoutValidation";
+                } else if($customerReserve->checkoutStatus == "customerFeedback"){
+                    $status = "customerFeedback";
+                } else {
+                    $status = "none";
+                }
+            }
         } else {
             $status = "none";
         }
@@ -859,7 +934,70 @@ class CustomerController extends Controller
             $to = $customer->deviceToken;
             $notification = array(
                 'title' => "$restaurant->rName, $restaurant->rBranch",
-                'body' => "Thank your for booking with us, please wait for your form to validate!",
+                'body' => "Thank your for booking with us, please wait for your form to be validated!",
+            );
+            $data = array(
+                'notificationType' => "Pending",
+                'notificationId' => $notif->id,
+                'notificationRLogo' => $finalImageUrl,
+            );
+            $this->sendFirebaseNotification($to, $notification, $data);
+        }
+
+        return response()->json([
+            'status' => "Success",
+        ]);
+    }
+    public function submitReserveForm(Request $request){
+        $restaurant = RestaurantAccount::select('id', 'rName', 'rBranch', 'rAddress', 'rCity', 'rLogo')->where('id', $request->restAcc_id)->first();
+        $customer = CustomerAccount::select('deviceToken')->where('id', $request->customer_id)->first();
+
+        CustomerReserve::create([
+            'customer_id' => $request->customer_id,
+            'restAcc_id' => $request->restAcc_id,
+            'orderSet_id' => $request->orderSet_id,
+            'status' => "pending",
+            'reserveDate' => $request->date,
+            'reserveTime' => $request->time,
+            'numberOfPersons' => $request->numberOfPersons,
+            'numberOfTables' => $request->numberOfTables,
+            'hoursOfStay' => $request->hoursOfStay,
+            'numberOfChildren' => $request->numberOfChildren,
+            'numberOfPwd' => $request->numberOfPwd,
+            'totalPwdChild' => $request->totalPwdChild,
+            'notes' => $request->notes,
+            'rewardStatus' => $request->rewardStatus,
+            'rewardType' => $request->rewardType,
+            'rewardInput' => $request->rewardInput,
+            'rewardClaimed' => $request->rewardClaimed,
+            'totalPrice' => $request->totalPrice,
+            'childrenDiscount' => 0,
+            'additionalDiscount' => 0.00,
+            'promoDiscount' => 0.00,
+            'offenseCharges' => 0.00,
+        ]);
+
+        $notif = CustomerNotification::create([
+            'customer_id' => $request->customer_id,
+            'restAcc_id' => $request->restAcc_id,
+            'notificationType' => "Pending",
+            'notificationTitle' => "You have booked at $restaurant->rName $restaurant->rBranch",
+            'notificationDescription' => "$restaurant->rAddress, $restaurant->rCity",
+            'notificationStatus' => "Unread",
+        ]);
+
+        $finalImageUrl = "";
+        if ($restaurant->rLogo == ""){
+            $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+        } else {
+            $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
+        }
+        
+        if($customer != null){
+            $to = $customer->deviceToken;
+            $notification = array(
+                'title' => "$restaurant->rName, $restaurant->rBranch",
+                'body' => "Thank your for booking with us, please wait for your form to be validated!",
             );
             $data = array(
                 'notificationType' => "Pending",
@@ -944,6 +1082,20 @@ class CustomerController extends Controller
         $currentTime = Carbon::now();
         $customerQueue = CustomerQueue::where('customer_id', $id)
         ->where('queueDate', $getDateToday)
+        ->where('status', '!=', 'cancelled')
+        ->where('status', '!=', 'declined')
+        ->where('status', '!=', 'noShow')
+        ->where('status', '!=', 'runaway')
+        ->where('status', '!=', 'completed')
+        ->orderBy('created_at', 'DESC')
+        ->first();
+
+
+        $customerReserve = CustomerReserve::where('customer_id', $id)
+        ->where('status', '!=', 'cancelled')
+        ->where('status', '!=', 'declined')
+        ->where('status', '!=', 'noShow')
+        ->where('status', '!=', 'runaway')
         ->where('status', '!=', 'completed')
         ->orderBy('created_at', 'DESC')
         ->first();
@@ -972,7 +1124,7 @@ class CustomerController extends Controller
                 } else {
                     $rAppDiffTime = 0;
                     $rAppDiffTimeLabel = "second";
-                    $liveStatusDescription = "You can no longer cancel. Please wait for the approval of your booking.";
+                    $liveStatusDescription = "You can no longer cancel. Please wait for the approval of your queueing.";
                 }
                 return response()->json([
                     'liveStatusHeader' => "Cancellation Time",
@@ -980,6 +1132,7 @@ class CustomerController extends Controller
                     'liveStatusNumber' => $rAppDiffTime,
                     'liveStatusNumberDesc' => $rAppDiffTimeLabel,
                     'liveStatusDescription' => $liveStatusDescription,
+                    'liveStatusBookType' => "queue",
                 ]);
             } else if ($customerQueue->status == "approved"){
                 $countCustomersApproved = CustomerQueue::where('status', "approved")
@@ -1016,6 +1169,7 @@ class CustomerController extends Controller
                     'liveStatusNumber' => $finalQueueNumber,
                     'liveStatusNumberDesc' => null,
                     'liveStatusDescription' => $desc,
+                    'liveStatusBookType' => "queue",
                 ]);
             } else if ($customerQueue->status == "validation") {
                 $rAppstartTime = Carbon::parse($customerQueue->validationDateTime);
@@ -1048,6 +1202,7 @@ class CustomerController extends Controller
                     'liveStatusNumber' => $rAppDiffTime,
                     'liveStatusNumberDesc' => $rAppDiffTimeLabel,
                     'liveStatusDescription' => $liveStatusDescription,
+                    'liveStatusBookType' => "queue",
                 ]);
             } else if ($customerQueue->status == "tableSettingUp") {
                 return response()->json([
@@ -1056,6 +1211,7 @@ class CustomerController extends Controller
                     'liveStatusNumber' => null,
                     'liveStatusNumberDesc' => null,
                     'liveStatusDescription' => "Your table is now setting up, please wait until you can access the ordering part",
+                    'liveStatusBookType' => "queue",
                 ]);
             } else {
                 return response()->json([
@@ -1064,6 +1220,151 @@ class CustomerController extends Controller
                     'liveStatusNumber' => null,
                     'liveStatusNumberDesc' => null,
                     'liveStatusDescription' => null,
+                    'liveStatusBookType' => null,
+                ]);
+            }
+        } else if ($customerReserve != null) { 
+            if($customerReserve->status == "pending"){
+                $rAppstartTime = Carbon::parse($customerReserve->created_at);
+                $rAppDiffSeconds = $currentTime->diffInSeconds($rAppstartTime);
+                $rAppDiffMinutes = $currentTime->diffInMinutes($rAppstartTime);
+
+                $rAppDiffMinutes = 15 - $rAppDiffMinutes;
+                $rAppDiffSeconds = (15 * 60) - $rAppDiffSeconds;
+
+                $liveStatusDescription = "Cancellation is void when time exceeds 15 minutes";
+                if ($rAppDiffMinutes > 1){
+                    $rAppDiffTime = $rAppDiffMinutes;
+                    $rAppDiffTimeLabel = "minutes";
+                } else if ($rAppDiffMinutes == 1) {
+                    if ($rAppDiffSeconds == 1){
+                        $rAppDiffTime = 1;
+                        $rAppDiffTimeLabel = "second";
+                    } else {
+                        $rAppDiffTime = $rAppDiffSeconds;
+                        $rAppDiffTimeLabel = "seconds";
+                    }
+                } else {
+                    $rAppDiffTime = 0;
+                    $rAppDiffTimeLabel = "second";
+                    $liveStatusDescription = "You can no longer cancel. Please wait for the approval of your reservation.";
+                }
+                return response()->json([
+                    'liveStatusHeader' => "Cancellation Time",
+                    'liveStatusBody' => null,
+                    'liveStatusNumber' => $rAppDiffTime,
+                    'liveStatusNumberDesc' => $rAppDiffTimeLabel,
+                    'liveStatusDescription' => $liveStatusDescription,
+                    'liveStatusBookType' => "reserve",
+                ]);
+            } else if ($customerReserve->status == "approved"){
+
+                $dateTime = date("Y-m-d H:i:s", strtotime("$customerReserve->reserveDate $customerReserve->reserveTime"));
+                $endTime = Carbon::parse($dateTime);
+                $currentTime = Carbon::now();
+
+                $rAppDiffSeconds = $endTime->diffInSeconds($currentTime);
+                $rAppDiffMinutes = $endTime->diffInMinutes($currentTime);
+                $rAppDiffHours = $endTime->diffInHours($currentTime);
+                $rAppDiffDays = $endTime->diffInDays($currentTime);
+
+                $cancellable = "no";
+                $desc = "Please be informed that your reservation is near.";
+                if($rAppDiffDays > 0){
+                    $cancellable = "yes";
+                    $desc = "You may no longer cancel a day before your reservation date.";
+                    if ($rAppDiffDays == 1){
+                        $rAppDiffTime = "1";
+                        $rAppDiffTimeLabel = "day left";
+                    } else {
+                        $rAppDiffTime = "$rAppDiffDays";
+                        $rAppDiffTimeLabel = "days left";
+                    }
+                } else if ($rAppDiffHours > 0){
+                    if ($rAppDiffHours == 1){
+                        $rAppDiffTime = "1";
+                        $rAppDiffTimeLabel = "hour left";
+                    } else {
+                        $rAppDiffTime = "$rAppDiffHours";
+                        $rAppDiffTimeLabel = "hours left";
+                    }
+                } else if ($rAppDiffMinutes > 0){
+                    if ($rAppDiffMinutes == 1){
+                        $rAppDiffTime = "1";
+                        $rAppDiffTimeLabel = "minute left";
+                    } else {
+                        $rAppDiffTime = "$rAppDiffMinutes";
+                        $rAppDiffTimeLabel = "minutes left";
+                    }
+                } else {
+                    if ($rAppDiffSeconds == 1){
+                        $rAppDiffTime = "1";
+                        $rAppDiffTimeLabel = "second left";
+                    } else {
+                        $rAppDiffTime = "$rAppDiffSeconds";
+                        $rAppDiffTimeLabel = "seconds left";
+                    }
+                }
+                
+                return response()->json([
+                    'liveStatusHeader' => "Reservation Status",
+                    'liveStatusBody' => $cancellable,
+                    'liveStatusNumber' => $rAppDiffTime,
+                    'liveStatusNumberDesc' => $rAppDiffTimeLabel,
+                    'liveStatusDescription' => $desc,
+                    'liveStatusBookType' => "reserve",
+                ]);
+
+            } else if ($customerReserve->status == "validation") {
+                $rAppstartTime = Carbon::parse($customerReserve->validationDateTime);
+                $rAppDiffSeconds = $currentTime->diffInSeconds($rAppstartTime);
+                $rAppDiffMinutes = $currentTime->diffInMinutes($rAppstartTime);
+
+                $rAppDiffMinutes = 15 - $rAppDiffMinutes;
+                $rAppDiffSeconds = (15 * 60) - $rAppDiffSeconds;
+
+                $liveStatusDescription = "Please be at the front desk within the 15 minutes time limit to confirm and validate your booking. If you do not show up within the given time, your book will be void.";
+
+                if ($rAppDiffMinutes > 1){
+                    $rAppDiffTime = $rAppDiffMinutes;
+                    $rAppDiffTimeLabel = "minutes";
+                } else if ($rAppDiffMinutes == 1) {
+                    if ($rAppDiffSeconds == 1){
+                        $rAppDiffTime = 1;
+                        $rAppDiffTimeLabel = "second";
+                    } else {
+                        $rAppDiffTime = $rAppDiffSeconds;
+                        $rAppDiffTimeLabel = "seconds";
+                    }
+                } else {
+                    $rAppDiffTime = 0;
+                    $rAppDiffTimeLabel = "second";
+                }
+                return response()->json([
+                    'liveStatusHeader' => "Confirmation Time",
+                    'liveStatusBody' => null,
+                    'liveStatusNumber' => $rAppDiffTime,
+                    'liveStatusNumberDesc' => $rAppDiffTimeLabel,
+                    'liveStatusDescription' => $liveStatusDescription,
+                    'liveStatusBookType' => "reserve",
+                ]);
+            } else if ($customerReserve->status == "tableSettingUp") {
+                return response()->json([
+                    'liveStatusHeader' => "Note",
+                    'liveStatusBody' => "Your Table is Now Setting Up",
+                    'liveStatusNumber' => null,
+                    'liveStatusNumberDesc' => null,
+                    'liveStatusDescription' => "Your table is now setting up, please wait until you can access the ordering part",
+                    'liveStatusBookType' => "reserve",
+                ]);
+            } else {
+                return response()->json([
+                    'liveStatusHeader' => null,
+                    'liveStatusBody' => null,
+                    'liveStatusNumber' => null,
+                    'liveStatusNumberDesc' => null,
+                    'liveStatusDescription' => null,
+                    'liveStatusBookType' => null,
                 ]);
             }
         } else {
@@ -1073,6 +1374,7 @@ class CustomerController extends Controller
                 'liveStatusNumber' => null,
                 'liveStatusNumberDesc' => null,
                 'liveStatusDescription' => null,
+                'liveStatusBookType' => null,
             ]);
         }
 
@@ -1081,48 +1383,97 @@ class CustomerController extends Controller
         $getDateToday = date("Y-m-d");
         $customerQueue = CustomerQueue::where('customer_id', $id)
         ->where('queueDate', $getDateToday)
-        ->where('status', '!=', 'completed')
+        ->where('status', 'pending')
+        ->orWhere('status', 'approved')
         ->orderBy('created_at', 'DESC')
         ->first();
-        
-        $restaurant = RestaurantAccount::select('id', 'rAddress', 'rCity', 'rLogo', 'rName', 'rBranch')->where('id', $customerQueue->restAcc_id)->first();
-        $customer = CustomerAccount::select('deviceToken')->where('id', $id)->first();
 
-        CustomerQueue::where('id', $customerQueue->id)
-        ->update([
-            'status' => 'cancelled',
-            'cancelDateTime' => date('Y-m-d H:i:s'),
-        ]);
+        $customerReserve = CustomerReserve::where('customer_id', $id)
+        ->where('status', 'pending')
+        ->orWhere('status', 'approved')
+        ->orderBy('created_at', 'DESC')
+        ->first();
 
-        $notif = CustomerNotification::create([
-            'customer_id' => $customerQueue->customer_id,
-            'restAcc_id' => $customerQueue->restAcc_id,
-            'notificationType' => "Cancelled",
-            'notificationTitle' => "You have Cancelled your Booking!",
-            'notificationDescription' => "$restaurant->rAddress, $restaurant->rCity",
-            'notificationStatus' => "Unread",
-        ]);
-
-        $finalImageUrl = "";
-        if ($restaurant->rLogo == ""){
-            $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
-        } else {
-            $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
-        }
-
-        
-        if($customer != null){
-            $to = $customer->deviceToken;
-            $notification = array(
-                'title' => "$restaurant->rName, $restaurant->rBranch",
-                'body' => "You have Cancelled your Booking, Thank you and we hope to see you again!",
-            );
-            $data = array(
+        if($customerQueue != null){
+            $restaurant = RestaurantAccount::select('id', 'rAddress', 'rCity', 'rLogo', 'rName', 'rBranch')->where('id', $customerQueue->restAcc_id)->first();
+            $customer = CustomerAccount::select('deviceToken')->where('id', $id)->first();
+    
+            CustomerQueue::where('id', $customerQueue->id)
+            ->update([
+                'status' => 'cancelled',
+                'cancelDateTime' => date('Y-m-d H:i:s'),
+            ]);
+    
+            $notif = CustomerNotification::create([
+                'customer_id' => $customerQueue->customer_id,
+                'restAcc_id' => $customerQueue->restAcc_id,
                 'notificationType' => "Cancelled",
-                'notificationId' => $notif->id,
-                'notificationRLogo' => $finalImageUrl,
-            );
-            $this->sendFirebaseNotification($to, $notification, $data);
+                'notificationTitle' => "You have Cancelled your Booking!",
+                'notificationDescription' => "$restaurant->rAddress, $restaurant->rCity",
+                'notificationStatus' => "Unread",
+            ]);
+    
+            $finalImageUrl = "";
+            if ($restaurant->rLogo == ""){
+                $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+            } else {
+                $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
+            }
+    
+            
+            if($customer != null){
+                $to = $customer->deviceToken;
+                $notification = array(
+                    'title' => "$restaurant->rName, $restaurant->rBranch",
+                    'body' => "You have Cancelled your Booking, Thank you and we hope to see you again!",
+                );
+                $data = array(
+                    'notificationType' => "Cancelled",
+                    'notificationId' => $notif->id,
+                    'notificationRLogo' => $finalImageUrl,
+                );
+                $this->sendFirebaseNotification($to, $notification, $data);
+            }
+        } else {
+            $restaurant = RestaurantAccount::select('id', 'rAddress', 'rCity', 'rLogo', 'rName', 'rBranch')->where('id', $customerReserve->restAcc_id)->first();
+            $customer = CustomerAccount::select('deviceToken')->where('id', $id)->first();
+    
+            CustomerReserve::where('id', $customerReserve->id)
+            ->update([
+                'status' => 'cancelled',
+                'cancelDateTime' => date('Y-m-d H:i:s'),
+            ]);
+    
+            $notif = CustomerNotification::create([
+                'customer_id' => $customerReserve->customer_id,
+                'restAcc_id' => $customerReserve->restAcc_id,
+                'notificationType' => "Cancelled",
+                'notificationTitle' => "You have Cancelled your Booking!",
+                'notificationDescription' => "$restaurant->rAddress, $restaurant->rCity",
+                'notificationStatus' => "Unread",
+            ]);
+    
+            $finalImageUrl = "";
+            if ($restaurant->rLogo == ""){
+                $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+            } else {
+                $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
+            }
+    
+            
+            if($customer != null){
+                $to = $customer->deviceToken;
+                $notification = array(
+                    'title' => "$restaurant->rName, $restaurant->rBranch",
+                    'body' => "You have Cancelled your Booking, Thank you and we hope to see you again!",
+                );
+                $data = array(
+                    'notificationType' => "Cancelled",
+                    'notificationId' => $notif->id,
+                    'notificationRLogo' => $finalImageUrl,
+                );
+                $this->sendFirebaseNotification($to, $notification, $data);
+            }
         }
 
         return response()->json([
@@ -1138,26 +1489,64 @@ class CustomerController extends Controller
         ->where('restAcc_id', $notification->restAcc_id)
         ->where('created_at', $notification->created_at)
         ->first();
+        
+        $customerReserve = CustomerReserve::where('customer_id', $cust_id)
+        ->where('restAcc_id', $notification->restAcc_id)
+        ->where('created_at', $notification->created_at)
+        ->first();
 
-        $orderSet = OrderSet::select('orderSetName')->where('id', $customerQueue->orderSet_id)->first();
+        if($customerQueue != null){
 
-        if($customerQueue->status == "pending"){
-            $viewable = "yes";
+            $orderSet = OrderSet::select('orderSetName')->where('id', $customerQueue->orderSet_id)->first();
+            if($customerQueue->status == "pending"){
+                $viewable = "yes";
+            } else {
+                $viewable = "no";
+            }
+    
+            return response()->json([
+                'orderName' => $orderSet->orderSetName,
+                'numberOfPersons' => $customerQueue->numberOfPersons,
+                'numberOfTables' => $customerQueue->numberOfTables,
+                'hoursOfStay' => $customerQueue->hoursOfStay,
+                'numberOfChildren' => $customerQueue->numberOfChildren,
+                'numberOfPwd' => $customerQueue->numberOfPwd,
+                'note' => $customerQueue->notes,
+                'restaurant' => "$restaurant->rName $restaurant->rBranch",
+                'date' => null,
+                'time' => null,
+                'statusViewable' => $viewable,
+            ]);
         } else {
-            $viewable = "no";
+
+            $orderSet = OrderSet::select('orderSetName')->where('id', $customerReserve->orderSet_id)->first();
+            if($customerReserve->status == "pending"){
+                $viewable = "yes";
+            } else {
+                $viewable = "no";
+            }
+
+            $bookDate = explode('-', $customerReserve->reserveDate);
+            $year = $bookDate[0];
+            $month = $this->convertMonths($bookDate[1]);
+            $day  = $bookDate[2];
+    
+            return response()->json([
+                'orderName' => $orderSet->orderSetName,
+                'numberOfPersons' => $customerReserve->numberOfPersons,
+                'numberOfTables' => $customerReserve->numberOfTables,
+                'hoursOfStay' => $customerReserve->hoursOfStay,
+                'numberOfChildren' => $customerReserve->numberOfChildren,
+                'numberOfPwd' => $customerReserve->numberOfPwd,
+                'note' => $customerReserve->notes,
+                'restaurant' => "$restaurant->rName $restaurant->rBranch",
+                'date' => "$month $day, $year",
+                'time' => $customerReserve->reserveTime,
+                'statusViewable' => $viewable,
+            ]);
         }
 
-        return response()->json([
-            'orderName' => $orderSet->orderSetName,
-            'numberOfPersons' => $customerQueue->numberOfPersons,
-            'numberOfTables' => $customerQueue->numberOfTables,
-            'hoursOfStay' => $customerQueue->hoursOfStay,
-            'numberOfChildren' => $customerQueue->numberOfChildren,
-            'numberOfPwd' => $customerQueue->numberOfPwd,
-            'note' => $customerQueue->notes,
-            'restaurant' => "$restaurant->rName $restaurant->rBranch",
-            'statusViewable' => $viewable,
-        ]);
+        
     }
     public function getNotificationCancelled($cust_id, $notif_id){
         $notification = CustomerNotification::where('id', $notif_id)->where('customer_id', $cust_id)->first();
@@ -1168,10 +1557,22 @@ class CustomerController extends Controller
         ->where('cancelDateTime', $notification->created_at)
         ->first();
 
-        return response()->json([
-            'cancelReason' => $customerQueue->cancelReason,
-            'restaurant' => "$restaurant->rName $restaurant->rBranch",
-        ]);
+        $customerReserve = CustomerReserve::where('customer_id', $cust_id)
+        ->where('restAcc_id', $notification->restAcc_id)
+        ->where('cancelDateTime', $notification->created_at)
+        ->first();
+
+        if($customerQueue != null){
+            return response()->json([
+                'cancelReason' => $customerQueue->cancelReason,
+                'restaurant' => "$restaurant->rName $restaurant->rBranch",
+            ]);
+        } else {
+            return response()->json([
+                'cancelReason' => $customerReserve->cancelReason,
+                'restaurant' => "$restaurant->rName $restaurant->rBranch",
+            ]);
+        }
     }
     public function getNotificationDeclined($cust_id, $notif_id){
         $notification = CustomerNotification::where('id', $notif_id)->where('customer_id', $cust_id)->first();
@@ -1181,11 +1582,23 @@ class CustomerController extends Controller
         ->where('restAcc_id', $notification->restAcc_id)
         ->where('declinedDateTime', $notification->created_at)
         ->first();
+        
+        $customerReserve = CustomerReserve::where('customer_id', $cust_id)
+        ->where('restAcc_id', $notification->restAcc_id)
+        ->where('declinedDateTime', $notification->created_at)
+        ->first();
 
-        return response()->json([
-            'declinedReason' => $customerQueue->declinedReason,
-            'restaurant' => "$restaurant->rName $restaurant->rBranch",
-        ]);
+        if($customerQueue != null){
+            return response()->json([
+                'declinedReason' => $customerQueue->declinedReason,
+                'restaurant' => "$restaurant->rName $restaurant->rBranch",
+            ]);
+        } else {
+            return response()->json([
+                'declinedReason' => $customerReserve->declinedReason,
+                'restaurant' => "$restaurant->rName $restaurant->rBranch",
+            ]);
+        }
     }
     public function getNotificationApproved($cust_id, $notif_id){
         $notification = CustomerNotification::where('id', $notif_id)->where('customer_id', $cust_id)->first();
@@ -1195,13 +1608,27 @@ class CustomerController extends Controller
         ->where('restAcc_id', $notification->restAcc_id)
         ->where('approvedDateTime', $notification->created_at)
         ->first();
+        
+        $customerReserve = CustomerReserve::where('customer_id', $cust_id)
+        ->where('restAcc_id', $notification->restAcc_id)
+        ->where('approvedDateTime', $notification->created_at)
+        ->first();
 
-        if($customerQueue->status == "approved"){
-            $viewable = "yes";
+        if($customerQueue != null){
+            if($customerQueue->status == "approved"){
+                $viewable = "yes";
+            } else {
+                $viewable = "no";
+            }
         } else {
-            $viewable = "no";
+            if($customerReserve->status == "approved"){
+                $viewable = "yes";
+            } else {
+                $viewable = "no";
+            }
         }
 
+        
         return response()->json([
             'restaurant' => "$restaurant->rName $restaurant->rBranch",
             'statusViewable' => $viewable,
@@ -1403,14 +1830,14 @@ class CustomerController extends Controller
 
         if(!$customerReserves->isEmpty()){
             foreach($customerReserves as $customerReserve){
-                $restaurant = RestaurantAccount::select('rLogo', 'rName', 'rAddress', 'rCity')->where('id', $customerReserve->restAcc_id)->first();
+                $restaurant = RestaurantAccount::select('id', 'rLogo', 'rName', 'rAddress', 'rCity')->where('id', $customerReserve->restAcc_id)->first();
                 
                 if ($restaurant->rLogo == ""){
                     $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
                 } else {
                     $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
                 }
-    
+
                 array_push($storeBookingHistory, [
                     'bookId' => $customerReserve->id,
                     'rLogo' => $finalImageUrl,
@@ -1498,6 +1925,8 @@ class CustomerController extends Controller
             return response()->json([
                 'bookDate' => "$month $day, $year",
                 'bookTime' => $bookTime,
+                'reserveDate' => null,
+                'reserveTime' => null,
                 'rName' => $restaurant->rName,
                 'rAddress' => "$restaurant->rAddress, $restaurant->rBranch, $restaurant->rCity",
                 'orderName' => $orderSet->orderSetName,
@@ -1515,7 +1944,7 @@ class CustomerController extends Controller
             $restaurant = RestaurantAccount::select('rName', 'rAddress', 'rBranch', 'rCity')->where('id', $customerReserve->restAcc_id)->first();
             $orderSet = OrderSet::select('orderSetName')->where('id', $customerReserve->orderSet_id)->where('restAcc_id', $customerReserve->restAcc_id)->first();
             
-            $bookDate = explode('-', $customerReserve->reserveDate);
+            $bookDate = explode('-', date("Y-m-d", strtotime($customerReserve->created_at->toTimeString())));
             $year = $bookDate[0];
             $month = $this->convertMonths($bookDate[1]);
             $day  = $bookDate[2];
@@ -1549,9 +1978,17 @@ class CustomerController extends Controller
                 }
             }
 
+            $reserveDate = explode('-', $customerReserve->reserveDate);
+            $year2 = $reserveDate[0];
+            $month2 = $this->convertMonths($reserveDate[1]);
+            $day2  = $reserveDate[2];
+            $reserveTime = date("g:i a", strtotime($customerReserve->reserveTime));
+
             return response()->json([
                 'bookDate' => "$month $day, $year",
                 'bookTime' => $bookTime,
+                'reserveDate' => "$month2 $day2, $year2",
+                'reserveTime' => $reserveTime,
                 'rName' => $restaurant->rName,
                 'rAddress' => "$restaurant->rAddress, $restaurant->rBranch, $restaurant->rCity",
                 'orderName' => $orderSet->orderSetName,
@@ -1573,6 +2010,7 @@ class CustomerController extends Controller
         $finalFoodSets = array();
         $orderSetId = null;
         $restAccId = null;
+
         if($customerQueue != null){
             $restAccId = $customerQueue->restAcc_id;
             $orderSetId = $customerQueue->orderSet_id;
@@ -1594,7 +2032,7 @@ class CustomerController extends Controller
                     'foodSetId' => 0,
                     'foodSetImage' => $this->ACCOUNT_NO_IMAGE_PATH."/add_ons_img.png",
                     'foodSetName' => "Add Ons",
-                    'foodSetDescription' => "Add ons contain price",
+                    'foodSetDescription' => "Includes extra charges on your total bill",
                 ]);
             }
         } else if($customerReserve != null){
@@ -1672,7 +2110,7 @@ class CustomerController extends Controller
              $countQuantity = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)->where('orderDone', "Processing")->sum('quantity');
 
              if($countQuantity >= 5){
-                $finalStatus = "Item max limit";
+                $finalStatus = "Maximum Quantity Reached";
              } else {
                 $customerOrderCount = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)
                 ->where('orderDone', "Processing")
@@ -1700,7 +2138,7 @@ class CustomerController extends Controller
                         'quantity' => $customerOrderCount->quantity + 1,
                         'price' => ($customerOrderCount->price / $customerOrderCount->quantity) * ($customerOrderCount->quantity + 1),
                     ]);
-                    $finalStatus = "Item Updated";
+                    $finalStatus = "Item Added";
                 }
              }
              
@@ -1709,7 +2147,7 @@ class CustomerController extends Controller
              $countQuantity = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)->where('orderDone', "Processing")->sum('quantity');
 
              if($countQuantity >= 5){
-                $finalStatus = "Item max limit";
+                $finalStatus = "Maximum Quantity Reached";
              } else {
                 $customerOrderCount = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)
                 ->where('orderDone', "Processing")
@@ -1737,7 +2175,7 @@ class CustomerController extends Controller
                         'quantity' => $customerOrderCount->quantity + 1,
                         'price' => $customerOrderCount->price * 2,
                     ]);
-                    $finalStatus = "Item Updated";
+                    $finalStatus = "Item Added";
                 }
              }
         } else {
@@ -1749,17 +2187,48 @@ class CustomerController extends Controller
         ]);
     }
     public function getOrderingOrders($cust_id){
-        $customerOrders = CustomerLOrder::where('cust_id', $cust_id)->where('orderDone', "Processing")->get();
+        $customerQueue = CustomerQueue::where('customer_id', $cust_id)->where('status', 'eating')->first();
+        $customerReserve = CustomerReserve::where('customer_id', $cust_id)->where('status', 'eating')->first();
         $finalCustomerOrders = array();
 
-        if(!$customerOrders->isEmpty()){
-            foreach ($customerOrders as $customerOrder){
-                array_push($finalCustomerOrders, [
-                    'custLOrder_id' => $customerOrder->id,
-                    'foodItemName' => $customerOrder->foodItemName,
-                    'quantity' => $customerOrder->quantity,
-                    'price' => $customerOrder->price,
-                ]);
+        if($customerQueue != null){
+            $customerOrdering = CustomerOrdering::where('custBook_id', $customerQueue->id)->first();
+            
+            $customerOrders = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)
+            ->where('cust_id', $cust_id)
+            ->where('orderDone', "Processing")
+            ->get();
+
+            if(!$customerOrders->isEmpty()){
+                foreach ($customerOrders as $customerOrder){
+                    array_push($finalCustomerOrders, [
+                        'custLOrder_id' => $customerOrder->id,
+                        'foodItemName' => $customerOrder->foodItemName,
+                        'quantity' => $customerOrder->quantity,
+                        'price' => $customerOrder->price,
+                    ]);
+                }
+            } else {
+                $finalCustomerOrders = null;
+            }
+        } else if ($customerReserve != null) {
+            $customerOrdering = CustomerOrdering::where('custBook_id', $customerReserve->id)->first();
+            $customerOrders = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)
+            ->where('cust_id', $cust_id)
+            ->where('orderDone', "Processing")
+            ->get();
+
+            if(!$customerOrders->isEmpty()){
+                foreach ($customerOrders as $customerOrder){
+                    array_push($finalCustomerOrders, [
+                        'custLOrder_id' => $customerOrder->id,
+                        'foodItemName' => $customerOrder->foodItemName,
+                        'quantity' => $customerOrder->quantity,
+                        'price' => $customerOrder->price,
+                    ]);
+                }
+            } else {
+                $finalCustomerOrders = null;
             }
         } else {
             $finalCustomerOrders = null;
@@ -1776,7 +2245,7 @@ class CustomerController extends Controller
             $getCustomerId = CustomerLOrder::where('id', $request->custLOrder_id)->first();
             $countQuantity = CustomerLOrder::where('cust_id', $getCustomerId->cust_id)->where('orderDone', "Processing")->sum('quantity');
             if($countQuantity >= 5){
-                $finalStatus = "Item max limit";
+                $finalStatus = "Maximum Quantity Reached";
             } else {
                 CustomerLOrder::where('id', $request->custLOrder_id)
                 ->where('orderDone', "Processing")
@@ -1784,20 +2253,19 @@ class CustomerController extends Controller
                     'quantity' => $getCustomerId->quantity + 1,
                     'price' => ($getCustomerId->price / $getCustomerId->quantity) * ($getCustomerId->quantity + 1),
                 ]);
-                $finalStatus = "Item Increased";
+                $finalStatus = "Quantity Updated";
             }
         } else {
             $getCustomerId = CustomerLOrder::where('id', $request->custLOrder_id)->first();
             if($getCustomerId->quantity == 1){
-                $finalStatus = "Minimum quantity is 1";
+                $finalStatus = "Minimum quantity cant be less than 1";
             } else {
-                CustomerLOrder::where('id', $request->custLOrder_id)
-                ->where('orderDone', "Processing")
+                CustomerLOrder::where('id', $request->custLOrder_id)->where('orderDone', "Processing")
                 ->update([
                     'quantity' => $getCustomerId->quantity - 1,
                     'price' => ($getCustomerId->price / $getCustomerId->quantity) * ($getCustomerId->quantity - 1),
                 ]);
-                $finalStatus = "Item Decreased";
+                $finalStatus = "Quantity Updated";
             }
         }
         return response()->json([
@@ -1817,15 +2285,42 @@ class CustomerController extends Controller
     }
     public function getOrderingAssistHist($cust_id){
         $finalAssistance = array();
-        $customerRequests = CustomerLRequest::where('cust_id', $cust_id)->get();
+        $customerQueue = CustomerQueue::where('customer_id', $cust_id)->where('status', 'eating')->first();
+        $customerReserve = CustomerReserve::where('customer_id', $cust_id)->where('status', 'eating')->first();
 
-        foreach($customerRequests as $customerRequest){
-            $time = date("g:i A", strtotime($customerRequest->created_at->format('H:i')));
+        if($customerQueue != null){
+            $customerOrdering = CustomerOrdering::where('custBook_id', $customerQueue->id)->where('custBookType', "queue")->first();
+            $customerRequests = CustomerLRequest::where('custOrdering_id', $customerOrdering->id)->where('cust_id', $cust_id)->get();
+
+            if($customerRequests->isEmpty()){
+                $finalAssistance = null;
+            } else {
+                foreach($customerRequests as $customerRequest){
+                    $time = date("g:i A", strtotime($customerRequest->created_at->format('H:i')));
+                    array_push($finalAssistance, [
+                        'requestType' => $customerRequest->request,
+                        'requestTime' => $time,
+                    ]);
+                }
+            }
+
+        } else if ($customerReserve != null){
+            $customerOrdering = CustomerOrdering::where('custBook_id', $customerReserve->id)->where('custBookType', "reserve")->first();
+            $customerRequests = CustomerLRequest::where('custOrdering_id', $customerOrdering->id)->where('cust_id', $cust_id)->get();
             
-            array_push($finalAssistance, [
-                'requestType' => $customerRequest->request,
-                'requestTime' => $time,
-            ]);
+            if($customerRequests->isEmpty()){
+                $finalAssistance = null;
+            } else {
+                foreach($customerRequests as $customerRequest){
+                    $time = date("g:i A", strtotime($customerRequest->created_at->format('H:i')));
+                    array_push($finalAssistance, [
+                        'requestType' => $customerRequest->request,
+                        'requestTime' => $time,
+                    ]);
+                }
+            }
+        } else {
+            $finalAssistance = null;
         }
         
         return response()->json($finalAssistance);
@@ -1838,30 +2333,112 @@ class CustomerController extends Controller
 
         if($customerQueue != null){
             $customerOrdering = CustomerOrdering::where('custBook_id', $customerQueue->id)->first();
-            $tableNumber = explode(',', $customerOrdering->tableNumbers);
+            
+            $countRequests = CustomerLRequest::where('custOrdering_id', $customerOrdering->id)
+            ->where('cust_id', $request->cust_id)
+            ->where('requestDone', "No")->count();
 
-            CustomerLRequest::create([
-                'custOrdering_id' => $customerOrdering->id,
-                'cust_id' => $request->cust_id,
-                'tableNumber' => $tableNumber[0],
-                'request' => $request->requestType,
-                'requestDone' => "No",
-                'requestSubmitDT' => date('Y-m-d H:i:s'),
-            ]);
-            $finalStatus = "Request sent! Kindly wait for the staff to come to your table. Thank you!";
+            if($countRequests >= 3){
+                $checkRequest = CustomerLRequest::where('custOrdering_id', $customerOrdering->id)
+                ->where('cust_id', $request->cust_id)
+                ->where('requestDone', "No")
+                ->orderBy('requestSubmitDT', "DESC")->limit(3)->last();
+
+                $endTime = Carbon::now();
+                $rAppstartTime = Carbon::parse($checkRequest->requestSubmitDT);
+                $rAppDiffMinutes = $endTime->diffInMinutes($rAppstartTime);
+                if ($rAppDiffMinutes > 0){
+                    if ($rAppDiffMinutes == 1){
+                        $rAppDiffTime = "1 minute ago";
+                    } else {
+                        $rAppDiffTime = "$rAppDiffMinutes minutes ago";
+                    }
+                }
+
+                if($rAppDiffTime >= 5){
+                    $finalStatus = "You have requested too many times, please try again after 5 mins (3 request only per 5 mins)";
+                } else {
+                    $tableNumber = explode(',', $customerOrdering->tableNumbers);
+    
+                    CustomerLRequest::create([
+                        'custOrdering_id' => $customerOrdering->id,
+                        'cust_id' => $request->cust_id,
+                        'tableNumber' => $tableNumber[0],
+                        'request' => $request->requestType,
+                        'requestDone' => "No",
+                        'requestSubmitDT' => date('Y-m-d H:i:s'),
+                    ]);
+                    $finalStatus = "Request sent! Kindly wait for the staff to come to your table. Thank you!";
+                }
+            } else {
+                $tableNumber = explode(',', $customerOrdering->tableNumbers);
+
+                CustomerLRequest::create([
+                    'custOrdering_id' => $customerOrdering->id,
+                    'cust_id' => $request->cust_id,
+                    'tableNumber' => $tableNumber[0],
+                    'request' => $request->requestType,
+                    'requestDone' => "No",
+                    'requestSubmitDT' => date('Y-m-d H:i:s'),
+                ]);
+                $finalStatus = "Request sent! Kindly wait for the staff to come to your table. Thank you!";
+            }
         } else if ($customerReserve != null){
             $customerOrdering = CustomerOrdering::where('custBook_id', $customerReserve->id)->first();
-            $tableNumber = explode(',', $customerOrdering->tableNumbers);
+            $countRequests = CustomerLRequest::where('custOrdering_id', $customerOrdering->id)
+            ->where('cust_id', $request->cust_id)
+            ->where('requestDone', "No")->count();
 
-            CustomerLRequest::create([
-                'custOrdering_id' => $customerOrdering->id,
-                'cust_id' => $request->cust_id,
-                'tableNumber' => $tableNumber[0],
-                'request' => $request->requestType,
-                'requestDone' => "No",
-                'requestSubmitDT' => date('Y-m-d H:i:s'),
-            ]);
-            $finalStatus = "Request sent! Kindly wait for the staff to come to your table. Thank you!";
+            if($countRequests >= 3){
+                $checkRequests = CustomerLRequest::where('custOrdering_id', $customerOrdering->id)
+                ->where('cust_id', $request->cust_id)
+                ->where('requestDone', "No")
+                ->orderBy('requestSubmitDT', "DESC")->limit(3)->get();
+
+                foreach($checkRequests as $checkRequest){
+                    $lastRequest = $checkRequest->requestSubmitDT;
+                }
+
+                $endTime = Carbon::now();
+                $rAppstartTime = Carbon::parse($lastRequest);
+                $rAppDiffMinutes = $endTime->diffInMinutes($rAppstartTime);
+                if ($rAppDiffMinutes >= 0){
+                    if ($rAppDiffMinutes == 1){
+                        $rAppDiffTime = 1;
+                    } else {
+                        $rAppDiffTime = "$rAppDiffMinutes";
+                    }
+                }
+
+                if($rAppDiffTime <= 5){
+                    $finalStatus = "You have requested too many times, please try again after 5 mins (3 request only per 5 mins)";
+                } else {
+                    $tableNumber = explode(',', $customerOrdering->tableNumbers);
+    
+                    CustomerLRequest::create([
+                        'custOrdering_id' => $customerOrdering->id,
+                        'cust_id' => $request->cust_id,
+                        'tableNumber' => $tableNumber[0],
+                        'request' => $request->requestType,
+                        'requestDone' => "No",
+                        'requestSubmitDT' => date('Y-m-d H:i:s'),
+                    ]);
+                    $finalStatus = "Request sent! Kindly wait for the staff to come to your table. Thank you!";
+                }
+                // $finalStatus = "$rAppDiffTime";
+            } else {
+                $tableNumber = explode(',', $customerOrdering->tableNumbers);
+
+                CustomerLRequest::create([
+                    'custOrdering_id' => $customerOrdering->id,
+                    'cust_id' => $request->cust_id,
+                    'tableNumber' => $tableNumber[0],
+                    'request' => $request->requestType,
+                    'requestDone' => "No",
+                    'requestSubmitDT' => date('Y-m-d H:i:s'),
+                ]);
+                $finalStatus = "Request sent! Kindly wait for the staff to come to your table. Thank you!";
+            }
         } else {
             $finalStatus = "Error";
         }
@@ -1878,7 +2455,7 @@ class CustomerController extends Controller
             $finalOrders = array();
             $orderSet = OrderSet::where('id', $customerQueue->orderSet_id)->first();
             $customerOrdering = CustomerOrdering::where('custBook_id', $customerQueue->id)->first();
-            $orders = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)->get();
+            $orders = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)->where('orderDone', "Yes")->get();
 
             $orderTotalPrice = 0.0;
             foreach ($orders as $order){
@@ -1950,7 +2527,7 @@ class CustomerController extends Controller
             $finalOrders = array();
             $orderSet = OrderSet::where('id', $customerReserve->orderSet_id)->first();
             $customerOrdering = CustomerOrdering::where('custBook_id', $customerReserve->id)->first();
-            $orders = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)->get();
+            $orders = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)->where('orderDone', "Yes")->get();
 
             $orderTotalPrice = 0.0;
             foreach ($orders as $order){
@@ -2034,13 +2611,13 @@ class CustomerController extends Controller
             $tableNumber = explode(',', $customerOrdering->tableNumbers);
 
             if($request->requestType == "Cash Payment"){
-                CustomerQueue::where('id', $customerOrdering->id)
+                CustomerQueue::where('id', $customerOrdering->custBook_id)
                 ->update([
                     'checkoutStatus' => 'cashCheckoutValidation',
                 ]);
                 $finalStatus = "Cash Payment";
             } else {
-                CustomerQueue::where('id', $customerOrdering->id)
+                CustomerQueue::where('id', $customerOrdering->custBook_id)
                 ->update([
                     'checkoutStatus' => 'gcashCheckout',
                 ]);
@@ -2073,7 +2650,7 @@ class CustomerController extends Controller
         }
 
         return response()->json([
-            'status' => $finalStatus,
+            'status' => $finalStatus
         ]);
     }
     public function getOrderingCheckoutStatus($cust_id){
@@ -2163,7 +2740,6 @@ class CustomerController extends Controller
                         ->where('restAcc_id', $restaurant->id)
                         ->where('stampValidity', $stampCard->stampValidity)
                         ->where('claimed', "No")
-                        ->where('status', "Incomplete")
                         ->first();
 
                         $storeTasks = array();
@@ -2284,12 +2860,6 @@ class CustomerController extends Controller
             }
         }
 
-        
-        // hanaping yung customerOrderingId
-        // icheck kung may stamp card ba ng task yung restaurant na yon
-        // ipasok tong rating sa database
-        //update customer queue or reserve
-        //push notification
         return response()->json([
             'status' => "sucess"
         ]);
@@ -2383,9 +2953,6 @@ class CustomerController extends Controller
 
             $customerOrdering = CustomerOrdering::where('custBook_id', $customerQueue->id)->where('custBookType', "queue")->first();
 
-
-
-
             $finalOrders = array();
             $orderSet = OrderSet::where('id', $customerQueue->orderSet_id)->first();
             $orders = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)->get();
@@ -2465,6 +3032,98 @@ class CustomerController extends Controller
                 'offenseCharge' => (number_format($customerQueue->offenseCharges, 2, '.')),
                 'totalPrice' => (number_format($totalPrice, 2, '.')),
             ]);
+        } else {
+            $customerReserve = CustomerReserve::where('id', $request->book_id)->where('customer_id', $request->cust_id)->first();
+            $restaurant = RestaurantAccount::select('rName', 'rAddress', 'rBranch', 'rCity')->where('id', $customerReserve->restAcc_id)->first();
+
+            $bookDate = explode('-', $customerReserve->reserveDate);
+            $year = $bookDate[0];
+            $month = $this->convertMonths($bookDate[1]);
+            $day  = $bookDate[2];
+            $checkIn = date("g:i a", strtotime($customerReserve->eatingDateTime));
+            $checkOut = date("g:i a", strtotime($customerReserve->completeDateTime));
+
+            $customerOrdering = CustomerOrdering::where('custBook_id', $customerReserve->id)->where('custBookType', "reserve")->first();
+
+            $finalOrders = array();
+            $orderSet = OrderSet::where('id', $customerReserve->orderSet_id)->first();
+            $orders = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)->get();
+
+            $orderTotalPrice = 0.0;
+            foreach ($orders as $order){
+                $orderTotalPrice += $order->price;
+                array_push($finalOrders, [
+                    'foodItemName' => $order->foodItemName,
+                    'quantity' => $order->quantity,
+                    'price' => (number_format($order->price, 2, '.'))
+                ]);
+            }
+
+            $finalReward = "None";
+            $rewardDiscount = 0.00;
+            if($customerReserve->rewardStatus == "Complete" && $customerReserve->rewardClaimed == "Yes"){
+                switch($customerReserve->rewardType){
+                    case "DSCN": 
+                        $finalReward = "Discount $customerReserve->rewardInput% in a Total Bill";
+                        $rewardDiscount = ($customerReserve->numberOfPersons * $orderSet->orderSetPrice) * ($customerReserve->rewardInput / 100);
+                        break;
+                    case "FRPE": 
+                        $finalReward = "Free $customerReserve->rewardInput person in a group";
+                        $rewardDiscount = $orderSet->orderSetPrice * $customerReserve->rewardInput;
+                        break;
+                    case "HLF": 
+                        $finalReward = "Half in the group will be free";
+                        $rewardDiscount = ($customerReserve->numberOfPersons * $orderSet->orderSetPrice) / 2;
+                        break;
+                    case "ALL": 
+                        $finalReward = "All people in the group will be free";
+                        $rewardDiscount = $customerReserve->numberOfPersons * $orderSet->orderSetPrice;
+                        break;
+                    default: 
+                        $finalReward = "None";
+                }
+            }
+
+            $seniorDiscount = $orderSet->orderSetPrice * ($customerReserve->numberOfPwd * 0.2);
+            $childrenDiscount = $orderSet->orderSetPrice * ($customerReserve->numberOfChildren * ($customerReserve->childrenDiscount / 100));
+            $subTotal = ($customerReserve->numberOfPersons * $orderSet->orderSetPrice) + $orderTotalPrice;
+
+            $totalPrice = $subTotal - (
+                $rewardDiscount + 
+                $seniorDiscount + 
+                $childrenDiscount + 
+                $customerReserve->additionalDiscount + 
+                $customerReserve->promoDiscount +
+                $customerReserve->offenseCharges 
+            );
+
+            return response()->json([
+                'bookDate' => "$month $day, $year",
+                'checkIn' => $checkIn,
+                'checkOut' => $checkOut,
+                'rName' => $restaurant->rName,
+                'rAddress' => "$restaurant->rAddress, $restaurant->rBranch, $restaurant->rCity",
+                'tableNumber' => $customerOrdering->tableNumbers,
+                'numberOfPersons' => $customerReserve->numberOfPersons,
+                'bookingType' => "Reserve",
+
+                'orderSetName' => $orderSet->orderSetName,
+                'numberOfPersons' => $customerReserve->numberOfPersons,
+                'orderSetPriceTotal' => (number_format($customerReserve->numberOfPersons * $orderSet->orderSetPrice, 2, '.')),
+                'orders' => $finalOrders,
+                'subtotal' => (number_format($subTotal, 2, '.')),
+                'numberOfPwd' => $customerReserve->numberOfPwd,
+                'pwdDiscount' =>  (number_format($seniorDiscount, 2, '.')),
+                'childrenPercentage' => $customerReserve->childrenDiscount,
+                'numberOfChildren' => $customerReserve->numberOfChildren,
+                'childrenDiscount' => (number_format($childrenDiscount, 2, '.')),
+                'promoDiscount' => (number_format($customerReserve->promoDiscount, 2, '.')),
+                'additionalDiscount' => (number_format($customerReserve->additionalDiscount, 2, '.')),
+                'rewardName' => $finalReward,
+                'rewardDiscount' => (number_format($rewardDiscount, 2, '.')),
+                'offenseCharge' => (number_format($customerReserve->offenseCharges, 2, '.')),
+                'totalPrice' => (number_format($totalPrice, 2, '.')),
+            ]);
         }
     }
     public function getRestaurantsReviews($rest_id){
@@ -2513,5 +3172,55 @@ class CustomerController extends Controller
             'countReviews' => $countReviews,
             'custReviews' => $finalCustReviews,
         ]);
+    }
+    public function getListOfRatedRestaurants(){
+        $finalRatedRestaurants = array();
+
+        $restaurants = RestaurantAccount::select('id', 'rName', 'rAddress', 'rBranch', 'rLogo')->get();
+
+        foreach($restaurants as $restaurant){
+            $finalImageUrl = "";
+            if ($restaurant->rLogo == ""){
+                $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+            } else {
+                $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
+            }
+
+            $restoRatings = CustRestoRating::where('restAcc_id', $restaurant->id)->get();
+            if(!$restoRatings->isEmpty()){
+                $countReviews = 0;
+                $sumRating = 0.0;
+
+                foreach($restoRatings as $restoRating){
+                    $countReviews++;
+                    $sumRating += $restoRating->rating;
+                }
+
+                $averageRating = $sumRating / $countReviews;
+                array_push($finalRatedRestaurants, [
+                    'restId' => $restaurant->id, 
+                    'rName' => $restaurant->rName, 
+                    'rAddress' => "$restaurant->rAddress, $restaurant->rBranch", 
+                    'rLogo' => $finalImageUrl, 
+                    'rRating' => "$averageRating", 
+                    'rCountReview' => "$countReviews",
+                ]);
+            } else {
+                array_push($finalRatedRestaurants, [
+                    'restId' => $restaurant->id, 
+                    'rName' => $restaurant->rName, 
+                    'rAddress' => "$restaurant->rAddress, $restaurant->rBranch", 
+                    'rLogo' => $finalImageUrl, 
+                    'rRating' => "0.0", 
+                    'rCountReview' => "0",
+                ]);
+            }
+        }
+
+        usort($finalRatedRestaurants, function($a, $b) {
+            return strtotime($b['rRating']) - strtotime($a['rRating']);
+        });
+
+        return response()->json($finalRatedRestaurants);
     }
 }

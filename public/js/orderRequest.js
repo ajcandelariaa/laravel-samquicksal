@@ -5,7 +5,7 @@ $('#btn-access').on('click', function(e){
 
     Swal.fire({
         title: 'Grant Access?',
-        text: 'Are you sure you want to grant an access to this customer?',
+        text: 'Are you sure you want to grant access to this customer?',
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#3085d6',

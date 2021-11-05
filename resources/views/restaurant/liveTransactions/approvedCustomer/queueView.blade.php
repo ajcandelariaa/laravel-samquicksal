@@ -161,14 +161,14 @@
                                 <p class="mt-2">No. of Persons: <span class="font-bold">{{ $customerQueue->numberOfPersons }}</span></p>
                                 <p class="mt-2">Senior Citizen/PWD: <span class="font-bold">{{ $customerQueue->numberOfPwd }}</span></p>
                                 <p class="mt-2">Reward: <span class="font-bold">{{ $finalReward }}</span></p>
-                                @if ($customerQueue->rewardClaimed != null)
-                                    <p class="mt-2">Reward Claimed: <span class="font-bold">{{ $customerQueue->rewardClaimed }}</span></p>
-                                @endif
                             </div>
                             <div>
                                 <p class="mt-2">Hours of Stay: <span class="font-bold">{{ $customerQueue->hoursOfStay }} hours</span></p>
                                 <p class="mt-2">No. of Tables: <span class="font-bold">{{ $customerQueue->numberOfTables }}</span></p>
                                 <p class="mt-2">Children (7 below): <span class="font-bold">{{ $customerQueue->numberOfChildren }}</span></p>
+                                @if ($customerQueue->rewardClaimed != null)
+                                    <p class="mt-2">Reward Claimed: <span class="font-bold">{{ $customerQueue->rewardClaimed }}</span></p>
+                                @endif
                             </div>
                         </div>
                         <div class="mt-5 border-multiStepBoxBorder w-10/12 p-4">

@@ -46,6 +46,7 @@ class CreateCustomerQueuesTable extends Migration
             $table->dateTIme('tableSettingDateTime')->nullable();
             $table->dateTIme('eatingDateTime')->nullable();
             $table->dateTIme('checkoutDateTime')->nullable();
+            $table->dateTIme('runawayDateTime')->nullable();
             $table->dateTIme('completeDateTime')->nullable();
             $table->string('declinedReason')->nullable();
             $table->string('cancelReason')->nullable();

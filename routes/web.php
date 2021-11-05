@@ -149,6 +149,7 @@ Route::middleware(['restaurantLoggedIn'])->group(function(){
     Route::get('/restaurant/live-transaction/approved-customer/reserve/{id}', [RestaurantController::class, 'ltAppCustRParticularView']);
     Route::get('/restaurant/live-transaction/approved-customer/reserve/no-show/{id}', [RestaurantController::class, 'ltAppCustRNoShow']);
     Route::post('/restaurant/live-transaction/approved-customer/reserve/admit/{id}', [RestaurantController::class, 'ltAppCustRAdmit']);
+    Route::get('/restaurant/live-transaction/approved-customer/reserve/validate/{id}', [RestaurantController::class, 'ltAppCustRValidate']);
     // -------CUSTOMER ORDERING------------ //
     Route::get('/restaurant/live-transaction/customer-ordering/list', [RestaurantController::class, 'ltCustOrderListView']);
     Route::get('/restaurant/live-transaction/customer-ordering/list/{id}/order-request', [RestaurantController::class, 'ltCustOrderORPartView']);

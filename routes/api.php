@@ -21,13 +21,14 @@ Route::get('/customer/test-restaurants', [CustomerController::class, 'restaurant
 
 
 Route::get('/customer/restaurants', [CustomerController::class, 'getListOfRestaurants']);
+Route::get('/customer/rated-restaurants', [CustomerController::class, 'getListOfRatedRestaurants']);
 Route::get('/customer/promos', [CustomerController::class, 'getListOfPromos']);
 Route::get('/customer/get-restaurants/about/{id}', [CustomerController::class, 'getRestaurantAboutInfo']);
 Route::get('/customer/get-restaurants/rewards/{id}', [CustomerController::class, 'getRestaurantsRewardsInfo']);
 Route::get('/customer/get-restaurants/reviews/{rest_id}', [CustomerController::class, 'getRestaurantsReviews']);
 Route::get('/customer/get-restaurants/promo/detail/{promoId}/{restaurantId}', [CustomerController::class, 'getRestaurantsPromoDetailInfo']);
 Route::get('/customer/get-restaurants/choose-order-set/{id}/{custId}', [CustomerController::class, 'getRestaurantChooseOrderSet']);
-Route::get('/customer/get-restaurants/get-date-time/{id}', [CustomerController::class, 'getReservationDateAndTimeForm']);
+Route::get('/customer/get-restaurants/get-date-time/{rest_id}', [CustomerController::class, 'getReservationDateAndTimeForm']);
 Route::get('/customer/get-restaurants/menu/{id}', [CustomerController::class, 'getRestaurantsMenuInfo']);
 Route::get('/customer/get-homepage-info/{id}', [CustomerController::class, 'getCustomerHomepageInfo']);
 Route::get('/customer/get-account-info/{id}', [CustomerController::class, 'getCustomerAccountInfo']);
@@ -73,6 +74,7 @@ Route::get('/customer/get-stamp-cards/details/{stamp_id}', [CustomerController::
 Route::post('/customer/register-customer', [CustomerController::class, 'registerCustomer']);
 Route::post('/customer/login-customer', [CustomerController::class, 'loginCustomer']);
 Route::post('/customer/submit-queue-form', [CustomerController::class, 'submitQueueForm']);
+Route::post('/customer/submit-reserve-form', [CustomerController::class, 'submitReserveForm']);
 Route::post('/customer/forgot-password', [CustomerController::class, 'forgotPassword']);
 Route::post('/customer/update-device-token', [CustomerController::class, 'updateDeviceToken']);
 

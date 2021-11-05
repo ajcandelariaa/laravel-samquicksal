@@ -94,8 +94,12 @@
     </section>
     @if (request()->is('restaurant/live-transaction/customer-booking/queue*'))
         <script type="text/javascript" src="{{ asset('js/queueView.js') }}"></script>
+    @elseif (request()->is('restaurant/live-transaction/approved-customer/queue*'))
+        <script type="text/javascript" src="{{ asset('js/queueView2.js') }}"></script>
     @elseif (request()->is('restaurant/live-transaction/customer-booking/reserve*'))
         <script type="text/javascript" src="{{ asset('js/reserveView.js') }}"></script>
+    @elseif (request()->is('restaurant/live-transaction/approved-customer/reserve*'))
+        <script type="text/javascript" src="{{ asset('js/reserveView2.js') }}"></script>
     @elseif (request()->is('restaurant/live-transaction/approved-customer/queue*'))
         <script type="text/javascript" src="{{ asset('js/queueView2.js') }}"></script>
     @elseif (request()->is('restaurant/live-transaction/customer-ordering/*'))
