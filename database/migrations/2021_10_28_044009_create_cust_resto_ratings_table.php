@@ -19,7 +19,7 @@ class CreateCustRestoRatingsTable extends Migration
             $table->unsignedBigInteger('restAcc_id');
             $table->unsignedBigInteger('custOrdering_id');
             $table->string('rating');
-            $table->string('comment');
+            $table->mediumText('comment');
             $table->string('anonymous');
             $table->foreign('customer_id')->references('id')->on('customer_accounts')->onDelete('cascade');
             $table->foreign('restAcc_id')->references('id')->on('restaurant_accounts')->onDelete('cascade');

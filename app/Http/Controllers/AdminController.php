@@ -207,6 +207,15 @@ class AdminController extends Controller
             'title' => "Restaurant Applicant View"
         ]);
     }
+    
+    public function restaurantApplicantApprovedView($id){
+        $applicant = RestaurantApplicant::where('id', $id)->first();
+        return view('admin.restaurant-applicant-approve', [
+            'applicant' => $applicant,
+            'title' => "Restaurant Applicant View"
+        ]);
+    }
+    
     public function restaurantAccountsView(Request $request){
         if(isset($_GET['q']) && !empty($_GET['q'])){
             $searchText = '%'.$_GET['q'].'%';
@@ -286,6 +295,15 @@ class AdminController extends Controller
         return redirect('/admin/login');
     }
     public function approveRestaurantApplicant(Request $request){
+        $request->validate([
+            'applicantLocLat' => 'required',
+            'applicantLocLong' => 'required',
+        ],
+        [
+            'applicantLocLat.required' => 'Latitude is required',
+            'applicantLocLong.required' => 'Longitude is required',
+        ]);
+        dd($request->applicantLocLat);
         $applicant = RestaurantApplicant::where('id', $request->applicantId)->first();
         $account = RestaurantAccount::select('emailAddress')->where('emailAddress', $applicant->emailAddress)->first();
 
@@ -357,6 +375,7 @@ class AdminController extends Controller
             mkdir('uploads');
             mkdir('uploads/customerAccounts');
             mkdir('uploads/customerAccounts/logo');
+            mkdir('uploads/customerAccounts/gcashQr');
             mkdir('uploads/restaurantAccounts');
             mkdir('uploads/restaurantAccounts/foodItem');
             mkdir('uploads/restaurantAccounts/foodSet');

@@ -74,8 +74,48 @@ $('#btn-complete').on('click', function(e){
     const href = $(this).attr('href')
 
     Swal.fire({
-        title: 'Complete?',
-        text: 'Are you sure this customer is done eating?',
+        title: 'End Service?',
+        text: 'Are you sure you are done serving this customer?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes'
+    }).then((result) =>{
+        if(result.value){
+            document.location.href = href;
+        }
+    })
+})
+
+// Invalid Receipt
+$('#btn-insAmount').on('click', function(e){
+    e.preventDefault();
+    const href = $(this).attr('href')
+
+    Swal.fire({
+        title: 'Inssuficient Amount?',
+        text: 'Are you sure this is inssuficient amount?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes'
+    }).then((result) =>{
+        if(result.value){
+            document.location.href = href;
+        }
+    })
+})
+
+// Invalid Receipt
+$('#btn-inReceipt').on('click', function(e){
+    e.preventDefault();
+    const href = $(this).attr('href')
+
+    Swal.fire({
+        title: 'Invalid Receipt?',
+        text: 'Are you sure gcash receipt is invalid?',
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#3085d6',

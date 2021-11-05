@@ -182,6 +182,7 @@ Route::middleware(['adminLoggedIn'])->group(function(){
     Route::get('/admin/restaurant-applicant/viewFile/{id}/{filename}', [AdminController::class, 'restaurantApplicantViewFile']);
     Route::get('/admin/restaurant-account/viewFile/{id}/{filename}', [AdminController::class, 'restaurantAccountViewFile']);
     Route::get('/admin/restaurant-applicants/{id}', [AdminController::class, 'restaurantApplicantView']);
+    Route::get('/admin/restaurant-applicants/{id}/approved', [AdminController::class, 'restaurantApplicantApprovedView']);
     Route::get('/admin/restaurant-applicants/delete/{id}', [AdminController::class, 'deleteRestaurantApplicant']);
     Route::get('/admin/restaurant-accounts', [AdminController::class, 'restaurantAccountsView']);
     Route::get('/admin/restaurant-accounts/{id}', [AdminController::class, 'restaurantAccountView']);

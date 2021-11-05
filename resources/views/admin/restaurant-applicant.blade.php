@@ -31,7 +31,8 @@
             <div class="container w-11/12 mx-auto mb-10">
                 <div class="mt-10 w-full flex justify-end gap-x-4">
                     <button id="btn-declined" class="text-sm bg-declineButton rounded-md py-2 px-7 hover:bg-yellow-400 shadow-adminDownloadButton">Decline</button>
-                    <button id="btn-approved" class="text-sm bg-approveButton rounded-md py-2 px-7 hover:bg-green-400 shadow-adminDownloadButton">Approve</button>
+                    {{-- <button id="btn-approved" class="text-sm bg-approveButton rounded-md py-2 px-7 hover:bg-green-400 shadow-adminDownloadButton">Approve</button> --}}
+                    <a href="/admin/restaurant-applicants/{{ $applicant->id }}/approved" class="text-sm bg-approveButton rounded-md py-2 px-7 hover:bg-green-400 shadow-adminDownloadButton">Approve</a>
                 </div>
             </div>
 
@@ -93,7 +94,7 @@
             <div class="popup2">
                 <div class="close-btn2"><i class="fas fa-times"></i></div>
                 <h1 class="mt-2 text-xl font-bold mb-10">Please enter the address to locate the restaurant </h1>
-                <p>Restaurant Address: <span class="font-semibold">{{ $applicant->rAddress.', '.$applicant->rCity.', '.$applicant->rState.', '.$applicant->rCountry }}</span></p>
+                <p>Restaurant Address: <span class="font-semibold">{{ $applicant->rAddress.', '.$applicant->rBranch.', '.$applicant->rCity.', '.$applicant->rState.', '.$applicant->rCountry }}</span></p>
                 <form action="/admin/restaurant-applicants/approve" method="POST" id='approvedForm'>
                     @csrf
                     <input type="text" name="applicantId" hidden value="{{ $applicant->id }}">
@@ -104,11 +105,15 @@
                             <label>Re-enter Address: </label>
                             <input type="text" name="inputtedAddress" id="inputtedAddress" class="ml-2 border border-gray-300 focus:border-black rounded-md px-2 text-sm text-gray-700 focus:outline-none">
                         </div>
-                        <p class="text-multiStepBoxColor col-span-1 mt-2">Latitude: <span class="ml-3">41°24'12.2"N 2°10'26.5"E</span></p>
-                        <p class="text-multiStepBoxColor col-span-1 mt-2">Longitude: <span class="ml-3">41°24'12.2"N 2°10'26.5"E</span></p>
+                        <p class="text-multiStepBoxColor col-span-1 mt-2">Latitude: <span class="ml-3">14.601021</span></p>
+                        <p class="text-multiStepBoxColor col-span-1 mt-2">Longitude: <span class="ml-3">120.990050</span></p>
                     </div>
                     
-                    <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3860.911375538337!2d120.9864360152883!3d14.604124180904545!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3397c9f8b14eb259%3A0xad4d12caac9a068e!2sFEU%20Institute%20of%20Technology!5e0!3m2!1sen!2sae!4v1632310147062!5m2!1sen!2sae" allowfullscreen="" loading="lazy" class="w-full h-52 border-0"></iframe>
+                    <div id="map"></div>
+                        <div id="infowindow-content">
+                            <span id="place-name" class="title"></span><br/>
+                            <span id="place-address"></span>
+                        </div>
                     <div class="text-center mb-5 mt-5">
                         <button class="text-sm bg-submitButton rounded-lg py-1 px-7 hover:bg-btnHoverColor shadow-adminDownloadButton text-white">Submit</button>
                     </div>

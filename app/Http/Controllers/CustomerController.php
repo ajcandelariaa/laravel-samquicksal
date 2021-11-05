@@ -730,6 +730,7 @@ class CustomerController extends Controller
                 mkdir('uploads');
                 mkdir('uploads/customerAccounts');
                 mkdir('uploads/customerAccounts/logo');
+                mkdir('uploads/customerAccounts/gcashQr');
                 mkdir('uploads/restaurantAccounts');
                 mkdir('uploads/restaurantAccounts/foodItem');
                 mkdir('uploads/restaurantAccounts/foodSet');
@@ -784,7 +785,6 @@ class CustomerController extends Controller
         ->where('status', '!=', 'declined')
         ->where('status', '!=', 'noShow')
         ->where('status', '!=', 'runaway')
-        ->where('status', '!=', 'completed')
         ->orderBy('created_at', 'DESC')
         ->first();
 
@@ -793,7 +793,6 @@ class CustomerController extends Controller
         ->where('status', '!=', 'declined')
         ->where('status', '!=', 'noShow')
         ->where('status', '!=', 'runaway')
-        ->where('status', '!=', 'completed')
         ->orderBy('created_at', 'DESC')
         ->first();
 
@@ -2106,7 +2105,7 @@ class CustomerController extends Controller
 
         $finalStatus = "";
         if($customerQueue != null){
-             $customerOrdering = CustomerOrdering::where('custBook_id', $customerQueue->id)->first();
+             $customerOrdering = CustomerOrdering::where('custBook_id', $customerQueue->id)->where('custBookType', 'queue')->first();
              $countQuantity = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)->where('orderDone', "Processing")->sum('quantity');
 
              if($countQuantity >= 5){
@@ -2143,7 +2142,7 @@ class CustomerController extends Controller
              }
              
         } else if ($customerReserve != null){
-            $customerOrdering = CustomerOrdering::where('custBook_id', $customerReserve->id)->first();
+            $customerOrdering = CustomerOrdering::where('custBook_id', $customerReserve->id)->where('custBookType', 'reserve')->first();
              $countQuantity = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)->where('orderDone', "Processing")->sum('quantity');
 
              if($countQuantity >= 5){
@@ -2192,7 +2191,7 @@ class CustomerController extends Controller
         $finalCustomerOrders = array();
 
         if($customerQueue != null){
-            $customerOrdering = CustomerOrdering::where('custBook_id', $customerQueue->id)->first();
+            $customerOrdering = CustomerOrdering::where('custBook_id', $customerQueue->id)->where('custBookType', 'queue')->first();
             
             $customerOrders = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)
             ->where('cust_id', $cust_id)
@@ -2212,7 +2211,7 @@ class CustomerController extends Controller
                 $finalCustomerOrders = null;
             }
         } else if ($customerReserve != null) {
-            $customerOrdering = CustomerOrdering::where('custBook_id', $customerReserve->id)->first();
+            $customerOrdering = CustomerOrdering::where('custBook_id', $customerReserve->id)->where('custBookType', 'reserve')->first();
             $customerOrders = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)
             ->where('cust_id', $cust_id)
             ->where('orderDone', "Processing")
@@ -2332,59 +2331,8 @@ class CustomerController extends Controller
         $customerReserve = CustomerReserve::where('customer_id', $request->cust_id)->where('status', 'eating')->first();
 
         if($customerQueue != null){
-            $customerOrdering = CustomerOrdering::where('custBook_id', $customerQueue->id)->first();
+            $customerOrdering = CustomerOrdering::where('custBook_id', $customerQueue->id)->where('custBookType', 'queue')->first();
             
-            $countRequests = CustomerLRequest::where('custOrdering_id', $customerOrdering->id)
-            ->where('cust_id', $request->cust_id)
-            ->where('requestDone', "No")->count();
-
-            if($countRequests >= 3){
-                $checkRequest = CustomerLRequest::where('custOrdering_id', $customerOrdering->id)
-                ->where('cust_id', $request->cust_id)
-                ->where('requestDone', "No")
-                ->orderBy('requestSubmitDT', "DESC")->limit(3)->last();
-
-                $endTime = Carbon::now();
-                $rAppstartTime = Carbon::parse($checkRequest->requestSubmitDT);
-                $rAppDiffMinutes = $endTime->diffInMinutes($rAppstartTime);
-                if ($rAppDiffMinutes > 0){
-                    if ($rAppDiffMinutes == 1){
-                        $rAppDiffTime = "1 minute ago";
-                    } else {
-                        $rAppDiffTime = "$rAppDiffMinutes minutes ago";
-                    }
-                }
-
-                if($rAppDiffTime >= 5){
-                    $finalStatus = "You have requested too many times, please try again after 5 mins (3 request only per 5 mins)";
-                } else {
-                    $tableNumber = explode(',', $customerOrdering->tableNumbers);
-    
-                    CustomerLRequest::create([
-                        'custOrdering_id' => $customerOrdering->id,
-                        'cust_id' => $request->cust_id,
-                        'tableNumber' => $tableNumber[0],
-                        'request' => $request->requestType,
-                        'requestDone' => "No",
-                        'requestSubmitDT' => date('Y-m-d H:i:s'),
-                    ]);
-                    $finalStatus = "Request sent! Kindly wait for the staff to come to your table. Thank you!";
-                }
-            } else {
-                $tableNumber = explode(',', $customerOrdering->tableNumbers);
-
-                CustomerLRequest::create([
-                    'custOrdering_id' => $customerOrdering->id,
-                    'cust_id' => $request->cust_id,
-                    'tableNumber' => $tableNumber[0],
-                    'request' => $request->requestType,
-                    'requestDone' => "No",
-                    'requestSubmitDT' => date('Y-m-d H:i:s'),
-                ]);
-                $finalStatus = "Request sent! Kindly wait for the staff to come to your table. Thank you!";
-            }
-        } else if ($customerReserve != null){
-            $customerOrdering = CustomerOrdering::where('custBook_id', $customerReserve->id)->first();
             $countRequests = CustomerLRequest::where('custOrdering_id', $customerOrdering->id)
             ->where('cust_id', $request->cust_id)
             ->where('requestDone', "No")->count();
@@ -2425,7 +2373,61 @@ class CustomerController extends Controller
                     ]);
                     $finalStatus = "Request sent! Kindly wait for the staff to come to your table. Thank you!";
                 }
-                // $finalStatus = "$rAppDiffTime";
+            } else {
+                $tableNumber = explode(',', $customerOrdering->tableNumbers);
+
+                CustomerLRequest::create([
+                    'custOrdering_id' => $customerOrdering->id,
+                    'cust_id' => $request->cust_id,
+                    'tableNumber' => $tableNumber[0],
+                    'request' => $request->requestType,
+                    'requestDone' => "No",
+                    'requestSubmitDT' => date('Y-m-d H:i:s'),
+                ]);
+                $finalStatus = "Request sent! Kindly wait for the staff to come to your table. Thank you!";
+            }
+        } else if ($customerReserve != null){
+            $customerOrdering = CustomerOrdering::where('custBook_id', $customerReserve->id)->where('custBookType', 'reserve')->first();
+            $countRequests = CustomerLRequest::where('custOrdering_id', $customerOrdering->id)
+            ->where('cust_id', $request->cust_id)
+            ->where('requestDone', "No")->count();
+
+            if($countRequests >= 3){
+                $checkRequests = CustomerLRequest::where('custOrdering_id', $customerOrdering->id)
+                ->where('cust_id', $request->cust_id)
+                ->where('requestDone', "No")
+                ->orderBy('requestSubmitDT', "DESC")->limit(3)->get();
+
+                foreach($checkRequests as $checkRequest){
+                    $lastRequest = $checkRequest->requestSubmitDT;
+                }
+
+                $endTime = Carbon::now();
+                $rAppstartTime = Carbon::parse($lastRequest);
+                $rAppDiffMinutes = $endTime->diffInMinutes($rAppstartTime);
+                if ($rAppDiffMinutes >= 0){
+                    if ($rAppDiffMinutes == 1){
+                        $rAppDiffTime = 1;
+                    } else {
+                        $rAppDiffTime = "$rAppDiffMinutes";
+                    }
+                }
+
+                if($rAppDiffTime <= 5){
+                    $finalStatus = "You have requested too many times, please try again after 5 mins (3 request only per 5 mins)";
+                } else {
+                    $tableNumber = explode(',', $customerOrdering->tableNumbers);
+    
+                    CustomerLRequest::create([
+                        'custOrdering_id' => $customerOrdering->id,
+                        'cust_id' => $request->cust_id,
+                        'tableNumber' => $tableNumber[0],
+                        'request' => $request->requestType,
+                        'requestDone' => "No",
+                        'requestSubmitDT' => date('Y-m-d H:i:s'),
+                    ]);
+                    $finalStatus = "Request sent! Kindly wait for the staff to come to your table. Thank you!";
+                }
             } else {
                 $tableNumber = explode(',', $customerOrdering->tableNumbers);
 
@@ -2454,7 +2456,7 @@ class CustomerController extends Controller
         if($customerQueue != null){
             $finalOrders = array();
             $orderSet = OrderSet::where('id', $customerQueue->orderSet_id)->first();
-            $customerOrdering = CustomerOrdering::where('custBook_id', $customerQueue->id)->first();
+            $customerOrdering = CustomerOrdering::where('custBook_id', $customerQueue->id)->where('custBookType', 'queue')->first();
             $orders = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)->where('orderDone', "Yes")->get();
 
             $orderTotalPrice = 0.0;
@@ -2505,6 +2507,7 @@ class CustomerController extends Controller
                 $customerQueue->offenseCharges 
             );
 
+            // return response()->json($customerOrdering);
             return response()->json([
                 'orderSetName' => $orderSet->orderSetName,
                 'numberOfPersons' => $customerQueue->numberOfPersons,
@@ -2526,7 +2529,7 @@ class CustomerController extends Controller
         } else if ($customerReserve != null){
             $finalOrders = array();
             $orderSet = OrderSet::where('id', $customerReserve->orderSet_id)->first();
-            $customerOrdering = CustomerOrdering::where('custBook_id', $customerReserve->id)->first();
+            $customerOrdering = CustomerOrdering::where('custBook_id', $customerReserve->id)->where('custBookType', 'reserve')->first();
             $orders = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)->where('orderDone', "Yes")->get();
 
             $orderTotalPrice = 0.0;
@@ -2607,7 +2610,7 @@ class CustomerController extends Controller
         $customerReserve = CustomerReserve::where('customer_id', $request->cust_id)->where('status', 'eating')->first();
 
         if($customerQueue != null){
-            $customerOrdering = CustomerOrdering::where('custBook_id', $customerQueue->id)->first();
+            $customerOrdering = CustomerOrdering::where('custBook_id', $customerQueue->id)->where('custBookType', 'queue')->first();
             $tableNumber = explode(',', $customerOrdering->tableNumbers);
 
             if($request->requestType == "Cash Payment"){
@@ -2633,8 +2636,23 @@ class CustomerController extends Controller
                 'requestSubmitDT' => date('Y-m-d H:i:s'),
             ]);
         } else if ($customerReserve != null){
-            $customerOrdering = CustomerOrdering::where('custBook_id', $customerReserve->id)->first();
+            $customerOrdering = CustomerOrdering::where('custBook_id', $customerReserve->id)->where('custBookType', 'reserve')->first();
+
             $tableNumber = explode(',', $customerOrdering->tableNumbers);
+
+            if($request->requestType == "Cash Payment"){
+                CustomerReserve::where('id', $customerOrdering->custBook_id)
+                ->update([
+                    'checkoutStatus' => 'cashCheckoutValidation',
+                ]);
+                $finalStatus = "Cash Payment";
+            } else {
+                CustomerReserve::where('id', $customerOrdering->custBook_id)
+                ->update([
+                    'checkoutStatus' => 'gcashCheckout',
+                ]);
+                $finalStatus = "GCash Payment";
+            }
 
             CustomerLRequest::create([
                 'custOrdering_id' => $customerOrdering->id,
@@ -2644,7 +2662,6 @@ class CustomerController extends Controller
                 'requestDone' => "No",
                 'requestSubmitDT' => date('Y-m-d H:i:s'),
             ]);
-            $finalStatus = "Request sent! Kindly wait for the staff to come to your table. Thank you!";
         } else {
             $finalStatus = "Error";
         }
@@ -2662,7 +2679,12 @@ class CustomerController extends Controller
             ->orWhere('checkoutStatus', "gcashInsufficientAmount");
         })->first();
 
-        $customerReserve = CustomerReserve::where('customer_id', $cust_id)->where('status', 'eating')->first();
+        $customerReserve = CustomerReserve::where('customer_id', $cust_id)->where('status', 'eating')
+        ->where(function ($query) {
+            $query->where('checkoutStatus', "cashCheckoutValidation")
+            ->orWhere('checkoutStatus', "gcashCheckoutValidation")
+            ->orWhere('checkoutStatus', "gcashInsufficientAmount");
+        })->first();
 
         if($customerQueue != null){
             $finalStatus = $customerQueue->checkoutStatus;
@@ -2705,10 +2727,13 @@ class CustomerController extends Controller
         $finalStatus = null;
 
         $customerQueue = CustomerQueue::where('customer_id', $cust_id)->where('status', 'completed')->where('checkoutStatus', "customerFeedback")->first();
-        // $customerReserve = CustomerReserve::where('customer_id', $cust_id)->where('status', 'completed')->where('checkoutStatus', "customerFeedback")->first();
+        $customerReserve = CustomerReserve::where('customer_id', $cust_id)->where('status', 'completed')->where('checkoutStatus', "customerFeedback")->first();
 
         if($customerQueue != null){
             $restaurant = RestaurantAccount::select('rName', 'rBranch')->where('id', $customerQueue->restAcc_id)->first();
+            $finalStatus = "$restaurant->rName, $restaurant->rBranch";
+        } else {
+            $restaurant = RestaurantAccount::select('rName', 'rBranch')->where('id', $customerReserve->restAcc_id)->first();
             $finalStatus = "$restaurant->rName, $restaurant->rBranch";
         }
 
@@ -2719,11 +2744,16 @@ class CustomerController extends Controller
     public function ratingFeedbackSubmit(Request $request){
         $getDateToday = date("Y-m-d");
         $customerQueue = CustomerQueue::where('customer_id', $request->cust_id)->where('status', 'completed')->where('checkoutStatus', "customerFeedback")->first();
-        // $customerReserve = CustomerReserve::where('customer_id', $request->cust_id)->where('status', 'complete')->first();
+        $customerReserve = CustomerReserve::where('customer_id', $request->cust_id)->where('status', 'completed')->where('checkoutStatus', "customerFeedback")->first();
 
         if($request->type == "not now"){
             if($customerQueue != null){
                 CustomerQueue::where('customer_id', $request->cust_id)->where('status', 'completed')->where('checkoutStatus', "customerFeedback")
+                ->update([
+                    'checkoutStatus' => "completed"
+                ]);
+            } else {
+                CustomerReserve::where('customer_id', $request->cust_id)->where('status', 'completed')->where('checkoutStatus', "customerFeedback")
                 ->update([
                     'checkoutStatus' => "completed"
                 ]);
@@ -2854,6 +2884,134 @@ class CustomerController extends Controller
                 ]);
 
                 CustomerQueue::where('customer_id', $request->cust_id)->where('status', 'completed')->where('checkoutStatus', "customerFeedback")
+                ->update([
+                    'checkoutStatus' => "completed",
+                ]);
+            } else {
+                $customerOrdering = CustomerOrdering::where('custBook_id', $customerReserve->id)->first();
+                $restaurant = RestaurantAccount::where('id', $customerReserve->restAcc_id)->first();
+                $stampCard = StampCard::where('restAcc_id', $customerReserve->restAcc_id)->first();
+
+                if($stampCard != null){
+                    if($getDateToday <= $stampCard->stampValidity){
+                        $custStampCard = CustomerStampCard::where('customer_id', $customerReserve->customer_id)
+                        ->where('restAcc_id', $restaurant->id)
+                        ->where('stampValidity', $stampCard->stampValidity)
+                        ->where('claimed', "No")
+                        ->first();
+
+                        $storeTasks = array();
+                        $storeDoneTasks = array();
+
+                        if($custStampCard != null){
+                            $stampCardTasks = StampCardTasks::where('stampCards_id', $stampCard->id)->get();
+                            
+                            foreach($stampCardTasks as $stampCardTask){
+                                $task = RestaurantTaskList::where('id', $stampCardTask->restaurantTaskLists_id)->first();
+                                if($task->taskCode == "FDBK"){
+                                    array_push($storeTasks, "Give a feedback/review per visit");
+                                    array_push($storeDoneTasks, "Give a feedback/review per visit");
+                                }
+                            }
+
+                            $currentStamp = $custStampCard->currentStamp + sizeof($storeDoneTasks);
+                            if($currentStamp >= $stampCard->stampCapacity){
+                                $stampStatus = "Complete";
+                                $currentStamp = $stampCard->stampCapacity;
+                            } else {
+                                $stampStatus = "Incomplete";
+                            }
+
+                            CustomerStampCard::where('id', $custStampCard->id)
+                            ->update([
+                                'status' => $stampStatus,
+                                'claimed' => "No",
+                                'currentStamp' => $currentStamp,
+                            ]);
+
+                            foreach($storeDoneTasks as $storeDoneTask){
+                                CustomerTasksDone::create([
+                                    'customer_id' => $customerReserve->customer_id,
+                                    'customerStampCard_id' => $custStampCard->id,
+                                    'taskName' => $storeDoneTask,
+                                    'taskAccomplishDate' => $getDateToday,
+                                ]);
+                            }
+
+                        } else {
+                            $stampCardTasks = StampCardTasks::where('stampCards_id', $stampCard->id)->get();
+                            foreach($stampCardTasks as $stampCardTask){
+                                $task = RestaurantTaskList::where('id', $stampCardTask->restaurantTaskLists_id)->first();
+                                if($task->taskCode == "FDBK"){
+                                    array_push($storeTasks, "Give a feedback/review per visit");
+                                    array_push($storeDoneTasks, "Give a feedback/review per visit");
+                                }
+                            }
+                            
+                            $stampReward = RestaurantRewardList::where('restAcc_id', $customerReserve->restAcc_id)->where('id', $stampCard->stampReward_id)->first();
+
+                            switch($stampReward->rewardCode){
+                                case "DSCN": 
+                                    $finalReward = "Discount $stampReward->rewardInput% in a Total Bill";
+                                    break;
+                                case "FRPE": 
+                                    $finalReward = "Free $stampReward->rewardInput person in a group";
+                                    break;
+                                case "HLF": 
+                                    $finalReward = "Half in the group will be free";
+                                    break;
+                                case "ALL": 
+                                    $finalReward = "All people in the group will be free";
+                                    break;
+                                default: 
+                                    $finalReward = "None";
+                            }
+
+                            $finalStampCapac = sizeof($storeDoneTasks);
+                            if(sizeof($storeDoneTasks) >= $stampCard->stampCapacity){
+                                $finalStampCapac = $stampCard->stampCapacity;
+                            }
+
+                            $custStampCardNew = CustomerStampCard::create([
+                                'customer_id' => $customerReserve->customer_id,
+                                'restAcc_id' => $customerReserve->restAcc_id,
+                                'status' => "Incomplete",
+                                'claimed' => "No",
+                                'currentStamp' => $finalStampCapac,
+                                'stampReward' => $finalReward,
+                                'stampValidity' => $stampCard->stampValidity,
+                                'stampCapacity' => $stampCard->stampCapacity,
+                            ]);
+
+                            foreach($storeTasks as $storeTask){
+                                CustomerStampTasks::create([
+                                    'customerStampCard_id' => $custStampCardNew->id,
+                                    'taskName' => $storeTask,
+                                ]);
+                            }
+
+                            foreach($storeDoneTasks as $storeDoneTask){
+                                CustomerTasksDone::create([
+                                    'customer_id' => $customerReserve->customer_id,
+                                    'customerStampCard_id' => $custStampCardNew->id,
+                                    'taskName' => $storeDoneTask,
+                                    'taskAccomplishDate' => $getDateToday,
+                                ]);
+                            }
+                        }
+                    }
+                }
+
+                CustRestoRating::create([
+                    'customer_id' => $customerReserve->customer_id,
+                    'restAcc_id' => $customerReserve->restAcc_id,
+                    'custOrdering_id' => $customerOrdering->id,
+                    'rating' => $request->rating,
+                    'comment' => $request->comment,
+                    'anonymous' => $request->anonymous,
+                ]);
+
+                CustomerReserve::where('customer_id', $request->cust_id)->where('status', 'completed')->where('checkoutStatus', "customerFeedback")
                 ->update([
                     'checkoutStatus' => "completed",
                 ]);
@@ -3202,7 +3360,7 @@ class CustomerController extends Controller
                     'rName' => $restaurant->rName, 
                     'rAddress' => "$restaurant->rAddress, $restaurant->rBranch", 
                     'rLogo' => $finalImageUrl, 
-                    'rRating' => "$averageRating", 
+                    'rRating' => (number_format($averageRating, 1, '.')),
                     'rCountReview' => "$countReviews",
                 ]);
             } else {

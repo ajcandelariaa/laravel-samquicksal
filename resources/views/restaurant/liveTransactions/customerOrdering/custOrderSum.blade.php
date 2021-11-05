@@ -19,7 +19,7 @@
             <div class="uppercase font-bold text-white text-xl py-2">ORDER SUMMARY</div>
             <div class="justify-self-end text-white py-3 ml-3">
                 <a href="/restaurant/live-transaction/customer-ordering/list/{{ $customerOrdering->id }}/order-summary/runaway" id="btn-runaway" class="px-8 py-2 bg-headerActiveTextColor mr-2">Runaway</a>
-                <a href="/restaurant/live-transaction/customer-ordering/list/{{ $customerOrdering->id }}/order-summary/complete" id="btn-complete" class="px-8 py-2 bg-postedStatus">Completed</a>
+                <a href="/restaurant/live-transaction/customer-ordering/list/{{ $customerOrdering->id }}/order-summary/complete" id="btn-complete" class="px-8 py-2 bg-postedStatus">Mark as Finished</a>
             </div>
         </div>
         <div class="w-11/12 mx-auto py-10">
@@ -186,32 +186,24 @@
                 </div>
 
 
-                @if ($gcashReceipt == null)
+                @if ($gcashReceipt != null)
+                    <div class="col-span-1 bg-manageFoodItemHeaderBgColor shadow-adminDownloadButton">
+                        <div class="uppercase font-bold text-center text-lg py-2 bg-adminViewAccountHeaderColor2">GCASH PAYMENT</div>
+                        <div class="py-5 w-11/12 mx-auto">
+                            <p class="text-center">Please validate if Payment is received.</p>
 
-                @else
-                    
-                @endif
-                <div class="col-span-1 bg-manageFoodItemHeaderBgColor shadow-adminDownloadButton">
-                    <div class="uppercase font-bold text-center text-lg py-2 bg-adminViewAccountHeaderColor2">GCASH PAYMENT</div>
-                    <div class="py-5 w-11/12 mx-auto">
-                        <p class="text-center">Please validate if Payment is received.</p>
-
-
-                        <div class="text-center">
-                            <button class="px-10 py-1 w-72 bg-manageRestaurantSidebarColorActive text-white mt-10">Download</button>
-                        </div>
-                        
-                        <div class="text-center">
-                            <button class="px-10 py-1 w-72 bg-manageRestaurantSidebarColorActive text-white mt-10">Inssuficient Amount</button>
-                        </div>
-                        
-                        <div class="text-center">
-                            <button class="px-10 py-1 w-72 bg-manageRestaurantSidebarColorActive text-white mt-10">Invalid Receipt</button>
+                            <img src="{{ asset('uploads/restaurantAccounts/gcashQr/1/1635933855.png') }}" class="mx-auto mt-2 w-full" alt="gcashQr">
+                            
+                            <div class="text-center">
+                                <a href="" id="btn-insAmount" class="inline-block py-2 w-full bg-red-500 hover:bg-red-600 text-white mt-6">Inssuficient Amount</a>
+                            </div>
+                            
+                            <div class="text-center">
+                                <a href="" id="btn-inReceipt" class="inline-block py-2 w-full bg-yellow-500 hover:bg-yellow-600 text-white mt-2">Invalid Receipt</a>
+                            </div>
                         </div>
                     </div>
-                </div>
-
-
+                @endif
             </div>
         </div>
         <div class="bg-manageRestaurantSidebarColorActive h-8"></div>
