@@ -742,6 +742,7 @@ class CustomerController extends Controller
             }
 
             mkdir('uploads/customerAccounts/logo/'.$customer->id);
+            mkdir('uploads/customerAccounts/gcashQr/'.$customer->id);
             
             $notif = CustomerNotification::create([
                 'customer_id' => $customer->id,
@@ -3380,5 +3381,15 @@ class CustomerController extends Controller
         });
 
         return response()->json($finalRatedRestaurants);
+    }
+    public function submitGcashReceipt(Request $request){
+        // $cust_id = $_POST['cust_id'];
+        // $gcashReceipt = $_POST['gcashReceipt'];
+        // $gcashDecoded = base64_decode($gcashReceipt);
+        // // $status = file_put_contents(public_path('uploads/customerAccounts/gcashQr/'.$cust_id), $gcashDecoded);
+
+        // return response()->json([
+        //     'status' => $gcashDecoded
+        // ]);
     }
 }
