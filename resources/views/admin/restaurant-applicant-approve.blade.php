@@ -1,36 +1,6 @@
 @extends('admin.app2')
 
 @section('content')
-{{-- <div class="bg-gray-200 w-full restaurant-applicant"> --}}
-    {{-- APPROVED POP UP FORM --}}
-    {{-- <div class="bg-white w-11/12 mx-auto mt-10 p-5"> --}}
-
-    {{-- <h1 class="mt-2 text-xl font-bold mb-10">Please enter the address to locate the restaurant </h1>
-    <p>Restaurant Address: <span class="font-semibold">{{ $applicant->rAddress.', '.$applicant->rBranch.', '.$applicant->rCity.', '.$applicant->rState.', '.$applicant->rCountry }}</span></p>
-    <form action="/admin/restaurant-applicants/approve" method="POST" id='approvedForm'>
-        @csrf
-        <input type="text" name="applicantId" hidden value="{{ $applicant->id }}">
-        <input type="text" name="applicantLocLat" hidden value="14.601021">
-        <input type="text" name="applicantLocLong" hidden value="120.990050">
-        <div class="grid grid-cols-3 w-full">
-            <div class="my-2 col-span-1">
-                <label>Re-enter Address: </label>
-                <input type="text" name="inputtedAddress" id="inputtedAddress" class="ml-2 border border-gray-300 focus:border-black rounded-md px-2 text-sm text-gray-700 focus:outline-none">
-            </div>
-            <p class="text-multiStepBoxColor col-span-1 mt-2">Latitude: <span class="ml-3">14.601021</span></p>
-            <p class="text-multiStepBoxColor col-span-1 mt-2">Longitude: <span class="ml-3">120.990050</span></p>
-        </div>
-        
-        <div id="map"></div>
-            <div id="infowindow-content">
-                <span id="place-name" class="title"></span><br/>
-                <span id="place-address"></span>
-            </div>
-        <div class="text-center mb-5 mt-5">
-            <button class="text-sm bg-submitButton rounded-lg py-1 px-7 hover:bg-btnHoverColor shadow-adminDownloadButton text-white">Submit</button>
-        </div>
-    </form>
-        <input type="text" name="lname" value="{{ old('lname') }}" class="border rounded-lg w-full py-1 px-2 text-sm text-gray-700 focus:outline-none"> --}}
     <div class="pac-card" id="pac-card">
         <div>
             <form action="/admin/restaurant-applicants/approve" method="POST">

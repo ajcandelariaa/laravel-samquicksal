@@ -75,7 +75,7 @@
     </section>
     <script type="text/javascript" src="{{ asset('js/test.js') }}"></script>
     @if (request()->is('admin/restaurant-applicants/*/approved'))
-        {{-- <script src="https://maps.googleapis.com/maps/api/js?key={{ env('MAPS_API_KEY') }}&callback=initMap&libraries=places&v=weekly" async></script> --}}
+        <script src="https://maps.googleapis.com/maps/api/js?key={{ env('MAPS_API_KEY') }}&callback=initMap&libraries=places&v=weekly" async></script>
     @endif
 </body>
 </html>
