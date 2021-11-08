@@ -19,10 +19,10 @@
     </style>
 </head>
 <body>
-    <header class=" header_1 top-0 z-50 w-full flex flex-wrap items-center justify-between px-2">
+    <header class=" header_2 top-0 z-50 w-full flex flex-wrap items-center justify-between px-2">
         <div class="container px-4 mx-auto flex flex-wrap items-center justify-between">
           <div class="w-full relative flex justify-between lg:w-auto lg:static lg:block lg:justify-start">
-            <a class="text-sm font-bold leading-relaxed inline-block mr-4 py-2 whitespace-nowrap uppercase text-white" href="/"><img class="w-36 xl:w-36" src="{{ asset('images/samquicksalWithWords.png') }}" alt="samquicksalWithWords"></a>
+            <a class="text-sm font-bold leading-relaxed inline-block mr-4 py-2 whitespace-nowrap uppercase text-white" href="/"><img class="w-36 lg:w-40 xxl:w-96" src="{{ asset('images/samquicksalWithWords.png') }}" alt="samquicksalWithWords"></a>
       
             <button class="cursor-pointer text-xl leading-none px-3 py-1 border border-solid border-transparent rounded bg-transparent block lg:hidden outline-none focus:outline-none" type="button" onclick="toggleNavbar('example-collapse-navbar')">
               <i class="text-submitButton fas fa-bars "></i>
@@ -31,17 +31,17 @@
           <nav class="lg:flex flex-grow items-center bg-adminLoginTextColor lg:bg-transparent lg:shadow-none hidden" id="example-collapse-navbar">
             <ul class="flex flex-col lg:flex-row list-none lg:ml-auto font-Montserrat">
               <li class="flex items-center">
-                <a class="nav__link cursor-pointer text-submitButton px-7 py-4 lg:py-2 flex items-center text-xs uppercase font-bold" href="#activationStep">
+                <a class="nav__link cursor-pointer text-submitButton px-7 py-4 lg:py-2 flex items-center lg:text-base uppercase font-bold" href="#activationStep">
                 <p class="md:hidden sm:hidden hidden xl:contents">Activation Steps</p>
                     <span class="xl:hidden inline-block ml-2 ">Activation Steps</span><a>
               </li>
               <li class="flex items-center">
-                <a class=" nav__link cursor-pointer px-7 py-4 lg:py-2 flex items-center text-xs uppercase font-bold " href="#advantages">
+                <a class=" nav__link cursor-pointer px-7 py-4 lg:py-2 flex items-center lg:text-base uppercase font-bold " href="#advantages">
                   <p class="md:hidden sm:hidden hidden xl:contents">Advantages</p>
                 <span class="xl:hidden inline-block ml-2 ">Advantages</span></a>
               </li>
               <li class="flex items-center">
-                <a class="nav__link cursor-pointer text-submitButton px-7 py-4 lg:py-2 flex items-center text-xs uppercase font-bold "href="#howItWorks">
+                <a class="nav__link cursor-pointer text-submitButton px-7 py-4 lg:py-2 flex items-center lg:text-base uppercase font-bold "href="#howItWorks">
                   <p class="md:hidden sm:hidden hidden xl:contents">How It Works</p>
                   <span class="xl:hidden inline-block ml-2 ">How It Works</span></a>
               </li>
@@ -61,8 +61,7 @@
     <section class="bg-adminViewAccountHeaderColor2 relative">
         <div class="container flex flex-col sm:flex-row md:flex-row lg:flex-row xl:flex-row items-center md:py-2 lg:py-1 xl:py-1 mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 ">
             <div class="flex flex-1 flex-col items-center xl:items-start leading-tight tracking-tighter">
-                <p class="mb-2 sm:mb-2 md:mb-3 lg:mb-3 xl:mb-8 mt-3 sm:mt-4 md:mt-7 lg:mt-8 xl:mt-10 xl:text-base lg:text-base md:text-xs sm:text-xs text-sm text-justify"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Id diam vel quam elementum pulvinar etiam non quam. Libero enim sed faucibus turpis. Luctus venenatis lectus magna fringilla urna porttitor. Morbi tristique senectus et netus. Ut diam quam nulla porttitor massa id neque. Nam aliquam sem et tortor consequat id porta.  </p>
-                <p class="xl:mb-10 lg:mb-5 md:mb-4 sm:mb-2 mb-2 xl:text-base lg:text-base md:text-xs sm:text-xs text-sm text-justify  ">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Sed velit dignissim sodales ut eu sem integer vitae. Amet purus gravida quis blandit turpis cursus in. Ultricies mi quis hendrerit dolor magna eget est lorem. Diam phasellus vestibulum lorem sed risus ultricies tristique. A lacus vestibulum sed arcu non. Duis at consectetur lorem donec massa sapien faucibus et molestie. Dolor morbi non arcu risus quis varius quam. Faucibus turpis in eu mi bibendum neque egestas congue.</p>
+                <p class="mb-2 sm:mb-2 md:mb-3 lg:mb-3 xl:mb-8 mt-3 sm:mt-4 md:mt-7 lg:mt-8 xl:mt-10 xl:text-base lg:text-base md:text-xs sm:text-xs text-sm text-justify"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; What separates the good restaurants from the ones are its customers, those who keep returning day in and day out because of the amazing experience the restaurant has to offer. With our application we believe that your restaurant can be a great one. Samgyeopsal is about the bonding and memories that happen while the meat is cooking, the smell of the meats as they hit the pan the various flavors that come together and the final piece of that puzzle is your customer. Customer rewards will give a sense of belonging as if they are part of a growing family, the app helps them by putting them at the forefront of the samgyeopsal experience. What are you waiting for? Be our partner now!</p>
             </div>
             <div class="flex justify-center flex-1 mt-5 mb-10 md:mb-10 lg:mb-16 xl:my-10 ">
                 <img class="w-5/12 sm:w-6/12 md:w-6/12 lg:w-7/12 xl:w-5/12" src="{{ asset('images/girlBoyBlack.png') }}" alt="girlBoyBlack">
@@ -221,7 +220,7 @@
 
     <section class="relative">
         <div class="flex flex-col items-center justify-center font-Montserrat font-semibold text-xs sm:text-sm md:text-sm lg:text-base xl:text-lg">
-            <a class="flex-1 shadow-md transition duration-300 ease-in-out transform hover:-translate-y-1 hover:scale-110  text-center hover:bg-adminLoginTextColor hover:text-submitButton hover:border-submitButton font-bold border-2 border-gray-100  xl:h-3/4 xl:w-96 lg:w-64 lg:h-32 md:w-60 md:h-32 sm:h-32 sm:w-60  h-32 w-48 py-2 px-3 xl:py-4 xl:px-8 text-gray-50  bg-headerActiveTextColor mb-5 xl:mt-1" href="/restaurant/register" target="_blank">Get Started</a>
+            <a class="flex-1 shadow-md transition duration-300 ease-in-out transform hover:-translate-y-1 hover:scale-110  text-center hover:bg-adminLoginTextColor hover:text-white hover:border-submitButton font-bold border-2 border-gray-100  xl:h-3/4 xl:w-96 lg:w-64 lg:h-32 md:w-60 md:h-32 sm:h-32 sm:w-60  h-32 w-48 py-2 px-3 xl:py-4 xl:px-8 text-gray-50  bg-headerActiveTextColor mb-5 xl:mt-1" href="/restaurant/register" target="_blank">Get Started</a>
             <a class="flex-1 shadow-md transition duration-300 ease-in-out transform hover:-translate-y-1 hover:scale-110 hover:text-gray-100 hover:bg-adminLoginTextColor bg-white text-center xl:h-3/4 xl:w-96 lg:w-64 lg:h-32 md:w-60 md:h-32 sm:h-32 sm:w-60 h-32 w-48  py-2 px-3 xl:py-4 xl:px-8 mb-16 xl:mb-36 text-headerActiveTextColor border-2 border-headerActiveTextColor" href="/restaurant/login" target="_blank">I’m already registered</a>
         </div>
     </section>

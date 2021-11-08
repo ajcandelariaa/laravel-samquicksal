@@ -18,9 +18,9 @@ class CreateCustomerQrAccessesTable extends Migration
             $table->unsignedBigInteger('custOrdering_id');
             $table->unsignedBigInteger('mainCust_id');
             $table->unsignedBigInteger('subCust_id');
-            $table->string('tableNumber');
+            $table->string('tableNumber')->nullable();
             $table->string('status');
-            $table->date('accessDate');
+            $table->dateTime('approvedDateTime');
             $table->timestamps();
         });
     }

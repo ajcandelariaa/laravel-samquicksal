@@ -19,6 +19,7 @@ use App\Models\StampCardTasks;
 use Illuminate\Support\Carbon;
 use App\Models\CustomerAccount;
 use App\Models\CustomerReserve;
+use App\Models\CustRestoRating;
 use App\Models\OrderSetFoodSet;
 use App\Models\UnavailableDate;
 use App\Models\CustomerLRequest;
@@ -37,32 +38,30 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\CustomerPasswordChanged;
 use App\Models\CustomerResetPassword;
-use Illuminate\Contracts\Cache\Store;
-use App\Mail\RestaurantFormAppreciation;
-use App\Models\CustRestoRating;
 
 class CustomerController extends Controller
 {
-    // public $RESTAURANT_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/logo";
-    // public $ACCOUNT_NO_IMAGE_PATH = "http://192.168.1.53:8000/images";
-    // public $CUSTOMER_IMAGE_PATH = "http://192.168.1.53:8000/uploads/customerAccounts/logo";
-    // public $POST_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/post";
-    // public $PROMO_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/promo";
-    // public $ORDER_SET_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/orderSet";
-    // public $FOOD_SET_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/foodSet";
-    // public $FOOD_ITEM_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/foodItem";
-    // public $RESTAURANT_GCASH_QR_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/gcashQr";
+    public $RESTAURANT_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/logo";
+    public $ACCOUNT_NO_IMAGE_PATH = "http://192.168.1.53:8000/images";
+    public $CUSTOMER_IMAGE_PATH = "http://192.168.1.53:8000/uploads/customerAccounts/logo";
+    public $POST_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/post";
+    public $PROMO_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/promo";
+    public $ORDER_SET_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/orderSet";
+    public $FOOD_SET_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/foodSet";
+    public $FOOD_ITEM_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/foodItem";
+    public $RESTAURANT_GCASH_QR_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/gcashQr";
     
-    public $RESTAURANT_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/logo";
-    public $ACCOUNT_NO_IMAGE_PATH = "https://www.samquicksal.com/images";
-    public $CUSTOMER_IMAGE_PATH = "https://www.samquicksal.com/uploads/customerAccounts/logo";
-    public $POST_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/post";
-    public $PROMO_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/promo";
-    public $ORDER_SET_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/orderSet";
-    public $FOOD_SET_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/foodSet";
-    public $FOOD_ITEM_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/foodItem";
-    public $RESTAURANT_GCASH_QR_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/gcashQr";
-    
+    // public $RESTAURANT_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/logo";
+    // public $ACCOUNT_NO_IMAGE_PATH = "https://www.samquicksal.com/images";
+    // public $CUSTOMER_IMAGE_PATH = "https://www.samquicksal.com/uploads/customerAccounts/logo";
+    // public $POST_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/post";
+    // public $PROMO_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/promo";
+    // public $ORDER_SET_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/orderSet";
+    // public $FOOD_SET_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/foodSet";
+    // public $FOOD_ITEM_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/foodItem";
+    // public $RESTAURANT_GCASH_QR_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/gcashQr";
+
+
     public function sendFirebaseNotification($to, $notification, $data){
         $server_key = env('FIREBASE_SERVER_KEY');
         $url = "https://fcm.googleapis.com/fcm/send";
@@ -179,8 +178,6 @@ class CustomerController extends Controller
             foreach ($restaurantUnavailableDates as $restaurantUnavailableDate) {
                 if($restaurantUnavailableDate->unavailableDatesDate == date("Y-m-d")){
                     $getAvailability = "Closed";
-                } else {
-                    $getAvailability = "Open";
                 }
             }
 
@@ -251,20 +248,56 @@ class CustomerController extends Controller
             }
         }
 
-        $finalSchedule = array();
+        $finalScheduleTemp = array();
         $storeHours = StoreHour::where('restAcc_id', $id)->get();
         foreach ($storeHours as $storeHour){
             $openingTime = date("g:i a", strtotime($storeHour->openingTime));
             $closingTime = date("g:i a", strtotime($storeHour->closingTime));
             foreach (explode(",", $storeHour->days) as $day){
-                array_push($finalSchedule, [
+                switch ($this->convertDays($day)){
+                    case "Monday":
+                        $num = 1;
+                        break;
+                    case "Tuesday":
+                        $num = 2;
+                        break;
+                    case "Wednesday":
+                        $num = 3;
+                        break;
+                    case "Thursday":
+                        $num = 4;
+                        break;
+                    case "Friday":
+                        $num = 5;
+                        break;
+                    case "Saturday":
+                        $num = 6;
+                        break;
+                    case "Sunday":
+                        $num = 7;
+                        break;
+                }
+                array_push($finalScheduleTemp, [
                     'Day' => $this->convertDays($day),
                     'Opening' => $openingTime,
                     'Closing' => $closingTime,
+                    'num' => $num,
                 ]);
             }
         }
-    
+
+        usort($finalScheduleTemp, function($a, $b) {
+            return ($a['num']) - ($b['num']);
+        });
+
+        $finalSchedule = array();
+        foreach($finalScheduleTemp as $tempSched){
+            array_push($finalSchedule, [
+                'Day' => $tempSched['Day'],
+                'Opening' => $tempSched['Opening'],
+                'Closing' => $tempSched['Closing'],
+            ]);
+        }
 
         $finalImageUrl = "";
         if ($account->rLogo == ""){
@@ -351,46 +384,54 @@ class CustomerController extends Controller
     }
     public function getRestaurantsRewardsInfo($id){
         $finalStampTasks = array();
-        $stamp = StampCard::where('restAcc_id', $id)->first();
+        $getDateToday = date("Y-m-d");
+        $stamp = StampCard::where('restAcc_id', $id)->latest()->first();
         if($stamp != null){
-            $stampReward = RestaurantRewardList::where('restAcc_id', $id)->where('id', $stamp->stampReward_id)->first();
-            $stampTasks = StampCardTasks::where('stampCards_id', $stamp->id)->get();
-            foreach($stampTasks as $stampTask){
-                $task = RestaurantTaskList::where('restAcc_id', $id)->where('id', $stampTask->restaurantTaskLists_id)->first();
-                if($task->taskCode == "SPND"){
-                    array_push($finalStampTasks, [
-                        'task' => "Spend ".$task->taskInput." pesos in 1 visit only"
-                    ]);
-                } else if($task->taskCode == "BRNG"){
-                    array_push($finalStampTasks, [
-                        'task' => "Bring ".$task->taskInput." friends in our store"
-                    ]);
-                } else if($task->taskCode == "ORDR"){
-                    array_push($finalStampTasks, [
-                        'task' => "Order ".$task->taskInput." add on/s per visit"
-                    ]);
-                } else {
-                    array_push($finalStampTasks, [
-                        'task' => $task->taskDescription
-                    ]);
-                }
-            }
-    
-            $finalStampReward = "";
-            if($stampReward->rewardCode == "DSCN"){
-                $finalStampReward = "Discount ".$stampReward->rewardInput."% in a Total Bill";
-            } else if($stampReward->rewardCode == "FRPE"){
-                $finalStampReward = "Free ".$stampReward->rewardInput." person in a group";
+            if($getDateToday > $stamp->stampValidity){
+                $finalStampReward = null;
+                $finalValidity = null;
+                $finalStampTasks = null;
+                $finalStampCapacity = null;
             } else {
-                $finalStampReward = $stampReward->rewardDescription;
+                $stampReward = RestaurantRewardList::where('restAcc_id', $id)->where('id', $stamp->stampReward_id)->first();
+                $stampTasks = StampCardTasks::where('stampCards_id', $stamp->id)->get();
+                foreach($stampTasks as $stampTask){
+                    $task = RestaurantTaskList::where('restAcc_id', $id)->where('id', $stampTask->restaurantTaskLists_id)->first();
+                    if($task->taskCode == "SPND"){
+                        array_push($finalStampTasks, [
+                            'task' => "Spend ".$task->taskInput." pesos in 1 visit only"
+                        ]);
+                    } else if($task->taskCode == "BRNG"){
+                        array_push($finalStampTasks, [
+                            'task' => "Bring ".$task->taskInput." friends in our store"
+                        ]);
+                    } else if($task->taskCode == "ORDR"){
+                        array_push($finalStampTasks, [
+                            'task' => "Order ".$task->taskInput." add on/s per visit"
+                        ]);
+                    } else {
+                        array_push($finalStampTasks, [
+                            'task' => $task->taskDescription
+                        ]);
+                    }
+                }
+        
+                $finalStampReward = "";
+                if($stampReward->rewardCode == "DSCN"){
+                    $finalStampReward = "Discount ".$stampReward->rewardInput."% in a Total Bill";
+                } else if($stampReward->rewardCode == "FRPE"){
+                    $finalStampReward = "Free ".$stampReward->rewardInput." person in a group";
+                } else {
+                    $finalStampReward = $stampReward->rewardDescription;
+                }
+        
+                $orderdate = explode('-', $stamp->stampValidity);
+                $month = $this->convertMonths($orderdate[1]);
+                $year = $orderdate[0];
+                $day  = $orderdate[2];
+                $finalValidity = "Valid Until: ".$month." ".$day.", ".$year;
+                $finalStampCapacity = $stamp->stampCapacity;
             }
-    
-            $orderdate = explode('-', $stamp->stampValidity);
-            $month = $this->convertMonths($orderdate[1]);
-            $year = $orderdate[0];
-            $day  = $orderdate[2];
-            $finalValidity = "Valid Until: ".$month." ".$day.", ".$year;
-            $finalStampCapacity = $stamp->stampCapacity;
         } else {
             $finalStampReward = null;
             $finalValidity = null;
@@ -1653,6 +1694,129 @@ class CustomerController extends Controller
             'restaurant' => "$restaurant->rName $restaurant->rBranch",
         ]);
     }
+    public function getNotificationGeofencing($cust_id, $notif_id){
+        $promos = array();
+        $tasks = array();
+        $orderSets = array();
+        $notification = CustomerNotification::where('id', $notif_id)->where('customer_id', $cust_id)->first();
+        $restaurant = RestaurantAccount::select('id', 'rName', 'rBranch', 'rAddress', 'rCity', 'rLogo')->where('id', $notification->restAcc_id)->first();
+
+        $getPromos = Promo::where('restAcc_id', $restaurant->id)->where('promoPosted', 'Posted')->get();
+        if($getPromos->isEmpty()){
+            $promos = null;
+        } else {
+            foreach($getPromos as $getPromo){
+                array_push($promos, [
+                    'promoImage' => $this->PROMO_IMAGE_PATH."/".$restaurant->id."/".$getPromo->promoImage,
+                    'promoTitle' => $getPromo->promoTitle,
+                    'promoDescription' => $getPromo->promoDescription,
+                ]);
+            }
+        }
+
+        $stampCard = StampCard::where('restAcc_id', $restaurant->id)->first();
+        if($stampCard == null){
+            $stampDiscount = null;
+            $stampValidity = null;
+            $stampCapacity = null;
+            $tasks = null;
+        } else {
+            $reward = RestaurantRewardList::where('id', $stampCard->stampReward_id)->where('restAcc_id', $restaurant->id)->first();
+            switch($reward->rewardCode){
+                case "DSCN": 
+                    $finalReward = "Discount $reward->rewardInput% in a Total Bill";
+                    break;
+                case "FRPE": 
+                    $finalReward = "Free $reward->rewardInput person in a group";
+                    break;
+                case "HLF": 
+                    $finalReward = "Half in the group will be free";
+                    break;
+                case "ALL": 
+                    $finalReward = "All people in the group will be free";
+                    break;
+                default: 
+                    $finalReward = "None";
+            }
+
+            $bookDate = explode('-', $stampCard->stampValidity);
+            $year = $bookDate[0];
+            $month = $this->convertMonths($bookDate[1]);
+            $day  = $bookDate[2];
+
+            $stampDiscount = $finalReward;
+            $stampValidity = "Valid Until: $month $day, $year";
+            $stampCapacity = "$stampCard->stampCapacity";
+
+            $getStampTasks = StampCardTasks::where('stampCards_id', $stampCard->id)->get();
+            foreach($getStampTasks as $getStampTask){
+                $getTasks = RestaurantTaskList::where('id', $getStampTask->restaurantTaskLists_id)->where('restAcc_id', $restaurant->id)->first();
+                switch($getTasks->taskCode){
+                    case "SPND":
+                        array_push($tasks, "Spend ".$getTasks->taskInput." pesos in 1 visit only");
+                        break;
+                    case "BRNG":
+                        array_push($tasks, "Bring ".$getTasks->taskInput." friends in our store");
+                        break;
+                    case "ORDR":
+                        array_push($tasks, "Order ".$getTasks->taskInput." add on/s per visit");
+                        break;
+                    case "VST":
+                        array_push($tasks, "Visit in our store");
+                        break;
+                    case "FDBK":
+                        array_push($tasks, "Give a feedback/review per visit");
+                        break;
+                    case "PUGC":
+                        array_push($tasks, "Pay using gcash");
+                        break;
+                    case "LUDN":
+                        array_push($tasks, "Eat during lunch/dinner hours");
+                        break;
+                    default: 
+                }
+            }
+
+        }
+
+        $getOrderSets = OrderSet::where('restAcc_id', $restaurant->id)->get();
+        if($getOrderSets->isEmpty()){
+            $orderSets = null;
+        } else {
+            foreach($getOrderSets as $getOrderSet){
+                array_push($orderSets, [
+                    'orderSetName' => $getOrderSet->orderSetName,
+                    'orderSetTagline' => $getOrderSet->orderSetTagline,
+                    'orderSetDescription' => $getOrderSet->orderSetDescription,
+                    'orderSetPrice' => (number_format($getOrderSet->orderSetPrice, 2, '.')),
+                    'orderSetImage' => $this->ORDER_SET_IMAGE_PATH."/".$restaurant->id."/".$getOrderSet->orderSetImage,
+                ]);
+            }
+        }
+
+
+
+        $finalImageUrl = "";
+        if ($restaurant->rLogo == ""){
+            $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+        } else {
+            $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
+        }
+
+        return response()->json([
+            'restAcc_id' => $restaurant->id,
+            'rName' => $restaurant->rName,
+            'rBranch' => $restaurant->rBranch,
+            'rAddress' => "$restaurant->rAddress, $restaurant->rCity",
+            'rLogo' => $finalImageUrl,
+            'promos' => $promos,
+            'stampDiscount' => $stampDiscount,
+            'stampValidity' => $stampValidity,
+            'stampCapacity' => $stampCapacity,
+            'stampTasks' => $tasks,
+            'orderSets' => $orderSets,
+        ]);
+    }
 
 
 
@@ -2062,7 +2226,9 @@ class CustomerController extends Controller
                     'foodSetDescription' => "Add ons contain price",
                 ]);
             }
-        } else {}
+        } else {
+
+        }
         return response()->json([
             'restAccId' => $restAccId,
             'orderSetId' => $orderSetId,
@@ -2102,30 +2268,34 @@ class CustomerController extends Controller
         return response()->json($finalFoodItems);
     }
     public function orderingAddFoodItem(Request $request){
+        $finalStatus = "Error";
         $customerQueue = CustomerQueue::where('customer_id', $request->cust_id)->where('status', 'eating')->first();
         $customerReserve = CustomerReserve::where('customer_id', $request->cust_id)->where('status', 'eating')->first();
 
-        // $customerQrAccess = CustomerQrAccess::where('subCust_id', $cust_id)->first();
-
-        $finalStatus = "";
         if($customerQueue != null){
              $customerOrdering = CustomerOrdering::where('custBook_id', $customerQueue->id)->where('custBookType', 'queue')->first();
-             $countQuantity = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)->where('orderDone', "Processing")->sum('quantity');
+             $tableNumbers = explode(',', $customerOrdering->tableNumbers);
+             $mainTable =  $tableNumbers[0];
+
+             $countQuantity = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)
+             ->where('tableNumber', $mainTable)
+             ->where('orderDone', "Processing")
+             ->sum('quantity');
 
              if($countQuantity >= 5){
                 $finalStatus = "Maximum Quantity Reached";
              } else {
                 $customerOrderCount = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)
+                ->where('tableNumber', $mainTable)
                 ->where('orderDone', "Processing")
                 ->where('foodItem_id', $request->foodItemId)
                 ->first();
 
                 if($customerOrderCount == null){
-                    $tableNumber = explode(',', $customerOrdering->tableNumbers);
                     CustomerLOrder::create([
                         'custOrdering_id' => $customerOrdering->id,
                         'cust_id' => $request->cust_id,
-                        'tableNumber' => $tableNumber[0],
+                        'tableNumber' => $mainTable,
                         'foodItem_id' => $request->foodItemId,
                         'foodItemName' => $request->foodName,
                         'quantity' => 1,
@@ -2135,6 +2305,7 @@ class CustomerController extends Controller
                     $finalStatus = "Item Added";
                 } else {
                     CustomerLOrder::where('custOrdering_id', $customerOrdering->id)
+                    ->where('tableNumber', $mainTable)
                     ->where('orderDone', "Processing")
                     ->where('foodItem_id', $request->foodItemId)
                     ->update([
@@ -2144,45 +2315,95 @@ class CustomerController extends Controller
                     $finalStatus = "Item Added";
                 }
              }
-             
         } else if ($customerReserve != null){
             $customerOrdering = CustomerOrdering::where('custBook_id', $customerReserve->id)->where('custBookType', 'reserve')->first();
-             $countQuantity = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)->where('orderDone', "Processing")->sum('quantity');
+            $tableNumbers = explode(',', $customerOrdering->tableNumbers);
+            $mainTable =  $tableNumbers[0];
 
-             if($countQuantity >= 5){
-                $finalStatus = "Maximum Quantity Reached";
-             } else {
-                $customerOrderCount = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)
+            $countQuantity = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)
+            ->where('tableNumber', $mainTable)
+            ->where('orderDone', "Processing")
+            ->sum('quantity');
+
+            if($countQuantity >= 5){
+               $finalStatus = "Maximum Quantity Reached";
+            } else {
+               $customerOrderCount = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)
+               ->where('tableNumber', $mainTable)
+               ->where('orderDone', "Processing")
+               ->where('foodItem_id', $request->foodItemId)
+               ->first();
+
+               if($customerOrderCount == null){
+                   CustomerLOrder::create([
+                       'custOrdering_id' => $customerOrdering->id,
+                       'cust_id' => $request->cust_id,
+                       'tableNumber' => $mainTable,
+                       'foodItem_id' => $request->foodItemId,
+                       'foodItemName' => $request->foodName,
+                       'quantity' => 1,
+                       'price' => $request->foodPrice,
+                       'orderDone' => "Processing",
+                   ]);
+                   $finalStatus = "Item Added";
+               } else {
+                   CustomerLOrder::where('custOrdering_id', $customerOrdering->id)
+                   ->where('tableNumber', $mainTable)
+                   ->where('orderDone', "Processing")
+                   ->where('foodItem_id', $request->foodItemId)
+                   ->update([
+                       'quantity' => $customerOrderCount->quantity + 1,
+                       'price' => ($customerOrderCount->price / $customerOrderCount->quantity) * ($customerOrderCount->quantity + 1),
+                   ]);
+                   $finalStatus = "Item Added";
+               }
+            }
+        } else {
+            $customerQrAccess = CustomerQrAccess::where('subCust_id', $request->cust_id)->where('status', "approved")->latest()->first();
+
+            if($customerQrAccess != null){
+                $countQuantity = CustomerLOrder::where('custOrdering_id', $customerQrAccess->custOrdering_id)
+                ->where('tableNumber', $customerQrAccess->tableNumber)
                 ->where('orderDone', "Processing")
-                ->where('foodItem_id', $request->foodItemId)
-                ->first();
-
-                if($customerOrderCount == null){
-                    $tableNumber = explode(',', $customerOrdering->tableNumbers);
-                    CustomerLOrder::create([
-                        'custOrdering_id' => $customerOrdering->id,
-                        'cust_id' => $request->cust_id,
-                        'tableNumber' => $tableNumber[0],
-                        'foodItem_id' => $request->foodItemId,
-                        'foodItemName' => $request->foodName,
-                        'quantity' => 1,
-                        'price' => $request->foodPrice,
-                        'orderDone' => "Processing",
-                    ]);
-                    $finalStatus = "Item Added";
-                } else {
-                    CustomerLOrder::where('custOrdering_id', $customerOrdering->id)
+                ->sum('quantity');
+    
+                if($countQuantity >= 5){
+                    $finalStatus = "Maximum Quantity Reached";
+                 } else {
+                    $customerOrderCount = CustomerLOrder::where('custOrdering_id', $customerQrAccess->custOrdering_id)
+                    ->where('tableNumber', $customerQrAccess->tableNumber)
                     ->where('orderDone', "Processing")
                     ->where('foodItem_id', $request->foodItemId)
-                    ->update([
-                        'quantity' => $customerOrderCount->quantity + 1,
-                        'price' => $customerOrderCount->price * 2,
-                    ]);
-                    $finalStatus = "Item Added";
-                }
-             }
-        } else {
-            $finalStatus = "Error";
+                    ->first();
+    
+                    if($customerOrderCount == null){
+                        $tableNumber = $customerQrAccess->tableNumber;
+                        CustomerLOrder::create([
+                            'custOrdering_id' => $customerQrAccess->custOrdering_id,
+                            'cust_id' => $request->cust_id,
+                            'tableNumber' => $tableNumber,
+                            'foodItem_id' => $request->foodItemId,
+                            'foodItemName' => $request->foodName,
+                            'quantity' => 1,
+                            'price' => $request->foodPrice,
+                            'orderDone' => "Processing",
+                        ]);
+                        $finalStatus = "Item Added";
+                    } else {
+                        CustomerLOrder::where('custOrdering_id', $customerQrAccess->custOrdering_id)
+                        ->where('tableNumber', $customerQrAccess->tableNumber)
+                        ->where('orderDone', "Processing")
+                        ->where('foodItem_id', $request->foodItemId)
+                        ->update([
+                            'quantity' => $customerOrderCount->quantity + 1,
+                            'price' => ($customerOrderCount->price / $customerOrderCount->quantity) * ($customerOrderCount->quantity + 1),
+                        ]);
+                        $finalStatus = "Item Added";
+                    }
+                 }
+            }
+            
+            
         }
 
         return response()->json([
@@ -2192,11 +2413,11 @@ class CustomerController extends Controller
     public function getOrderingOrders($cust_id){
         $customerQueue = CustomerQueue::where('customer_id', $cust_id)->where('status', 'eating')->first();
         $customerReserve = CustomerReserve::where('customer_id', $cust_id)->where('status', 'eating')->first();
+        $customerQrAccess = CustomerQrAccess::where('subCust_id', $cust_id)->where('status', 'approved')->latest()->first();
         $finalCustomerOrders = array();
 
         if($customerQueue != null){
             $customerOrdering = CustomerOrdering::where('custBook_id', $customerQueue->id)->where('custBookType', 'queue')->first();
-            
             $customerOrders = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)
             ->where('cust_id', $cust_id)
             ->where('orderDone', "Processing")
@@ -2229,6 +2450,30 @@ class CustomerController extends Controller
                         'quantity' => $customerOrder->quantity,
                         'price' => $customerOrder->price,
                     ]);
+                }
+            } else {
+                $finalCustomerOrders = null;
+            }
+        } else if ($customerQrAccess != null){
+            $customerOrdering = CustomerOrdering::where('id', $customerQrAccess->custOrdering_id)->first();
+
+            if($customerOrdering != null){
+                $customerOrders = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)
+                ->where('cust_id', $cust_id)
+                ->where('orderDone', "Processing")
+                ->get();
+    
+                if(!$customerOrders->isEmpty()){
+                    foreach ($customerOrders as $customerOrder){
+                        array_push($finalCustomerOrders, [
+                            'custLOrder_id' => $customerOrder->id,
+                            'foodItemName' => $customerOrder->foodItemName,
+                            'quantity' => $customerOrder->quantity,
+                            'price' => $customerOrder->price,
+                        ]);
+                    }
+                } else {
+                    $finalCustomerOrders = null;
                 }
             } else {
                 $finalCustomerOrders = null;
@@ -2290,6 +2535,7 @@ class CustomerController extends Controller
         $finalAssistance = array();
         $customerQueue = CustomerQueue::where('customer_id', $cust_id)->where('status', 'eating')->first();
         $customerReserve = CustomerReserve::where('customer_id', $cust_id)->where('status', 'eating')->first();
+        $customerQrAccess = CustomerQrAccess::where('subCust_id', $cust_id)->where('status', 'approved')->latest()->first();
 
         if($customerQueue != null){
             $customerOrdering = CustomerOrdering::where('custBook_id', $customerQueue->id)->where('custBookType', "queue")->first();
@@ -2322,6 +2568,21 @@ class CustomerController extends Controller
                     ]);
                 }
             }
+        } else if($customerQrAccess != null){
+            $customerOrdering = CustomerOrdering::where('id', $customerQrAccess->custOrdering_id)->first();
+            $customerRequests = CustomerLRequest::where('custOrdering_id', $customerOrdering->id)->where('cust_id', $cust_id)->get();
+            
+            if($customerRequests->isEmpty()){
+                $finalAssistance = null;
+            } else {
+                foreach($customerRequests as $customerRequest){
+                    $time = date("g:i A", strtotime($customerRequest->created_at->format('H:i')));
+                    array_push($finalAssistance, [
+                        'requestType' => $customerRequest->request,
+                        'requestTime' => $time,
+                    ]);
+                }
+            }
         } else {
             $finalAssistance = null;
         }
@@ -2333,16 +2594,21 @@ class CustomerController extends Controller
         $finalStatus = null;
         $customerQueue = CustomerQueue::where('customer_id', $request->cust_id)->where('status', 'eating')->first();
         $customerReserve = CustomerReserve::where('customer_id', $request->cust_id)->where('status', 'eating')->first();
+        $customerQrAccess = CustomerQrAccess::where('subCust_id', $request->cust_id)->where('status', 'approved')->latest()->first();
 
         if($customerQueue != null){
             $customerOrdering = CustomerOrdering::where('custBook_id', $customerQueue->id)->where('custBookType', 'queue')->first();
+            $tableNumbers = explode(',', $customerOrdering->tableNumbers);
+            $mainTable =  $tableNumbers[0];
             
             $countRequests = CustomerLRequest::where('custOrdering_id', $customerOrdering->id)
+            ->where('tableNumber', $mainTable)
             ->where('cust_id', $request->cust_id)
             ->where('requestDone', "No")->count();
 
             if($countRequests >= 3){
                 $checkRequests = CustomerLRequest::where('custOrdering_id', $customerOrdering->id)
+                ->where('tableNumber', $mainTable)
                 ->where('cust_id', $request->cust_id)
                 ->where('requestDone', "No")
                 ->orderBy('requestSubmitDT', "DESC")->limit(3)->get();
@@ -2370,7 +2636,7 @@ class CustomerController extends Controller
                     CustomerLRequest::create([
                         'custOrdering_id' => $customerOrdering->id,
                         'cust_id' => $request->cust_id,
-                        'tableNumber' => $tableNumber[0],
+                        'tableNumber' => $mainTable,
                         'request' => $request->requestType,
                         'requestDone' => "No",
                         'requestSubmitDT' => date('Y-m-d H:i:s'),
@@ -2378,12 +2644,11 @@ class CustomerController extends Controller
                     $finalStatus = "Request sent! Kindly wait for the staff to come to your table. Thank you!";
                 }
             } else {
-                $tableNumber = explode(',', $customerOrdering->tableNumbers);
 
                 CustomerLRequest::create([
                     'custOrdering_id' => $customerOrdering->id,
                     'cust_id' => $request->cust_id,
-                    'tableNumber' => $tableNumber[0],
+                    'tableNumber' => $mainTable,
                     'request' => $request->requestType,
                     'requestDone' => "No",
                     'requestSubmitDT' => date('Y-m-d H:i:s'),
@@ -2392,12 +2657,72 @@ class CustomerController extends Controller
             }
         } else if ($customerReserve != null){
             $customerOrdering = CustomerOrdering::where('custBook_id', $customerReserve->id)->where('custBookType', 'reserve')->first();
+            $tableNumbers = explode(',', $customerOrdering->tableNumbers);
+            $mainTable =  $tableNumbers[0];
+
             $countRequests = CustomerLRequest::where('custOrdering_id', $customerOrdering->id)
+            ->where('tableNumber', $mainTable)
             ->where('cust_id', $request->cust_id)
             ->where('requestDone', "No")->count();
 
             if($countRequests >= 3){
                 $checkRequests = CustomerLRequest::where('custOrdering_id', $customerOrdering->id)
+                ->where('tableNumber', $mainTable)
+                ->where('cust_id', $request->cust_id)
+                ->where('requestDone', "No")
+                ->orderBy('requestSubmitDT', "DESC")->limit(3)->get();
+
+                foreach($checkRequests as $checkRequest){
+                    $lastRequest = $checkRequest->requestSubmitDT;
+                }
+
+                $endTime = Carbon::now();
+                $rAppstartTime = Carbon::parse($lastRequest);
+                $rAppDiffMinutes = $endTime->diffInMinutes($rAppstartTime);
+                if ($rAppDiffMinutes >= 0){
+                    if ($rAppDiffMinutes == 1){
+                        $rAppDiffTime = 1;
+                    } else {
+                        $rAppDiffTime = "$rAppDiffMinutes";
+                    }
+                }
+
+                if($rAppDiffTime <= 5){
+                    $finalStatus = "You have requested too many times, please try again after 5 mins (3 request only per 5 mins)";
+                } else {
+                    CustomerLRequest::create([
+                        'custOrdering_id' => $customerOrdering->id,
+                        'cust_id' => $request->cust_id,
+                        'tableNumber' => $mainTable,
+                        'request' => $request->requestType,
+                        'requestDone' => "No",
+                        'requestSubmitDT' => date('Y-m-d H:i:s'),
+                    ]);
+                    $finalStatus = "Request sent! Kindly wait for the staff to come to your table. Thank you!";
+                }
+            } else {
+                CustomerLRequest::create([
+                    'custOrdering_id' => $customerOrdering->id,
+                    'cust_id' => $request->cust_id,
+                    'tableNumber' => $mainTable,
+                    'request' => $request->requestType,
+                    'requestDone' => "No",
+                    'requestSubmitDT' => date('Y-m-d H:i:s'),
+                ]);
+                $finalStatus = "Request sent! Kindly wait for the staff to come to your table. Thank you!";
+            }
+        } else if($customerQrAccess != null){
+            $customerOrdering = CustomerOrdering::where('id', $customerQrAccess->custOrdering_id)->first();
+            $mainTable =  $customerQrAccess->tableNumber;
+
+            $countRequests = CustomerLRequest::where('custOrdering_id', $customerOrdering->id)
+            ->where('tableNumber', $mainTable)
+            ->where('cust_id', $request->cust_id)
+            ->where('requestDone', "No")->count();
+
+            if($countRequests >= 3){
+                $checkRequests = CustomerLRequest::where('custOrdering_id', $customerOrdering->id)
+                ->where('tableNumber', $mainTable)
                 ->where('cust_id', $request->cust_id)
                 ->where('requestDone', "No")
                 ->orderBy('requestSubmitDT', "DESC")->limit(3)->get();
@@ -2425,7 +2750,7 @@ class CustomerController extends Controller
                     CustomerLRequest::create([
                         'custOrdering_id' => $customerOrdering->id,
                         'cust_id' => $request->cust_id,
-                        'tableNumber' => $tableNumber[0],
+                        'tableNumber' => $mainTable,
                         'request' => $request->requestType,
                         'requestDone' => "No",
                         'requestSubmitDT' => date('Y-m-d H:i:s'),
@@ -2433,18 +2758,18 @@ class CustomerController extends Controller
                     $finalStatus = "Request sent! Kindly wait for the staff to come to your table. Thank you!";
                 }
             } else {
-                $tableNumber = explode(',', $customerOrdering->tableNumbers);
 
                 CustomerLRequest::create([
                     'custOrdering_id' => $customerOrdering->id,
                     'cust_id' => $request->cust_id,
-                    'tableNumber' => $tableNumber[0],
+                    'tableNumber' => $mainTable,
                     'request' => $request->requestType,
                     'requestDone' => "No",
                     'requestSubmitDT' => date('Y-m-d H:i:s'),
                 ]);
                 $finalStatus = "Request sent! Kindly wait for the staff to come to your table. Thank you!";
             }
+
         } else {
             $finalStatus = "Error";
         }
@@ -2608,11 +2933,11 @@ class CustomerController extends Controller
     }
 
     public function orderingCheckout(Request $request){
-        //  DAPAT DITO KAPAG MAG CHECHECKOUT, mawaalan na ng access yung mga subcustomer
         $finalStatus = null;
         $customerQueue = CustomerQueue::where('customer_id', $request->cust_id)->where('status', 'eating')->first();
         $customerReserve = CustomerReserve::where('customer_id', $request->cust_id)->where('status', 'eating')->first();
 
+        
         if($customerQueue != null){
             $customerOrdering = CustomerOrdering::where('custBook_id', $customerQueue->id)->where('custBookType', 'queue')->first();
             $tableNumber = explode(',', $customerOrdering->tableNumbers);
@@ -2639,6 +2964,39 @@ class CustomerController extends Controller
                 'requestDone' => "No",
                 'requestSubmitDT' => date('Y-m-d H:i:s'),
             ]);
+            
+            $customerQrAccess = CustomerQrAccess::where('custOrdering_id', $customerOrdering->id)->get();
+            if(!$customerQrAccess->isEmpty()){
+                foreach ($customerQrAccess as $customerQrA){
+                    if($customerQrA->status == "pending"){
+                        CustomerQrAccess::where('id', $customerQrA->id)
+                        ->update([
+                            'status' => "ignored"
+                        ]);
+                    } else if ($customerQrA->status == "approved"){
+                        $customer = CustomerAccount::where('id', $customerQrA->subCust_id)->first();
+                        $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/samquicksalLogo.png';
+                        if($customer != null){
+                            $to = $customer->deviceToken;
+                            $notification = array(
+                                'title' => "Hi $customer->name, thank you for ordering together with your friends!",
+                                'body' => "You will not access it anymore because your friend did checkout already. Thank you and have a nice day!",
+                            );
+                            $data = array(
+                                'notificationType' => "QR Access Complete",
+                                'notificationId' => 0,
+                                'notificationRLogo' => $finalImageUrl,
+                            );
+                            $this->sendFirebaseNotification($to, $notification, $data);
+                        }
+                        
+                        CustomerQrAccess::where('id', $customerQrA->id)
+                        ->update([
+                            'status' => "completed"
+                        ]);
+                    } else {}
+                }
+            }
         } else if ($customerReserve != null){
             $customerOrdering = CustomerOrdering::where('custBook_id', $customerReserve->id)->where('custBookType', 'reserve')->first();
 
@@ -2666,6 +3024,39 @@ class CustomerController extends Controller
                 'requestDone' => "No",
                 'requestSubmitDT' => date('Y-m-d H:i:s'),
             ]);
+            
+            $customerQrAccess = CustomerQrAccess::where('custOrdering_id', $customerOrdering->id)->get();
+            if(!$customerQrAccess->isEmpty()){
+                foreach ($customerQrAccess as $customerQrA){
+                    if($customerQrA->status == "pending"){
+                        CustomerQrAccess::where('id', $customerQrA->id)
+                        ->update([
+                            'status' => "ignored"
+                        ]);
+                    } else if ($customerQrA->status == "approved"){
+                        $customer = CustomerAccount::where('id', $customerQrA->subCust_id)->first();
+                        $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/samquicksalLogo.png';
+                        if($customer != null){
+                            $to = $customer->deviceToken;
+                            $notification = array(
+                                'title' => "Hi $customer->name, thank you for ordering together with your friends!",
+                                'body' => "You will not access it anymore because your friend did checkout already. Thank you and have a nice day!",
+                            );
+                            $data = array(
+                                'notificationType' => "QR Access Complete",
+                                'notificationId' => 0,
+                                'notificationRLogo' => $finalImageUrl,
+                            );
+                            $this->sendFirebaseNotification($to, $notification, $data);
+                        }
+                        
+                        CustomerQrAccess::where('id', $customerQrA->id)
+                        ->update([
+                            'status' => "completed"
+                        ]);
+                    } else {}
+                }
+            }
         } else {
             $finalStatus = "Error";
         }
@@ -2689,6 +3080,7 @@ class CustomerController extends Controller
             ->orWhere('checkoutStatus', "gcashCheckoutValidation")
             ->orWhere('checkoutStatus', "gcashInsufficientAmount");
         })->first();
+
 
         if($customerQueue != null){
             $finalStatus = $customerQueue->checkoutStatus;
@@ -2766,7 +3158,7 @@ class CustomerController extends Controller
             if($customerQueue != null){
                 $customerOrdering = CustomerOrdering::where('custBook_id', $customerQueue->id)->first();
                 $restaurant = RestaurantAccount::where('id', $customerQueue->restAcc_id)->first();
-                $stampCard = StampCard::where('restAcc_id', $customerQueue->restAcc_id)->first();
+                $stampCard = StampCard::where('restAcc_id', $customerQueue->restAcc_id)->latest()->first();
 
                 if($stampCard != null){
                     if($getDateToday <= $stampCard->stampValidity){
@@ -2811,6 +3203,8 @@ class CustomerController extends Controller
                                     'customerStampCard_id' => $custStampCard->id,
                                     'taskName' => $storeDoneTask,
                                     'taskAccomplishDate' => $getDateToday,
+                                    'booking_id' => $customerQueue->id,
+                                    'booking_type' => "reserve",
                                 ]);
                             }
 
@@ -2872,6 +3266,8 @@ class CustomerController extends Controller
                                     'customerStampCard_id' => $custStampCardNew->id,
                                     'taskName' => $storeDoneTask,
                                     'taskAccomplishDate' => $getDateToday,
+                                    'booking_id' => $customerQueue->id,
+                                    'booking_type' => "reserve",
                                 ]);
                             }
                         }
@@ -2939,6 +3335,8 @@ class CustomerController extends Controller
                                     'customerStampCard_id' => $custStampCard->id,
                                     'taskName' => $storeDoneTask,
                                     'taskAccomplishDate' => $getDateToday,
+                                    'booking_id' => $customerReserve->id,
+                                    'booking_type' => "reserve",
                                 ]);
                             }
 
@@ -3000,6 +3398,8 @@ class CustomerController extends Controller
                                     'customerStampCard_id' => $custStampCardNew->id,
                                     'taskName' => $storeDoneTask,
                                     'taskAccomplishDate' => $getDateToday,
+                                    'booking_id' => $customerReserve->id,
+                                    'booking_type' => "reserve",
                                 ]);
                             }
                         }
@@ -3294,40 +3694,44 @@ class CustomerController extends Controller
         $reviews = CustRestoRating::where('restAcc_id', $rest_id)->orderBy('id', "DESC")->get();
         $countReviews = 0;
         $sumRating = 0.0;
-        foreach($reviews as $review){
-            $countReviews++;
-            $sumRating += $review->rating;
-            $date = strtotime($review->created_at);
-            if($review->anonymous == "Yes"){
-                array_push($finalCustReviews, [
-                    'custImage' => $this->ACCOUNT_NO_IMAGE_PATH.'/user-default.png',
-                    'custName' => "Anonymous",
-                    'custRating' => $review->rating,
-                    'custComment' => $review->comment,
-                    'custRateDate' => date('M j ', $date),
-                ]);
-            } else {
-                $customer = CustomerAccount::where('id', $review->customer_id)->first();
-
-                $finalImageUrl = "";
-                if($customer->profileImage == null){
-                    $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/user-default.png';
+        $averageRating = 0.0;
+        if(!$reviews->isEmpty()){
+            foreach($reviews as $review){
+                $countReviews++;
+                $sumRating += $review->rating;
+                $date = strtotime($review->created_at);
+                if($review->anonymous == "Yes"){
+                    array_push($finalCustReviews, [
+                        'custImage' => $this->ACCOUNT_NO_IMAGE_PATH.'/user-default.png',
+                        'custName' => "Anonymous",
+                        'custRating' => $review->rating,
+                        'custComment' => $review->comment,
+                        'custRateDate' => date('M j ', $date),
+                    ]);
                 } else {
-                    $finalImageUrl = $this->CUSTOMER_IMAGE_PATH.'/'.$customer->id.'/'. $customer->profileImage;
+                    $customer = CustomerAccount::where('id', $review->customer_id)->first();
+    
+                    $finalImageUrl = "";
+                    if($customer->profileImage == null){
+                        $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/user-default.png';
+                    } else {
+                        $finalImageUrl = $this->CUSTOMER_IMAGE_PATH.'/'.$customer->id.'/'. $customer->profileImage;
+                    }
+    
+                    array_push($finalCustReviews, [
+                        'custImage' => $finalImageUrl,
+                        'custName' => $customer->name,
+                        'custRating' => $review->rating,
+                        'custComment' => $review->comment,
+                        'custRateDate' => date('M j ', $date),
+                    ]);
                 }
-
-                array_push($finalCustReviews, [
-                    'custImage' => $finalImageUrl,
-                    'custName' => $customer->name,
-                    'custRating' => $review->rating,
-                    'custComment' => $review->comment,
-                    'custRateDate' => date('M j ', $date),
-                ]);
             }
-            
+            $averageRating = $sumRating / $countReviews;
+        } else {
+            $finalCustReviews = null;
         }
 
-        $averageRating = $sumRating / $countReviews;
 
         return response()->json([
             'averageRating' => (number_format($averageRating, 1, '.')),
@@ -3385,14 +3789,958 @@ class CustomerController extends Controller
 
         return response()->json($finalRatedRestaurants);
     }
+    public function geofenceNotifyCustomer(Request $request){
+        $getDateToday = date('Y-m-d');
+        $cust_id = $request->cust_id;
+        $cust_lat = $request->cust_lat;
+        $cust_long = $request->cust_long;
+        $CONST_RADIUS = 1000;
+
+        $finalResult = array();
+        
+        if($cust_lat != $cust_long){
+            $restaurants = RestaurantAccount::select('id', 'rName', 'rAddress', 'rBranch', 'rLogo', 'rLatitudeLoc', 'rLongitudeLoc')->get();
+            $storeGeo = array();
+            foreach ($restaurants as $restaurant){
+                $rest_lat = $restaurant->rLatitudeLoc;
+                $rest_long = $restaurant->rLongitudeLoc;
+                if ($rest_lat != $rest_long) {
+                    //calculate distance
+                    $meters = 0;
+                    $R = 6371;
+                    $lat = $rest_lat - $cust_lat;
+                    $long = $rest_long - $cust_long;
+
+                    $dLat = deg2rad($lat);
+                    $dLong = deg2rad($long);
+
+                    $a = 
+                        sin($dLat/2) * sin($dLat/2) +
+                        cos(deg2rad($cust_lat)) * cos(deg2rad($rest_lat)) *
+                        sin($dLong/2) * sin($dLong/2);
+                    
+                    $c = 2 * atan2(sqrt($a), sqrt(1-$a));
+
+                    $DistanceKM = $R * $c;
+                    $DistanceMeter = $DistanceKM * 1000;
+
+                    //i-check kung pasok
+                    if($CONST_RADIUS >= $DistanceMeter){
+
+                        $finalImageUrl = "";
+                        if ($restaurant->rLogo == ""){
+                            $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+                        } else {
+                            $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
+                        }
+
+                        array_push($storeGeo , [
+                            'rest_id' => $restaurant->id,
+                            'rName' => $restaurant->rName,
+                            'rAddress' => "$restaurant->rAddress, $restaurant->rBranch",
+                            'rBranch' => $restaurant->rBranch,
+                            'rLogo' => $finalImageUrl,
+                            'DistanceMeter' => intval($DistanceMeter),
+                        ]);
+                    }
+
+                }
+            }
+
+            foreach($storeGeo as $existingNotif){
+                $notifcations = CustomerNotification::where('customer_id', $cust_id)
+                ->where('restAcc_id', $existingNotif['rest_id'])
+                ->where('notificationType', 'Geofencing')
+                ->first();
+
+                if($notifcations != null){
+                    //existing na yung type ng ganong notif
+                    $notifDate = explode(' ', $notifcations->created_at);
+
+                    //check kung nag notif na ngayon araw
+                    if($notifDate[0] != $getDateToday){
+                        array_push($finalResult, [
+                            'rest_id' => $existingNotif['rest_id'],
+                            'rName' => $existingNotif['rName'],
+                            'rAddress' => $existingNotif['rAddress'],
+                            'rLogo' => $existingNotif['rLogo'],
+                            'rBranch' => $existingNotif['rBranch'],
+                        ]);
+                    }
+                } else {
+                    //wala pang notif na ganon
+                    array_push($finalResult, [
+                        'rest_id' => $existingNotif['rest_id'],
+                        'rName' => $existingNotif['rName'],
+                        'rAddress' => $existingNotif['rAddress'],
+                        'rLogo' => $existingNotif['rLogo'],
+                        'rBranch' => $existingNotif['rBranch'],
+                    ]);
+                }
+            }
+
+            foreach($finalResult as $custNotif){
+                $notif = CustomerNotification::create([
+                    'customer_id' => $cust_id,
+                    'restAcc_id' => $custNotif['rest_id'],
+                    'notificationType' => "Geofencing",
+                    'notificationTitle' => $custNotif['rName'] . " is near you! See the latest promos or menu",
+                    'notificationDescription' => $custNotif['rAddress'],
+                    'notificationStatus' => "Unread",
+                ]);
+
+                $customer = CustomerAccount::where('id', $cust_id)->first();
+        
+                if($customer != null){
+                    $to = $customer->deviceToken;
+                    $notification = array(
+                        'title' => $custNotif['rName'].', '.$custNotif['rBranch'],
+                        'body' => "It seems like you are near to our restaurant",
+                    );
+                    $data = array(
+                        'notificationType' => "Geofencing",
+                        'notificationId' => $notif->id,
+                        'notificationRLogo' => $custNotif['rLogo'],
+                    );
+                    $this->sendFirebaseNotification($to, $notification, $data);
+                }
+            }
+        } else {
+            $finalResult = null;
+        }
+        return response()->json([
+            'status' => "Success",
+        ]);
+    }
+
+    public function getListOfNearbyRestaurants(Request $request){
+        $cust_lat = $request->cust_lat;
+        $cust_long = $request->cust_long;
+        $CONST_RADIUS = 10000000000;
+        $finalResult = array();
+
+
+        if($cust_lat != $cust_long){
+            $restaurants = RestaurantAccount::select('id', 'rName', 'rAddress', 'rCity', 'rLogo', 'rLatitudeLoc', 'rLongitudeLoc')->get();
+            $storeGeo = array();
+
+            foreach ($restaurants as $restaurant){
+                $rest_lat = $restaurant->rLatitudeLoc;
+                $rest_long = $restaurant->rLongitudeLoc;
+
+                if ($rest_lat != $rest_long) {
+                    //calculate distance
+                    $meters = 0;
+                    $R = 6371;
+                    $lat = $rest_lat - $cust_lat;
+                    $long = $rest_long - $cust_long;
+
+                    $dLat = deg2rad($lat);
+                    $dLong = deg2rad($long);
+
+                    $a = 
+                        sin($dLat/2) * sin($dLat/2) +
+                        cos(deg2rad($cust_lat)) * cos(deg2rad($rest_lat)) *
+                        sin($dLong/2) * sin($dLong/2);
+                    
+                    $c = 2 * atan2(sqrt($a), sqrt(1-$a));
+
+                    $DistanceKM = $R * $c;
+                    $DistanceMeter = $DistanceKM * 1000;
+
+                    // 10,000 meters = 10km
+                    if($CONST_RADIUS >= $DistanceMeter){
+                        $finalImageUrl = "";
+                        if ($restaurant->rLogo == ""){
+                            $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+                        } else {
+                            $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
+                        }
+                        $tempDistance = $DistanceMeter;
+                        $finalDistance = "";
+                        if($DistanceKM >= 1){
+                            $finalDistance = (number_format($DistanceKM, 1, '.'))." km away";
+                        } else {
+                            $finalDistance = (number_format($DistanceMeter, 1, '.'))." m away";
+                        }
+
+                        $getAvailability = "";
+                        $rSchedule = "";
+
+                        $restaurantUnavailableDates = UnavailableDate::select('unavailableDatesDate')->where('restAcc_id', $restaurant->id)->get();
+                        foreach ($restaurantUnavailableDates as $restaurantUnavailableDate) {
+                            if($restaurantUnavailableDate->unavailableDatesDate == date("Y-m-d")){
+                                $getAvailability = "Closed";
+                            }
+                        }
+                        
+                        if($getAvailability == "Closed"){
+                            $rSchedule = "Closed Now";
+                        } else {
+                            $restaurantStoreHours = StoreHour::where('restAcc_id', $restaurant->id)->get();
+                            foreach ($restaurantStoreHours as $restaurantStoreHour){
+                                foreach (explode(",", $restaurantStoreHour->days) as $day){
+                                    if($this->convertDays($day) == date('l')){
+                                        $currentTime = date("H:i");
+                                        if($currentTime < $restaurantStoreHour->openingTime || $currentTime > $restaurantStoreHour->closingTime){
+                                            $rSchedule = "Closed Now";
+                                        } else {
+                                            $closingTime = date("g:i a", strtotime($restaurantStoreHour->closingTime));
+                                            $rSchedule = "Open now until ".$closingTime;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        if($rSchedule == ""){
+                            $rSchedule = "Closed Now";
+                        }
+
+                        array_push($storeGeo , [
+                            'rest_id' => $restaurant->id,
+                            'rName' => $restaurant->rName,
+                            'rAddress' => "$restaurant->rAddress, $restaurant->rCity",
+                            'rLogo' => $finalImageUrl,
+                            'rSchedule' => $rSchedule,
+                            'distance' => $finalDistance,
+                            'tempDistance' => $tempDistance,
+                        ]);
+                    }
+                }
+            }
+
+            usort($storeGeo, function($a, $b) {
+                return ($a['tempDistance']) - ($b['tempDistance']);
+            });
+
+            foreach($storeGeo as $temp){
+                array_push($finalResult, [
+                    'rest_id' => $temp['rest_id'],
+                    'rName' => $temp['rName'],
+                    'rAddress' => $temp['rAddress'],
+                    'rLogo' => $temp['rLogo'],
+                    'rSchedule' => $temp['rSchedule'],
+                    'distance' => $temp['distance'],
+                ]);
+            }
+            
+        }
+        if($storeGeo == null){
+            $finalResult = null;
+        }
+        return response()->json($finalResult);
+    }
+
+    public function getNotificationCompleted($cust_id, $notif_id){
+        $notification = CustomerNotification::where('id', $notif_id)->where('customer_id', $cust_id)->where('notificationType', "Complete")->first();
+        $restaurant = RestaurantAccount::select('rName', 'rBranch')->where('id', $notification->restAcc_id)->first();
+        
+        $customerQueue = CustomerQueue::where('status', 'completed')->where('completeDateTime', $notification->created_at)->first();
+        $customerReserve = CustomerReserve::where('status', 'completed')->where('completeDateTime', $notification->created_at)->first();
+
+        $countTasks = 0;
+        $stampCard_id = 0;
+        $storeTasks = array();
+        if($customerQueue != null){
+            $getTasksDones = CustomerTasksDone::where('booking_id', $customerQueue->id)->where('booking_type', "queue")->get();
+            if(!$getTasksDones->isEmpty()){
+                $stampCard_id = $getTasksDones[0]->customerStampCard_id;
+                foreach($getTasksDones as $getTasksDone){
+                    array_push($storeTasks, $getTasksDone->taskName);
+                    $countTasks++;
+                }
+            }
+
+            $finalBookType = "queue";
+            $finalBookId = $customerQueue->id;
+        } else {
+            $getTasksDones = CustomerTasksDone::where('booking_id', $customerReserve->id)->where('booking_type', "reserve")->get();
+            if(!$getTasksDones->isEmpty()){
+                $stampCard_id = $getTasksDones[0]->customerStampCard_id;
+                foreach($getTasksDones as $getTasksDone){
+                    array_push($storeTasks, $getTasksDone->taskName);
+                    $countTasks++;
+                }
+            }
+
+            $finalBookType = "reserve";
+            $finalBookId = $customerReserve->id;
+        }
+        
+        return response()->json([
+            'restaurant' => "$restaurant->rName $restaurant->rBranch",
+            'finalBookType' => $finalBookType,
+            'finalBookId' => $finalBookId,
+            'stampCardId' => $stampCard_id,
+            'tasks' => $storeTasks,
+            'countTasks' => $countTasks
+        ]);
+    }
+
+    public function customerScanQr($cust_id, $request_cust_id){
+        $reqStatus = "error";
+        $subCustStatus = "none";
+
+        // SUB CUST STATUS
+        $customerQueueSub = CustomerQueue::where('customer_id', $cust_id)
+        ->where('status', '!=', 'cancelled')
+        ->where('status', '!=', 'declined')
+        ->where('status', '!=', 'noShow')
+        ->where('status', '!=', 'runaway')
+        ->orderBy('created_at', 'DESC')
+        ->first();
+
+        $customerReserveSub = CustomerReserve::where('customer_id', $cust_id)
+        ->where('status', '!=', 'cancelled')
+        ->where('status', '!=', 'declined')
+        ->where('status', '!=', 'noShow')
+        ->where('status', '!=', 'runaway')
+        ->orderBy('created_at', 'DESC')
+        ->first();
+
+        if($customerQueueSub != null){
+            if($customerQueueSub->status == "eating"){
+                $subCustStatus = "onGoing";
+            } else if ($customerQueueSub->status == "pending" 
+                        || $customerQueueSub->status == "approved" 
+                        || $customerQueueSub->status == "validation"
+                        || $customerQueueSub->status == "tableSettingUp") {
+                $subCustStatus = "onGoing";
+            } else {
+                $subCustStatus = "none";
+            }
+        } else if ($customerReserveSub != null) { 
+            if($customerReserveSub->status == "eating"){
+                $subCustStatus = "onGoing";
+            } else if ($customerReserveSub->status == "pending" 
+                        || $customerReserveSub->status == "approved" 
+                        || $customerReserveSub->status == "validation"
+                        || $customerReserveSub->status == "tableSettingUp") {
+                $subCustStatus = "onGoing";
+            } else {
+                $subCustStatus = "none";
+            }
+        } else {
+            $subCustStatus = "none";
+        }
+
+
+        if($subCustStatus == "onGoing"){
+            return response()->json([
+                'custId' => null,
+                'custImage' => null,
+                'custName' => null,
+                'custEAddress' => null,
+                'custCNumber' => null,
+                'custJDate' => null,
+                'bdRName' => null,
+                'bdRAddres' => null,
+                'bdOrderName' => null,
+                'bdBookType' => null,
+                'bdAccessSlot' => null,
+                'reqStatus' => "Ongoing Status",
+            ]);
+        } else {
+            // MAIN CUST STATUS
+            $customer = CustomerAccount::where('id', $request_cust_id)->first();
+            $customerQueue = CustomerQueue::where('customer_id', $request_cust_id)->where('status', "eating")->first();
+            $customerReserve = CustomerReserve::where('customer_id', $request_cust_id)->where('status', "eating")->first();
+            $userSinceDate = explode('-', date('Y-m-d', strtotime($customer->created_at)));
+            $month2 = $this->convertMonths($userSinceDate[1]);
+            $year2 = $userSinceDate[0];
+            $day2  = $userSinceDate[2];
+            $finalImageUrl = "";
+            if($customer->profileImage == null){
+                $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/user-default.png';
+            } else {
+                $finalImageUrl = $this->CUSTOMER_IMAGE_PATH.'/'.$request_cust_id.'/'. $customer->profileImage;
+            }
+
+
+            if($customerQueue != null){
+                $restaurant = RestaurantAccount::select('id', 'rName', 'rAddress', 'rCity')->where('id', $customerQueue->restAcc_id)->first();
+                $orderSet = OrderSet::where('id', $customerQueue->orderSet_id)->where('restAcc_id', $restaurant->id)->first();
+                $customerOrdering = CustomerOrdering::where('custBook_id', $customerQueue->id
+                )->where('custBookType', "queue")
+                ->where('status', "eating")
+                ->first();
+
+                if($customerOrdering->availableQrAccess >= 1){
+                    $checkAccess = CustomerQrAccess::where('mainCust_id', $request_cust_id)
+                    ->where('subCust_id', $cust_id)
+                    ->where('custOrdering_id', $customerOrdering->id)
+                    ->latest()
+                    ->first();
+
+                    if($checkAccess == null){
+                        return response()->json([
+                            'custId' => $request_cust_id,
+                            'custImage' => $finalImageUrl,
+                            'custName' => $customer->name,
+                            'custEAddress' => $customer->emailAddress,
+                            'custCNumber' => $customer->contactNumber,
+                            'custJDate' => "User since: $month2 $day2, $year2",
+                            'bdRName' => $restaurant->rName,
+                            'bdRAddres' => "$restaurant->rAddress, $restaurant->rCity",
+                            'bdOrderName' => $orderSet->orderSetName,
+                            'bdBookType' => "Queue",
+                            'bdAccessSlot' => $customerOrdering->availableQrAccess,
+                            'reqStatus' => "Success",
+                        ]);
+                    } else {
+                        if($checkAccess->status == "declined") {
+                            return response()->json([
+                                'custId' => $request_cust_id,
+                                'custImage' => $finalImageUrl,
+                                'custName' => $customer->name,
+                                'custEAddress' => $customer->emailAddress,
+                                'custCNumber' => $customer->contactNumber,
+                                'custJDate' => "User since: $month2 $day2, $year2",
+                                'bdRName' => $restaurant->rName,
+                                'bdRAddres' => "$restaurant->rAddress, $restaurant->rCity",
+                                'bdOrderName' => $orderSet->orderSetName,
+                                'bdBookType' => "Queue",
+                                'bdAccessSlot' => $customerOrdering->availableQrAccess,
+                                'reqStatus' => "Success",
+                            ]);
+                        } else if($checkAccess->status == "approved") {
+                            return response()->json([
+                                'custId' => $request_cust_id,
+                                'custImage' => $finalImageUrl,
+                                'custName' => $customer->name,
+                                'custEAddress' => $customer->emailAddress,
+                                'custCNumber' => $customer->contactNumber,
+                                'custJDate' => "User since: $month2 $day2, $year2",
+                                'bdRName' => $restaurant->rName,
+                                'bdRAddres' => "$restaurant->rAddress, $restaurant->rCity",
+                                'bdOrderName' => $orderSet->orderSetName,
+                                'bdBookType' => "Queue",
+                                'bdAccessSlot' => $customerOrdering->availableQrAccess,
+                                'reqStatus' => "Approved",
+                            ]);
+                        } else {
+                            return response()->json([
+                                'custId' => $request_cust_id,
+                                'custImage' => $finalImageUrl,
+                                'custName' => $customer->name,
+                                'custEAddress' => $customer->emailAddress,
+                                'custCNumber' => $customer->contactNumber,
+                                'custJDate' => "User since: $month2 $day2, $year2",
+                                'bdRName' => $restaurant->rName,
+                                'bdRAddres' => "$restaurant->rAddress, $restaurant->rCity",
+                                'bdOrderName' => $orderSet->orderSetName,
+                                'bdBookType' => "Queue",
+                                'bdAccessSlot' => $customerOrdering->availableQrAccess,
+                                'reqStatus' => "Pending",
+                            ]);
+                        }
+                    }
+                } else {
+                    return response()->json([
+                        'custId' => $request_cust_id,
+                        'custImage' => $finalImageUrl,
+                        'custName' => $customer->name,
+                        'custEAddress' => $customer->emailAddress,
+                        'custCNumber' => $customer->contactNumber,
+                        'custJDate' => "User since: $month2 $day2, $year2",
+                        'bdRName' => $restaurant->rName,
+                        'bdRAddres' => "$restaurant->rAddress, $restaurant->rCity",
+                        'bdOrderName' => $orderSet->orderSetName,
+                        'bdBookType' => "Queue",
+                        'bdAccessSlot' => 0,
+                        'reqStatus' => "Full Slot",
+                    ]);
+                }
+            } else if($customerReserve != null){
+                $restaurant = RestaurantAccount::select('id', 'rName', 'rAddress', 'rCity')->where('id', $customerReserve->restAcc_id)->first();
+                $orderSet = OrderSet::where('id', $customerReserve->orderSet_id)->where('restAcc_id', $restaurant->id)->first();
+                $customerOrdering = CustomerOrdering::where('custBook_id', $customerReserve->id
+                )->where('custBookType', "queue")
+                ->where('status', "eating")
+                ->first();
+
+                if($customerOrdering->availableQrAccess >= 1){
+                    $checkAccess = CustomerQrAccess::where('mainCust_id', $request_cust_id)
+                    ->where('subCust_id', $cust_id)
+                    ->where('custOrdering_id', $customerOrdering->id)
+                    ->first();
+
+                    if($checkAccess == null){
+                        return response()->json([
+                            'custId' => $request_cust_id,
+                            'custImage' => $finalImageUrl,
+                            'custName' => $customer->name,
+                            'custEAddress' => $customer->emailAddress,
+                            'custCNumber' => $customer->contactNumber,
+                            'custJDate' => "User since: $month2 $day2, $year2",
+                            'bdRName' => $restaurant->rName,
+                            'bdRAddres' => "$restaurant->rAddress, $restaurant->rCity",
+                            'bdOrderName' => $orderSet->orderSetName,
+                            'bdBookType' => "Reserve",
+                            'bdAccessSlot' => $customerOrdering->availableQrAccess,
+                            'reqStatus' => "Success",
+                        ]);
+                    } else {
+                        return response()->json([
+                            'custId' => $request_cust_id,
+                            'custImage' => $finalImageUrl,
+                            'custName' => $customer->name,
+                            'custEAddress' => $customer->emailAddress,
+                            'custCNumber' => $customer->contactNumber,
+                            'custJDate' => "User since: $month2 $day2, $year2",
+                            'bdRName' => $restaurant->rName,
+                            'bdRAddres' => "$restaurant->rAddress, $restaurant->rCity",
+                            'bdOrderName' => $orderSet->orderSetName,
+                            'bdBookType' => "Reserve",
+                            'bdAccessSlot' => $customerOrdering->availableQrAccess,
+                            'reqStatus' => "Pending",
+                        ]);
+                    }
+
+                } else {
+                    return response()->json([
+                        'custId' => $request_cust_id,
+                        'custImage' => $finalImageUrl,
+                        'custName' => $customer->name,
+                        'custEAddress' => $customer->emailAddress,
+                        'custCNumber' => $customer->contactNumber,
+                        'custJDate' => "User since: $month2 $day2, $year2",
+                        'bdRName' => $restaurant->rName,
+                        'bdRAddres' => "$restaurant->rAddress, $restaurant->rCity",
+                        'bdOrderName' => $orderSet->orderSetName,
+                        'bdBookType' => "Reserve",
+                        'bdAccessSlot' => 0,
+                        'reqStatus' => "Full Slot",
+                    ]);
+                }
+            } else {
+                return response()->json([
+                    'custId' => null,
+                    'custImage' => null,
+                    'custName' => null,
+                    'custEAddress' => null,
+                    'custCNumber' => null,
+                    'custJDate' => null,
+                    'bdRName' => null,
+                    'bdRAddres' => null,
+                    'bdOrderName' => null,
+                    'bdBookType' => null,
+                    'bdAccessSlot' => null,
+                    'reqStatus' => "Invalid Access",
+                ]);
+            }
+        }
+    }
+
+    public function orderingRequestAccess($cust_id, $request_cust_id){
+        $finalStatus = "";
+        $customerQueue = CustomerQueue::where('customer_id', $request_cust_id)->where('status', "eating")->first();
+        $customerReserve = CustomerReserve::where('customer_id', $request_cust_id)->where('status', "eating")->first();
+        if($customerQueue != null){
+            $customer = CustomerAccount::where('id', $request_cust_id)->first();
+            $customerOrdering = CustomerOrdering::where('custBook_id', $customerQueue->id)
+            ->where('custBookType', "queue")
+            ->where('status', "eating")
+            ->first();
+
+            CustomerQrAccess::create([
+                'custOrdering_id' =>  $customerOrdering->id,
+                'mainCust_id' => $request_cust_id,
+                'subCust_id' => $cust_id,
+                'tableNumber' => "0",
+                'status' => "pending",
+            ]);
+
+            $notif = CustomerNotification::create([
+                'customer_id' => $customer->id,
+                'restAcc_id' => 0,
+                'notificationType' => "QR Request",
+                'notificationTitle' => "Someone has scanned your QR Code. Please review it now.",
+                'notificationDescription' => "Samquicksal",
+                'notificationStatus' => "Unread",
+            ]);
+
+            $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/samquicksalLogo.png';
+            if($customer != null){
+                $to = $customer->deviceToken;
+                $notification = array(
+                    'title' => "Hi $customer->name, Someone has scanned your QR Code!",
+                    'body' => "Please review it now.",
+                );
+                $data = array(
+                    'notificationType' => "QR Request",
+                    'notificationId' => $notif->id,
+                    'notificationRLogo' => $finalImageUrl,
+                );
+                $this->sendFirebaseNotification($to, $notification, $data);
+            }
+
+
+            $customerSub = CustomerAccount::where('id', $cust_id)->first();
+            $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/samquicksalLogo.png';
+            if($customerSub != null){
+                $to2 = $customerSub->deviceToken;
+                $notification2 = array(
+                    'title' => "Hi $customerSub->name, Your request has been sent",
+                    'body' => "Please wait for your friend to validate your request. Thank you for your patience.",
+                );
+                $data2 = array(
+                    'notificationType' => "QR Request Sub",
+                    'notificationId' => 0,
+                    'notificationRLogo' => $finalImageUrl,
+                );
+                $this->sendFirebaseNotification($to2, $notification2, $data2);
+            }
+            $finalStatus = "success";
+        } else if($customerReserve != null){
+            $customer = CustomerAccount::where('id', $request_cust_id)->first();
+            $customerOrdering = CustomerOrdering::where('custBook_id', $customerReserve->id)
+            ->where('custBookType', "queue")
+            ->where('status', "eating")
+            ->first();
+
+            CustomerQrAccess::create([
+                'custOrdering_id' =>  $customerOrdering->id,
+                'mainCust_id' => $request_cust_id,
+                'subCust_id' => $cust_id,
+                'tableNumber' => "0",
+                'status' => "pending",
+            ]);
+
+            $notif = CustomerNotification::create([
+                'customer_id' => $customer->id,
+                'restAcc_id' => 0,
+                'notificationType' => "QR Request",
+                'notificationTitle' => "Someone has scanned your QR Code. Please review it now.",
+                'notificationDescription' => "Samquicksal",
+                'notificationStatus' => "Unread",
+            ]);
+
+            $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/samquicksalLogo.png';
+            if($customer != null){
+                $to = $customer->deviceToken;
+                $notification = array(
+                    'title' => "Hi $customer->name, Someone has scanned your QR Code!",
+                    'body' => "Please review it now.",
+                );
+                $data = array(
+                    'notificationType' => "QR Request",
+                    'notificationId' => $notif->id,
+                    'notificationRLogo' => $finalImageUrl,
+                );
+                $this->sendFirebaseNotification($to, $notification, $data);
+            }
+
+            $customerSub = CustomerAccount::where('id', $cust_id)->first();
+            $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/samquicksalLogo.png';
+            if($customerSub != null){
+                $to2 = $customerSub->deviceToken;
+                $notification2 = array(
+                    'title' => "Hi $customerSub->name, Your request has been sent",
+                    'body' => "Please wait for your friend to validate your request. Thank you for your patience.",
+                );
+                $data2 = array(
+                    'notificationType' => "QR Request Sub",
+                    'notificationId' => 0,
+                    'notificationRLogo' => $finalImageUrl,
+                );
+                $this->sendFirebaseNotification($to2, $notification2, $data2);
+            }
+            $finalStatus = "success";
+        } else {
+            $finalStatus = "error";
+        }
+        return response()->json([
+            'status' => $finalStatus,
+        ]);
+    }
+    public function getNotificationQrValidate($cust_id, $notif_id){
+        $customerNotification = CustomerNotification::where('id', $notif_id)
+        ->where('customer_id', $cust_id)
+        ->where('notificationType', "QR Request")
+        ->first();
+
+        $customerQrAccess = CustomerQrAccess::where('mainCust_id', $cust_id)
+        ->where('created_at', $customerNotification->created_at)
+        ->first();
+        
+        $customerSub = CustomerAccount::where('id', $customerQrAccess->subCust_id)->first();
+        $reqDate = explode('-', date("Y-m-d", strtotime($customerQrAccess->created_at)));
+        $year = $reqDate[0];
+        $month = $this->convertMonths($reqDate[1]);
+        $day  = $reqDate[2];
+        $reqTime = date("g:i a", strtotime($customerQrAccess->created_at->toTimeString()));
+
+        if($customerQrAccess->status == "pending"){
+            $customerOrdering = CustomerOrdering::where('id', $customerQrAccess->custOrdering_id)->where('status', "eating")->first();
+            if($customerOrdering == null){
+                return response()->json([
+                    'custQrAcces_id' => $customerQrAccess->id,
+                    'custName' => $customerSub->name,
+                    'custEAddress' => $customerSub->emailAddress,
+                    'custENumber' => $customerSub->contactNumber,
+                    'scannedStatus' => $customerQrAccess->status,
+                    'scanReqDate' => "$month $day, $year",
+                    'scanReqTime' => $reqTime,
+                    'tableNumbers' => null,
+                ]);
+            } else {
+                if($customerOrdering->availableQrAccess >= 1){
+                    $availTableNumbers = array();
+                    $tableNumbers = array();
+                    $tableNumbers = explode(',', $customerOrdering->tableNumbers);
+                    $getExTableNums = CustomerQrAccess::where('mainCust_id', $cust_id)
+                    ->where('custOrdering_id', $customerOrdering->id)
+                    ->where('status', "approved")
+                    ->get();
+    
+                    if($getExTableNums->isEmpty()){
+                       for($i=0; $i<sizeOf($tableNumbers); $i++){
+                           if($i!=0){
+                                array_push($availTableNumbers, $tableNumbers[$i]); 
+                           }
+                       }
+                    } else {
+                        foreach($getExTableNums as $getExTableNum){
+                            $exTableNum = $getExTableNum->tableNumber;
+                            for($i=0; $i<sizeOf($tableNumbers); $i++){
+                                if($i!=0){
+                                    if($tableNumbers[$i] != $exTableNum){
+                                        array_push($availTableNumbers, $tableNumbers[$i]); 
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    return response()->json([
+                        'custQrAcces_id' => $customerQrAccess->id,
+                        'custName' => $customerSub->name,
+                        'custEAddress' => $customerSub->emailAddress,
+                        'custENumber' => $customerSub->contactNumber,
+                        'scannedStatus' => $customerQrAccess->status,
+                        'scanReqDate' => "$month $day, $year",
+                        'scanReqTime' => $reqTime,
+                        'tableNumbers' => $availTableNumbers,
+                    ]);
+                } else {
+                    return response()->json([
+                        'custQrAcces_id' => $customerQrAccess->id,
+                        'custName' => $customerSub->name,
+                        'custEAddress' => $customerSub->emailAddress,
+                        'custENumber' => $customerSub->contactNumber,
+                        'scannedStatus' => $customerQrAccess->status,
+                        'scanReqDate' => "$month $day, $year",
+                        'scanReqTime' => $reqTime,
+                        'tableNumbers' => null,
+                    ]);
+                }
+            }
+        } else {
+            return response()->json([
+                'custQrAcces_id' => $customerQrAccess->id,
+                'custName' => $customerSub->name,
+                'custEAddress' => $customerSub->emailAddress,
+                'custENumber' => $customerSub->contactNumber,
+                'scannedStatus' => $customerQrAccess->status,
+                'scanReqDate' => "$month $day, $year",
+                'scanReqTime' => $reqTime,
+                'tableNumbers' => null,
+            ]);
+        }
+    }
+
+    public function orderingRequestAppDec(Request $request){
+        $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/samquicksalLogo.png';
+        $finalStatus = "Error";
+
+        if($request->reqType == "declined"){
+            $customerQrAccess = CustomerQrAccess::where('id', $request->custQrAcces_id)->first();
+            CustomerQrAccess::where('id', $request->custQrAcces_id)
+            ->update([
+                'status' => "declined",
+            ]);
+    
+            $customerSub = CustomerAccount::where('id', $customerQrAccess->subCust_id)->first();
+            $notif = CustomerNotification::create([
+                'customer_id' => $customerSub->id,
+                'restAcc_id' => 0,
+                'notificationType' => "QR Declined",
+                'notificationTitle' => "Your request has been declined",
+                'notificationDescription' => "Samquicksal",
+                'notificationStatus' => "Unread",
+            ]);
+            if($customerSub != null){
+                $to = $customerSub->deviceToken;
+                $notification = array(
+                    'title' => "Hi $customerSub->name, your request has been declined",
+                    'body' => "You can request again anytime as long as you have the qr code of your friend",
+                );
+                $data = array(
+                    'notificationType' => "QR Declined",
+                    'notificationId' => $notif->id,
+                    'notificationRLogo' => $finalImageUrl,
+                );
+                $this->sendFirebaseNotification($to, $notification, $data);
+            }
+
+
+            $customerMain = CustomerAccount::where('id', $customerQrAccess->mainCust_id)->first();
+            if($customerMain != null){
+                $to = $customerMain->deviceToken;
+                $notification = array(
+                    'title' => "Customer Request Declined",
+                    'body' => "The next time this customer requested again you can ignore it so that this customer cannot spam request",
+                );
+                $data = array(
+                    'notificationType' => "QR Declined Main",
+                    'notificationId' => 0,
+                    'notificationRLogo' => $finalImageUrl,
+                );
+                $this->sendFirebaseNotification($to, $notification, $data);
+            }
+            $finalStatus = "Request Declined";
+        } else {
+            $customerQrAccess = CustomerQrAccess::where('id', $request->custQrAcces_id)->first();
+            $customerOrdering = CustomerOrdering::where('id', $customerQrAccess->custOrdering_id)->first();
+
+            CustomerOrdering::where('id', $customerQrAccess->custOrdering_id)
+            ->update([
+                'availableQrAccess' => ($customerOrdering->availableQrAccess - 1)
+            ]);
+
+            CustomerQrAccess::where('id', $request->custQrAcces_id)
+            ->update([
+                'status' => "approved",
+                'tableNumber' => $request->tableNumber,
+                'approvedDateTime' => date("Y-m-d H:i:s"),
+            ]);
+    
+            $customerSub = CustomerAccount::where('id', $customerQrAccess->subCust_id)->first();
+            $notif = CustomerNotification::create([
+                'customer_id' => $customerSub->id,
+                'restAcc_id' => 0,
+                'notificationType' => "QR Approved",
+                'notificationTitle' => "Your request has been approved! You can now order together with your friend",
+                'notificationDescription' => "Samquicksal",
+                'notificationStatus' => "Unread",
+            ]);
+            if($customerSub != null){
+                $to = $customerSub->deviceToken;
+                $notification = array(
+                    'title' => "Hi $customerSub->name, your request has been approved",
+                    'body' => "You can now order together with your friend",
+                );
+                $data = array(
+                    'notificationType' => "QR Approved",
+                    'notificationId' => $notif->id,
+                    'notificationRLogo' => $finalImageUrl,
+                );
+                $this->sendFirebaseNotification($to, $notification, $data);
+            }
+
+
+            $customerMain = CustomerAccount::where('id', $customerQrAccess->mainCust_id)->first();
+            if($customerMain != null){
+                $to = $customerMain->deviceToken;
+                $notification = array(
+                    'title' => "Customer Request Approved",
+                    'body' => "This customer can now order the your order but cannot checkout",
+                );
+                $data = array(
+                    'notificationType' => "QR Approved Main",
+                    'notificationId' => 0,
+                    'notificationRLogo' => $finalImageUrl,
+                );
+                $this->sendFirebaseNotification($to, $notification, $data);
+            }
+            $finalStatus = "Request Approved";
+        }
+        return response()->json([
+            'status' => $finalStatus,
+        ]);
+    }
+
+    public function getNotificationQrApproved($cust_id, $notif_id){
+        //check kung may access pa ba sa customer access
+        $notification = CustomerNotification::where('id', $notif_id)->first();
+        $customerQrAccess = CustomerQrAccess::where('subCust_id', $cust_id)->where('approvedDateTime', $notification->created_at)->first();
+
+        if($customerQrAccess != null){
+            $customer = CustomerAccount::where('id', $customerQrAccess->mainCust_id)->first();
+            if($customerQrAccess->status == "approved"){
+                return response()->json([
+                    'custQrAcces_id' => $customerQrAccess->id,
+                    'custName' => $customer->name,
+                    'custEAddress' => $customer->emailAddress,
+                    'custENumber' => $customer->contactNumber,
+                    'tableNumber' => $customerQrAccess->tableNumber,
+                    'status' => "clickable",
+                ]);
+            } else {
+                return response()->json([
+                    'custQrAcces_id' => $customerQrAccess->id,
+                    'custName' => $customer->name,
+                    'custEAddress' => $customer->emailAddress,
+                    'custENumber' => $customer->contactNumber,
+                    'tableNumber' => $customerQrAccess->tableNumber,
+                    'status' => "invalid",
+                ]);
+            }
+        } else {
+            return response()->json([
+                'custQrAcces_id' => null,
+                'custName' => null,
+                'custEAddress' => null,
+                'custENumber' => null,
+                'tableNumber' => null,
+                'status' => "invalid",
+            ]);
+        }
+    }
+
+    public function orderingCheckCustAccess($cust_id){
+        $customerQrAccess = CustomerQrAccess::where('subCust_id', $cust_id)->where('status', 'approved')->latest()->first();
+        if($customerQrAccess != null){
+            $customerOrdering = CustomerOrdering::where('id', $customerQrAccess->custOrdering_id)->where('status', "eating")->first();
+            if($customerOrdering != null){
+                //then totoo na sub to
+                return response()->json([
+                    'mainCust_id' => $customerQrAccess->mainCust_id,
+                    'status' => "subCustomer",
+                ]);
+            } else {
+                return response()->json([
+                    'mainCust_id' => null,
+                    'status' => "mainCustomer",
+                ]);
+            }
+        } else {
+            return response()->json([
+                'mainCust_id' => null,
+                'status' => "mainCustomer",
+            ]);
+        }
+    }
+
+
+
     public function submitGcashReceipt(Request $request){
-        // $cust_id = $_POST['cust_id'];
-        // $gcashReceipt = $_POST['gcashReceipt'];
-        // $gcashDecoded = base64_decode($gcashReceipt);
-        // // $status = file_put_contents(public_path('uploads/customerAccounts/gcashQr/'.$cust_id), $gcashDecoded);
+        // $cust_id = $request->cust_id;
+        // $gcashReceipt = $request->gcashReceipt;
+        // $image = str_replace('data:image/png;base64,', '', $gcashReceipt);
+        // $image = str_replace(' ', '+', $image);
+        // $imageName = Str::random(10).'.'.'jpg';
+        // File::put(storage_path(). '/' . $imageName, base64_decode($image));
+        // // file_put_contents(public_path('uploads/customerAccounts/gcashQr/'.$cust_id), base64_decode($image));
+        
+        // // $gcashDecoded = base64_decode($gcashReceipt);
+        // // $image = base64_encode(file_get_contents($request->file('gcashReceipt')->pat‌​h()));
+        // // $f = finfo_open();
+        // // $mime_type = finfo_buffer($f, $gcashDecoded, FILEINFO_MIME_TYPE);
+        // // $status = move_uploaded_file($gcashDecoded, public_path('uploads/customerAccounts/gcashQr/'.$cust_id));
 
         // return response()->json([
-        //     'status' => $gcashDecoded
+        //     'status' => base64_decode($image)
         // ]);
     }
 }

@@ -14,10 +14,15 @@
     <link rel="stylesheet" href="{{ asset('css/main.scss') }}">
     <title>Samquicksal</title>
     <link rel="icon" href="{{ asset('images/samquicksalLogo.png') }}">
-    
     <script type="text/javascript" src="{{ asset('js/sweetalert2.all.min.js') }}"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <style>
+      html{
+          scroll-behavior: smooth;
+      }
+  </style>
 </head>
+
 <body class="antialiased">
     @if (session()->has('passwordUpdated'))
         <script>
@@ -32,28 +37,18 @@
       <header class="top-0 z-50 w-full flex flex-wrap items-center justify-between px-2 header_1">
       <div class="container px-4 mx-auto flex flex-wrap items-center justify-between">
         <div class="w-full relative flex justify-between lg:w-auto lg:static lg:block lg:justify-start">
-          <a class="text-sm font-bold leading-relaxed inline-block mr-4 py-2 whitespace-nowrap uppercase text-white" href="/"><img class="w-36 xl:w-36" src="{{ asset('images/samquicksalWithWords.png') }}" alt="samquicksalWithWords"></a>
+          <a class="text-sm font-bold leading-relaxed inline-block mr-4 py-2 whitespace-nowrap uppercase text-white" href="/"><img class="w-36 lg:w-40 xxl:w-96" src="{{ asset('images/samquicksalWithWords.png') }}" alt="samquicksalWithWords"></a>
     
           <button class="cursor-pointer text-xl leading-none px-3 py-1 border border-solid border-transparent rounded bg-transparent block lg:hidden outline-none focus:outline-none" type="button" onclick="toggleNavbar('example-collapse-navbar')">
             <i class="text-submitButton fas fa-bars "></i>
           </button>
         </div>
-        <nav class="lg:flex flex-grow items-center bg-white lg:bg-transparent lg:shadow-none hidden" id="example-collapse-navbar">
+        <nav class="lg:flex flex-grow items-center bg-adminLoginTextColor lg:bg-transparent lg:shadow-none hidden" id="example-collapse-navbar">
           <ul class="flex flex-col lg:flex-row list-none lg:ml-auto font-Montserrat">
             <li class="flex items-center">
-              <a class="nav__link cursor-pointer text-darkerSubmitButton  px-7 py-4 lg:py-2 flex items-center text-xs uppercase font-bold" href="/restaurant" target="_blank">
+              <a class="nav__link cursor-pointer text-darkerSubmitButton  px-7 py-4 lg:py-2 flex items-center text-xs lg:text-base uppercase font-bold" href="/restaurant" target="_blank">
               <p class="md:hidden sm:hidden hidden xl:contents">Be Our Partner</p>
                   <span class="xl:hidden inline-block ml-2">Be Our Partner</span><a>
-            </li>
-            <li class="flex items-center">
-              <a class=" nav__link cursor-pointer text-darkerSubmitButton px-7 py-4 lg:py-2 flex items-center text-xs uppercase font-bold">
-                <p class="md:hidden sm:hidden hidden    xl:contents">Login</p>
-              <span class="xl:hidden inline-block ml-2 ">Login</span></a>
-            </li>
-            <li class="flex items-center">
-              <a class="nav__link cursor-pointer text-darkerSubmitButton  px-7 py-4 lg:py-2 flex items-center text-xs uppercase font-bold">
-                <p class="md:hidden sm:hidden hidden xl:contents">Signup</p>
-                <span class="xl:hidden inline-block ml-2">Signup</span></a>
             </li>
           </ul>
         </nav>
@@ -76,8 +71,8 @@
                         <div class="grid gap-8 items-start justify-center ">
                           <div class="relative group">
                             <div class="absolute -inset-0.5 bg-gradient-to-r from-submitButton to-purple-600 rounded-lg filter blur-xl opacity-75 group-hover:opacity-100 transition duration-500 group-hover:duration-200"></div>
-                          <a class="relative px-5 py-5 bg-black rounded-lg leading-none flex items-center" href="/customer" target="_blank">
-                            <span class="text-gray-100 pr-1 text-sm sm:text-sm md:text-md lg:text-lg xl:text-lg font-bold ">Dine in</span>
+                          <a class="relative px-5 py-5 bg-black rounded-lg leading-none flex items-center" href="#downloadHome">
+                            <span class="text-gray-100 pr-1 text-sm sm:text-sm md:text-md lg:text-lg xl:text-lg font-bold ">Download</span>
                             <span class="text-submitButton font-bold group-hover:text-gray-100 transition duration-200 text-sm sm:text-sm md:text-md lg:text-lg xl:text-lg">Now &rarr;</span>
                           </a>
                       </div>
@@ -190,42 +185,42 @@
         </div>
       </section>
     
-        <section class="font-Montserrat relative">
-          <div class="bottom-auto top-0 left-0 right-0 w-full absolute pointer-events-none overflow-hidden -mt-20" style="height: 80px;">
-              <svg class="absolute bottom-0 overflow-hidden" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" version="1.1" viewBox="0 0 2560 100" x="0" y="0">
-                <polygon class="text-white fill-current"points="2560 0 2560 100 0 100">
-              </polygon>
-              </svg>
+      <section class="font-Montserrat relative">
+        <div class="bottom-auto top-0 left-0 right-0 w-full absolute pointer-events-none overflow-hidden -mt-20" style="height: 80px;">
+            <svg class="absolute bottom-0 overflow-hidden" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" version="1.1" viewBox="0 0 2560 100" x="0" y="0">
+              <polygon class="text-white fill-current"points="2560 0 2560 100 0 100">
+            </polygon>
+            </svg>
+          </div>
+          <div class="container flex flex-col items-start px-5 py-16 lg:pt-44 mx-auto lg:items-center md:flex-row xl:px-28 lg:px-28 ">
+            <div class="mx-auto xl:mb-10 xl:mt-36 xl:w-5/6 xl:max-w-lg xl:ml-24 lg:mt-52 lg:mr-3 lg:w-6/12 md:w-5/12 md:mt-48 md:mr-2 sm:w-7/12 w-9/12 mb-5 flex-shrink shadow-xl col fade-in">
+              <div class="bg-submitButton text-white rounded-xl">
+                  <div class="flex justify-center">
+                      <h1 class="uppercase font-black md:text-4xl lg:text-5xl xl:text-7xl text-4xl lg:ml-11 ml-3 mr-2 my-4  col fade-in">no</h1>
+                  <div class="flex flex-col mr-2 my-4 text-sm lg:text-base xl:text-3xl md:text-sm  col fade-in ">
+                      <p>Long Wait Hours!</p>
+                      <p>More Falling in Line!</p>
+                  </div>
+              </div>
+              <div class="flex justify-center items-center">
+                  <img class=" w-10/12 sm:w-10/12 lg:w-10/12 xl:w-10/12 md:w-10/12 rounded-t-xl col fade-in" src="{{ asset('images/muhanUnilimitedSamgyupsal.png') }}" alt="muhanUnilimitedSamgyupsal">
+              </div>
             </div>
-            <div class="container flex flex-col items-start px-5 py-16 lg:pt-44 mx-auto lg:items-center md:flex-row xl:px-28 lg:px-28 ">
-              <div class="mx-auto xl:mb-10 xl:mt-36 xl:w-5/6 xl:max-w-lg xl:ml-24 lg:mt-52 lg:mr-3 lg:w-6/12 md:w-5/12 md:mt-48 md:mr-2 sm:w-7/12 w-9/12 mb-5 flex-shrink shadow-xl col fade-in">
-                <div class="bg-submitButton text-white rounded-xl">
-                    <div class="flex justify-center">
-                        <h1 class="uppercase font-black md:text-4xl lg:text-5xl xl:text-7xl text-4xl lg:ml-11 ml-3 mr-2 my-4  col fade-in">no</h1>
-                    <div class="flex flex-col mr-2 my-4 text-sm lg:text-base xl:text-3xl md:text-sm  col fade-in ">
-                        <p>Long Wait Hours!</p>
-                        <p>More Falling in Line!</p>
-                    </div>
-                </div>
-                <div class="flex justify-center items-center">
-                    <img class=" w-8/12 sm:w-7/12 lg:w-7/12 xl:w-7/12 md:w-7/12 shadow-2xl rounded-t-xl col fade-in" src="{{ asset('images/muhanUnilimitedSamgyupsal.png') }}" alt="muhanUnilimitedSamgyupsal">
-                </div>
+            </div>
+            <div class="shadow-xl mx-auto mb-24 xl:-mt-20 xl:mr-28 xl:w-5/6 xl:max-w-lg md:w-5/12 md:ml-2 lg:ml-3 lg:-mt-10 lg:w-6/12 sm:w-7/12 w-9/12 col fade-in ">
+              <div class="bg-boxPeach text-submitButton rounded-xl relative pb-48 sm:pb-56 md:pb-60 lg:pb-72 xl:pb-96  shadow-xl">
+                  <div class="flex flex-col py-5 px-5 xl:py-5 xl:px-7 xl:text-3xl lg:text-2xl md:text-2xl sm:text-2xl text-xl font-bold col fade-in">
+                      <p>Earn Rewards for</p>
+                      <p>Completing</p>
+                      <p>Our Loyalty Card</p>
+                  </div>
+              <div class="flex justify-center items-center absolute col fade-in ">
+                  <img class="flex-shrink w-full sm:w-full md:w-full lg:w-full xl:w-full rounded-t-xl" src="{{ asset('images/rewards.png') }}" alt="rewards">
               </div>
-              </div>
-              <div class="shadow-xl mx-auto mb-24 xl:-mt-20 xl:mr-28 xl:w-5/6 xl:max-w-lg md:w-5/12 md:ml-2 lg:ml-3 lg:-mt-10 lg:w-6/12 sm:w-7/12 w-9/12 col fade-in ">
-                <div class="bg-boxPeach text-submitButton rounded-xl relative pb-48 sm:pb-56 md:pb-60 lg:pb-72 xl:pb-96  shadow-xl">
-                    <div class="flex flex-col py-5 px-5 xl:py-5 xl:px-7 xl:text-3xl lg:text-2xl md:text-2xl sm:text-2xl text-xl font-bold col fade-in">
-                        <p>Earn Rewards for</p>
-                        <p>Completing</p>
-                        <p>Our Loyalty Card</p>
-                    </div>
-                <div class="flex justify-center items-center absolute col fade-in ">
-                    <img class="flex-shrink w-full sm:w-full md:w-full lg:w-full xl:w-full rounded-t-xl" src="{{ asset('images/rewards.png') }}" alt="rewards">
-                </div>
-          </div>
-          </div>
-          </div>
-        </section>
+        </div>
+        </div>
+        </div>
+      </section>
     
           <div class="bg-gradient-to-b from-white to-headerBgColor">
           <section class=" font-Montserrat mt-20 sm:mt-28 md:mt-16 lg:mt-20 xl:mt-60">
@@ -284,16 +279,16 @@
             </section>
     
             <section>
-                <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 p-4 mt-10 lg:mt-32 pb-20  ">
-                    <div class="flex justify-center items-center col fade-in">
-                        <img class="w-32 md:w-56 lg:w-72 xl:w-72 shadow-2xl rounded-3xl" src="{{ asset('images/homepage.png') }}" alt="homepage">
-                    </div>
-                    <div class="font-Montserrat flex justify-center items-center flex-col ">
-                        <h1 class="my-5 lg:mb-4 lg:text-4xl text-lg text-center font-bold col fade-in">Download The Samquicksal App Now!</h1>
-                        <a href="#"><img class="w-5/12 sm:w-5/12 md:w-6/12 lg:w-7/12 xl:w-8/12  mx-auto transition duration-300 ease-in-out transform hover:-translate-y-1 hover:scale-110" src="{{ asset('images/googlePlay.png') }}" alt="googlePlay"></a>
-                    </div>
-                </div>
-            </section>
+              <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 p-4 mt-10 lg:mt-32 pb-20 "  id="downloadHome">
+                  <div class="flex justify-center items-center col fade-in">
+                      <img class="w-56 sm:w-56 md:w-56 lg:w-72 xl:w-6/12 rounded-3xl" src="{{ asset('images/homepage.png') }}" alt="homepage">
+                  </div>
+                  <div class="font-Montserrat flex justify-center items-center flex-col ">
+                      <h1 class="my-5 lg:mb-4 lg:text-4xl text-lg text-center font-bold col fade-in">Download The Samquicksal App Now!</h1>
+                      <a href="#"><img class="w-5/12 sm:w-5/12 md:w-6/12 lg:w-7/12 xl:w-8/12  mx-auto transition duration-300 ease-in-out transform hover:-translate-y-1 hover:scale-110" src="{{ asset('images/googlePlay.png') }}" alt="googlePlay"></a>
+                  </div>
+              </div>
+          </section>
             </div>
         <footer class=" transition duration-500 ease-in-out transform bg-adminLoginTextColor ">
             <div class="flex flex-col flex-wrap justify-center p-2 lg:p-5 md:flex-row">

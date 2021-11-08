@@ -14,5 +14,7 @@ class CustomerTasksDone extends Model
         'customerStampCard_id',
         'taskName',
         'taskAccomplishDate',
+        'booking_id',
+        'booking_type',
     ];
 }

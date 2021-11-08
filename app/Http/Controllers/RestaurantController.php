@@ -313,11 +313,11 @@ class RestaurantController extends Controller
         ->first();
 
         $customerQrAccess = CustomerQrAccess::where('custOrdering_id', $id)
-        ->where('accessDate', $getDateToday)
+        ->where('status', "approved")
         ->get();
 
         $finalCustomerAccess = array();
-        if($customerQrAccess->isEmpty()){
+        if(!$customerQrAccess->isEmpty()){
             foreach($customerQrAccess as $customerQr){
                 $customer = CustomerAccount::where('id', $customerQr->subCust_id)->first();
 
@@ -327,7 +327,9 @@ class RestaurantController extends Controller
                 $day2  = $userSinceDate[2];
 
                 array_push($finalCustomerAccess, [
+                    'custId' => $customer->id,
                     'custName' => $customer->name,
+                    'custImage' => $customer->profileImage,
                     'tableNumber' => $customerQr->tableNumber,
                     'userSince' => "$month2 $day2, $year2",
                 ]);
@@ -1537,8 +1539,9 @@ class RestaurantController extends Controller
         ]);
     }
     public function stampCardView(){
+        $getDateToday = date("Y-m-d");
         $resAccid = Session::get('loginId');
-        $stamp = StampCard::where('restAcc_id', $resAccid)->first();
+        $stamp = StampCard::where('restAcc_id', $resAccid)->latest()->first();
         if($stamp == null){
             $rewards = RestaurantRewardList::where('restAcc_id', $resAccid)->get();
             $tasks = RestaurantTaskList::where('restAcc_id', $resAccid)->get();
@@ -1549,23 +1552,35 @@ class RestaurantController extends Controller
                 'tasks' => $tasks,
             ]);
         } else {
-            $reward = RestaurantRewardList::where('restAcc_id', $resAccid)->where('id', $stamp->stampReward_id)->first();
-            $rewards = RestaurantRewardList::where('restAcc_id', $resAccid)->get();
-            $tasks = RestaurantTaskList::where('restAcc_id', $resAccid)->get();
-            $getTasks = StampCardTasks::where('stampCards_id', $stamp->id)->get();
-            $storeTasksId = array();
-            foreach ($getTasks as $getTask){
-                array_push($storeTasksId, $getTask->restaurantTaskLists_id);
+            if($getDateToday <= $stamp->stampValidity){
+                $reward = RestaurantRewardList::where('restAcc_id', $resAccid)->where('id', $stamp->stampReward_id)->first();
+                $rewards = RestaurantRewardList::where('restAcc_id', $resAccid)->get();
+                $tasks = RestaurantTaskList::where('restAcc_id', $resAccid)->get();
+                $getTasks = StampCardTasks::where('stampCards_id', $stamp->id)->get();
+                $storeTasksId = array();
+                foreach ($getTasks as $getTask){
+                    array_push($storeTasksId, $getTask->restaurantTaskLists_id);
+                }
+                return view('restaurant.manageRestaurant.tasksRewards.stampCard',[
+                    'title' => 'Manage Task Rewards',
+                    'resAccid' => $resAccid,
+                    'stamp' => $stamp,
+                    'reward' => $reward,
+                    'rewards' => $rewards,
+                    'tasks' => $tasks,
+                    'storeTasksId' => $storeTasksId,
+                ]);
+            } else {
+                $stamp = null;
+                $rewards = RestaurantRewardList::where('restAcc_id', $resAccid)->get();
+                $tasks = RestaurantTaskList::where('restAcc_id', $resAccid)->get();
+                return view('restaurant.manageRestaurant.tasksRewards.stampCard',[
+                    'title' => 'Manage Task Rewards',
+                    'stamp' => $stamp,
+                    'rewards' => $rewards,
+                    'tasks' => $tasks,
+                ]);
             }
-            return view('restaurant.manageRestaurant.tasksRewards.stampCard',[
-                'title' => 'Manage Task Rewards',
-                'resAccid' => $resAccid,
-                'stamp' => $stamp,
-                'reward' => $reward,
-                'rewards' => $rewards,
-                'tasks' => $tasks,
-                'storeTasksId' => $storeTasksId,
-            ]);
         }
     }
     public function editTimeLimitView(){
@@ -2015,7 +2030,7 @@ class RestaurantController extends Controller
             $eatingTime = date("H:i", strtotime($customerQueue->eatingDateTime));
             $restaurant = RestaurantAccount::where('id', $customerQueue->restAcc_id)->first();
             //check muna kung may stamp card na inimplement yung restaurant
-            $stampCard = StampCard::where('restAcc_id', $customerQueue->restAcc_id)->first();
+            $stampCard = StampCard::where('restAcc_id', $customerQueue->restAcc_id)->latest()->first();
             if($stampCard != null){
                 //kung meron icompare yung validity date sa current date, kapag sobra meaning tapos na yon di na valid.
                 if($getDateToday <= $stampCard->stampValidity){
@@ -2092,6 +2107,8 @@ class RestaurantController extends Controller
                                 'customerStampCard_id' => $custStampCard->id,
                                 'taskName' => $storeDoneTask,
                                 'taskAccomplishDate' => $getDateToday,
+                                'booking_id' => $customerQueue->id,
+                                'booking_type' => "queue",
                             ]);
                         }
 
@@ -2195,6 +2212,8 @@ class RestaurantController extends Controller
                                 'customerStampCard_id' => $custStampCardNew->id,
                                 'taskName' => $storeDoneTask,
                                 'taskAccomplishDate' => $getDateToday,
+                                'booking_id' => $customerQueue->id,
+                                'booking_type' => "queue",
                             ]);
                         }
 
@@ -2208,7 +2227,6 @@ class RestaurantController extends Controller
                     }
 
                 }
-
             }
 
             CustomerOrdering::where('id', $id)->where('status', 'eating')
@@ -2343,6 +2361,8 @@ class RestaurantController extends Controller
                                 'customerStampCard_id' => $custStampCard->id,
                                 'taskName' => $storeDoneTask,
                                 'taskAccomplishDate' => $getDateToday,
+                                'booking_id' => $customerReserve->id,
+                                'booking_type' => "reserve",
                             ]);
                         }
 
@@ -2446,6 +2466,8 @@ class RestaurantController extends Controller
                                 'customerStampCard_id' => $custStampCardNew->id,
                                 'taskName' => $storeDoneTask,
                                 'taskAccomplishDate' => $getDateToday,
+                                'booking_id' => $customerReserve->id,
+                                'booking_type' => "reserve",
                             ]);
                         }
 
@@ -3493,12 +3515,16 @@ class RestaurantController extends Controller
         
     }
     public function addStampCard(Request $request){
+        $getDateToday = date("Y-m-d");
         $restAccId = Session::get('loginId');
-        $checkStampExist = StampCard::where('restAcc_id', $restAccId)->first();
+        $checkStampExist = StampCard::where('restAcc_id', $restAccId)->latest()->first();
+        
 
         if($checkStampExist != null){
-            $request->session()->flash('invalid');
-            return redirect('/restaurant/manage-restaurant/task-rewards/stamp-card');
+            if($getDateToday > $checkStampExist->stampValidity){
+                $request->session()->flash('invalid');
+                return redirect('/restaurant/manage-restaurant/task-rewards/stamp-card');
+            }
         }
 
         $request->validate([
@@ -3528,11 +3554,14 @@ class RestaurantController extends Controller
     }
     public function editTask3(Request $request){
         $restAccId = Session::get('loginId');
+        $getDateToday = date("Y-m-d");
 
-        $checkStampExist = StampCard::where('restAcc_id', $restAccId)->first();
+        $checkStampExist = StampCard::where('restAcc_id', $restAccId)->latest()->first();
         if($checkStampExist != null){
-            $request->session()->flash('cantEdit');
-            return redirect('/restaurant/manage-restaurant/task-rewards/tasks');
+            if($getDateToday <= $checkStampExist->stampValidity){
+                $request->session()->flash('cantEdit');
+                return redirect('/restaurant/manage-restaurant/task-rewards/tasks');
+            }
         }
 
         $taskCode = "ORDR";
@@ -3546,11 +3575,14 @@ class RestaurantController extends Controller
     }
     public function editTask2(Request $request){
         $restAccId = Session::get('loginId');
+        $getDateToday = date("Y-m-d");
 
-        $checkStampExist = StampCard::where('restAcc_id', $restAccId)->first();
+        $checkStampExist = StampCard::where('restAcc_id', $restAccId)->latest()->first();
         if($checkStampExist != null){
-            $request->session()->flash('cantEdit');
-            return redirect('/restaurant/manage-restaurant/task-rewards/tasks');
+            if($getDateToday <= $checkStampExist->stampValidity){
+                $request->session()->flash('cantEdit');
+                return redirect('/restaurant/manage-restaurant/task-rewards/tasks');
+            }
         }
 
         $taskCode = "BRNG";
@@ -3564,11 +3596,14 @@ class RestaurantController extends Controller
     }
     public function editTask1(Request $request){
         $restAccId = Session::get('loginId');
+        $getDateToday = date("Y-m-d");
 
-        $checkStampExist = StampCard::where('restAcc_id', $restAccId)->first();
+        $checkStampExist = StampCard::where('restAcc_id', $restAccId)->latest()->first();
         if($checkStampExist != null){
-            $request->session()->flash('cantEdit');
-            return redirect('/restaurant/manage-restaurant/task-rewards/tasks');
+            if($getDateToday <= $checkStampExist->stampValidity){
+                $request->session()->flash('cantEdit');
+                return redirect('/restaurant/manage-restaurant/task-rewards/tasks');
+            }
         }
 
         $taskCode = "SPND";
@@ -3582,11 +3617,14 @@ class RestaurantController extends Controller
     }
     public function editReward2(Request $request){
         $restAccId = Session::get('loginId');
+        $getDateToday = date("Y-m-d");
+        $checkStampExist = StampCard::where('restAcc_id', $restAccId)->latest()->first();
 
-        $checkStampExist = StampCard::where('restAcc_id', $restAccId)->first();
         if($checkStampExist != null){
-            $request->session()->flash('cantEdit');
-            return redirect('/restaurant/manage-restaurant/task-rewards/rewards');
+            if($getDateToday <= $checkStampExist->stampValidity){
+                $request->session()->flash('cantEdit');
+                return redirect('/restaurant/manage-restaurant/task-rewards/rewards');
+            }
         }
 
         $rewardCode = "FRPE";
@@ -3600,11 +3638,14 @@ class RestaurantController extends Controller
     }
     public function editReward1(Request $request){
         $restAccId = Session::get('loginId');
+        $getDateToday = date("Y-m-d");
+        $checkStampExist = StampCard::where('restAcc_id', $restAccId)->latest()->first();
 
-        $checkStampExist = StampCard::where('restAcc_id', $restAccId)->first();
         if($checkStampExist != null){
-            $request->session()->flash('cantEdit');
-            return redirect('/restaurant/manage-restaurant/task-rewards/rewards');
+            if($getDateToday <= $checkStampExist->stampValidity){
+                $request->session()->flash('cantEdit');
+                return redirect('/restaurant/manage-restaurant/task-rewards/rewards');
+            }
         }
 
         $rewardCode = "DSCN";

@@ -19,6 +19,8 @@ class CreateCustomerTasksDonesTable extends Migration
             $table->unsignedBigInteger('customerStampCard_id');
             $table->string('taskName');
             $table->date('taskAccomplishDate');
+            $table->unsignedBigInteger('booking_id');
+            $table->string('booking_type');
             $table->foreign('customer_id')->references('id')->on('customer_accounts')->onDelete('cascade');
             $table->foreign('customerStampCard_id')->references('id')->on('customer_stamp_cards')->onDelete('cascade');
             $table->timestamps();

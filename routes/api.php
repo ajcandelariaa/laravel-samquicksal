@@ -22,6 +22,7 @@ Route::get('/customer/test-restaurants', [CustomerController::class, 'restaurant
 
 Route::get('/customer/restaurants', [CustomerController::class, 'getListOfRestaurants']);
 Route::get('/customer/rated-restaurants', [CustomerController::class, 'getListOfRatedRestaurants']);
+Route::post('/customer/nearby-restaurants', [CustomerController::class, 'getListOfNearbyRestaurants']);
 Route::get('/customer/promos', [CustomerController::class, 'getListOfPromos']);
 Route::get('/customer/get-restaurants/about/{id}', [CustomerController::class, 'getRestaurantAboutInfo']);
 Route::get('/customer/get-restaurants/rewards/{id}', [CustomerController::class, 'getRestaurantsRewardsInfo']);
@@ -42,12 +43,21 @@ Route::get('/customer/get-notifications/declined/{cust_id}/{notif_id}', [Custome
 Route::get('/customer/get-notifications/approved/{cust_id}/{notif_id}', [CustomerController::class, 'getNotificationApproved']);
 Route::get('/customer/get-notifications/no-show/{cust_id}/{notif_id}', [CustomerController::class, 'getNotificationNoShow']);
 Route::get('/customer/get-notifications/runaway/{cust_id}/{notif_id}', [CustomerController::class, 'getNotificationRunaway']);
+Route::get('/customer/get-notifications/completed/{cust_id}/{notif_id}', [CustomerController::class, 'getNotificationCompleted']);
+Route::get('/customer/get-notifications/qr-validate/{cust_id}/{notif_id}', [CustomerController::class, 'getNotificationQrValidate']);
+Route::get('/customer/get-notifications/qr-approved/{cust_id}/{notif_id}', [CustomerController::class, 'getNotificationQrApproved']);
+Route::get('/customer/get-notifications/geofencing/{cust_id}/{notif_id}', [CustomerController::class, 'getNotificationGeofencing']);
 
 Route::get('/customer/get-booking-history/{cust_id}', [CustomerController::class, 'getBookingHistory']);
 Route::post('/customer/get-booking-history/cancelled', [CustomerController::class, 'getBookingHistoryCancelled']);
 Route::post('/customer/get-booking-history/complete', [CustomerController::class, 'getBookingHistoryComplete']);
 
 
+Route::get('/customer/scan-qr/{cust_id}/{request_cust_id}', [CustomerController::class, 'customerScanQr']);
+Route::get('/customer/ordering/request-access/{cust_id}/{request_cust_id}', [CustomerController::class, 'orderingRequestAccess']);
+Route::post('/customer/ordering/request-access/approved-declined', [CustomerController::class, 'orderingRequestAppDec']);
+
+Route::get('/customer/ordering/check-customer-access/food-set/{cust_id}', [CustomerController::class, 'orderingCheckCustAccess']);
 
 Route::get('/customer/ordering/food-set/{cust_id}', [CustomerController::class, 'getOrderingFoodSets']);
 Route::get('/customer/ordering/food-item/{restAcc_id}/{orderSet_id}/{foodSet_id}', [CustomerController::class, 'getOrderingFoodItems']);
@@ -69,6 +79,7 @@ Route::post('/customer/ordering/checkout/gcash-upload-image', [CustomerControlle
 Route::get('/customer/get-stamp-cards/{cust_id}', [CustomerController::class, 'getStampCards']);
 Route::get('/customer/get-stamp-cards/details/{stamp_id}', [CustomerController::class, 'getStampCardDetails']);
 
+Route::post('/customer/geofencing/notification', [CustomerController::class, 'geofenceNotifyCustomer']);
 
 
 

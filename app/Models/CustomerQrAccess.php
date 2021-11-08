@@ -15,6 +15,6 @@ class CustomerQrAccess extends Model
         'subCust_id',
         'tableNumber',
         'status',
-        'accessDate',
+        'approvedDateTime',
     ];
 }

@@ -12,7 +12,11 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" integrity="sha512-1ycn6IcaQQ40/MKBW2W4Rhis/DbILU74C1vSrLJxCq57o941Ym01SwNsOMqvEBFlcgUa6xLiPY/NS5R+E6ztJQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
-<body class="font-Montserrat" style="background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url({{asset('images/registration-bg.png')}}); background-repeat: no-repeat; background-size: cover;">
+
+
+{{-- sample --}}
+    <!-- This is an example component -->
+<body class="font-Montserrat relative" style="background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url({{asset('images/registration-bg.png')}}); background-repeat: no-repeat; background-size: cover;">
     @if (session()->has('registered'))
         <script>
             Swal.fire(
@@ -23,11 +27,11 @@
         </script>
     @endif
     <div class="flex items-center justify-center">
-        <div class="w-adminDashboardBox max-w-full shadow-2xl bg-white my-10">
+        <div class="w-adminDashboardBox max-w-full shadow-2xl bg-white rounded-2xl my-10">
             <div class="w-3/5 mx-auto pt-10 pb-12">
             <form action="/restaurant/register2" method="POST" enctype="multipart/form-data">
                 @csrf
-                <h3 class="text-xl font-semibold">Tell us about yourself</h3>
+                <h3 class="text-xl font-semibold text-center">Tell us about yourself</h3>
                 <div class="mt-5">
                     <div class="">
                         <label class="text-gray-400 mb-1 ml-1">First Name <span class="text-red-600">*</span></label>
@@ -59,7 +63,7 @@
                         <span class="mt-2 text-red-600 italic text-sm">@error('role'){{ $message }}@enderror</span>
                     </div>
                     
-                    <div class="grid grid-cols-2 gap-4 mt-3">
+                    <div class="grid grid-cols-2 gap-4 mt-3 pb-5">
                         <div class="col-span-1">
                             <label class="text-gray-400 mb-1 ml-1">Birthday<span class="text-red-600">*</span></label>
                             <input type="date" name="birthDate" value="{{ old('birthDate') }}" class="border rounded-lg w-full py-1 px-2 text-sm text-gray-500 focus:outline-none {{ $errors->has('birthDate') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }}">
@@ -79,8 +83,9 @@
                 </div>
 
 
-
-                <h3 class="text-xl font-semibold">How we may contact you?</h3>
+            <hr>
+            
+                <h3 class="text-xl font-semibold text-center pt-5">How we may contact you?</h3>
                 <div class="grid grid-cols-2 gap-x-5 mt-5">
                     <div class="col-span-full">
                         <label class="text-gray-400 mb-1 ml-1">Address<span class="text-red-600">*</span></label>
@@ -118,7 +123,7 @@
                         <span class="mt-2 text-red-600 italic text-sm">@error('emailAddress'){{ $message }}@enderror</span>
                     </div>
 
-                    <div class="mt-3 col-span-1">
+                    <div class="mt-3 col-span-1 pb-10">
                         <label class="text-gray-400 mb-1 ml-1">Contact Number<span class="text-red-600">*</span></label>
                         <input type="text" name="contactNumber" placeholder="(e.g. 09123456789)" value="{{ old('contactNumber') }}" class="border {{ $errors->has('contactNumber') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }} rounded-lg w-full py-1 px-2 text-sm text-gray-700 focus:outline-none">
                         <span class="mt-2 text-red-600 italic text-sm">@error('contactNumber'){{ $message }}@enderror</span>
@@ -131,9 +136,8 @@
                     </div>
                 </div>
 
-
-
-                <h3 class="text-xl font-semibold">Make your Restaurant to be known</h3>
+      <hr>
+                <h3 class="text-xl font-semibold text-center pt-5">Make your Restaurant to be known</h3>
                 <div class="grid grid-cols-2 gap-x-5 mt-5">
                     <div class="col-span-full">
                         <label class="text-gray-400 mb-1 ml-1">Restaurant Name<span class="text-red-600">*</span></label>
@@ -160,7 +164,7 @@
                         <input type="text" name="rPostalCode" value="{{ old('rPostalCode') }}" class="border {{ $errors->has('rPostalCode') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }} rounded-lg w-full py-1 px-2 text-sm text-gray-700 focus:outline-none">
                         <span class="mt-2 text-red-600 italic text-sm">@error('rPostalCode'){{ $message }}@enderror</span><br>
                     </div>
-                    <div class="col-span-1">
+                    <div class="col-span-1 pb-10">
                         <label class="text-gray-400 mb-1 ml-1">State/Province<span class="text-red-600">*</span></label>
                         <input type="text" name="rState" value="{{ old('rState') }}" class="border {{ $errors->has('rState') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }} rounded-lg w-full py-1 px-2 text-sm text-gray-700 focus:outline-none">
                         <span class="mt-2 text-red-600 italic text-sm">@error('rState'){{ $message }}@enderror</span><br>
@@ -172,7 +176,9 @@
                     </div>
                 </div>
 
-                <h3 class="text-xl font-semibold">Validate your Restaurant</h3>
+                <hr>
+
+                <h3 class="text-xl font-semibold text-center pt-5">Validate your Restaurant</h3>
                 <p class="text-xs text-gray-400 italic mt-2"><i class="fas fa-exclamation-circle mr-1"></i>All files must be in pdf format</p>
 
                 <div class="grid grid-cols-2 gap-y-3 mt-5 items-center">
@@ -202,10 +208,8 @@
                     <span class="col-span-full text-red-600 italic text-sm">@error('staffValidId'){{ $message }}@enderror</span>
                 </div>
 
-                <div class="mt-6 font-Roboto">
-                    <div class="float-right">
-                        <button type="submit" class="text-submitButton font-semibold">Submit <i class="fas fa-chevron-right ml-2"></i></button>
-                    </div>
+                <div class="mt-6 font-Roboto flex justify-center items-center">            
+                    <button type="submit" class="rounded-xl bg-submitButton py-3 px-8 text-white font-semibold tracking-wide hover:bg-adminLoginTextColor transition duration-200 ease-in-out">Submit <i class="fas fa-chevron-right ml-2"></i></button>
                 </div>
 
             </div>

@@ -172,7 +172,11 @@
                             <div class="uppercase font-bold text-center text-lg py-2 bg-adminViewAccountHeaderColor2">Customer DETAILS</div>
                             <div class="grid grid-cols-orderCustDetailsGrid items-center py-7 gap-x-5 w-10/12 mx-auto">
                                 <div>
-                                    <img src="{{ asset('images/user-default.png') }}" alt="customerImage" class="w-24 h-24 rounded-3xl">
+                                    @if ($customer['custImage'] == null)
+                                        <img src="{{ asset('images/user-default.png') }}" alt="customerImage" class="w-24 h-24 rounded-3xl">
+                                    @else
+                                        <img src="{{ asset('uploads/customerAccounts/logo/'.$customer['custId'].'/'.$customer['custImage']) }}" alt="customerImage" class="w-24 h-24 rounded-3xl start">
+                                    @endif
                                 </div>
                                 <div>
                                     <p>Name: {{ $customer['custName'] }}</p>

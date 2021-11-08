@@ -1,6 +1,5 @@
 .header_1 {
-    --text: #D8345F;
-    --text-inverse: #333;
+    --text: #fff;
     --background: transparent;
     position: fixed;
     z-index: 999;
@@ -13,8 +12,21 @@
 }
 
 .header_2 {
+    --text: #fff;
+    --text-inverse: #333;
+    --background: #588DA8;
+    position: fixed;
+    z-index: 999;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background 250ms ease-in;
+    background: var(--background);
+    color: var(--text);
+}
+
+.header_3 {
   --text: #D8345F;
-  --text-inverse: #333;
   --background: #000000;
   position: fixed;
   z-index: 999;

@@ -25,8 +25,8 @@ Route::get('/restaurant', function () {
 });
 
 // RESTAURANT ROUTES
-Route::get('/restaurant/register', [RestaurantController::class, 'registerView']);
-Route::post('/restaurant/register', [RestaurantController::class, 'addRestaurant']);
+Route::get('/restaurant/register', [RestaurantController::class, 'registerView2']);
+Route::post('/restaurant/register', [RestaurantController::class, 'register2']);
 
 Route::get('/restaurant/register2', [RestaurantController::class, 'registerView2']);
 Route::post('/restaurant/register2', [RestaurantController::class, 'register2']);
