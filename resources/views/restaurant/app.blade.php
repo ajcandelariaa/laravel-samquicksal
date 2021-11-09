@@ -35,6 +35,12 @@
                 <div class="grid items-center mt-4 {{ (request()->is('restaurant/live-transaction*')) ? 'text-headerActiveTextColor bg-black' : 'text-white hover:bg-sideBarHoverBgColor' }}">
                     <a href="/restaurant/live-transaction/customer-booking/queue" class="pt-3 pb-3 hover:text-gray-300"><i class="fas fa-podcast w-10 ml-8 hover:text-gray-300"></i>Live Transactions</a>
                 </div>
+                <div class="grid items-center mt-4 {{ (request()->is('restaurant/transaction-history*')) ? 'text-headerActiveTextColor bg-black' : 'text-white hover:bg-sideBarHoverBgColor' }}">
+                    <a href="/restaurant/transaction-history/cancelled/queue" class="pt-3 pb-3 hover:text-gray-300"><i class="fas fa-history w-10 ml-8 hover:text-gray-300"></i>Transaction History</a>
+                </div>
+                <div class="grid items-center mt-4 {{ (request()->is('restaurant/stamp-offenses*')) ? 'text-headerActiveTextColor bg-black' : 'text-white hover:bg-sideBarHoverBgColor' }}">
+                    <a href="/restaurant/stamp-offenses/stamp" class="pt-3 pb-3 hover:text-gray-300"><i class="fas fa-stamp w-10 ml-8 hover:text-gray-300"></i>Stamp & Offenses</a>
+                </div>
                 <div class="grid items-center mt-4 {{ (request()->is('restaurant/manage-restaurant*')) ? 'text-headerActiveTextColor bg-black' : 'text-white hover:bg-sideBarHoverBgColor' }}">
                     <a href="/restaurant/manage-restaurant/about/restaurant-information" class="pt-3 pb-3 hover:text-gray-300"><i class="fas fa-file-signature w-10 ml-8 hover:text-gray-300"></i>Manage Restaurant</a>
                 </div>

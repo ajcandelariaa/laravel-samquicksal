@@ -208,14 +208,14 @@
             </div>
             </div>
             <div class="shadow-xl mx-auto mb-24 xl:-mt-20 xl:mr-28 xl:w-5/6 xl:max-w-lg md:w-5/12 md:ml-2 lg:ml-3 lg:-mt-10 lg:w-6/12 sm:w-7/12 w-9/12 col fade-in ">
-              <div class="bg-boxPeach text-submitButton rounded-xl relative pb-48 sm:pb-56 md:pb-60 lg:pb-72 xl:pb-96  shadow-xl">
+              <div class="bg-boxPeach text-submitButton rounded-xl relative pb-72 sm:pb-56 md:pb-60 lg:pb-72 xl:pb-96 shadow-xl">
                   <div class="flex flex-col py-5 px-5 xl:py-5 xl:px-7 xl:text-3xl lg:text-2xl md:text-2xl sm:text-2xl text-xl font-bold col fade-in">
                       <p>Earn Rewards for</p>
                       <p>Completing</p>
                       <p>Our Loyalty Card</p>
                   </div>
               <div class="flex justify-center items-center absolute col fade-in ">
-                  <img class="flex-shrink w-full sm:w-full md:w-full lg:w-full xl:w-full rounded-t-xl" src="{{ asset('images/rewards.png') }}" alt="rewards">
+                  <img class="flex-shrink w-10/12 sm:w-full md:w-full lg:w-full xl:w-full rounded-t-xl" src="{{ asset('images/rewards.png') }}" alt="rewards">
               </div>
         </div>
         </div>
@@ -223,7 +223,7 @@
       </section>
     
           <div class="bg-gradient-to-b from-white to-headerBgColor">
-          <section class=" font-Montserrat mt-20 sm:mt-28 md:mt-16 lg:mt-20 xl:mt-60">
+          <section class=" font-Montserrat mt-28 sm:mt-28 md:mt-16 lg:mt-20 xl:mt-60 mx-20 sm:mx-0">
               <div class="container flex flex-col items-center lg:px-5 xl:px-5 lg:py-7 xl:py-8 mx-auto">
                 <div class="flex flex-col xl:w-full text-left ">
                   <div class="w-full mx-auto xl:w-1/2">
@@ -253,7 +253,7 @@
                       when you get a notification from our app!</p>
                   </div>
                 </div>
-                <div class="flex flex-row lg:flex-row md:flex-row xl:flex-row sm:flex-row items-center mx-auto mb-3 sm:mb-4 md:mb-5 lg:mb-6 xl:mb-7 xl:w-1/2 lg:w-8/12 md:w-8/12 sm:w-10/12 col fade-in">
+                <div class="flex flex-row lg:flex-row md:flex-row xl:flex-row sm:flex-row items-center mx-auto mb-3 sm:mb-4 md:mb-5 lg:mb-6 xl:mb-7 xl:w-1/2 lg:w-8/12 md:w-8/12 sm:w-10/12 col fade-in ">
                   <div class="inline-flex items-center justify-center flex-shrink-0 w-4/12 sm:w-4/12 md:w-3/12 lg:w-3/12 xl:w-3/12 sm:mr-10 ">
                       <div class="inline-flex items-center justify-center flex-shrink-0 sm:mr-10 xl:w-11/12 lg:w-10/12 md:w-11/12 sm:w-7/12 w-7/12 rounded-l-xl sm:rounded-l-xl md:rounded-l-xl lg:rounded-l-xl xl:rounded-l-xl bg-adminViewAccountHeaderColor sm:bg-adminViewAccountHeaderColor md:bg-adminViewAccountHeaderColor lg:bg-adminViewAccountHeaderColor xl:bg-adminViewAccountHeaderColor h-20 sm:h-28 md:h-32 lg:h-32">
                           <img class="w-8/12 sm:w-9/12 md:w-8/12 lg:w-8/12 xl:w-7/12 xl:mr-8 xl:-ml-4 lg:mr-5 md:mr-5 md:ml-3 xl:my-4 lg:my-4 md:my-4" src="{{ asset('images/check.png') }}" alt="check">
@@ -261,7 +261,7 @@
                   </div>
                   <div class="flex-grow xl:-ml-28 lg:-ml-20 md:-ml-20 sm:-ml-24 -ml-7 xl:mr-16 lg:mr-10 md:mr-10 sm:mr-10 mr-5 xl:pl-8 lg:pl-7 md:pl-7 sm:pl-7 xl:pr-3 lg:pr-3 md:pr-3 sm:pr-3 pr-2 xl:h-32 lg:h-32 md:h-32 sm:h-28 h-20 rounded-r-xl bg-gradient-to-r from-gray-100 to-fadedPink bg-sm:mt-0 px-2">
                     <h2 class="mb-1 lg:mt-2 md:mt-4 sm:mt-2 mt-2 lg:mb-2 md:mb-2 sm:mb-1 lg:text-xl xl:text-xl text-xs font-bold  text-adminLoginTextColor">Be Rewarded</h2>
-                    <p class="text-xxs md:text-xs lg:text-base xl:text-base leading-tight sm:leading-relaxed md:leading-relaxed lg:leading-relaxed xl:leading-relaxed sm:px-0 md:px-0 lg:px-0 xl:px-0 text-submitButton tracking-tighter">Stamp card for users that can be used for exclusive discounts and many more </p>
+                    <p class="text-xxs md:text-xs lg:text-base xl:text-base leading-tight sm:leading-relaxed md:leading-relaxed lg:leading-relaxed xl:leading-relaxed sm:px-0 md:px-0 lg:px-0 xl:px-0 text-submitButton tracking-tighter">Stamp card for users that can be used for exclusive discounts and many more</p>
                   </div>
                 </div>
                 <div class="flex flex-row lg:flex-row md:flex-row xl:flex-row sm:flex-row items-center mx-auto mb-3 sm:mb-4 md:mb-5 lg:mb-6 xl:mb-7 xl:w-1/2 lg:w-8/12 md:w-8/12 sm:w-10/12 col fade-in ">
@@ -272,18 +272,18 @@
                   </div>
                   <div class="flex-grow xl:-ml-28 lg:-ml-20 md:-ml-20 sm:-ml-24 -ml-7 xl:mr-16 lg:mr-10 md:mr-10 sm:mr-10 mr-5 xl:pl-8 lg:pl-7 md:pl-7 sm:pl-7 xl:pr-3 lg:pr-3 md:pr-3 sm:pr-3 pr-2 xl:h-32 lg:h-32 md:h-32 sm:h-28 h-20 rounded-r-xl bg-gradient-to-r from-gray-100 to-fadedPink bg-sm:mt-0 px-2 ">
                     <h2 class="mb-1 lg:mt-2 md:mt-4 sm:mt-2 mt-2 lg:mb-2 md:mb-2 sm:mb-1 lg:text-xl xl:text-xl text-xs font-bold  text-adminLoginTextColor">Exciting Promos</h2>
-                    <p class="text-xxs md:text-xs lg:text-base xl:text-base leading-tight sm:leading-relaxed md:leading-relaxed lg:leading-relaxed xl:leading-relaxed sm:px-0 md:px-0 lg:px-0 xl:px-0 text-submitButton tracking-tighter">Be the first to hear about the exclusive promotions that our registered restaurants have to offer such as special lunch rates, holiday discounts, or exclusive promos for their anniversaries. </p>
+                    <p class="text-xxs md:text-xs lg:text-base xl:text-base leading-tight sm:leading-relaxed xl:leading-tight sm:px-0 md:px-0 lg:px-0 xl:px-0 text-submitButton tracking-tighter ">Be the first to hear about the exclusive promotions that our registered restaurants have to offer such as special lunch rates, holiday discounts, or exclusive promos for their anniversaries. </p>
                   </div>
                 </div>
               </div>
             </section>
     
             <section>
-              <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 p-4 mt-10 lg:mt-32 pb-20 "  id="downloadHome">
+              <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 p-4 mt-10 lg:mt-32 pb-20"  id="downloadHome">
                   <div class="flex justify-center items-center col fade-in">
-                      <img class="w-56 sm:w-56 md:w-56 lg:w-72 xl:w-6/12 rounded-3xl" src="{{ asset('images/homepage.png') }}" alt="homepage">
+                      <img class="w-56 sm:w-56 md:w-56 lg:w-72 xl:w-6/12 rounded-3xl xl:-mr-60 " src="{{ asset('images/homepage.png') }}" alt="homepage">
                   </div>
-                  <div class="font-Montserrat flex justify-center items-center flex-col ">
+                  <div class="font-Montserrat flex justify-center items-center flex-col  xl:mr-auto">
                       <h1 class="my-5 lg:mb-4 lg:text-4xl text-lg text-center font-bold col fade-in">Download The Samquicksal App Now!</h1>
                       <a href="#"><img class="w-5/12 sm:w-5/12 md:w-6/12 lg:w-7/12 xl:w-8/12  mx-auto transition duration-300 ease-in-out transform hover:-translate-y-1 hover:scale-110" src="{{ asset('images/googlePlay.png') }}" alt="googlePlay"></a>
                   </div>

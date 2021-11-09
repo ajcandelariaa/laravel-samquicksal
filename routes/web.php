@@ -112,14 +112,10 @@ Route::middleware(['restaurantLoggedIn'])->group(function(){
     Route::post('/restaurant/manage-restaurant/task-rewards/tasks/edit/task1', [RestaurantController::class, 'editTask1']);
     Route::post('/restaurant/manage-restaurant/task-rewards/tasks/edit/task2', [RestaurantController::class, 'editTask2']);
     Route::post('/restaurant/manage-restaurant/task-rewards/tasks/edit/task3', [RestaurantController::class, 'editTask3']);
-    // -------CANCEL RESERVATION------------ //
-    Route::get('/restaurant/manage-restaurant/offense/cancel-reservation', [RestaurantController::class, 'cancelReservationView']);
+    // -------OFFENSES ------------ //
+    Route::get('/restaurant/manage-restaurant/offense/offenses', [RestaurantController::class, 'offensesView']);
     Route::post('/restaurant/manage-restaurant/offense/cancel-reservation/edit/{id}', [RestaurantController::class, 'editCancelReservation']);
-    // -------NO SHOW------------ //
-    Route::get('/restaurant/manage-restaurant/offense/no-show', [RestaurantController::class, 'noShowView']);
     Route::post('/restaurant/manage-restaurant/offense/no-show/edit/{id}', [RestaurantController::class, 'editNoShow']);
-    // -------RUNAWAY------------ //
-    Route::get('/restaurant/manage-restaurant/offense/runaway', [RestaurantController::class, 'runawayView']);
     Route::post('/restaurant/manage-restaurant/offense/runaway/edit/{id}', [RestaurantController::class, 'editRunaway']);
     // -------POLICY------------ //
     Route::get('/restaurant/manage-restaurant/offense/policy', [RestaurantController::class, 'policyView']);
@@ -160,7 +156,31 @@ Route::middleware(['restaurantLoggedIn'])->group(function(){
     Route::get('/restaurant/live-transaction/customer-ordering/list/{id}/order-summary/runaway', [RestaurantController::class, 'ltCustOrderOSRunaway']);
     Route::post('/restaurant/live-transaction/customer-ordering/list/{id}/order-summary', [RestaurantController::class, 'ltCustOrderApplyDiscounts']);
     Route::get('/restaurant/live-transaction/customer-ordering/list/{id}/order-request/grant-access', [RestaurantController::class, 'ltCustOrderGrantAccess']);
-    
+    // -------TRANSACTION HISTORY------------ //
+    Route::get('/restaurant/transaction-history/cancelled/queue', [RestaurantController::class, 'thCancelledListQView']);
+    Route::get('/restaurant/transaction-history/cancelled/reserve', [RestaurantController::class, 'thCancelledListRView']);
+    Route::get('/restaurant/transaction-history/cancelled/queue/{book_id}', [RestaurantController::class, 'thCancelledPartQView']);
+    Route::get('/restaurant/transaction-history/cancelled/reserve/{book_id}', [RestaurantController::class, 'thCancelledPartRView']);
+    Route::get('/restaurant/transaction-history/declined/queue', [RestaurantController::class, 'thDeclinedListQView']);
+    Route::get('/restaurant/transaction-history/declined/reserve', [RestaurantController::class, 'thDeclinedListRView']);
+    Route::get('/restaurant/transaction-history/declined/queue/{book_id}', [RestaurantController::class, 'thDeclinedPartQView']);
+    Route::get('/restaurant/transaction-history/declined/reserve/{book_id}', [RestaurantController::class, 'thDeclinedPartRView']);
+    Route::get('/restaurant/transaction-history/no-show/queue', [RestaurantController::class, 'thNoshowListQView']);
+    Route::get('/restaurant/transaction-history/no-show/reserve', [RestaurantController::class, 'thNoshowListRView']);
+    Route::get('/restaurant/transaction-history/no-show/queue/{book_id}', [RestaurantController::class, 'thNoshowPartQView']);
+    Route::get('/restaurant/transaction-history/no-show/reserve/{book_id}', [RestaurantController::class, 'thNoshowPartRView']);
+    Route::get('/restaurant/transaction-history/runaway/queue', [RestaurantController::class, 'thRunawayListQView']);
+    Route::get('/restaurant/transaction-history/runaway/reserve', [RestaurantController::class, 'thRunawayListRView']);
+    Route::get('/restaurant/transaction-history/runaway/queue/{book_id}', [RestaurantController::class, 'thRunawayPartQView']);
+    Route::get('/restaurant/transaction-history/runaway/reserve/{book_id}', [RestaurantController::class, 'thRunawayPartRView']);
+    Route::get('/restaurant/transaction-history/completed/queue', [RestaurantController::class, 'thCompletedListQView']);
+    Route::get('/restaurant/transaction-history/completed/reserve', [RestaurantController::class, 'thCompletedListRView']);
+    Route::get('/restaurant/transaction-history/completed/queue/{book_id}', [RestaurantController::class, 'thCompletedPartQView']);
+    Route::get('/restaurant/transaction-history/completed/reserve/{book_id}', [RestaurantController::class, 'thCompletedPartRView']);
+    // -------STAMP & OFFENSES------------ //
+    Route::get('/restaurant/stamp-offenses/stamp', [RestaurantController::class, 'soStampList']);
+    Route::get('/restaurant/stamp-offenses/stamp/{stamp_id}', [RestaurantController::class, 'soStampView']);
+    Route::get('/restaurant/stamp-offenses/customer-offenses', [RestaurantController::class, 'soCustomerOffenses']);
 
 });
 Route::middleware(['restaurantLoggedOut'])->group(function(){

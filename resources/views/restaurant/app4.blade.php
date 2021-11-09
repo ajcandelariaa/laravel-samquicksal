@@ -64,58 +64,63 @@
             </div>
             <div class="bg-black min-h-screen w-80">
                 <div class="grid items-center mt-8 text-white">
-                    @if (request()->is('restaurant/live-transaction/*'))
+                    @if (request()->is('restaurant/transaction-history/*'))
                         <a href="/restaurant/dashboard" class="pt-3 pb-3 hover:bg-sideBarHoverBgColor hover:text-gray-300 transition duration-200 ease-in-out">
-                            <i class="fas fa-arrow-left mr-4 ml-8 "></i> Live Transactions
+                            <i class="fas fa-arrow-left mr-4 ml-8 "></i> Transaction History
                         </a>
                         <div class="text-sm mt-5 w-10/12 mx-auto">
-                            <a href="/restaurant/live-transaction/customer-booking/queue" class="ml-5 {{ (request()->is('restaurant/live-transaction/customer-booking/*')) ? 'text-manageRestaurantSidebarColorActive' : 'text-manageRestaurantSidebarColor hover:underline' }}"><i class="fas fa-file w-3 mr-3"></i> Customer Booking</a>
+                            <a href="/restaurant/transaction-history/cancelled/queue" class="ml-5 {{ (request()->is('restaurant/transaction-history/cancelled*')) ? 'text-manageRestaurantSidebarColorActive' : 'text-manageRestaurantSidebarColor hover:underline' }}"><i class="fas fa-file w-3 mr-3"></i> Customer Cancelled</a>
                             <div class="border-multiStepBoxBorder border-manageRestaurantHrColor mt-3"></div>
                         </div>
                         <div class="text-sm mt-5 w-10/12 mx-auto">
-                            <a href="/restaurant/live-transaction/approved-customer/queue" class="ml-5 {{ (request()->is('restaurant/live-transaction/approved-customer/*')) ? 'text-manageRestaurantSidebarColorActive' : 'text-manageRestaurantSidebarColor hover:underline' }}"><i class="fas fa-file w-3 mr-3"></i> Approved Customer</a>
+                            <a href="/restaurant/transaction-history/declined/queue" class="ml-5 {{ (request()->is('restaurant/transaction-history/declined*')) ? 'text-manageRestaurantSidebarColorActive' : 'text-manageRestaurantSidebarColor hover:underline' }}"><i class="fas fa-file w-3 mr-3"></i> Customer Declined</a>
                             <div class="border-multiStepBoxBorder border-manageRestaurantHrColor mt-3"></div>
                         </div>
                         <div class="text-sm mt-5 w-10/12 mx-auto">
-                            <a href="/restaurant/live-transaction/customer-ordering/list" class="ml-5 {{ (request()->is('restaurant/live-transaction/customer-ordering/*')) ? 'text-manageRestaurantSidebarColorActive' : 'text-manageRestaurantSidebarColor hover:underline' }}"><i class="fas fa-file w-3 mr-3"></i> Customer Ordering</a>
+                            <a href="/restaurant/transaction-history/no-show/queue" class="ml-5 {{ (request()->is('restaurant/transaction-history/no-show*')) ? 'text-manageRestaurantSidebarColorActive' : 'text-manageRestaurantSidebarColor hover:underline' }}"><i class="fas fa-file w-3 mr-3"></i> Customer No Show</a>
+                            <div class="border-multiStepBoxBorder border-manageRestaurantHrColor mt-3"></div>
+                        </div>
+                        <div class="text-sm mt-5 w-10/12 mx-auto">
+                            <a href="/restaurant/transaction-history/runaway/queue" class="ml-5 {{ (request()->is('restaurant/transaction-history/runaway*')) ? 'text-manageRestaurantSidebarColorActive' : 'text-manageRestaurantSidebarColor hover:underline' }}"><i class="fas fa-file w-3 mr-3"></i> Customer Runaway</a>
+                            <div class="border-multiStepBoxBorder border-manageRestaurantHrColor mt-3"></div>
+                        </div>
+                        <div class="text-sm mt-5 w-10/12 mx-auto">
+                            <a href="/restaurant/transaction-history/completed/queue" class="ml-5 {{ (request()->is('restaurant/transaction-history/completed*')) ? 'text-manageRestaurantSidebarColorActive' : 'text-manageRestaurantSidebarColor hover:underline' }}"><i class="fas fa-file w-3 mr-3"></i> Customer Completed</a>
                             <div class="border-multiStepBoxBorder border-manageRestaurantHrColor mt-3"></div>
                         </div>
                     @endif
                 </div>
             </div>
             <div class="bg-gray-200 w-full">
-                @if (request()->is('restaurant/live-transaction/customer-booking/*'))
+                @if (request()->is('restaurant/transaction-history/cancelled*'))
                     <div class="grid grid-cols-2 gap-x-1 w-full px-1 mt-1 text-center font-bold uppercase">
-                        <a href="/restaurant/live-transaction/customer-booking/queue" class="w-full py-3 rounded-sm {{ (request()->is('restaurant/live-transaction/customer-booking/queue*')) ? 'bg-tableBgHeader text-submitButton shadow-adminDownloadButton ' : 'bg-white text-manageRestaurantSidebarColor' }}">Customer Queue</a>
-                        <a href="/restaurant/live-transaction/customer-booking/reserve" class="w-full py-3 rounded-sm {{ (request()->is('restaurant/live-transaction/customer-booking/reserve*')) ? 'bg-tableBgHeader text-submitButton shadow-adminDownloadButton ' : 'bg-white text-manageRestaurantSidebarColor' }}">Customer Reserve</a>
+                        <a href="/restaurant/transaction-history/cancelled/queue" class="w-full py-3 rounded-sm {{ (request()->is('restaurant/transaction-history/cancelled/queue*')) ? 'bg-tableBgHeader text-submitButton shadow-adminDownloadButton ' : 'bg-white text-manageRestaurantSidebarColor' }}">Customer Queue</a>
+                        <a href="/restaurant/transaction-history/cancelled/reserve" class="w-full py-3 rounded-sm {{ (request()->is('restaurant/transaction-history/cancelled/reserve*')) ? 'bg-tableBgHeader text-submitButton shadow-adminDownloadButton ' : 'bg-white text-manageRestaurantSidebarColor' }}">Customer Reserve</a>
                     </div>
-                @elseif (request()->is('restaurant/live-transaction/approved-customer/*'))
+                @elseif (request()->is('restaurant/transaction-history/declined*'))
                     <div class="grid grid-cols-2 gap-x-1 w-full px-1 mt-1 text-center font-bold uppercase">
-                        <a href="/restaurant/live-transaction/approved-customer/queue" class="w-full py-3 rounded-sm {{ (request()->is('restaurant/live-transaction/approved-customer/queue*')) ? 'bg-tableBgHeader text-submitButton shadow-adminDownloadButton ' : 'bg-white text-manageRestaurantSidebarColor' }}">Customer Queue</a>
-                        <a href="/restaurant/live-transaction/approved-customer/reserve" class="w-full py-3 rounded-sm {{ (request()->is('restaurant/live-transaction/approved-customer/reserve*')) ? 'bg-tableBgHeader text-submitButton shadow-adminDownloadButton ' : 'bg-white text-manageRestaurantSidebarColor' }}">Customer Reserve</a>
+                        <a href="/restaurant/transaction-history/declined/queue" class="w-full py-3 rounded-sm {{ (request()->is('restaurant/transaction-history/declined/queue*')) ? 'bg-tableBgHeader text-submitButton shadow-adminDownloadButton ' : 'bg-white text-manageRestaurantSidebarColor' }}">Customer Queue</a>
+                        <a href="/restaurant/transaction-history/declined/reserve" class="w-full py-3 rounded-sm {{ (request()->is('restaurant/transaction-history/declined/reserve*')) ? 'bg-tableBgHeader text-submitButton shadow-adminDownloadButton ' : 'bg-white text-manageRestaurantSidebarColor' }}">Customer Reserve</a>
                     </div>
-                @elseif (request()->is('restaurant/live-transaction/customer-ordering/list/*'))
+                @elseif (request()->is('restaurant/transaction-history/no-show*'))
                     <div class="grid grid-cols-2 gap-x-1 w-full px-1 mt-1 text-center font-bold uppercase">
-                        <a href="order-request" class="w-full py-3 rounded-sm {{ (request()->is('*order-request')) ? 'bg-tableBgHeader text-submitButton shadow-adminDownloadButton ' : 'bg-white text-manageRestaurantSidebarColor' }}">Order & Request</a>
-                        <a href="order-summary" class="w-full py-3 rounded-sm {{ (request()->is('*order-summary')) ? 'bg-tableBgHeader text-submitButton shadow-adminDownloadButton ' : 'bg-white text-manageRestaurantSidebarColor' }}">Order Summary</a>
+                        <a href="/restaurant/transaction-history/no-show/queue" class="w-full py-3 rounded-sm {{ (request()->is('restaurant/transaction-history/no-show/queue*')) ? 'bg-tableBgHeader text-submitButton shadow-adminDownloadButton ' : 'bg-white text-manageRestaurantSidebarColor' }}">Customer Queue</a>
+                        <a href="/restaurant/transaction-history/no-show/reserve" class="w-full py-3 rounded-sm {{ (request()->is('restaurant/transaction-history/no-show/reserve*')) ? 'bg-tableBgHeader text-submitButton shadow-adminDownloadButton ' : 'bg-white text-manageRestaurantSidebarColor' }}">Customer Reserve</a>
+                    </div>
+                @elseif (request()->is('restaurant/transaction-history/runaway*'))
+                    <div class="grid grid-cols-2 gap-x-1 w-full px-1 mt-1 text-center font-bold uppercase">
+                        <a href="/restaurant/transaction-history/runaway/queue" class="w-full py-3 rounded-sm {{ (request()->is('restaurant/transaction-history/runaway/queue*')) ? 'bg-tableBgHeader text-submitButton shadow-adminDownloadButton ' : 'bg-white text-manageRestaurantSidebarColor' }}">Customer Queue</a>
+                        <a href="/restaurant/transaction-history/runaway/reserve" class="w-full py-3 rounded-sm {{ (request()->is('restaurant/transaction-history/runaway/reserve*')) ? 'bg-tableBgHeader text-submitButton shadow-adminDownloadButton ' : 'bg-white text-manageRestaurantSidebarColor' }}">Customer Reserve</a>
+                    </div>
+                @elseif (request()->is('restaurant/transaction-history/completed*'))
+                    <div class="grid grid-cols-2 gap-x-1 w-full px-1 mt-1 text-center font-bold uppercase">
+                        <a href="/restaurant/transaction-history/completed/queue" class="w-full py-3 rounded-sm {{ (request()->is('restaurant/transaction-history/completed/queue*')) ? 'bg-tableBgHeader text-submitButton shadow-adminDownloadButton ' : 'bg-white text-manageRestaurantSidebarColor' }}">Customer Queue</a>
+                        <a href="/restaurant/transaction-history/completed/reserve" class="w-full py-3 rounded-sm {{ (request()->is('restaurant/transaction-history/completed/reserve*')) ? 'bg-tableBgHeader text-submitButton shadow-adminDownloadButton ' : 'bg-white text-manageRestaurantSidebarColor' }}">Customer Reserve</a>
                     </div>
                 @endif
                 @yield('content')
             </div>
         </div>
     </section>
-    @if (request()->is('restaurant/live-transaction/customer-booking/queue*'))
-        <script type="text/javascript" src="{{ asset('js/queueView.js') }}"></script>
-    @elseif (request()->is('restaurant/live-transaction/approved-customer/queue*'))
-        <script type="text/javascript" src="{{ asset('js/queueView2.js') }}"></script>
-    @elseif (request()->is('restaurant/live-transaction/customer-booking/reserve*'))
-        <script type="text/javascript" src="{{ asset('js/reserveView.js') }}"></script>
-    @elseif (request()->is('restaurant/live-transaction/approved-customer/reserve*'))
-        <script type="text/javascript" src="{{ asset('js/reserveView2.js') }}"></script>
-    @elseif (request()->is('restaurant/live-transaction/approved-customer/queue*'))
-        <script type="text/javascript" src="{{ asset('js/queueView2.js') }}"></script>
-    @elseif (request()->is('restaurant/live-transaction/customer-ordering/*'))
-        <script type="text/javascript" src="{{ asset('js/orderRequest.js') }}"></script>
-    @endif
 </body>
 </html>

@@ -41,25 +41,25 @@ use App\Models\CustomerResetPassword;
 
 class CustomerController extends Controller
 {
-    // public $RESTAURANT_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/logo";
-    // public $ACCOUNT_NO_IMAGE_PATH = "http://192.168.1.53:8000/images";
-    // public $CUSTOMER_IMAGE_PATH = "http://192.168.1.53:8000/uploads/customerAccounts/logo";
-    // public $POST_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/post";
-    // public $PROMO_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/promo";
-    // public $ORDER_SET_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/orderSet";
-    // public $FOOD_SET_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/foodSet";
-    // public $FOOD_ITEM_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/foodItem";
-    // public $RESTAURANT_GCASH_QR_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/gcashQr";
+    public $RESTAURANT_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/logo";
+    public $ACCOUNT_NO_IMAGE_PATH = "http://192.168.1.53:8000/images";
+    public $CUSTOMER_IMAGE_PATH = "http://192.168.1.53:8000/uploads/customerAccounts/logo";
+    public $POST_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/post";
+    public $PROMO_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/promo";
+    public $ORDER_SET_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/orderSet";
+    public $FOOD_SET_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/foodSet";
+    public $FOOD_ITEM_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/foodItem";
+    public $RESTAURANT_GCASH_QR_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/gcashQr";
     
-    public $RESTAURANT_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/logo";
-    public $ACCOUNT_NO_IMAGE_PATH = "https://www.samquicksal.com/images";
-    public $CUSTOMER_IMAGE_PATH = "https://www.samquicksal.com/uploads/customerAccounts/logo";
-    public $POST_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/post";
-    public $PROMO_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/promo";
-    public $ORDER_SET_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/orderSet";
-    public $FOOD_SET_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/foodSet";
-    public $FOOD_ITEM_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/foodItem";
-    public $RESTAURANT_GCASH_QR_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/gcashQr";
+    // public $RESTAURANT_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/logo";
+    // public $ACCOUNT_NO_IMAGE_PATH = "https://www.samquicksal.com/images";
+    // public $CUSTOMER_IMAGE_PATH = "https://www.samquicksal.com/uploads/customerAccounts/logo";
+    // public $POST_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/post";
+    // public $PROMO_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/promo";
+    // public $ORDER_SET_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/orderSet";
+    // public $FOOD_SET_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/foodSet";
+    // public $FOOD_ITEM_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/foodItem";
+    // public $RESTAURANT_GCASH_QR_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/gcashQr";
 
 
     public function sendFirebaseNotification($to, $notification, $data){
@@ -4703,7 +4703,6 @@ class CustomerController extends Controller
         if($customerQrAccess != null){
             $customerOrdering = CustomerOrdering::where('id', $customerQrAccess->custOrdering_id)->where('status', "eating")->first();
             if($customerOrdering != null){
-                //then totoo na sub to
                 return response()->json([
                     'mainCust_id' => $customerQrAccess->mainCust_id,
                     'status' => "subCustomer",
@@ -4725,22 +4724,9 @@ class CustomerController extends Controller
 
 
     public function submitGcashReceipt(Request $request){
-        // $cust_id = $request->cust_id;
-        // $gcashReceipt = $request->gcashReceipt;
-        // $image = str_replace('data:image/png;base64,', '', $gcashReceipt);
-        // $image = str_replace(' ', '+', $image);
-        // $imageName = Str::random(10).'.'.'jpg';
-        // File::put(storage_path(). '/' . $imageName, base64_decode($image));
-        // // file_put_contents(public_path('uploads/customerAccounts/gcashQr/'.$cust_id), base64_decode($image));
-        
-        // // $gcashDecoded = base64_decode($gcashReceipt);
-        // // $image = base64_encode(file_get_contents($request->file('gcashReceipt')->pat‌​h()));
-        // // $f = finfo_open();
-        // // $mime_type = finfo_buffer($f, $gcashDecoded, FILEINFO_MIME_TYPE);
-        // // $status = move_uploaded_file($gcashDecoded, public_path('uploads/customerAccounts/gcashQr/'.$cust_id));
 
-        // return response()->json([
-        //     'status' => base64_decode($image)
-        // ]);
+        return response()->json([
+            'status' => $_FILES['gcashReceipt']
+        ]);
     }
 }

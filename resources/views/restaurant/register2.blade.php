@@ -85,7 +85,7 @@
 
             <hr>
             
-                <h3 class="text-xl font-semibold text-center pt-5">How we may contact you?</h3>
+                <h3 class="text-xl font-semibold text-center py-6">How may we contact you?</h3>
                 <div class="grid grid-cols-2 gap-x-5 mt-5">
                     <div class="col-span-full">
                         <label class="text-gray-400 mb-1 ml-1">Address<span class="text-red-600">*</span></label>
@@ -137,7 +137,7 @@
                 </div>
 
       <hr>
-                <h3 class="text-xl font-semibold text-center pt-5">Make your Restaurant to be known</h3>
+                <h3 class="text-xl font-semibold text-center py-6">Make your Restaurant be known</h3>
                 <div class="grid grid-cols-2 gap-x-5 mt-5">
                     <div class="col-span-full">
                         <label class="text-gray-400 mb-1 ml-1">Restaurant Name<span class="text-red-600">*</span></label>
@@ -178,7 +178,7 @@
 
                 <hr>
 
-                <h3 class="text-xl font-semibold text-center pt-5">Validate your Restaurant</h3>
+                <h3 class="text-xl font-semibold text-center py-6">Validate your Restaurant</h3>
                 <p class="text-xs text-gray-400 italic mt-2"><i class="fas fa-exclamation-circle mr-1"></i>All files must be in pdf format</p>
 
                 <div class="grid grid-cols-2 gap-y-3 mt-5 items-center">

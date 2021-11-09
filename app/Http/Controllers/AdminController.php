@@ -303,7 +303,7 @@ class AdminController extends Controller
             'applicantLocLat.required' => 'Latitude is required',
             'applicantLocLong.required' => 'Longitude is required',
         ]);
-        dd($request->applicantLocLat);
+
         $applicant = RestaurantApplicant::where('id', $request->applicantId)->first();
         $account = RestaurantAccount::select('emailAddress')->where('emailAddress', $applicant->emailAddress)->first();
 
@@ -367,7 +367,6 @@ class AdminController extends Controller
             mkdir('storage/uploads/restaurantAccounts/');
         }
         mkdir('storage/uploads/restaurantAccounts/'.$nextIdFolderName);
-
 
 
         // MAKE DIRECTORIES FOR ACCOUNTS

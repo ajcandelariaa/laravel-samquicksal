@@ -64,58 +64,25 @@
             </div>
             <div class="bg-black min-h-screen w-80">
                 <div class="grid items-center mt-8 text-white">
-                    @if (request()->is('restaurant/live-transaction/*'))
+                    @if (request()->is('restaurant/stamp-offenses/*'))
                         <a href="/restaurant/dashboard" class="pt-3 pb-3 hover:bg-sideBarHoverBgColor hover:text-gray-300 transition duration-200 ease-in-out">
-                            <i class="fas fa-arrow-left mr-4 ml-8 "></i> Live Transactions
+                            <i class="fas fa-arrow-left mr-4 ml-8 "></i> Stamp & Offenses
                         </a>
                         <div class="text-sm mt-5 w-10/12 mx-auto">
-                            <a href="/restaurant/live-transaction/customer-booking/queue" class="ml-5 {{ (request()->is('restaurant/live-transaction/customer-booking/*')) ? 'text-manageRestaurantSidebarColorActive' : 'text-manageRestaurantSidebarColor hover:underline' }}"><i class="fas fa-file w-3 mr-3"></i> Customer Booking</a>
+                            <a href="/restaurant/stamp-offenses/stamp" class="ml-5 {{ (request()->is('restaurant/stamp-offenses/stamp*')) ? 'text-manageRestaurantSidebarColorActive' : 'text-manageRestaurantSidebarColor hover:underline' }}"><i class="fas fa-file w-3 mr-3"></i> Stamp Cards</a>
                             <div class="border-multiStepBoxBorder border-manageRestaurantHrColor mt-3"></div>
                         </div>
                         <div class="text-sm mt-5 w-10/12 mx-auto">
-                            <a href="/restaurant/live-transaction/approved-customer/queue" class="ml-5 {{ (request()->is('restaurant/live-transaction/approved-customer/*')) ? 'text-manageRestaurantSidebarColorActive' : 'text-manageRestaurantSidebarColor hover:underline' }}"><i class="fas fa-file w-3 mr-3"></i> Approved Customer</a>
-                            <div class="border-multiStepBoxBorder border-manageRestaurantHrColor mt-3"></div>
-                        </div>
-                        <div class="text-sm mt-5 w-10/12 mx-auto">
-                            <a href="/restaurant/live-transaction/customer-ordering/list" class="ml-5 {{ (request()->is('restaurant/live-transaction/customer-ordering/*')) ? 'text-manageRestaurantSidebarColorActive' : 'text-manageRestaurantSidebarColor hover:underline' }}"><i class="fas fa-file w-3 mr-3"></i> Customer Ordering</a>
+                            <a href="/restaurant/stamp-offenses/customer-offenses" class="ml-5 {{ (request()->is('restaurant/stamp-offenses/customer-offenses*')) ? 'text-manageRestaurantSidebarColorActive' : 'text-manageRestaurantSidebarColor hover:underline' }}"><i class="fas fa-file w-3 mr-3"></i> Customer Offenses</a>
                             <div class="border-multiStepBoxBorder border-manageRestaurantHrColor mt-3"></div>
                         </div>
                     @endif
                 </div>
             </div>
             <div class="bg-gray-200 w-full">
-                @if (request()->is('restaurant/live-transaction/customer-booking/*'))
-                    <div class="grid grid-cols-2 gap-x-1 w-full px-1 mt-1 text-center font-bold uppercase">
-                        <a href="/restaurant/live-transaction/customer-booking/queue" class="w-full py-3 rounded-sm {{ (request()->is('restaurant/live-transaction/customer-booking/queue*')) ? 'bg-tableBgHeader text-submitButton shadow-adminDownloadButton ' : 'bg-white text-manageRestaurantSidebarColor' }}">Customer Queue</a>
-                        <a href="/restaurant/live-transaction/customer-booking/reserve" class="w-full py-3 rounded-sm {{ (request()->is('restaurant/live-transaction/customer-booking/reserve*')) ? 'bg-tableBgHeader text-submitButton shadow-adminDownloadButton ' : 'bg-white text-manageRestaurantSidebarColor' }}">Customer Reserve</a>
-                    </div>
-                @elseif (request()->is('restaurant/live-transaction/approved-customer/*'))
-                    <div class="grid grid-cols-2 gap-x-1 w-full px-1 mt-1 text-center font-bold uppercase">
-                        <a href="/restaurant/live-transaction/approved-customer/queue" class="w-full py-3 rounded-sm {{ (request()->is('restaurant/live-transaction/approved-customer/queue*')) ? 'bg-tableBgHeader text-submitButton shadow-adminDownloadButton ' : 'bg-white text-manageRestaurantSidebarColor' }}">Customer Queue</a>
-                        <a href="/restaurant/live-transaction/approved-customer/reserve" class="w-full py-3 rounded-sm {{ (request()->is('restaurant/live-transaction/approved-customer/reserve*')) ? 'bg-tableBgHeader text-submitButton shadow-adminDownloadButton ' : 'bg-white text-manageRestaurantSidebarColor' }}">Customer Reserve</a>
-                    </div>
-                @elseif (request()->is('restaurant/live-transaction/customer-ordering/list/*'))
-                    <div class="grid grid-cols-2 gap-x-1 w-full px-1 mt-1 text-center font-bold uppercase">
-                        <a href="order-request" class="w-full py-3 rounded-sm {{ (request()->is('*order-request')) ? 'bg-tableBgHeader text-submitButton shadow-adminDownloadButton ' : 'bg-white text-manageRestaurantSidebarColor' }}">Order & Request</a>
-                        <a href="order-summary" class="w-full py-3 rounded-sm {{ (request()->is('*order-summary')) ? 'bg-tableBgHeader text-submitButton shadow-adminDownloadButton ' : 'bg-white text-manageRestaurantSidebarColor' }}">Order Summary</a>
-                    </div>
-                @endif
                 @yield('content')
             </div>
         </div>
     </section>
-    @if (request()->is('restaurant/live-transaction/customer-booking/queue*'))
-        <script type="text/javascript" src="{{ asset('js/queueView.js') }}"></script>
-    @elseif (request()->is('restaurant/live-transaction/approved-customer/queue*'))
-        <script type="text/javascript" src="{{ asset('js/queueView2.js') }}"></script>
-    @elseif (request()->is('restaurant/live-transaction/customer-booking/reserve*'))
-        <script type="text/javascript" src="{{ asset('js/reserveView.js') }}"></script>
-    @elseif (request()->is('restaurant/live-transaction/approved-customer/reserve*'))
-        <script type="text/javascript" src="{{ asset('js/reserveView2.js') }}"></script>
-    @elseif (request()->is('restaurant/live-transaction/approved-customer/queue*'))
-        <script type="text/javascript" src="{{ asset('js/queueView2.js') }}"></script>
-    @elseif (request()->is('restaurant/live-transaction/customer-ordering/*'))
-        <script type="text/javascript" src="{{ asset('js/orderRequest.js') }}"></script>
-    @endif
 </body>
 </html>

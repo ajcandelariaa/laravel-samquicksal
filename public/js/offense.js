@@ -1,5 +1,5 @@
 function cancellationBlockDays() {
-    var offenseType = document.getElementById("offenseType");
+    var offenseType = document.getElementById("offenseTypeC");
     var selectedValue = offenseType.options[offenseType.selectedIndex].value;
     if (selectedValue == "limitBlock") {
         $('#showCancellationBlockDays').show();
@@ -10,23 +10,23 @@ function cancellationBlockDays() {
 }
 
 function noShowBlockDays() {
-    var offenseType = document.getElementById("offenseType");
+    var offenseType = document.getElementById("offenseTypeN");
     var selectedValue = offenseType.options[offenseType.selectedIndex].value;
     if (selectedValue == "limitBlock") {
-        $('#showCancellationBlockDays').show();
+        $('#showNoShowBlockDays').show();
     } else {
-        $('#showCancellationBlockDays').hide();
-        $('#showCancellationBlockDays').val("");
+        $('#showNoShowBlockDays').hide();
+        $('#showNoShowBlockDays').val("");
     }
 }
 
-function runawayBlockDays() {
-    var offenseType = document.getElementById("offenseType");
+function runawayBlockDay() {
+    var offenseType = document.getElementById("offenseTypeR");
     var selectedValue = offenseType.options[offenseType.selectedIndex].value;
     if (selectedValue == "limitBlock") {
-        $('#showCancellationBlockDays').show();
+        $('#showRunawayBlockDays').show();
     } else {
-        $('#showCancellationBlockDays').hide();
-        $('#showCancellationBlockDays').val("");
+        $('#showRunawayBlockDays').hide();
+        $('#showRunawayBlockDays').val("");
     }
 }

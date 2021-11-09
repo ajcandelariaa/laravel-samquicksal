@@ -73,6 +73,7 @@ Route::get('/customer/ordering/checkout/status/{cust_id}', [CustomerController::
 Route::get('/customer/ordering/gcash/status/{cust_id}', [CustomerController::class, 'getOrderingGCashStatus']);
 Route::get('/customer/ordering/checkout/rating-feedback/{cust_id}', [CustomerController::class, 'getOrderingRatingFeedback']);
 Route::post('/customer/ordering/checkout/rating-feedback/submit', [CustomerController::class, 'ratingFeedbackSubmit']);
+
 Route::post('/customer/ordering/checkout/gcash-upload-image', [CustomerController::class, 'submitGcashReceipt']);
 
 

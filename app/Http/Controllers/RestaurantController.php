@@ -132,6 +132,356 @@ class RestaurantController extends Controller
 
 
     // RENDER VIEWS
+    public function soCustomerOffenses(){
+        $restAcc_id = Session::get('loginId');
+
+
+
+        return view('restaurant.stampOffenses.customerOffenses');
+    }
+    public function soStampList(){
+        $restAcc_id = Session::get('loginId');
+
+        
+
+
+        return view('restaurant.stampOffenses.stampCards');
+    }
+    public function thCompletedListRView(){
+        $restAcc_id = Session::get('loginId');
+        $storeCustomer = array();
+        $customerReserve = CustomerReserve::where('restAcc_id', $restAcc_id)->where('status', 'completed')
+        ->orderBy('created_at', 'DESC')
+        ->paginate(10);
+
+        if(!$customerReserve->isEmpty()){
+            foreach($customerReserve as $custR){
+                $customer = CustomerAccount::where('id', $custR->customer_id)->first();
+
+                $bookDate = explode('-', date('Y-m-d', strtotime($custR->created_at)));
+                $month = $this->convertMonths($bookDate[1]);
+                $year = $bookDate[0];
+                $day  = $bookDate[2];
+
+                $time = date('g:i a', strtotime($custR->created_at));
+
+                array_push($storeCustomer, [
+                    'bookId' => $custR->id,
+                    'custName' => $customer->name,
+                    'bookDate' => "$month $day, $year",
+                    'bookTime' => $time,
+                ]);
+            }
+        } 
+
+        return view('restaurant.transactionHistory.completed.completedListR', [
+            'storeCustomer' => $storeCustomer,
+            'customerReserve' => $customerReserve
+        ]);
+    }
+    public function thCompletedListQView(){
+        $restAcc_id = Session::get('loginId');
+        $storeCustomer = array();
+        $customerQueue = CustomerQueue::where('restAcc_id', $restAcc_id)->where('status', 'completed')
+        ->orderBy('created_at', 'DESC')
+        ->paginate(10);
+
+        if(!$customerQueue->isEmpty()){
+            foreach($customerQueue as $custQ){
+                if($custQ->customer_id == 0){
+                    $customerName = $custQ->name;
+                } else {
+                    $customer = CustomerAccount::where('id', $custQ->customer_id)->first();
+                    $customerName = $customer->name;
+                }
+
+                $bookDate = explode('-', date('Y-m-d', strtotime($custQ->created_at)));
+                $month = $this->convertMonths($bookDate[1]);
+                $year = $bookDate[0];
+                $day  = $bookDate[2];
+
+                $time = date('g:i a', strtotime($custQ->created_at));
+
+                array_push($storeCustomer, [
+                    'bookId' => $custQ->id,
+                    'custName' => $customerName,
+                    'bookDate' => "$month $day, $year",
+                    'bookTime' => $time,
+                ]);
+            }
+        }
+
+        return view('restaurant.transactionHistory.completed.completedListQ', [
+            'storeCustomer' => $storeCustomer,
+            'customerQueue' => $customerQueue
+        ]);
+    }
+    public function thRunawayListRView(){
+        $restAcc_id = Session::get('loginId');
+        $storeCustomer = array();
+        $customerReserve = CustomerReserve::where('restAcc_id', $restAcc_id)->where('status', 'runaway')
+        ->orderBy('created_at', 'DESC')
+        ->paginate(10);
+
+        if(!$customerReserve->isEmpty()){
+            foreach($customerReserve as $custR){
+                $customer = CustomerAccount::where('id', $custR->customer_id)->first();
+
+                $bookDate = explode('-', date('Y-m-d', strtotime($custR->created_at)));
+                $month = $this->convertMonths($bookDate[1]);
+                $year = $bookDate[0];
+                $day  = $bookDate[2];
+
+                $time = date('g:i a', strtotime($custR->created_at));
+
+                array_push($storeCustomer, [
+                    'bookId' => $custR->id,
+                    'custName' => $customer->name,
+                    'bookDate' => "$month $day, $year",
+                    'bookTime' => $time,
+                ]);
+            }
+        } 
+
+        return view('restaurant.transactionHistory.runaway.runawayListR', [
+            'storeCustomer' => $storeCustomer,
+            'customerReserve' => $customerReserve
+        ]);
+    }
+    public function thRunawayListQView(){
+        $restAcc_id = Session::get('loginId');
+        $storeCustomer = array();
+        $customerQueue = CustomerQueue::where('restAcc_id', $restAcc_id)->where('status', 'runaway')
+        ->orderBy('created_at', 'DESC')
+        ->paginate(10);
+
+        if(!$customerQueue->isEmpty()){
+            foreach($customerQueue as $custQ){
+                if($custQ->customer_id == 0){
+                    $customerName = $custQ->name;
+                } else {
+                    $customer = CustomerAccount::where('id', $custQ->customer_id)->first();
+                    $customerName = $customer->name;
+                }
+
+                $bookDate = explode('-', date('Y-m-d', strtotime($custQ->created_at)));
+                $month = $this->convertMonths($bookDate[1]);
+                $year = $bookDate[0];
+                $day  = $bookDate[2];
+
+                $time = date('g:i a', strtotime($custQ->created_at));
+
+                array_push($storeCustomer, [
+                    'bookId' => $custQ->id,
+                    'custName' => $customerName,
+                    'bookDate' => "$month $day, $year",
+                    'bookTime' => $time,
+                ]);
+            }
+        } 
+
+        return view('restaurant.transactionHistory.runaway.runawayListQ', [
+            'storeCustomer' => $storeCustomer,
+            'customerQueue' => $customerQueue
+        ]);
+    }
+    public function thNoShowListRView(){
+        $restAcc_id = Session::get('loginId');
+        $storeCustomer = array();
+        $customerReserve = CustomerReserve::where('restAcc_id', $restAcc_id)->where('status', 'noShow')
+        ->orderBy('created_at', 'DESC')
+        ->paginate(10);
+
+        if(!$customerReserve->isEmpty()){
+            foreach($customerReserve as $custR){
+                $customer = CustomerAccount::where('id', $custR->customer_id)->first();
+
+                $bookDate = explode('-', date('Y-m-d', strtotime($custR->created_at)));
+                $month = $this->convertMonths($bookDate[1]);
+                $year = $bookDate[0];
+                $day  = $bookDate[2];
+
+                $time = date('g:i a', strtotime($custR->created_at));
+
+                array_push($storeCustomer, [
+                    'bookId' => $custR->id,
+                    'custName' => $customer->name,
+                    'bookDate' => "$month $day, $year",
+                    'bookTime' => $time,
+                ]);
+            }
+        } 
+
+        return view('restaurant.transactionHistory.noshow.noshowListR', [
+            'storeCustomer' => $storeCustomer,
+            'customerReserve' => $customerReserve
+        ]);
+    }
+    public function thNoshowListQView(){
+        $restAcc_id = Session::get('loginId');
+        $storeCustomer = array();
+        $customerQueue = CustomerQueue::where('restAcc_id', $restAcc_id)->where('status', 'noShow')
+        ->orderBy('created_at', 'DESC')
+        ->paginate(10);
+
+        if(!$customerQueue->isEmpty()){
+            foreach($customerQueue as $custQ){
+                if($custQ->customer_id == 0){
+                    $customerName = $custQ->name;
+                } else {
+                    $customer = CustomerAccount::where('id', $custQ->customer_id)->first();
+                    $customerName = $customer->name;
+                }
+
+                $bookDate = explode('-', date('Y-m-d', strtotime($custQ->created_at)));
+                $month = $this->convertMonths($bookDate[1]);
+                $year = $bookDate[0];
+                $day  = $bookDate[2];
+
+                $time = date('g:i a', strtotime($custQ->created_at));
+
+                array_push($storeCustomer, [
+                    'bookId' => $custQ->id,
+                    'custName' => $customerName,
+                    'bookDate' => "$month $day, $year",
+                    'bookTime' => $time,
+                ]);
+            }
+        } 
+
+        return view('restaurant.transactionHistory.noshow.noshowListQ', [
+            'storeCustomer' => $storeCustomer,
+            'customerQueue' => $customerQueue
+        ]);
+    }
+    public function thDeclinedListRView(){
+        $restAcc_id = Session::get('loginId');
+        $storeCustomer = array();
+        $customerReserve = CustomerReserve::where('restAcc_id', $restAcc_id)->where('status', 'declined')
+        ->orderBy('created_at', 'DESC')
+        ->paginate(10);
+
+        if(!$customerReserve->isEmpty()){
+            foreach($customerReserve as $custR){
+                $customer = CustomerAccount::where('id', $custR->customer_id)->first();
+
+                $bookDate = explode('-', date('Y-m-d', strtotime($custR->created_at)));
+                $month = $this->convertMonths($bookDate[1]);
+                $year = $bookDate[0];
+                $day  = $bookDate[2];
+
+                $time = date('g:i a', strtotime($custR->created_at));
+
+                array_push($storeCustomer, [
+                    'bookId' => $custR->id,
+                    'custName' => $customer->name,
+                    'bookDate' => "$month $day, $year",
+                    'bookTime' => $time,
+                ]);
+            }
+        } 
+
+        return view('restaurant.transactionHistory.declined.declinedListR', [
+            'storeCustomer' => $storeCustomer,
+            'customerReserve' => $customerReserve
+        ]);
+    }
+    public function thDeclinedListQView(){
+        $restAcc_id = Session::get('loginId');
+        $storeCustomer = array();
+        $customerQueue = CustomerQueue::where('restAcc_id', $restAcc_id)->where('status', 'declined')
+        ->orderBy('created_at', 'DESC')
+        ->paginate(10);
+
+        if(!$customerQueue->isEmpty()){
+            foreach($customerQueue as $custQ){
+                $customer = CustomerAccount::where('id', $custQ->customer_id)->first();
+
+                $bookDate = explode('-', date('Y-m-d', strtotime($custQ->created_at)));
+                $month = $this->convertMonths($bookDate[1]);
+                $year = $bookDate[0];
+                $day  = $bookDate[2];
+
+                $time = date('g:i a', strtotime($custQ->created_at));
+
+                array_push($storeCustomer, [
+                    'bookId' => $custQ->id,
+                    'custName' => $customer->name,
+                    'bookDate' => "$month $day, $year",
+                    'bookTime' => $time,
+                ]);
+            }
+        } 
+
+        return view('restaurant.transactionHistory.declined.declinedListQ', [
+            'storeCustomer' => $storeCustomer,
+            'customerQueue' => $customerQueue
+        ]);
+    }
+    public function thCancelledListRView(){
+        $restAcc_id = Session::get('loginId');
+        $storeCustomer = array();
+        $customerReserve = CustomerReserve::where('restAcc_id', $restAcc_id)->where('status', 'cancelled')
+        ->orderBy('created_at', 'DESC')
+        ->paginate(10);
+
+        if(!$customerReserve->isEmpty()){
+            foreach($customerReserve as $custR){
+                $customer = CustomerAccount::where('id', $custR->customer_id)->first();
+
+                $bookDate = explode('-', date('Y-m-d', strtotime($custR->created_at)));
+                $month = $this->convertMonths($bookDate[1]);
+                $year = $bookDate[0];
+                $day  = $bookDate[2];
+
+                $time = date('g:i a', strtotime($custR->created_at));
+
+                array_push($storeCustomer, [
+                    'bookId' => $custR->id,
+                    'custName' => $customer->name,
+                    'bookDate' => "$month $day, $year",
+                    'bookTime' => $time,
+                ]);
+            }
+        } 
+
+        return view('restaurant.transactionHistory.cancelled.cancelledListR', [
+            'storeCustomer' => $storeCustomer,
+            'customerReserve' => $customerReserve
+        ]);
+    }
+    public function thCancelledListQView(){
+        $restAcc_id = Session::get('loginId');
+        $storeCustomer = array();
+        $customerQueue = CustomerQueue::where('restAcc_id', $restAcc_id)->where('status', 'cancelled')
+        ->orderBy('created_at', 'DESC')
+        ->paginate(10);
+
+        if(!$customerQueue->isEmpty()){
+            foreach($customerQueue as $custQ){
+                $customer = CustomerAccount::where('id', $custQ->customer_id)->first();
+
+                $bookDate = explode('-', date('Y-m-d', strtotime($custQ->created_at)));
+                $month = $this->convertMonths($bookDate[1]);
+                $year = $bookDate[0];
+                $day  = $bookDate[2];
+
+                $time = date('g:i a', strtotime($custQ->created_at));
+
+                array_push($storeCustomer, [
+                    'bookId' => $custQ->id,
+                    'custName' => $customer->name,
+                    'bookDate' => "$month $day, $year",
+                    'bookTime' => $time,
+                ]);
+            }
+        } 
+
+        return view('restaurant.transactionHistory.cancelled.cancelledListQ', [
+            'storeCustomer' => $storeCustomer,
+            'customerQueue' => $customerQueue
+        ]);
+    }
     public function ltCustOrderOSPartView($id){
         $restAcc_id = Session::get('loginId');
         $getDateToday = date('Y-m-d');
@@ -1498,28 +1848,16 @@ class RestaurantController extends Controller
             'id' => $id,
         ]);
     }
-    public function runawayView(){
-        $id = Session::get('loginId');
-        $runaway = Runaway::where('restAcc_id', $id)->first();
-        return view('restaurant.manageRestaurant.offense.runaway',[
-            'title' => 'Manage Offense',
-            'runaway' => $runaway
-        ]);
-    }
-    public function noShowView(){
-        $id = Session::get('loginId');
-        $noShow = NoShow::where('restAcc_id', $id)->first();
-        return view('restaurant.manageRestaurant.offense.noShow',[
-            'title' => 'Manage Offense',
-            'noShow' => $noShow
-        ]);
-    }
-    public function cancelReservationView(){
+    public function offensesView(){
         $id = Session::get('loginId');
         $cancellation = Cancellation::where('restAcc_id', $id)->first();
-        return view('restaurant.manageRestaurant.offense.cancelReservation',[
+        $noShow = NoShow::where('restAcc_id', $id)->first();
+        $runaway = Runaway::where('restAcc_id', $id)->first();
+        return view('restaurant.manageRestaurant.offense.offenses',[
             'title' => 'Manage Offense',
-            'cancellation' => $cancellation
+            'noShow' => $noShow,
+            'cancellation' => $cancellation,
+            'runaway' => $runaway
         ]);
     }
     public function tasksView(){
@@ -1869,7 +2207,7 @@ class RestaurantController extends Controller
             'country' => 'required',
             'emailAddress' => 'required|email|unique:restaurant_accounts,emailAddress',
             'contactNumber' => 'required|digits:11',
-            'landlineNumber' => 'numeric|min:8',
+            'landlineNumber' => 'nullable|digits:8',
             'rName' => 'required',
             'rBranch' => 'required',
             'rAddress' => 'required',
@@ -3659,27 +3997,25 @@ class RestaurantController extends Controller
     }
     public function editRunaway(Request $request, $id){
         $restAccId = Session::get('loginId');
-        if($request->offenseType == "limitBlock"){
+        if($request->offenseTypeR == "limitBlock"){
             $request->validate([
                 'numberOfRunaway' => 'required',
-                'numberOfDays' => 'required',
-                'offenseType' => 'required',
-                'cancelBlockDays' => 'required',
+                'offenseTypeR' => 'required',
+                'runawayBlockDays' => 'required',
             ]);
         } else {
             $request->validate([
                 'numberOfRunaway' => 'required',
-                'numberOfDays' => 'required',
-                'offenseType' => 'required',
+                'offenseTypeR' => 'required',
             ]);
         }
         $blockDays = "";
-        if($request->offenseType == "noOffense"){
+        if($request->offenseTypeR == "noOffense"){
             $blockDays = "0";
-        } else if ($request->offenseType == "permanentBlock") {
+        } else if ($request->offenseTypeR == "permanentBlock") {
             $blockDays = "Permanent";
         } else {
-            $blockDays = $request->cancelBlockDays;
+            $blockDays = $request->runawayBlockDays;
         }
 
         Runaway::where('id', $id)->where('restAcc_id', $restAccId)
@@ -3690,31 +4026,29 @@ class RestaurantController extends Controller
         ]);
 
         $request->session()->flash('edited');
-        return redirect('/restaurant/manage-restaurant/offense/runaway');
+        return redirect('/restaurant/manage-restaurant/offense/offenses');
     }
     public function editNoShow(Request $request, $id){
         $restAccId = Session::get('loginId');
-        if($request->offenseType == "limitBlock"){
+        if($request->offenseTypeN == "limitBlock"){
             $request->validate([
                 'numberOfNoShow' => 'required',
-                'numberOfDays' => 'required',
-                'offenseType' => 'required',
-                'cancelBlockDays' => 'required',
+                'offenseTypeN' => 'required',
+                'noshowBlockDays' => 'required',
             ]);
         } else {
             $request->validate([
                 'numberOfNoShow' => 'required',
-                'numberOfDays' => 'required',
-                'offenseType' => 'required',
+                'offenseTypeN' => 'required',
             ]);
         }
         $blockDays = "";
-        if($request->offenseType == "noOffense"){
+        if($request->offenseTypeN == "noOffense"){
             $blockDays = "0";
-        } else if ($request->offenseType == "permanentBlock") {
+        } else if ($request->offenseTypeN == "permanentBlock") {
             $blockDays = "Permanent";
         } else {
-            $blockDays = $request->cancelBlockDays;
+            $blockDays = $request->noshowBlockDays;
         }
 
         NoShow::where('id', $id)->where('restAcc_id', $restAccId)
@@ -3725,28 +4059,26 @@ class RestaurantController extends Controller
         ]);
 
         $request->session()->flash('edited');
-        return redirect('/restaurant/manage-restaurant/offense/no-show');
+        return redirect('/restaurant/manage-restaurant/offense/offenses');
     }
     public function editCancelReservation(Request $request, $id){
         $restAccId = Session::get('loginId');
         if($request->offenseType == "limitBlock"){
             $request->validate([
                 'numberOfCancellation' => 'required',
-                'numberOfDays' => 'required',
-                'offenseType' => 'required',
+                'offenseTypeC' => 'required',
                 'cancelBlockDays' => 'required',
             ]);
         } else {
             $request->validate([
                 'numberOfCancellation' => 'required',
-                'numberOfDays' => 'required',
-                'offenseType' => 'required',
+                'offenseTypeC' => 'required',
             ]);
         }
         $blockDays = "";
-        if($request->offenseType == "noOffense"){
+        if($request->offenseTypeC == "noOffense"){
             $blockDays = "0";
-        } else if ($request->offenseType == "permanentBlock") {
+        } else if ($request->offenseTypeC == "permanentBlock") {
             $blockDays = "Permanent";
         } else {
             $blockDays = $request->cancelBlockDays;
@@ -3760,7 +4092,7 @@ class RestaurantController extends Controller
         ]);
 
         $request->session()->flash('edited');
-        return redirect('/restaurant/manage-restaurant/offense/cancel-reservation');
+        return redirect('/restaurant/manage-restaurant/offense/offenses');
     }
     public function editPolicy(Request $request){
         $restAccId = Session::get('loginId');

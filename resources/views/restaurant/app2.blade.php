@@ -43,6 +43,18 @@
                         <i class="fas fa-podcast"></i>
                     </a>
                 </div>
+                <div class="grid items-center mt-4 text-white {{ (request()->is('restaurant/transaction-history*')) ? 'relative bg-black' : 'hover:bg-sideBarHoverBgColor' }}">
+                    <div class="{{ (request()->is('restaurant/transaction-history*')) ? 'h-full w-1 bg-headerActiveTextColor absolute left-0' : '' }}"></div>
+                    <a href="/restaurant/transaction-history/cancelled/queue" class="pt-3 pb-3 text-center">
+                        <i class="fas fa-history"></i>
+                    </a>
+                </div>
+                <div class="grid items-center mt-4 text-white {{ (request()->is('restaurant/stamp-offenses*')) ? 'relative bg-black' : 'hover:bg-sideBarHoverBgColor' }}">
+                    <div class="{{ (request()->is('restaurant/stamp-offenses*')) ? 'h-full w-1 bg-headerActiveTextColor absolute left-0' : '' }}"></div>
+                    <a href="/restaurant/stamp-offenses/stamp" class="pt-3 pb-3 text-center">
+                        <i class="fas fa-stamp"></i>
+                    </a>
+                </div>
                 <div class="grid items-center mt-4 text-white {{ (request()->is('restaurant/manage-restaurant*')) ? 'relative bg-black' : 'hover:bg-sideBarHoverBgColor' }}">
                     <div class="{{ (request()->is('restaurant/manage-restaurant*')) ? 'h-full w-1 bg-headerActiveTextColor absolute left-0' : '' }}"></div>
                     <a href="/restaurant/manage-restaurant/about/restaurant-information" class="pt-3 pb-3 text-center">
@@ -77,7 +89,7 @@
                             <div class="border-multiStepBoxBorder border-manageRestaurantHrColor mt-3"></div>
                         </div>
                         <div class="text-sm mt-3 w-10/12 mx-auto">
-                            <a href="/restaurant/manage-restaurant/offense/cancel-reservation" class="ml-5 {{ (request()->is('restaurant/manage-restaurant/offense*')) ? 'text-manageRestaurantSidebarColorActive' : 'text-manageRestaurantSidebarColor hover:underline' }}"><i class="fas fa-file w-3 mr-3"></i> Manage Offense</a>
+                            <a href="/restaurant/manage-restaurant/offense/offenses" class="ml-5 {{ (request()->is('restaurant/manage-restaurant/offense*')) ? 'text-manageRestaurantSidebarColorActive' : 'text-manageRestaurantSidebarColor hover:underline' }}"><i class="fas fa-file w-3 mr-3"></i> Manage Offense</a>
                             <div class="border-multiStepBoxBorder border-manageRestaurantHrColor mt-3"></div>
                         </div>
                         <div class="text-sm mt-3 w-10/12 mx-auto">
@@ -116,10 +128,8 @@
                     </div>
                 @endif
                 @if (request()->is('restaurant/manage-restaurant/offense/*'))
-                    <div class="grid grid-cols-4 gap-x-1 w-full px-1 mt-1 text-center font-bold uppercase">
-                        <a href="/restaurant/manage-restaurant/offense/cancel-reservation" class="w-full py-3 rounded-sm {{ (request()->is('restaurant/manage-restaurant/offense/cancel-reservation*')) ? 'bg-tableBgHeader text-submitButton shadow-adminDownloadButton ' : 'bg-white text-manageRestaurantSidebarColor' }}">Cancel Reservation</a>
-                        <a href="/restaurant/manage-restaurant/offense/no-show" class="w-full py-3 rounded-sm {{ (request()->is('restaurant/manage-restaurant/offense/no-show*')) ? 'bg-tableBgHeader text-submitButton shadow-adminDownloadButton ' : 'bg-white text-manageRestaurantSidebarColor' }}">No Show</a>
-                        <a href="/restaurant/manage-restaurant/offense/runaway" class="w-full py-3 rounded-sm {{ (request()->is('restaurant/manage-restaurant/offense/runaway*')) ? 'bg-tableBgHeader text-submitButton shadow-adminDownloadButton ' : 'bg-white text-manageRestaurantSidebarColor' }}">Runaway</a>
+                    <div class="grid grid-cols-2 gap-x-1 w-full px-1 mt-1 text-center font-bold uppercase">
+                        <a href="/restaurant/manage-restaurant/offense/offenses" class="w-full py-3 rounded-sm {{ (request()->is('restaurant/manage-restaurant/offense/offenses*')) ? 'bg-tableBgHeader text-submitButton shadow-adminDownloadButton ' : 'bg-white text-manageRestaurantSidebarColor' }}">Offenses</a>
                         <a href="/restaurant/manage-restaurant/offense/policy" class="w-full py-3 rounded-sm {{ (request()->is('restaurant/manage-restaurant/offense/policy*')) ? 'bg-tableBgHeader text-submitButton shadow-adminDownloadButton ' : 'bg-white text-manageRestaurantSidebarColor' }}">Restaurant Policy</a>
                     </div>
                 @endif

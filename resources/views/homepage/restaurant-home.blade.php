@@ -61,7 +61,7 @@
     <section class="bg-adminViewAccountHeaderColor2 relative">
         <div class="container flex flex-col sm:flex-row md:flex-row lg:flex-row xl:flex-row items-center md:py-2 lg:py-1 xl:py-1 mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 ">
             <div class="flex flex-1 flex-col items-center xl:items-start leading-tight tracking-tighter">
-                <p class="mb-2 sm:mb-2 md:mb-3 lg:mb-3 xl:mb-8 mt-3 sm:mt-4 md:mt-7 lg:mt-8 xl:mt-10 xl:text-base lg:text-base md:text-xs sm:text-xs text-sm text-justify"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; What separates the good restaurants from the ones are its customers, those who keep returning day in and day out because of the amazing experience the restaurant has to offer. With our application we believe that your restaurant can be a great one. Samgyeopsal is about the bonding and memories that happen while the meat is cooking, the smell of the meats as they hit the pan the various flavors that come together and the final piece of that puzzle is your customer. Customer rewards will give a sense of belonging as if they are part of a growing family, the app helps them by putting them at the forefront of the samgyeopsal experience. What are you waiting for? Be our partner now!</p>
+                <p class="mb-2 sm:mb-2 md:mb-3 lg:mb-3 xl:mb-8 mt-3 sm:mt-4 md:mt-7 lg:mt-8 xl:mt-10 xl:text-base lg:text-base md:text-xs sm:text-xs text-sm text-justify"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;What separates the good restaurants from the ones are its customers, those who keep returning day in and day out because of the amazing experience the restaurant has to offer. With our application we believe that your restaurant can be a great one. Samgyeopsal is about the bonding and memories that happen while the meat is cooking, the smell of the meats as they hit the pan the various flavors that come together and the final piece of that puzzle is your customer. Customer rewards will give a sense of belonging as if they are part of a growing family, the app helps them by putting them at the forefront of the samgyeopsal experience. What are you waiting for? Be our partner now!</p>
             </div>
             <div class="flex justify-center flex-1 mt-5 mb-10 md:mb-10 lg:mb-16 xl:my-10 ">
                 <img class="w-5/12 sm:w-6/12 md:w-6/12 lg:w-7/12 xl:w-5/12" src="{{ asset('images/girlBoyBlack.png') }}" alt="girlBoyBlack">
@@ -78,8 +78,8 @@
             <div class="flex justify-center">
                 <h1 class="capitalize text-lg sm:text-lg md:text-xl lg:text-2xl xl:text-4xl font-semibold text-center col fade-in">activation steps</h1>
             </div>
-            <div class="grid sm:grid-cols-3 sm:p-4 md:p-10 lg:p-14 xl:p-16">
-                <div class="mx-auto">
+            <div class="grid sm:grid-cols-3 sm:p-4 md:p-10 lg:p-14 xl:p-16 md:grid-cols-3">
+                <div class="mx-auto sm:ml-auto">
                     {{-- <img class=" text-headerActiveTextColor w-4/12 sm:w-6/12 md:w-7/12 lg:w-8/12 xl:w-full lg:mt-4 md:mt-2 sm:mt-3 mt-4 xl:ml-4 lg:ml-9 md:ml-10 sm:ml-11 ml-16 animate-wiggle" src="{{ asset('images/clarity_form-line.png') }}" alt="filloutIcon"> --}}
                    <svg xmlns="http://www.w3.org/2000/svg" class="text-headerActiveTextColor w-3/12 sm:w-6/12 md:w-6/12 lg:w-6/12 xl:w-7/12 mx-auto animate-wiggle col fade-in " fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -91,7 +91,7 @@
                 </div>
 
                 <div class="mx-auto">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="text-headerActiveTextColor  xl:w-7/12 lg:w-6/12 md:w-6/12 sm:w-6/12 w-3/12 mx-auto animate-spin col fade-in" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="text-headerActiveTextColor xl:w-7/12 lg:w-6/12 md:w-6/12 sm:w-6/12 w-3/12 mx-auto animate-spin col fade-in" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
@@ -101,7 +101,7 @@
                     </div>
                 </div>
 
-                <div class="mx-auto">
+                <div class="mx-auto sm:mr-auto">
                       <svg xmlns="http://www.w3.org/2000/svg" class="text-headerActiveTextColor w-3/12 sm:w-6/12 md:w-6/12  lg:w-6/12 xl:w-7/12 mx-auto animate-wiggle col fade-in" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
                       </svg>
@@ -117,13 +117,13 @@
     <section class="bg-adminViewAccountHeaderColor2 relative" id="advantages">
         {{-- sample --}}
         <div class="container flex flex-col-reverse xl:flex-row lg:flex-row md:flex-row sm:flex-row items-start xl:py-16 lg:py-14 md:py-5 mx-auto xl:items-center px-3 sm:px-0 md:px-0 lg:px-28 xl:px-28">
-            <div class=" flex justify-center md:justify-start lg:justify-start xl:justify-start xl:mb-10 mb-6 md:ml-24   md:mt-10 sm:mt-10 lg:-ml-10 ">
+            <div class=" flex justify-center mx-auto sm:mr-10 md:justify-start lg:justify-start xl:justify-start xl:mb-10 mb-6 md:ml-24 md:mt-10 sm:mt-10 lg:-ml-10 ">
                 <img class="w-4/12 sm:w-7/12 md:w-5/12 lg:w-9/12 xl:w-9/12 slide-in from-left" src="{{ asset('images/partners.png') }}" alt="partners">
             </div>
-            <div class="flex flex-col sm:items-start md:items-start lg:items-start xl:items-start items-center lg:flex-grow xl:pl-0 md:pl-16 xl:-ml-0 lg:-ml-32 md:-ml-72 sm:-ml-5 ">
+            <div class="flex flex-col sm:items-start md:items-start lg:items-start xl:items-start mx-auto items-center lg:flex-grow xl:pl-0 md:pl-16 xl:-ml-0 lg:-ml-32 md:-ml-72 sm:-ml-5 ">
                 <h1 class="xl:mb-16 lg:mb-5 mb-3 text-base xl:text-4xl lg:text-2xl md:text-xl sm:text-lg lg:text-left lg:-ml-10 xl:text-left sm:mt-5 mt-7 font-Montserrat font-semibold tracking-tighter text-black col fade-in">Samquisksal Partner Advantages.</h1>
-                <div class="flex justify-center">
-                    <span class="inline-flex items-center justify-center flex-shrink-0 w-6 sm:w-8 md:w-8 lg:w-8 xl:w-14 mr-3 sm:mr-3 md:mr-3 xl:mr-7 lg:mr-7 xl:mb-6 rounded-full col fade-in">
+                <div class="flex justify-center mx-16 sm:mx-0">
+                    <span class="inline-flex items-center justify-center flex-shrink-0 w-6 sm:w-8 md:w-8 lg:w-8 xl:w-14 mr-3  ml-9 sm:ml-0 sm:mr-3 md:mr-3 xl:mr-7 lg:mr-7 xl:mb-6 rounded-full col fade-in">
                         <svg xmlns="http://www.w3.org/2000/svg" class="text-headerActiveTextColor" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
                         </svg>
@@ -134,29 +134,28 @@
                     <p class="text-xxs sm:text-xs xl:text-base mb-3 xl:mb-10 text-headerActiveTextColor font-Roboto col fade-in">Samquicksal can help your Restaurant get more potential customers with Loyalty Reward Card. </p>
                  </div>
                 </div>
-                <div class="flex justify-center">
-                    <span class="inline-flex items-center justify-center flex-shrink-0 w-6 sm:w-8 md:w-8 lg:w-8 xl:w-14 mr-3 sm:mr-3 md:mr-3 xl:mr-7 lg:mr-7 xl:mb-6 rounded-ful col fade-in">
+                <div class="flex justify-center mx-16 sm:mx-0">
+                    <span class="inline-flex items-center justify-center flex-shrink-0 w-6 sm:w-8 md:w-8 lg:w-8 xl:w-14 mr-3  ml-9 sm:ml-0 sm:mr-3 md:mr-3 xl:mr-7 lg:mr-7 xl:mb-6 rounded-full col fade-in">
                         <svg xmlns="http://www.w3.org/2000/svg" class="text-headerActiveTextColor" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
                         </svg>
                         <path d="M10 15.172l9.192-9.193 1.415 1.414L10 18l-6.364-6.364 1.414-1.414z"></path>
                     </span>
-                <div class="flex flex-col mt-4">
+                <div class="flex flex-col mt-3 xl:mt-4">
                     <p class="text-sm sm:text-base md:text-sm lg:text-lg xl:text-2xl text-headerActiveTextColor font-semibold col fade-in">Easy Reservation and Ordering Process</p>
-                    <p class="text-xxs sm:text-xs md:text-xs lg:text-base xl:text-base mb-3 xl:mb-10 text-headerActiveTextColor font-Roboto col fade-in "> From Queuing and Reservation to Ordering, Samquicksal improves your dining experiencece.  </p>
+                   <p class="text-xxs sm:text-xs xl:text-base mb-3 xl:mb-10 text-headerActiveTextColor font-Roboto fade-in sm:pr-0">No more long waiting time. From queueing to ordering, Samquicksal improves your overall dining experience.</p>
                  </div>
                 </div>
-
-                <div class="flex justify-center">
-                    <span class="inline-flex items-center justify-center flex-shrink-0 w-6 sm:w-8 md:w-8 lg:w-8 xl:w-14 mr-3 sm:mr-3 md:mr-3 xl:mr-7 lg:mr-7 xl:mb-6 rounded-full col fade-in">
+                <div class="flex justify-center mx-16 sm:mx-0">
+                     <span class="inline-flex items-center justify-center flex-shrink-0 w-6 sm:w-8 md:w-8 lg:w-8 xl:w-14 mr-3  ml-9 sm:ml-0 sm:mr-3 md:mr-3 xl:mr-7 lg:mr-7 xl:mb-6 rounded-full col fade-in">
                         <svg xmlns="http://www.w3.org/2000/svg" class="text-headerActiveTextColor" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
                         </svg>
                         <path d="M10 15.172l9.192-9.193 1.415 1.414L10 18l-6.364-6.364 1.414-1.414z"></path>
                     </span>
-                <div class="flex flex-col mt-4">
+                <div class="flex flex-col mt-3 xl:mt-4">
                     <p class="text-sm sm:text-base md:text-sm lg:text-lg xl:text-2xl text-headerActiveTextColor font-semibold col fade-in">Promo Announcement Made Easy</p>
-                    <p class="text-xxs sm:text-xs md:text-xs lg:text-base mb-3 xl:mb-10 text-headerActiveTextColor font-Roboto col fade-in ">Promos from your Restaurant are presented to customer within the application. </p>
+                    <p class="text-xxs sm:text-xs xl:text-base mb-3 xl:mb-10 text-headerActiveTextColor font-Roboto fade-in pr-16 sm:pr-0">Promos from your Restaurant are presented to customer within the application.. </p>
                  </div>
                 </div>
             </div>

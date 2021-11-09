@@ -17,7 +17,7 @@ class CreateCancellationsTable extends Migration
             $table->id();
             $table->unsignedBigInteger('restAcc_id');
             $table->integer('noOfCancellation');
-            $table->integer('noOfDays');
+            $table->integer('noOfDays')->nullable();
             $table->string('blockDays');
             $table->timestamps();
             $table->foreign('restAcc_id')->references('id')->on('restaurant_accounts')->onDelete('cascade');
