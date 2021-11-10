@@ -4624,9 +4624,8 @@ class RestaurantController extends Controller
         $restAccId = Session::get('loginId');
         $checkStampExist = StampCard::where('restAcc_id', $restAccId)->latest()->first();
         
-
         if($checkStampExist != null){
-            if($getDateToday > $checkStampExist->stampValidity){
+            if($getDateToday <= $checkStampExist->stampValidity){
                 $request->session()->flash('invalid');
                 return redirect('/restaurant/manage-restaurant/task-rewards/stamp-card');
             }
@@ -4639,14 +4638,12 @@ class RestaurantController extends Controller
             'stampValidity' => 'required',
         ]);
 
-        StampCard::create([
+        $getLatestStamp = StampCard::create([
             'restAcc_id' => $restAccId,
             'stampCapacity' => $request->stampCapacity,
             'stampReward_id' => $request->stampReward,
             'stampValidity' => $request->stampValidity,
         ]);
-
-        $getLatestStamp = StampCard::where('restAcc_id', $restAccId)->first();
 
         foreach ($request->tasks as $taskId){
             StampCardTasks::create([
