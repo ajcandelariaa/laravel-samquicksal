@@ -41,7 +41,7 @@
                     <div class="grid grid-rows-customerOrderingTableRow text-center pt-3 pb-1 text-white">
                         <p class="row-span-1">
                             @if ($finalCustomer['custOrdering_id'] != "")
-                                <i class="fas fa-clock mr-3"></i>02h 02m 00s</span>
+                                <i class="fas fa-clock mr-3"></i>{{ $finalCustomer['finaltime'] }}</span>
                             @endif
                         </p>
                         @if ($finalCustomer['custOrdering_id'] == "")   

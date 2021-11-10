@@ -1,3 +1,64 @@
+$(".btn-edit-item" ).click(function() {
+    document.querySelector(".edit-form").classList.add("active");
+    document.querySelector(".overlay").classList.add("active");
+
+    $tr = $(this).closest('.tr');
+    
+    var data = $tr.children('.td').map(function(){
+        return $(this).text();
+    }).get();
+
+    $('#updateOpeningTime').val(data[0])
+    $('#updateClosingTime').val(data[1])
+    $('#storeId').val(data[2])
+
+    for (let i=0; i<data.length; i++){
+        tempArray.push(data[i])
+        if(i != 0 && i != 1 && i != 2){
+            switch (data[i]){
+                case 'SU':
+                    $('#SU').prop('disabled', false);
+                    $('#SU').prop('checked', true)
+                    break;
+                case 'MO':
+                    $('#MO').prop('disabled', false);
+                    $('#MO').prop('checked', true)
+                    break;
+                case 'TU':
+                    $('#TU').prop('disabled', false);
+                    $('#TU').prop('checked', true)
+                    break;
+                case 'WE':
+                    $('#WE').prop('disabled', false);
+                    $('#WE').prop('checked', true)
+                    break;
+                case 'TH':
+                    $('#TH').prop('disabled', false);
+                    $('#TH').prop('checked', true)
+                    break;
+                case 'FR':
+                    $('#FR').prop('disabled', false);
+                    $('#FR').prop('checked', true)
+                    break;
+                case 'SA':
+                    $('#SA').prop('disabled', false);
+                    $('#SA').prop('checked', true)
+                    break;
+                default:
+            }
+        }
+    }
+});
+
+
+
+
+
+
+
+
+
+
 // GRANT ACCESS CONFIRMATION
 $('#btn-access').on('click', function(e){
     e.preventDefault();

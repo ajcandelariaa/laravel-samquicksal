@@ -136,18 +136,83 @@ class RestaurantController extends Controller
     // RENDER VIEWS
     public function soCustomerOffenses(){
         $restAcc_id = Session::get('loginId');
+        $storeName = array();
+        $storeValidity = array();
+        $custMainOffenses = CustOffenseMain::where('restAcc_id', $restAcc_id)
+        ->orderBy('created_at', 'DESC')
+        ->paginate(10);
 
+        if(!$custMainOffenses->isEmpty()){
+            foreach($custMainOffenses as $custMainOffense){
+                $customer = CustomerAccount::where('id', $custMainOffense->customer_id)->first();
+                array_push($storeName, $customer->name);
 
-
-        return view('restaurant.stampOffenses.customerOffenses');
+                if($custMainOffense->offenseValidity != null){
+                    $bookDate = explode('-', date('Y-m-d', strtotime($custMainOffense->offenseValidity)));
+                    $month = $this->convertMonths($bookDate[1]);
+                    $year = $bookDate[0];
+                    $day  = $bookDate[2];
+                    array_push($storeValidity, "$month $day, $year");
+                } else {
+                    array_push($storeValidity, "Not Yet Block");
+                }
+                
+            }
+        }
+        return view('restaurant.stampOffenses.customerOffenses', [
+            'custMainOffenses' => $custMainOffenses,
+            'storeName' => $storeName,
+            'storeValidity' => $storeValidity,
+        ]);
     }
     public function soStampList(){
         $restAcc_id = Session::get('loginId');
+        $storeStamps = array();
 
+        $stampCards = StampCard::where('restAcc_id', $restAcc_id)
+        ->orderBy('created_at', 'DESC')
+        ->paginate(10);
         
+        if(!$stampCards->isEmpty()){
 
+            foreach($stampCards as $stampCard){
+                $finalReward = "None";
+                $reward = RestaurantRewardList::where('id', $stampCard->stampReward_id)->first();
+                
+                switch($reward->rewardCode){
+                    case "DSCN": 
+                        $finalReward = "Discount $reward->rewardInput% in a Total Bill";
+                        break;
+                    case "FRPE": 
+                        $finalReward = "Free $reward->rewardInput person in a group";
+                        break;
+                    case "HLF": 
+                        $finalReward = "Half in the group will be free";
+                        break;
+                    case "ALL": 
+                        $finalReward = "All people in the group will be free";
+                        break;
+                    default: 
+                        $finalReward = "None";
+                }
 
-        return view('restaurant.stampOffenses.stampCards');
+                $bookDate = explode('-', date('Y-m-d', strtotime($stampCard->stampValidity)));
+                $month = $this->convertMonths($bookDate[1]);
+                $year = $bookDate[0];
+                $day  = $bookDate[2];
+
+                array_push($storeStamps, [
+                    'stampCapacity' => $stampCard->stampCapacity,
+                    'finalReward' => $finalReward,
+                    'stampValidity' => "$month $day, $year",
+                ]);
+            }
+        }
+
+        return view('restaurant.stampOffenses.stampCards', [
+            'storeStamps' => $storeStamps,
+            'stampCards' => $stampCards,
+        ]);
     }
     public function thCompletedListRView(){
         $restAcc_id = Session::get('loginId');
@@ -823,32 +888,6 @@ class RestaurantController extends Controller
         $eatingCustomers = CustomerOrdering::where('restAcc_id', $restAcc_id)->where('status', 'eating')->where('orderingDate', $getDateToday)->get();
         $restaurant = RestaurantAccount::select('rNumberOfTables')->where('id', $restAcc_id)->first();
 
-        $customerQueue = CustomerQueue::select('tableSettingDateTime', 'eatingDateTime', 'hoursOfStay')->where('id', 32)->first();
-        if($customerQueue->eatingDateTime != null){
-            $starTime = $customerQueue->eatingDateTime;
-            $endTime = date(Carbon::parse($customerQueue->eatingDateTime)->addHours($customerQueue->hoursOfStay));
-            $startCountDown = "yes";
-        } else {
-            $starTime = $customerQueue->tableSettingDateTime;
-            $endTime = date(Carbon::parse($customerQueue->eatingDateTime)->addHours($customerQueue->hoursOfStay));
-            $startCountDown = "no";
-        }
-        $starTime = $customerQueue->tableSettingDateTime;
-        $endTime = Carbon::parse($customerQueue->eatingDateTime)->addHours($customerQueue->hoursOfStay);
-        $startCountDown = "no";
-
-        echo "s: $starTime <br>";
-        echo "e: $endTime <br>";
-
-        $cAccDiffSeconds = $endTime->diffInSeconds($starTime);
-        $cAccDiffMinutes = $endTime->diffInMinutes($starTime);
-        $cAccDiffHours = $endTime->diffInHours($starTime);
-
-        echo "cAccDiffSeconds: $cAccDiffSeconds <br>";
-        echo "cAccDiffMinutes: $cAccDiffMinutes <br>";
-        echo "cAccDiffHours: $cAccDiffHours <br>";
-
-        dd();
 
         $customers = array();
         foreach ($eatingCustomers as $eatingCustomer){
@@ -866,25 +905,87 @@ class RestaurantController extends Controller
 
             if($eatingCustomer->custBookType == "queue"){
                 $customerQueue = CustomerQueue::select('eatingDateTime', 'hoursOfStay')->where('id', $eatingCustomer->custBook_id)->first();
+                $finaltime = "";
+                $finalminutes = "";
+                $finalseconds = "";
                 if($customerQueue->eatingDateTime != null){
-                    $starTime = $customerQueue->eatingDateTime;
-                    $endTime = date(Carbon::parse($customerQueue->eatingDateTime)->addHours($customerQueue->hoursOfStay));
-                    $startCountDown = "yes";
+                    $starTime = Carbon::now(0);
+                    $endTime = Carbon::parse($customerQueue->eatingDateTime)->addHours($customerQueue->hoursOfStay);
+                    
+                    $cAccDiffSeconds = $endTime->diffInSeconds($starTime);
+                    $cAccDiffMinutes = $endTime->diffInMinutes($starTime);
+                    $cAccDiffHours = $endTime->diffInHours($starTime);
+
+                    if($cAccDiffHours == 0){
+                        $getminutes = $cAccDiffMinutes;
+                    } else {
+                        $getminutes = $cAccDiffMinutes - (60 * ($customerQueue->hoursOfStay - $cAccDiffHours));
+                    }
+
+                    $getSeconds = $cAccDiffSeconds - (3600 * ($customerQueue->hoursOfStay - $cAccDiffHours) + (60 * ($cAccDiffMinutes - (60 * ($customerQueue->hoursOfStay - $cAccDiffHours)))));
+
+                    if($getminutes <= 9){
+                        $finalminutes = "0$getminutes";
+                    } else {
+                        $finalminutes = "$getminutes";
+                    }
+
+                    if($getSeconds <= 9){
+                        $finalseconds = "0$getSeconds";
+                    } else {
+                        $finalseconds = "$getSeconds";
+                    }
+                    
+                    if($starTime >= $endTime){
+                        $finaltime = "00h : 00m : 00s";
+                    } else {
+                        $finaltime = "0$cAccDiffHours"."h : ".$finalminutes."m : ".$finalseconds."s";
+                    }
+
                 } else {
-                    $starTime = $customerQueue->eatingDateTime;
-                    $endTime = date(Carbon::parse($customerQueue->eatingDateTime)->addHours($customerQueue->hoursOfStay));
-                    $startCountDown = "no";
+                    $finaltime = "0".$customerQueue->hoursOfStay."h : 00m : 00s";
                 }
             } else {
                 $customerReserve = CustomerReserve::select('eatingDateTime', 'hoursOfStay')->where('id', $eatingCustomer->custBook_id)->first();
+                $finaltime = "";
+                $finalminutes = "";
+                $finalseconds = "";
                 if($customerReserve->eatingDateTime != null){
-                    $starTime = $customerReserve->eatingDateTime;
-                    $endTime = date(Carbon::parse($customerReserve->eatingDateTime)->addHours($customerReserve->hoursOfStay));
-                    $startCountDown = "yes";
+                    $starTime = Carbon::now(0);
+                    $endTime = Carbon::parse($customerReserve->eatingDateTime)->addHours($customerReserve->hoursOfStay);
+                    
+                    $cAccDiffSeconds = $endTime->diffInSeconds($starTime);
+                    $cAccDiffMinutes = $endTime->diffInMinutes($starTime);
+                    $cAccDiffHours = $endTime->diffInHours($starTime);
+
+                    if($cAccDiffHours == 0){
+                        $getminutes = $cAccDiffMinutes;
+                    } else {
+                        $getminutes = $cAccDiffMinutes - (60 * ($customerReserve->hoursOfStay - $cAccDiffHours));
+                    }
+
+                    $getSeconds = $cAccDiffSeconds - (3600 * ($customerReserve->hoursOfStay - $cAccDiffHours) + (60 * ($cAccDiffMinutes - (60 * ($customerReserve->hoursOfStay - $cAccDiffHours)))));
+
+                    if($getminutes <= 9){
+                        $finalminutes = "0$getminutes";
+                    } else {
+                        $finalminutes = "$getminutes";
+                    }
+
+                    if($getSeconds <= 9){
+                        $finalseconds = "0$getSeconds";
+                    } else {
+                        $finalseconds = "$getSeconds";
+                    }
+                    
+                    if($starTime >= $endTime){
+                        $finaltime = "00h : 00m : 00s";
+                    } else {
+                        $finaltime = "0$cAccDiffHours"."h : ".$finalminutes."m : ".$finalseconds."s";
+                    }
+
                 } else {
-                    $starTime = $customerReserve->eatingDateTime;
-                    $endTime = date(Carbon::parse($customerReserve->eatingDateTime)->addHours($customerReserve->hoursOfStay));
-                    $startCountDown = "no";
+                    $finaltime = "0".$customerReserve->hoursOfStay."h : 00m : 00s";
                 }
             }
 
@@ -895,9 +996,7 @@ class RestaurantController extends Controller
                     'countOrders' => $countOrders,
                     'countRequests' => $countRequests,
                     'grantedAccess' => $eatingCustomer->grantedAccess,
-                    'starTime' => $starTime,
-                    'endTime' => $endTime,
-                    'startCountDown' => $startCountDown,
+                    'finaltime' => $finaltime,
                 ]);
             } else if (sizeOf($customerTableNumbers) > 1){
                 foreach ($customerTableNumbers as $customerTableNumber){
@@ -907,9 +1006,7 @@ class RestaurantController extends Controller
                         'countOrders' => $countOrders,
                         'countRequests' => $countRequests,
                         'grantedAccess' => $eatingCustomer->grantedAccess,
-                        'starTime' => $starTime,
-                        'endTime' => $endTime,
-                        'startCountDown' => $startCountDown,
+                        'finaltime' => $finaltime,
                     ]);
                 }
             } else {}
@@ -927,9 +1024,7 @@ class RestaurantController extends Controller
                         'countOrders' => $customer['countOrders'],
                         'countRequests' => $customer['countRequests'],
                         'grantedAccess' => $customer['grantedAccess'],
-                        'starTime' => $customer['starTime'],
-                        'endTime' => $customer['endTime'],
-                        'startCountDown' => $customer['startCountDown'],
+                        'finaltime' => $customer['finaltime'],
                     ]);
                 }
             }
@@ -940,9 +1035,7 @@ class RestaurantController extends Controller
                     'countOrders' => "",
                     'countRequests' => "",
                     'grantedAccess' => "",
-                    'starTime' => "",
-                    'endTime' => "",
-                    'startCountDown' => "",
+                    'finaltime' => "",
                 ]);
             }
         }

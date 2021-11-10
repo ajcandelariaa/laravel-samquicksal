@@ -15,7 +15,7 @@
         <div class="w-full mt-3 shadow-adminDownloadButton items-center bg-manageRestaurantSidebarColorActive pb-10">
             <div class="flex justify-between px-5 py-4 items-center">
                 <div class="text-white font-bold uppercase text-xl">Publish Restaurant</div>
-                <a href="/restaurant/manage-restaurant/time/time-limit/edit" class="bg-submitButton text-white w-36 h-9 leading-9 text-center rounded-md font-Montserrat hover:bg-darkerSubmitButton hover:text-gray-300  transition duration-200 ease-in-out">Publish</a>
+                <a href="#" class="bg-submitButton text-white w-36 h-9 leading-9 text-center rounded-md font-Montserrat hover:bg-darkerSubmitButton hover:text-gray-300  transition duration-200 ease-in-out">Publish</a>
             </div>
             <div class="bg-white">
                 <div class="w-11/12 mx-auto grid grid-cols-checkListGrid py-5">
