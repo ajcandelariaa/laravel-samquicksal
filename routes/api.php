@@ -30,7 +30,7 @@ Route::get('/customer/get-restaurants/reviews/{rest_id}', [CustomerController::c
 Route::get('/customer/get-restaurants/promo/detail/{promoId}/{restaurantId}', [CustomerController::class, 'getRestaurantsPromoDetailInfo']);
 Route::get('/customer/get-restaurants/choose-order-set/{id}/{custId}', [CustomerController::class, 'getRestaurantChooseOrderSet']);
 Route::get('/customer/get-restaurants/get-date-time/{rest_id}', [CustomerController::class, 'getReservationDateAndTimeForm']);
-Route::get('/customer/get-restaurants/menu/{id}', [CustomerController::class, 'getRestaurantsMenuInfo']);
+Route::get('/customer/get-restaurants/menu/{id}/{cust_id}', [CustomerController::class, 'getRestaurantsMenuInfo']);
 Route::get('/customer/get-homepage-info/{id}', [CustomerController::class, 'getCustomerHomepageInfo']);
 Route::get('/customer/get-account-info/{id}', [CustomerController::class, 'getCustomerAccountInfo']);
 Route::get('/customer/get-notifications/{id}', [CustomerController::class, 'getCustomerNotification']);

@@ -29,7 +29,7 @@
                                     @if ($_GET['page'] == 1)
                                         {{ $count }}
                                     @else
-                                        {{ ((($_GET['page'] - 1) * 9) + $count) }}
+                                        {{ ((($_GET['page'] - 1) * 10) + $count) }}
                                     @endif
                                 @else
                                     {{ $count }}
@@ -51,7 +51,7 @@
                                     @if ($_GET['page'] == 1)
                                         {{ $count }}
                                     @else
-                                        {{ ((($_GET['page'] - 1) * 9) + $count) }}
+                                        {{ ((($_GET['page'] - 1) * 10) + $count) }}
                                     @endif
                                 @else
                                     {{ $count }}

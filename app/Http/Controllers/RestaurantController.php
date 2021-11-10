@@ -20,6 +20,8 @@ use App\Models\CustomerLOrder;
 use App\Models\PromoMechanics;
 use App\Models\StampCardTasks;
 use Illuminate\Support\Carbon;
+use App\Models\CustOffenseEach;
+use App\Models\CustOffenseMain;
 use App\Models\CustomerAccount;
 use App\Models\CustomerReserve;
 use App\Models\OrderSetFoodSet;
@@ -27,8 +29,12 @@ use App\Models\UnavailableDate;
 use App\Mail\RestaurantVerified;
 use App\Models\CustomerLRequest;
 use App\Models\CustomerOrdering;
+use App\Models\CustomerQrAccess;
 use App\Models\OrderSetFoodItem;
+use App\Models\CustomerStampCard;
+use App\Models\CustomerTasksDone;
 use App\Models\RestaurantAccount;
+use App\Models\CustomerStampTasks;
 use App\Models\RestaurantTaskList;
 use App\Mail\RestaurantUpdateEmail;
 use App\Models\RestaurantApplicant;
@@ -42,10 +48,6 @@ use App\Mail\RestaurantPasswordChanged;
 use App\Models\RestaurantResetPassword;
 use Illuminate\Support\Facades\Session;
 use App\Mail\RestaurantFormAppreciation;
-use App\Models\CustomerQrAccess;
-use App\Models\CustomerStampCard;
-use App\Models\CustomerStampTasks;
-use App\Models\CustomerTasksDone;
 
 class RestaurantController extends Controller
 {
@@ -671,18 +673,20 @@ class RestaurantController extends Controller
             foreach($customerQrAccess as $customerQr){
                 $customer = CustomerAccount::where('id', $customerQr->subCust_id)->first();
 
-                $userSinceDate = explode('-', date('Y-m-d', strtotime($customer->created_at)));
-                $month2 = $this->convertMonths($userSinceDate[1]);
-                $year2 = $userSinceDate[0];
-                $day2  = $userSinceDate[2];
-
-                array_push($finalCustomerAccess, [
-                    'custId' => $customer->id,
-                    'custName' => $customer->name,
-                    'custImage' => $customer->profileImage,
-                    'tableNumber' => $customerQr->tableNumber,
-                    'userSince' => "$month2 $day2, $year2",
-                ]);
+                if($customer != null){
+                    $userSinceDate = explode('-', date('Y-m-d', strtotime($customer->created_at)));
+                    $month2 = $this->convertMonths($userSinceDate[1]);
+                    $year2 = $userSinceDate[0];
+                    $day2  = $userSinceDate[2];
+    
+                    array_push($finalCustomerAccess, [
+                        'custId' => $customer->id,
+                        'custName' => $customer->name,
+                        'custImage' => $customer->profileImage,
+                        'tableNumber' => $customerQr->tableNumber,
+                        'userSince' => "$month2 $day2, $year2",
+                    ]);
+                }
             }
         }
         
@@ -818,6 +822,33 @@ class RestaurantController extends Controller
         $getDateToday = date('Y-m-d');
         $eatingCustomers = CustomerOrdering::where('restAcc_id', $restAcc_id)->where('status', 'eating')->where('orderingDate', $getDateToday)->get();
         $restaurant = RestaurantAccount::select('rNumberOfTables')->where('id', $restAcc_id)->first();
+
+        $customerQueue = CustomerQueue::select('tableSettingDateTime', 'eatingDateTime', 'hoursOfStay')->where('id', 32)->first();
+        if($customerQueue->eatingDateTime != null){
+            $starTime = $customerQueue->eatingDateTime;
+            $endTime = date(Carbon::parse($customerQueue->eatingDateTime)->addHours($customerQueue->hoursOfStay));
+            $startCountDown = "yes";
+        } else {
+            $starTime = $customerQueue->tableSettingDateTime;
+            $endTime = date(Carbon::parse($customerQueue->eatingDateTime)->addHours($customerQueue->hoursOfStay));
+            $startCountDown = "no";
+        }
+        $starTime = $customerQueue->tableSettingDateTime;
+        $endTime = Carbon::parse($customerQueue->eatingDateTime)->addHours($customerQueue->hoursOfStay);
+        $startCountDown = "no";
+
+        echo "s: $starTime <br>";
+        echo "e: $endTime <br>";
+
+        $cAccDiffSeconds = $endTime->diffInSeconds($starTime);
+        $cAccDiffMinutes = $endTime->diffInMinutes($starTime);
+        $cAccDiffHours = $endTime->diffInHours($starTime);
+
+        echo "cAccDiffSeconds: $cAccDiffSeconds <br>";
+        echo "cAccDiffMinutes: $cAccDiffMinutes <br>";
+        echo "cAccDiffHours: $cAccDiffHours <br>";
+
+        dd();
 
         $customers = array();
         foreach ($eatingCustomers as $eatingCustomer){
@@ -2364,253 +2395,255 @@ class RestaurantController extends Controller
         if($customerOrdering->custBookType == "queue"){
             //check muna kung clinaime nya
             $customerQueue = CustomerQueue::where('id', $customerOrdering->custBook_id)->where('status', 'eating')->first();
+
+            if($customerQueue->customer_id != 0){
             
-            $eatingTime = date("H:i", strtotime($customerQueue->eatingDateTime));
-            $restaurant = RestaurantAccount::where('id', $customerQueue->restAcc_id)->first();
-            //check muna kung may stamp card na inimplement yung restaurant
-            $stampCard = StampCard::where('restAcc_id', $customerQueue->restAcc_id)->latest()->first();
-            if($stampCard != null){
-                //kung meron icompare yung validity date sa current date, kapag sobra meaning tapos na yon di na valid.
-                if($getDateToday <= $stampCard->stampValidity){
-                    //valid pa, so check kung yung validitiy at restaccid is same sa custoemr stamp card
-                    $custStampCard = CustomerStampCard::where('customer_id', $customerQueue->customer_id)
-                    ->where('restAcc_id', $restaurant->id)
-                    ->where('stampValidity', $stampCard->stampValidity)
-                    ->first();
-
-                    // CHECK MUNA KUNG ANO MGA NAGING REWARD
-                    $storeTasks = array();
-                    $storeDoneTasks = array();
-                    if($custStampCard != null){
-                        //then iupdate mag update lang, mag add ng mga tasks done
-                        $stampCardTasks = StampCardTasks::where('stampCards_id', $stampCard->id)->get();
-                        foreach($stampCardTasks as $stampCardTask){
-                            $task = RestaurantTaskList::where('id', $stampCardTask->restaurantTaskLists_id)->first();
-                            switch($task->taskCode){
-                                case "SPND":
-                                    if($customerQueue->totalPrice >= $task->taskInput){
-                                        array_push($storeDoneTasks, "Spend ".$task->taskInput." pesos in 1 visit only");
-                                    }
-                                    break;
-                                case "BRNG":
-                                    if($customerQueue->numberOfPersons >= $task->taskInput){
-                                        array_push($storeDoneTasks, "Bring ".$task->taskInput." friends in our store");
-                                    }
-                                    break;
-                                case "ORDR":
-                                    if($addOnQuantity >= $task->taskInput){
-                                        array_push($storeDoneTasks, "Order ".$task->taskInput." add on/s per visit");
-                                    }
-                                    break;
-                                case "VST":
-                                    array_push($storeDoneTasks, "Visit in our store");
-                                    break;
-                                case "FDBK":
-                                    array_push($storeTasks, "Give a feedback/review per visit");
-                                    break;
-                                case "PUGC":
-                                    if($customerQueue->gcashCheckoutReceipt != null){
-                                        array_push($storeDoneTasks, "Pay using gcash");
-                                    }
-                                    break;
-                                case "LUDN":
-                                    if("11:00" >= $eatingTime && "14:00" <= $eatingTime){
-                                        array_push($storeDoneTasks, "Eat during lunch/dinner hours");
-                                    } else if("17:00" >= $eatingTime && "22:00" <= $eatingTime){
-                                        array_push($storeDoneTasks, "Eat during lunch/dinner hours");
-                                    } else {}
-                                    break;
-                                default: 
-                            }
-                        }
-
-                        $currentStamp = $custStampCard->currentStamp + sizeof($storeDoneTasks);
-                        if($currentStamp >= $stampCard->stampCapacity){
-                            $stampStatus = "Complete";
-                            $currentStamp = $stampCard->stampCapacity;
-                        } else {
-                            $stampStatus = "Incomplete";
-                        }
-
-                        CustomerStampCard::where('id', $custStampCard->id)
-                        ->update([
-                            'status' => $stampStatus,
-                            'claimed' => "No",
-                            'currentStamp' => $currentStamp,
-                        ]);
-
-                        foreach($storeDoneTasks as $storeDoneTask){
-                            CustomerTasksDone::create([
-                                'customer_id' => $customerQueue->customer_id,
-                                'customerStampCard_id' => $custStampCard->id,
-                                'taskName' => $storeDoneTask,
-                                'taskAccomplishDate' => $getDateToday,
-                                'booking_id' => $customerQueue->id,
-                                'booking_type' => "queue",
-                            ]);
-                        }
-
-                    } else {
-                        //mag add din pati sa mga tasks
-                        $stampCardTasks = StampCardTasks::where('stampCards_id', $stampCard->id)->get();
-                        foreach($stampCardTasks as $stampCardTask){
-                            $task = RestaurantTaskList::where('id', $stampCardTask->restaurantTaskLists_id)->first();
-                            switch($task->taskCode){
-                                case "SPND":
-                                    array_push($storeTasks, "Spend ".$task->taskInput." pesos in 1 visit only");
-                                    if($customerQueue->totalPrice >= $task->taskInput){
-                                        array_push($storeDoneTasks, "Spend ".$task->taskInput." pesos in 1 visit only");
-                                    }
-                                    break;
-                                case "BRNG":
-                                    array_push($storeTasks, "Bring ".$task->taskInput." friends in our store");
-                                    if($customerQueue->numberOfPersons >= $task->taskInput){
-                                        array_push($storeDoneTasks, "Bring ".$task->taskInput." friends in our store");
-                                    }
-                                    break;
-                                case "ORDR":
-                                    array_push($storeTasks, "Order ".$task->taskInput." add on/s per visit");
-                                    if($addOnQuantity >= $task->taskInput){
-                                        array_push($storeDoneTasks, "Order ".$task->taskInput." add on/s per visit");
-                                    }
-                                    break;
-                                case "VST":
-                                    array_push($storeTasks, "Visit in our store");
-                                    array_push($storeDoneTasks, "Visit in our store");
-                                    break;
-                                case "FDBK":
-                                    array_push($storeTasks, "Give a feedback/review per visit");
-                                    break;
-                                case "PUGC":
-                                    array_push($storeTasks, "Pay using gcash");
-                                    if($customerQueue->gcashCheckoutReceipt != null){
-                                        array_push($storeDoneTasks, "Pay using gcash");
-                                    }
-                                    break;
-                                case "LUDN":
-                                    // dd($time > date("H:i", strtotime("10:00 am")));
-                                    //11:00am - 2:00pm (lunch)
-                                    //5:00pm - 10:00pm (dinner)
-                                    array_push($storeTasks, "Eat during lunch/dinner hours");
-                                    if("11:00" >= $eatingTime && "14:00" <= $eatingTime){
-                                        array_push($storeDoneTasks, "Eat during lunch/dinner hours");
-                                    } else if("17:00" >= $eatingTime && "22:00" <= $eatingTime){
-                                        array_push($storeDoneTasks, "Eat during lunch/dinner hours");
-                                    } else {}
-                                    break;
-                                default: 
-                            }
-                        }
-
-                        $stampReward = RestaurantRewardList::where('restAcc_id', $customerQueue->restAcc_id)->where('id', $stampCard->stampReward_id)->first();
-
-                        switch($stampReward->rewardCode){
-                            case "DSCN": 
-                                $finalReward = "Discount $stampReward->rewardInput% in a Total Bill";
-                                break;
-                            case "FRPE": 
-                                $finalReward = "Free $stampReward->rewardInput person in a group";
-                                break;
-                            case "HLF": 
-                                $finalReward = "Half in the group will be free";
-                                break;
-                            case "ALL": 
-                                $finalReward = "All people in the group will be free";
-                                break;
-                            default: 
-                                $finalReward = "None";
-                        }
-
-                        $finalStampCapac = sizeof($storeDoneTasks);
-                        if(sizeof($storeDoneTasks) >= $stampCard->stampCapacity){
-                            $finalStampCapac = $stampCard->stampCapacity;
-                        }
-
-                        $custStampCardNew = CustomerStampCard::create([
-                            'customer_id' => $customerQueue->customer_id,
-                            'restAcc_id' => $customerQueue->restAcc_id,
-                            'status' => "Incomplete",
-                            'claimed' => "No",
-                            'currentStamp' => $finalStampCapac,
-                            'stampReward' => $finalReward,
-                            'stampValidity' => $stampCard->stampValidity,
-                            'stampCapacity' => $stampCard->stampCapacity,
-                        ]);
-
-                        foreach($storeTasks as $storeTask){
-                            CustomerStampTasks::create([
-                                'customerStampCard_id' => $custStampCardNew->id,
-                                'taskName' => $storeTask,
-                            ]);
-                        }
-
-                        foreach($storeDoneTasks as $storeDoneTask){
-                            CustomerTasksDone::create([
-                                'customer_id' => $customerQueue->customer_id,
-                                'customerStampCard_id' => $custStampCardNew->id,
-                                'taskName' => $storeDoneTask,
-                                'taskAccomplishDate' => $getDateToday,
-                                'booking_id' => $customerQueue->id,
-                                'booking_type' => "queue",
-                            ]);
-                        }
-
-                    }
+                $eatingTime = date("H:i", strtotime($customerQueue->eatingDateTime));
+                $restaurant = RestaurantAccount::where('id', $customerQueue->restAcc_id)->first();
+                //check muna kung may stamp card na inimplement yung restaurant
+                $stampCard = StampCard::where('restAcc_id', $customerQueue->restAcc_id)->latest()->first();
+                if($stampCard != null){
+                    //kung meron icompare yung validity date sa current date, kapag sobra meaning tapos na yon di na valid.
                     
-                    if($customerQueue->rewardClaimed == "Yes"){
-                        CustomerStampCard::where('id', $custStampCard->id)
-                        ->update([
-                            'claimed' => "Yes",
-                        ]);
+                    if($getDateToday <= $stampCard->stampValidity){
+                        //valid pa, so check kung yung validitiy at restaccid is same sa custoemr stamp card
+                        $custStampCard = CustomerStampCard::where('customer_id', $customerQueue->customer_id)
+                        ->where('restAcc_id', $restaurant->id)
+                        ->where('stampValidity', $stampCard->stampValidity)
+                        ->first();
+    
+                        if($customerQueue->rewardClaimed == "Yes"){
+                            CustomerStampCard::where('id', $custStampCard->id)
+                            ->update([
+                                'claimed' => "Yes",
+                            ]);
+                        } else {
+                            // CHECK MUNA KUNG ANO MGA NAGING REWARD
+                            $storeTasks = array();
+                            $storeDoneTasks = array();
+                            if($custStampCard != null){
+                                //then iupdate mag update lang, mag add ng mga tasks done
+                                $stampCardTasks = StampCardTasks::where('stampCards_id', $stampCard->id)->get();
+                                foreach($stampCardTasks as $stampCardTask){
+                                    $task = RestaurantTaskList::where('id', $stampCardTask->restaurantTaskLists_id)->first();
+                                    switch($task->taskCode){
+                                        case "SPND":
+                                            if($customerQueue->totalPrice >= $task->taskInput){
+                                                array_push($storeDoneTasks, "Spend ".$task->taskInput." pesos in 1 visit only");
+                                            }
+                                            break;
+                                        case "BRNG":
+                                            if($customerQueue->numberOfPersons >= $task->taskInput){
+                                                array_push($storeDoneTasks, "Bring ".$task->taskInput." friends in our store");
+                                            }
+                                            break;
+                                        case "ORDR":
+                                            if($addOnQuantity >= $task->taskInput){
+                                                array_push($storeDoneTasks, "Order ".$task->taskInput." add on/s per visit");
+                                            }
+                                            break;
+                                        case "VST":
+                                            array_push($storeDoneTasks, "Visit in our store");
+                                            break;
+                                        case "FDBK":
+                                            array_push($storeTasks, "Give a feedback/review per visit");
+                                            break;
+                                        case "PUGC":
+                                            if($customerQueue->gcashCheckoutReceipt != null){
+                                                array_push($storeDoneTasks, "Pay using gcash");
+                                            }
+                                            break;
+                                        case "LUDN":
+                                            if("11:00" >= $eatingTime && "14:00" <= $eatingTime){
+                                                array_push($storeDoneTasks, "Eat during lunch/dinner hours");
+                                            } else if("17:00" >= $eatingTime && "22:00" <= $eatingTime){
+                                                array_push($storeDoneTasks, "Eat during lunch/dinner hours");
+                                            } else {}
+                                            break;
+                                        default: 
+                                    }
+                                }
+    
+                                $currentStamp = $custStampCard->currentStamp + sizeof($storeDoneTasks);
+                                if($currentStamp >= $stampCard->stampCapacity){
+                                    $stampStatus = "Complete";
+                                    $currentStamp = $stampCard->stampCapacity;
+                                } else {
+                                    $stampStatus = "Incomplete";
+                                }
+    
+                                CustomerStampCard::where('id', $custStampCard->id)
+                                ->update([
+                                    'status' => $stampStatus,
+                                    'claimed' => "No",
+                                    'currentStamp' => $currentStamp,
+                                ]);
+    
+                                foreach($storeDoneTasks as $storeDoneTask){
+                                    CustomerTasksDone::create([
+                                        'customer_id' => $customerQueue->customer_id,
+                                        'customerStampCard_id' => $custStampCard->id,
+                                        'taskName' => $storeDoneTask,
+                                        'taskAccomplishDate' => $getDateToday,
+                                        'booking_id' => $customerQueue->id,
+                                        'booking_type' => "queue",
+                                    ]);
+                                }
+    
+                            } else {
+                                //mag add din pati sa mga tasks
+                                $stampCardTasks = StampCardTasks::where('stampCards_id', $stampCard->id)->get();
+                                foreach($stampCardTasks as $stampCardTask){
+                                    $task = RestaurantTaskList::where('id', $stampCardTask->restaurantTaskLists_id)->first();
+                                    switch($task->taskCode){
+                                        case "SPND":
+                                            array_push($storeTasks, "Spend ".$task->taskInput." pesos in 1 visit only");
+                                            if($customerQueue->totalPrice >= $task->taskInput){
+                                                array_push($storeDoneTasks, "Spend ".$task->taskInput." pesos in 1 visit only");
+                                            }
+                                            break;
+                                        case "BRNG":
+                                            array_push($storeTasks, "Bring ".$task->taskInput." friends in our store");
+                                            if($customerQueue->numberOfPersons >= $task->taskInput){
+                                                array_push($storeDoneTasks, "Bring ".$task->taskInput." friends in our store");
+                                            }
+                                            break;
+                                        case "ORDR":
+                                            array_push($storeTasks, "Order ".$task->taskInput." add on/s per visit");
+                                            if($addOnQuantity >= $task->taskInput){
+                                                array_push($storeDoneTasks, "Order ".$task->taskInput." add on/s per visit");
+                                            }
+                                            break;
+                                        case "VST":
+                                            array_push($storeTasks, "Visit in our store");
+                                            array_push($storeDoneTasks, "Visit in our store");
+                                            break;
+                                        case "FDBK":
+                                            array_push($storeTasks, "Give a feedback/review per visit");
+                                            break;
+                                        case "PUGC":
+                                            array_push($storeTasks, "Pay using gcash");
+                                            if($customerQueue->gcashCheckoutReceipt != null){
+                                                array_push($storeDoneTasks, "Pay using gcash");
+                                            }
+                                            break;
+                                        case "LUDN":
+                                            // dd($time > date("H:i", strtotime("10:00 am")));
+                                            //11:00am - 2:00pm (lunch)
+                                            //5:00pm - 10:00pm (dinner)
+                                            array_push($storeTasks, "Eat during lunch/dinner hours");
+                                            if("11:00" >= $eatingTime && "14:00" <= $eatingTime){
+                                                array_push($storeDoneTasks, "Eat during lunch/dinner hours");
+                                            } else if("17:00" >= $eatingTime && "22:00" <= $eatingTime){
+                                                array_push($storeDoneTasks, "Eat during lunch/dinner hours");
+                                            } else {}
+                                            break;
+                                        default: 
+                                    }
+                                }
+    
+                                $stampReward = RestaurantRewardList::where('restAcc_id', $customerQueue->restAcc_id)->where('id', $stampCard->stampReward_id)->first();
+    
+                                switch($stampReward->rewardCode){
+                                    case "DSCN": 
+                                        $finalReward = "Discount $stampReward->rewardInput% in a Total Bill";
+                                        break;
+                                    case "FRPE": 
+                                        $finalReward = "Free $stampReward->rewardInput person in a group";
+                                        break;
+                                    case "HLF": 
+                                        $finalReward = "Half in the group will be free";
+                                        break;
+                                    case "ALL": 
+                                        $finalReward = "All people in the group will be free";
+                                        break;
+                                    default: 
+                                        $finalReward = "None";
+                                }
+    
+                                $finalStampCapac = sizeof($storeDoneTasks);
+                                if(sizeof($storeDoneTasks) >= $stampCard->stampCapacity){
+                                    $finalStampCapac = $stampCard->stampCapacity;
+                                }
+    
+                                $custStampCardNew = CustomerStampCard::create([
+                                    'customer_id' => $customerQueue->customer_id,
+                                    'restAcc_id' => $customerQueue->restAcc_id,
+                                    'status' => "Incomplete",
+                                    'claimed' => "No",
+                                    'currentStamp' => $finalStampCapac,
+                                    'stampReward' => $finalReward,
+                                    'stampValidity' => $stampCard->stampValidity,
+                                    'stampCapacity' => $stampCard->stampCapacity,
+                                ]);
+    
+                                foreach($storeTasks as $storeTask){
+                                    CustomerStampTasks::create([
+                                        'customerStampCard_id' => $custStampCardNew->id,
+                                        'taskName' => $storeTask,
+                                    ]);
+                                }
+    
+                                foreach($storeDoneTasks as $storeDoneTask){
+                                    CustomerTasksDone::create([
+                                        'customer_id' => $customerQueue->customer_id,
+                                        'customerStampCard_id' => $custStampCardNew->id,
+                                        'taskName' => $storeDoneTask,
+                                        'taskAccomplishDate' => $getDateToday,
+                                        'booking_id' => $customerQueue->id,
+                                        'booking_type' => "queue",
+                                    ]);
+                                }
+                            }
+                        }
                     }
-
                 }
             }
-
-            CustomerOrdering::where('id', $id)->where('status', 'eating')
-            ->update([
-                'status' => "checkout",
-            ]);
-
-            CustomerQueue::where('id', $customerOrdering->custBook_id)->where('status', 'eating')
-            ->update([
-                'status' => "completed",
-                'checkoutStatus' => "customerFeedback",
-                'completeDateTime' => date("Y-m-d H:i:s"),
-            ]);
-
-            $notif = CustomerNotification::create([
-                'customer_id' => $customerQueue->customer_id,
-                'restAcc_id' => $customerQueue->restAcc_id,
-                'notificationType' => "Complete",
-                'notificationTitle' => "Your payment is successful! Thank you for dining! You may give us a rating and share your experience.",
-                'notificationDescription' => "$restaurant->rAddress, $restaurant->rCity",
-                'notificationStatus' => "Unread",
-            ]);
+                CustomerOrdering::where('id', $id)->where('status', 'eating')
+                ->update([
+                    'status' => "checkout",
+                ]);
     
-            $customerAccount = CustomerAccount::where('id', $customerQueue->customer_id)->first();
-            
-            $finalImageUrl = "";
-            if ($restaurant->rLogo == ""){
-                $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
-            } else {
-                $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
-            }
+                CustomerQueue::where('id', $customerOrdering->custBook_id)->where('status', 'eating')
+                ->update([
+                    'status' => "completed",
+                    'checkoutStatus' => "customerFeedback",
+                    'completeDateTime' => date("Y-m-d H:i:s"),
+                ]);
     
-            if($customerAccount != null){
-                $to = $customerAccount->deviceToken;
-                $notification = array(
-                    'title' => "$restaurant->rAddress, $restaurant->rCity",
-                    'body' => "Your payment is successful! Thank you for dining! You may give us a rating and share your experience.",
-                );
-                $data = array(
+            if($customerQueue->customer_id != 0){
+                $notif = CustomerNotification::create([
+                    'customer_id' => $customerQueue->customer_id,
+                    'restAcc_id' => $customerQueue->restAcc_id,
                     'notificationType' => "Complete",
-                    'notificationId' => $notif->id,
-                    'notificationRLogo' => $finalImageUrl,
-                );
-                $this->sendFirebaseNotification($to, $notification, $data);
+                    'notificationTitle' => "Your payment is successful! Thank you for dining! You may give us a rating and share your experience.",
+                    'notificationDescription' => "$restaurant->rAddress, $restaurant->rCity",
+                    'notificationStatus' => "Unread",
+                ]);
+        
+                $customerAccount = CustomerAccount::where('id', $customerQueue->customer_id)->first();
+                
+                $finalImageUrl = "";
+                if ($restaurant->rLogo == ""){
+                    $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+                } else {
+                    $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
+                }
+        
+                if($customerAccount != null){
+                    $to = $customerAccount->deviceToken;
+                    $notification = array(
+                        'title' => "$restaurant->rAddress, $restaurant->rCity",
+                        'body' => "Your payment is successful! Thank you for dining! You may give us a rating and share your experience.",
+                    );
+                    $data = array(
+                        'notificationType' => "Complete",
+                        'notificationId' => $notif->id,
+                        'notificationRLogo' => $finalImageUrl,
+                    );
+                    $this->sendFirebaseNotification($to, $notification, $data);
+                }
             }
-    
             Session::flash('completed');
             return redirect('/restaurant/live-transaction/customer-ordering/list');
 
@@ -2618,262 +2651,262 @@ class RestaurantController extends Controller
         } else {
             //check muna kung clinaime nya
             $customerReserve = CustomerReserve::where('id', $customerOrdering->custBook_id)->where('status', 'eating')->first();
-            
-            $eatingTime = date("H:i", strtotime($customerReserve->eatingDateTime));
-            $restaurant = RestaurantAccount::where('id', $customerReserve->restAcc_id)->first();
-            //check muna kung may stamp card na inimplement yung restaurant
-            $stampCard = StampCard::where('restAcc_id', $customerReserve->restAcc_id)->first();
-            if($stampCard != null){
-                //kung meron icompare yung validity date sa current date, kapag sobra meaning tapos na yon di na valid.
-                if($getDateToday <= $stampCard->stampValidity){
-                    //valid pa, so check kung yung validitiy at restaccid is same sa custoemr stamp card
-                    $custStampCard = CustomerStampCard::where('customer_id', $customerReserve->customer_id)
-                    ->where('restAcc_id', $restaurant->id)
-                    ->where('stampValidity', $stampCard->stampValidity)
-                    ->first();
 
-                    // CHECK MUNA KUNG ANO MGA NAGING REWARD
-                    $storeTasks = array();
-                    $storeDoneTasks = array();
-                    if($custStampCard != null){
-                        //then iupdate mag update lang, mag add ng mga tasks done
-                        $stampCardTasks = StampCardTasks::where('stampCards_id', $stampCard->id)->get();
-                        foreach($stampCardTasks as $stampCardTask){
-                            $task = RestaurantTaskList::where('id', $stampCardTask->restaurantTaskLists_id)->first();
-                            switch($task->taskCode){
-                                case "SPND":
-                                    if($customerReserve->totalPrice >= $task->taskInput){
-                                        array_push($storeDoneTasks, "Spend ".$task->taskInput." pesos in 1 visit only");
-                                    }
-                                    break;
-                                case "BRNG":
-                                    if($customerReserve->numberOfPersons >= $task->taskInput){
-                                        array_push($storeDoneTasks, "Bring ".$task->taskInput." friends in our store");
-                                    }
-                                    break;
-                                case "ORDR":
-                                    if($addOnQuantity >= $task->taskInput){
-                                        array_push($storeDoneTasks, "Order ".$task->taskInput." add on/s per visit");
-                                    }
-                                    break;
-                                case "VST":
-                                    array_push($storeDoneTasks, "Visit in our store");
-                                    break;
-                                case "FDBK":
-                                    array_push($storeTasks, "Give a feedback/review per visit");
-                                    break;
-                                case "PUGC":
-                                    if($customerReserve->gcashCheckoutReceipt != null){
-                                        array_push($storeDoneTasks, "Pay using gcash");
-                                    }
-                                    break;
-                                case "LUDN":
-                                    if("11:00" >= $eatingTime && "14:00" <= $eatingTime){
-                                        array_push($storeDoneTasks, "Eat during lunch/dinner hours");
-                                    } else if("17:00" >= $eatingTime && "22:00" <= $eatingTime){
-                                        array_push($storeDoneTasks, "Eat during lunch/dinner hours");
-                                    } else {}
-                                    break;
-                                default: 
-                            }
-                        }
-
-                        $currentStamp = $custStampCard->currentStamp + sizeof($storeDoneTasks);
-                        if($currentStamp >= $stampCard->stampCapacity){
-                            $stampStatus = "Complete";
-                            $currentStamp = $stampCard->stampCapacity;
+            if($customerReserve->customer_id != 0){
+                $eatingTime = date("H:i", strtotime($customerReserve->eatingDateTime));
+                $restaurant = RestaurantAccount::where('id', $customerReserve->restAcc_id)->first();
+                //check muna kung may stamp card na inimplement yung restaurant
+                $stampCard = StampCard::where('restAcc_id', $customerReserve->restAcc_id)->first();
+                if($stampCard != null){
+                    //kung meron icompare yung validity date sa current date, kapag sobra meaning tapos na yon di na valid.
+                    if($getDateToday <= $stampCard->stampValidity){
+                        //valid pa, so check kung yung validitiy at restaccid is same sa custoemr stamp card
+                        $custStampCard = CustomerStampCard::where('customer_id', $customerReserve->customer_id)
+                        ->where('restAcc_id', $restaurant->id)
+                        ->where('stampValidity', $stampCard->stampValidity)
+                        ->first();
+    
+                        if($customerReserve->rewardClaimed == "Yes"){
+                            CustomerStampCard::where('id', $custStampCard->id)
+                            ->update([
+                                'claimed' => "Yes",
+                            ]);
                         } else {
-                            $stampStatus = "Incomplete";
-                        }
-
-                        CustomerStampCard::where('id', $custStampCard->id)
-                        ->update([
-                            'status' => $stampStatus,
-                            'claimed' => "No",
-                            'currentStamp' => $currentStamp,
-                        ]);
-
-                        foreach($storeDoneTasks as $storeDoneTask){
-                            CustomerTasksDone::create([
-                                'customer_id' => $customerReserve->customer_id,
-                                'customerStampCard_id' => $custStampCard->id,
-                                'taskName' => $storeDoneTask,
-                                'taskAccomplishDate' => $getDateToday,
-                                'booking_id' => $customerReserve->id,
-                                'booking_type' => "reserve",
-                            ]);
-                        }
-
-                    } else {
-                        //mag add din pati sa mga tasks
-                        $stampCardTasks = StampCardTasks::where('stampCards_id', $stampCard->id)->get();
-                        foreach($stampCardTasks as $stampCardTask){
-                            $task = RestaurantTaskList::where('id', $stampCardTask->restaurantTaskLists_id)->first();
-                            switch($task->taskCode){
-                                case "SPND":
-                                    array_push($storeTasks, "Spend ".$task->taskInput." pesos in 1 visit only");
-                                    if($customerReserve->totalPrice >= $task->taskInput){
-                                        array_push($storeDoneTasks, "Spend ".$task->taskInput." pesos in 1 visit only");
+                            // CHECK MUNA KUNG ANO MGA NAGING REWARD
+                            $storeTasks = array();
+                            $storeDoneTasks = array();
+                            if($custStampCard != null){
+                                //then iupdate mag update lang, mag add ng mga tasks done
+                                $stampCardTasks = StampCardTasks::where('stampCards_id', $stampCard->id)->get();
+                                foreach($stampCardTasks as $stampCardTask){
+                                    $task = RestaurantTaskList::where('id', $stampCardTask->restaurantTaskLists_id)->first();
+                                    switch($task->taskCode){
+                                        case "SPND":
+                                            if($customerReserve->totalPrice >= $task->taskInput){
+                                                array_push($storeDoneTasks, "Spend ".$task->taskInput." pesos in 1 visit only");
+                                            }
+                                            break;
+                                        case "BRNG":
+                                            if($customerReserve->numberOfPersons >= $task->taskInput){
+                                                array_push($storeDoneTasks, "Bring ".$task->taskInput." friends in our store");
+                                            }
+                                            break;
+                                        case "ORDR":
+                                            if($addOnQuantity >= $task->taskInput){
+                                                array_push($storeDoneTasks, "Order ".$task->taskInput." add on/s per visit");
+                                            }
+                                            break;
+                                        case "VST":
+                                            array_push($storeDoneTasks, "Visit in our store");
+                                            break;
+                                        case "FDBK":
+                                            array_push($storeTasks, "Give a feedback/review per visit");
+                                            break;
+                                        case "PUGC":
+                                            if($customerReserve->gcashCheckoutReceipt != null){
+                                                array_push($storeDoneTasks, "Pay using gcash");
+                                            }
+                                            break;
+                                        case "LUDN":
+                                            if("11:00" >= $eatingTime && "14:00" <= $eatingTime){
+                                                array_push($storeDoneTasks, "Eat during lunch/dinner hours");
+                                            } else if("17:00" >= $eatingTime && "22:00" <= $eatingTime){
+                                                array_push($storeDoneTasks, "Eat during lunch/dinner hours");
+                                            } else {}
+                                            break;
+                                        default: 
                                     }
-                                    break;
-                                case "BRNG":
-                                    array_push($storeTasks, "Bring ".$task->taskInput." friends in our store");
-                                    if($customerReserve->numberOfPersons >= $task->taskInput){
-                                        array_push($storeDoneTasks, "Bring ".$task->taskInput." friends in our store");
+                                }
+    
+                                $currentStamp = $custStampCard->currentStamp + sizeof($storeDoneTasks);
+                                if($currentStamp >= $stampCard->stampCapacity){
+                                    $stampStatus = "Complete";
+                                    $currentStamp = $stampCard->stampCapacity;
+                                } else {
+                                    $stampStatus = "Incomplete";
+                                }
+    
+                                CustomerStampCard::where('id', $custStampCard->id)
+                                ->update([
+                                    'status' => $stampStatus,
+                                    'claimed' => "No",
+                                    'currentStamp' => $currentStamp,
+                                ]);
+    
+                                foreach($storeDoneTasks as $storeDoneTask){
+                                    CustomerTasksDone::create([
+                                        'customer_id' => $customerReserve->customer_id,
+                                        'customerStampCard_id' => $custStampCard->id,
+                                        'taskName' => $storeDoneTask,
+                                        'taskAccomplishDate' => $getDateToday,
+                                        'booking_id' => $customerReserve->id,
+                                        'booking_type' => "reserve",
+                                    ]);
+                                }
+    
+                            } else {
+                                //mag add din pati sa mga tasks
+                                $stampCardTasks = StampCardTasks::where('stampCards_id', $stampCard->id)->get();
+                                foreach($stampCardTasks as $stampCardTask){
+                                    $task = RestaurantTaskList::where('id', $stampCardTask->restaurantTaskLists_id)->first();
+                                    switch($task->taskCode){
+                                        case "SPND":
+                                            array_push($storeTasks, "Spend ".$task->taskInput." pesos in 1 visit only");
+                                            if($customerReserve->totalPrice >= $task->taskInput){
+                                                array_push($storeDoneTasks, "Spend ".$task->taskInput." pesos in 1 visit only");
+                                            }
+                                            break;
+                                        case "BRNG":
+                                            array_push($storeTasks, "Bring ".$task->taskInput." friends in our store");
+                                            if($customerReserve->numberOfPersons >= $task->taskInput){
+                                                array_push($storeDoneTasks, "Bring ".$task->taskInput." friends in our store");
+                                            }
+                                            break;
+                                        case "ORDR":
+                                            array_push($storeTasks, "Order ".$task->taskInput." add on/s per visit");
+                                            if($addOnQuantity >= $task->taskInput){
+                                                array_push($storeDoneTasks, "Order ".$task->taskInput." add on/s per visit");
+                                            }
+                                            break;
+                                        case "VST":
+                                            array_push($storeTasks, "Visit in our store");
+                                            array_push($storeDoneTasks, "Visit in our store");
+                                            break;
+                                        case "FDBK":
+                                            array_push($storeTasks, "Give a feedback/review per visit");
+                                            break;
+                                        case "PUGC":
+                                            array_push($storeTasks, "Pay using gcash");
+                                            if($customerReserve->gcashCheckoutReceipt != null){
+                                                array_push($storeDoneTasks, "Pay using gcash");
+                                            }
+                                            break;
+                                        case "LUDN":
+                                            // dd($time > date("H:i", strtotime("10:00 am")));
+                                            //11:00am - 2:00pm (lunch)
+                                            //5:00pm - 10:00pm (dinner)
+                                            array_push($storeTasks, "Eat during lunch/dinner hours");
+                                            if("11:00" >= $eatingTime && "14:00" <= $eatingTime){
+                                                array_push($storeDoneTasks, "Eat during lunch/dinner hours");
+                                            } else if("17:00" >= $eatingTime && "22:00" <= $eatingTime){
+                                                array_push($storeDoneTasks, "Eat during lunch/dinner hours");
+                                            } else {}
+                                            break;
+                                        default: 
                                     }
-                                    break;
-                                case "ORDR":
-                                    array_push($storeTasks, "Order ".$task->taskInput." add on/s per visit");
-                                    if($addOnQuantity >= $task->taskInput){
-                                        array_push($storeDoneTasks, "Order ".$task->taskInput." add on/s per visit");
-                                    }
-                                    break;
-                                case "VST":
-                                    array_push($storeTasks, "Visit in our store");
-                                    array_push($storeDoneTasks, "Visit in our store");
-                                    break;
-                                case "FDBK":
-                                    array_push($storeTasks, "Give a feedback/review per visit");
-                                    break;
-                                case "PUGC":
-                                    array_push($storeTasks, "Pay using gcash");
-                                    if($customerReserve->gcashCheckoutReceipt != null){
-                                        array_push($storeDoneTasks, "Pay using gcash");
-                                    }
-                                    break;
-                                case "LUDN":
-                                    // dd($time > date("H:i", strtotime("10:00 am")));
-                                    //11:00am - 2:00pm (lunch)
-                                    //5:00pm - 10:00pm (dinner)
-                                    array_push($storeTasks, "Eat during lunch/dinner hours");
-                                    if("11:00" >= $eatingTime && "14:00" <= $eatingTime){
-                                        array_push($storeDoneTasks, "Eat during lunch/dinner hours");
-                                    } else if("17:00" >= $eatingTime && "22:00" <= $eatingTime){
-                                        array_push($storeDoneTasks, "Eat during lunch/dinner hours");
-                                    } else {}
-                                    break;
-                                default: 
+                                }
+    
+                                $stampReward = RestaurantRewardList::where('restAcc_id', $customerReserve->restAcc_id)->where('id', $stampCard->stampReward_id)->first();
+    
+                                switch($stampReward->rewardCode){
+                                    case "DSCN": 
+                                        $finalReward = "Discount $stampReward->rewardInput% in a Total Bill";
+                                        break;
+                                    case "FRPE": 
+                                        $finalReward = "Free $stampReward->rewardInput person in a group";
+                                        break;
+                                    case "HLF": 
+                                        $finalReward = "Half in the group will be free";
+                                        break;
+                                    case "ALL": 
+                                        $finalReward = "All people in the group will be free";
+                                        break;
+                                    default: 
+                                        $finalReward = "None";
+                                }
+    
+                                $finalStampCapac = sizeof($storeDoneTasks);
+                                if(sizeof($storeDoneTasks) >= $stampCard->stampCapacity){
+                                    $finalStampCapac = $stampCard->stampCapacity;
+                                }
+    
+                                $custStampCardNew = CustomerStampCard::create([
+                                    'customer_id' => $customerReserve->customer_id,
+                                    'restAcc_id' => $customerReserve->restAcc_id,
+                                    'status' => "Incomplete",
+                                    'claimed' => "No",
+                                    'currentStamp' => $finalStampCapac,
+                                    'stampReward' => $finalReward,
+                                    'stampValidity' => $stampCard->stampValidity,
+                                    'stampCapacity' => $stampCard->stampCapacity,
+                                ]);
+    
+                                foreach($storeTasks as $storeTask){
+                                    CustomerStampTasks::create([
+                                        'customerStampCard_id' => $custStampCardNew->id,
+                                        'taskName' => $storeTask,
+                                    ]);
+                                }
+    
+                                foreach($storeDoneTasks as $storeDoneTask){
+                                    CustomerTasksDone::create([
+                                        'customer_id' => $customerReserve->customer_id,
+                                        'customerStampCard_id' => $custStampCardNew->id,
+                                        'taskName' => $storeDoneTask,
+                                        'taskAccomplishDate' => $getDateToday,
+                                        'booking_id' => $customerReserve->id,
+                                        'booking_type' => "reserve",
+                                    ]);
+                                }
+    
                             }
                         }
-
-                        $stampReward = RestaurantRewardList::where('restAcc_id', $customerReserve->restAcc_id)->where('id', $stampCard->stampReward_id)->first();
-
-                        switch($stampReward->rewardCode){
-                            case "DSCN": 
-                                $finalReward = "Discount $stampReward->rewardInput% in a Total Bill";
-                                break;
-                            case "FRPE": 
-                                $finalReward = "Free $stampReward->rewardInput person in a group";
-                                break;
-                            case "HLF": 
-                                $finalReward = "Half in the group will be free";
-                                break;
-                            case "ALL": 
-                                $finalReward = "All people in the group will be free";
-                                break;
-                            default: 
-                                $finalReward = "None";
-                        }
-
-                        $finalStampCapac = sizeof($storeDoneTasks);
-                        if(sizeof($storeDoneTasks) >= $stampCard->stampCapacity){
-                            $finalStampCapac = $stampCard->stampCapacity;
-                        }
-
-                        $custStampCardNew = CustomerStampCard::create([
-                            'customer_id' => $customerReserve->customer_id,
-                            'restAcc_id' => $customerReserve->restAcc_id,
-                            'status' => "Incomplete",
-                            'claimed' => "No",
-                            'currentStamp' => $finalStampCapac,
-                            'stampReward' => $finalReward,
-                            'stampValidity' => $stampCard->stampValidity,
-                            'stampCapacity' => $stampCard->stampCapacity,
-                        ]);
-
-                        foreach($storeTasks as $storeTask){
-                            CustomerStampTasks::create([
-                                'customerStampCard_id' => $custStampCardNew->id,
-                                'taskName' => $storeTask,
-                            ]);
-                        }
-
-                        foreach($storeDoneTasks as $storeDoneTask){
-                            CustomerTasksDone::create([
-                                'customer_id' => $customerReserve->customer_id,
-                                'customerStampCard_id' => $custStampCardNew->id,
-                                'taskName' => $storeDoneTask,
-                                'taskAccomplishDate' => $getDateToday,
-                                'booking_id' => $customerReserve->id,
-                                'booking_type' => "reserve",
-                            ]);
-                        }
-
                     }
-                    
-                    if($customerReserve->rewardClaimed == "Yes"){
-                        CustomerStampCard::where('id', $custStampCard->id)
-                        ->update([
-                            'claimed' => "Yes",
-                        ]);
-                    }
-
                 }
-
             }
-
-            CustomerOrdering::where('id', $id)->where('status', 'eating')
-            ->update([
-                'status' => "checkout",
-            ]);
-
-            CustomerReserve::where('id', $customerOrdering->custBook_id)->where('status', 'eating')
-            ->update([
-                'status' => "completed",
-                'checkoutStatus' => "customerFeedback",
-                'completeDateTime' => date("Y-m-d H:i:s"),
-            ]);
-
-            $notif = CustomerNotification::create([
-                'customer_id' => $customerReserve->customer_id,
-                'restAcc_id' => $customerReserve->restAcc_id,
-                'notificationType' => "Complete",
-                'notificationTitle' => "Your payment is successful! Thank you for dining! You may give us a rating and share your experience.",
-                'notificationDescription' => "$restaurant->rAddress, $restaurant->rCity",
-                'notificationStatus' => "Unread",
-            ]);
     
-            $customerAccount = CustomerAccount::where('id', $customerReserve->customer_id)->first();
+                CustomerOrdering::where('id', $id)->where('status', 'eating')
+                ->update([
+                    'status' => "checkout",
+                ]);
+    
+                CustomerReserve::where('id', $customerOrdering->custBook_id)->where('status', 'eating')
+                ->update([
+                    'status' => "completed",
+                    'checkoutStatus' => "customerFeedback",
+                    'completeDateTime' => date("Y-m-d H:i:s"),
+                ]);
+                
+                if($customerReserve->customer_id != 0){
+                    $notif = CustomerNotification::create([
+                        'customer_id' => $customerReserve->customer_id,
+                        'restAcc_id' => $customerReserve->restAcc_id,
+                        'notificationType' => "Complete",
+                        'notificationTitle' => "Your payment is successful! Thank you for dining! You may give us a rating and share your experience.",
+                        'notificationDescription' => "$restaurant->rAddress, $restaurant->rCity",
+                        'notificationStatus' => "Unread",
+                    ]);
             
-            $finalImageUrl = "";
-            if ($restaurant->rLogo == ""){
-                $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
-            } else {
-                $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
-            }
-    
-            if($customerAccount != null){
-                $to = $customerAccount->deviceToken;
-                $notification = array(
-                    'title' => "$restaurant->rAddress, $restaurant->rCity",
-                    'body' => "Your payment is successful! Thank you for dining! You may give us a rating and share your experience.",
-                );
-                $data = array(
-                    'notificationType' => "Complete",
-                    'notificationId' => $notif->id,
-                    'notificationRLogo' => $finalImageUrl,
-                );
-                $this->sendFirebaseNotification($to, $notification, $data);
-            }
-    
+                    $customerAccount = CustomerAccount::where('id', $customerReserve->customer_id)->first();
+                    
+                    $finalImageUrl = "";
+                    if ($restaurant->rLogo == ""){
+                        $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+                    } else {
+                        $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
+                    }
+            
+                    if($customerAccount != null){
+                        $to = $customerAccount->deviceToken;
+                        $notification = array(
+                            'title' => "$restaurant->rAddress, $restaurant->rCity",
+                            'body' => "Your payment is successful! Thank you for dining! You may give us a rating and share your experience.",
+                        );
+                        $data = array(
+                            'notificationType' => "Complete",
+                            'notificationId' => $notif->id,
+                            'notificationRLogo' => $finalImageUrl,
+                        );
+                        $this->sendFirebaseNotification($to, $notification, $data);
+                    }
+                }
             Session::flash('completed');
             return redirect('/restaurant/live-transaction/customer-ordering/list');
-
-
         }
     }
     public function ltCustOrderOSRunaway($id){
         $getDateToday = date("Y-m-d");
+        $getDateTimeToday = date('Y-m-d H:i:s');
         $customerOrdering = CustomerOrdering::where('id', $id)->where('status', 'eating')->first();
 
         if($customerOrdering->custBookType == "queue"){
@@ -2892,38 +2925,198 @@ class RestaurantController extends Controller
                 'runawayDateTime' => date("Y-m-d H:i:s"),
             ]);
 
-            $notif = CustomerNotification::create([
-                'customer_id' => $customerQueue->customer_id,
-                'restAcc_id' => $customerQueue->restAcc_id,
-                'notificationType' => "Runaway",
-                'notificationTitle' => "You have left without Paying",
-                'notificationDescription' => "$restaurant->rAddress, $restaurant->rCity",
-                'notificationStatus' => "Unread",
-            ]);
-            
-            $customerAccount = CustomerAccount::where('id', $customerQueue->customer_id)->first();
+            if($customerQueue->customer_id != 0){
+                // CHECK IF THERES LATEST CANCEL OFFENSE
+                $mainOffense = CustOffenseMain::where('customer_id', $customerQueue->customer_id)
+                ->where('restAcc_id', $restaurant->id)
+                ->where('offenseType', "runaway")
+                ->latest()
+                ->first();
 
-            $finalImageUrl = "";
-            if ($restaurant->rLogo == ""){
-                $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
-            } else {
-                $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
-            }
+                $restOffense = Cancellation::where('restAcc_id', $restaurant->id)->first();
+                $custMainOffenseId = "";
 
-            if($customerAccount != null){
-                $to = $customerAccount->deviceToken;
-                $notification = array(
-                    'title' => "$restaurant->rAddress, $restaurant->rCity",
-                    'body' => "You have left without Paying!",
-                );
-                $data = array(
+                if($restOffense->blockDays != 0){
+                    //check muna kung nag apply yuing restaurant ng offense
+                    if($mainOffense != null){
+                        //kapag may exisint offense yung customer
+                        if($mainOffense->offenseValidity != null){
+                            //kapag hindi null meaning nakablock na sya sa part na yon so dapat icompare naten yung dates kung tapos na ba, kung hindi pa then walang mangyayari kung tapos na then block natin ule
+                            if(strtotime($mainOffense->offenseValidity) < strtotime($getDateTimeToday)){
+                                // meanning nag lift na yung ban kaso check muna kung permanent ba or hindi kase kung permanent yan ibigsabihin wala na yan di na magdadagdag pero kung hindi edi mag dagdagtayo
+                                if($mainOffense->offenseDaysBlock != "Permanent"){
+                                    //so hindi sya permanent block, so pwede pa natin ule sya mablock
+                                    if($restOffense->noOfCancellation == 1){
+                                        //check kung isa lang ininput, kase kung isa lang matik maboblock agad
+                                        if($restOffense->blockDays == "Permanent"){
+                                            //check kung permanent, kase yung ngayon date ang ilalagay
+                                            $createMainOffense = CustOffenseMain::create([
+                                                'customer_id' => $customerQueue->customer_id,
+                                                'restAcc_id' => $restaurant->id,
+                                                'offenseType' => "runaway",
+                                                'totalOffense' => 1,
+                                                'offenseCapacity' => $restOffense->noOfCancellation,
+                                                'offenseDaysBlock' => $restOffense->blockDays,
+                                                'offenseValidity' => $getDateTimeToday,
+                                            ]);
+                                            $custMainOffenseId = $createMainOffense->id;
+                                        } else {
+                                            //check kung hindi permanent kase bibilangin yung kung ilang days ang ban tas iseset yung date na yon sa offensevalidity
+                                            for($i=1; $i<=$restOffense->blockDays; $i++){
+                                                $finalOffenseValidity = date('Y-m-d H:i:s', strtotime($getDateTimeToday. ' + 1 days'));
+                                                $getDateTimeToday = $finalOffenseValidity;
+                                            }
+                                            $createMainOffense = CustOffenseMain::create([
+                                                'customer_id' => $customerQueue->customer_id,
+                                                'restAcc_id' => $restaurant->id,
+                                                'offenseType' => "runaway",
+                                                'totalOffense' => 1,
+                                                'offenseCapacity' => $restOffense->noOfCancellation,
+                                                'offenseDaysBlock' => $restOffense->blockDays,
+                                                'offenseValidity' => $finalOffenseValidity,
+                                            ]);
+                                            $custMainOffenseId = $createMainOffense->id;
+                                        }
+                                    } else {
+                                        //kung yung noOfcanccellation ay lagpas sa isa then create na tayo tas di pa to block
+                                        $createMainOffense = CustOffenseMain::create([
+                                            'customer_id' => $customerQueue->customer_id,
+                                            'restAcc_id' => $restaurant->id,
+                                            'offenseType' => "runaway",
+                                            'totalOffense' => 1,
+                                            'offenseCapacity' => $restOffense->noOfCancellation,
+                                            'offenseDaysBlock' => $restOffense->blockDays,
+                                        ]);
+                                        $custMainOffenseId = $createMainOffense->id;
+                                    }
+                                } 
+                            } 
+                        } else {
+                            // null sya so meaning di pa sya na bablock
+                            if(($mainOffense->totalOffense + 1) == $mainOffense->offenseCapacity) {
+                                // dito naman syempre mag iinsert tayo ng isa, kapag nag insert tayo ng isa tas nag equal sa capacity ma bablock yon
+                                if($mainOffense->offenseDaysBlock == "Permanent"){
+                                    //so kapag permanent yung pagkablock nya ganito mangyayari
+                                    CustOffenseMain::where('id', $mainOffense->id)
+                                    ->update([
+                                        'totalOffense' => $mainOffense->totalOffense + 1,
+                                        'offenseValidity' => $getDateTimeToday,
+                                    ]);
+                                    $custMainOffenseId = $mainOffense->id;
+                                } else {
+                                    //kung hindi permanent yung pagkablock gawin naten yung pag add ng offenseValidity
+                                    for($i=1; $i<=$mainOffense->offenseDaysBlock; $i++){
+                                        $finalOffenseValidity = date('Y-m-d H:i:s', strtotime($getDateTimeToday. ' + 1 days'));
+                                        $getDateTimeToday = $finalOffenseValidity;
+                                    }
+                                    CustOffenseMain::where('id', $mainOffense->id)
+                                    ->update([
+                                        'totalOffense' => $mainOffense->totalOffense + 1,
+                                        'offenseValidity' => $finalOffenseValidity,
+                                    ]);
+                                    $custMainOffenseId = $mainOffense->id;
+                                }
+                            } else {
+                                //walang block na mangyayari, update lang
+                                CustOffenseMain::where('id', $mainOffense->id)
+                                ->update([
+                                    'totalOffense' => $mainOffense->totalOffense + 1,
+                                ]);
+                                $custMainOffenseId = $mainOffense->id;
+                            }
+                        }
+                    } else {
+                        //so wala pang offense totally like first time neto, lalagyan naten ng offense
+                        if($restOffense->noOfCancellation == 1){
+                            //check kung isa lang ininput, kase kung isa lang matik maboblock agad
+                            if($restOffense->blockDays == "Permanent"){
+                                //check kung permanent, kase yung ngayon date ang ilalagay
+                                $createMainOffense = CustOffenseMain::create([
+                                    'customer_id' => $customerQueue->customer_id,
+                                    'restAcc_id' => $restaurant->id,
+                                    'offenseType' => "runaway",
+                                    'totalOffense' => 1,
+                                    'offenseCapacity' => $restOffense->noOfCancellation,
+                                    'offenseDaysBlock' => $restOffense->blockDays,
+                                    'offenseValidity' => $getDateTimeToday,
+                                ]);
+                                $custMainOffenseId = $createMainOffense->id;
+                            } else {
+                                //check kung hindi permanent kase bibilangin yung kung ilang days ang ban tas iseset yung date na yon sa offensevalidity
+                                for($i=1; $i<=$restOffense->blockDays; $i++){
+                                    $finalOffenseValidity = date('Y-m-d H:i:s', strtotime($getDateTimeToday. ' + 1 days'));
+                                    $getDateTimeToday = $finalOffenseValidity;
+                                }
+                                $createMainOffense = CustOffenseMain::create([
+                                    'customer_id' => $customerQueue->customer_id,
+                                    'restAcc_id' => $restaurant->id,
+                                    'offenseType' => "runaway",
+                                    'totalOffense' => 1,
+                                    'offenseCapacity' => $restOffense->noOfCancellation,
+                                    'offenseDaysBlock' => $restOffense->blockDays,
+                                    'offenseValidity' => $finalOffenseValidity,
+                                ]);
+                                $custMainOffenseId = $createMainOffense->id;
+                            }
+                        } else {
+                            //kung yung noOfcanccellation ay lagpas sa isa then create na tayo tas di pa to block
+                            $createMainOffense = CustOffenseMain::create([
+                                'customer_id' => $customerQueue->customer_id,
+                                'restAcc_id' => $restaurant->id,
+                                'offenseType' => "runaway",
+                                'totalOffense' => 1,
+                                'offenseCapacity' => $restOffense->noOfCancellation,
+                                'offenseDaysBlock' => $restOffense->blockDays,
+                            ]);
+                            $custMainOffenseId = $createMainOffense->id;
+                        }
+                    }
+                    //lastly add naten to sa database
+                    if($custMainOffenseId != ""){
+                        CustOffenseEach::create([
+                            'custOffMain_id' => $custMainOffenseId,
+                            'customer_id' => $customerQueue->customer_id,
+                            'restAcc_id' => $restaurant->id,
+                            'book_id' => $customerQueue->id,
+                            'book_type' => "queue",
+                            'offenseType' => "runaway",
+                        ]);
+                    }
+                }
+
+
+                $notif = CustomerNotification::create([
+                    'customer_id' => $customerQueue->customer_id,
+                    'restAcc_id' => $customerQueue->restAcc_id,
                     'notificationType' => "Runaway",
-                    'notificationId' => $notif->id,
-                    'notificationRLogo' => $finalImageUrl,
-                );
-                $this->sendFirebaseNotification($to, $notification, $data);
-            }
+                    'notificationTitle' => "You have left without Paying",
+                    'notificationDescription' => "$restaurant->rAddress, $restaurant->rCity",
+                    'notificationStatus' => "Unread",
+                ]);
+                
+                $customerAccount = CustomerAccount::where('id', $customerQueue->customer_id)->first();
 
+                $finalImageUrl = "";
+                if ($restaurant->rLogo == ""){
+                    $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+                } else {
+                    $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
+                }
+
+                if($customerAccount != null){
+                    $to = $customerAccount->deviceToken;
+                    $notification = array(
+                        'title' => "$restaurant->rAddress, $restaurant->rCity",
+                        'body' => "You have left without Paying!",
+                    );
+                    $data = array(
+                        'notificationType' => "Runaway",
+                        'notificationId' => $notif->id,
+                        'notificationRLogo' => $finalImageUrl,
+                    );
+                    $this->sendFirebaseNotification($to, $notification, $data);
+                }
+            }
             Session::flash('runaway');
             return redirect('/restaurant/live-transaction/customer-ordering/list');
         } else {
@@ -2941,36 +3134,197 @@ class RestaurantController extends Controller
                 'runawayDateTime' => date("Y-m-d H:i:s"),
             ]);
 
-            $notif = CustomerNotification::create([
-                'customer_id' => $customerReserve->customer_id,
-                'restAcc_id' => $customerReserve->restAcc_id,
-                'notificationType' => "Runaway",
-                'notificationTitle' => "You have left without Paying",
-                'notificationDescription' => "$restaurant->rAddress, $restaurant->rCity",
-                'notificationStatus' => "Unread",
-            ]);
-            
-            $customerAccount = CustomerAccount::where('id', $customerReserve->customer_id)->first();
+            if($customerReserve->customer_id != 0){
+                // CHECK IF THERES LATEST CANCEL OFFENSE
+                $mainOffense = CustOffenseMain::where('customer_id', $customerReserve->customer_id)
+                ->where('restAcc_id', $restaurant->id)
+                ->where('offenseType', "runaway")
+                ->latest()
+                ->first();
 
-            $finalImageUrl = "";
-            if ($restaurant->rLogo == ""){
-                $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
-            } else {
-                $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
-            }
+                $restOffense = Cancellation::where('restAcc_id', $restaurant->id)->first();
+                $custMainOffenseId = "";
 
-            if($customerAccount != null){
-                $to = $customerAccount->deviceToken;
-                $notification = array(
-                    'title' => "$restaurant->rAddress, $restaurant->rCity",
-                    'body' => "You have left without Paying!",
-                );
-                $data = array(
+                if($restOffense->blockDays != 0){
+                    //check muna kung nag apply yuing restaurant ng offense
+                    if($mainOffense != null){
+                        //kapag may exisint offense yung customer
+                        if($mainOffense->offenseValidity != null){
+                            //kapag hindi null meaning nakablock na sya sa part na yon so dapat icompare naten yung dates kung tapos na ba, kung hindi pa then walang mangyayari kung tapos na then block natin ule
+                            if(strtotime($mainOffense->offenseValidity) < strtotime($getDateTimeToday)){
+                                // meanning nag lift na yung ban kaso check muna kung permanent ba or hindi kase kung permanent yan ibigsabihin wala na yan di na magdadagdag pero kung hindi edi mag dagdagtayo
+                                if($mainOffense->offenseDaysBlock != "Permanent"){
+                                    //so hindi sya permanent block, so pwede pa natin ule sya mablock
+                                    if($restOffense->noOfCancellation == 1){
+                                        //check kung isa lang ininput, kase kung isa lang matik maboblock agad
+                                        if($restOffense->blockDays == "Permanent"){
+                                            //check kung permanent, kase yung ngayon date ang ilalagay
+                                            $createMainOffense = CustOffenseMain::create([
+                                                'customer_id' => $customerReserve->customer_id,
+                                                'restAcc_id' => $restaurant->id,
+                                                'offenseType' => "runaway",
+                                                'totalOffense' => 1,
+                                                'offenseCapacity' => $restOffense->noOfCancellation,
+                                                'offenseDaysBlock' => $restOffense->blockDays,
+                                                'offenseValidity' => $getDateTimeToday,
+                                            ]);
+                                            $custMainOffenseId = $createMainOffense->id;
+                                        } else {
+                                            //check kung hindi permanent kase bibilangin yung kung ilang days ang ban tas iseset yung date na yon sa offensevalidity
+                                            for($i=1; $i<=$restOffense->blockDays; $i++){
+                                                $finalOffenseValidity = date('Y-m-d H:i:s', strtotime($getDateTimeToday. ' + 1 days'));
+                                                $getDateTimeToday = $finalOffenseValidity;
+                                            }
+                                            $createMainOffense = CustOffenseMain::create([
+                                                'customer_id' => $customerReserve->customer_id,
+                                                'restAcc_id' => $restaurant->id,
+                                                'offenseType' => "runaway",
+                                                'totalOffense' => 1,
+                                                'offenseCapacity' => $restOffense->noOfCancellation,
+                                                'offenseDaysBlock' => $restOffense->blockDays,
+                                                'offenseValidity' => $finalOffenseValidity,
+                                            ]);
+                                            $custMainOffenseId = $createMainOffense->id;
+                                        }
+                                    } else {
+                                        //kung yung noOfcanccellation ay lagpas sa isa then create na tayo tas di pa to block
+                                        $createMainOffense = CustOffenseMain::create([
+                                            'customer_id' => $customerReserve->customer_id,
+                                            'restAcc_id' => $restaurant->id,
+                                            'offenseType' => "runaway",
+                                            'totalOffense' => 1,
+                                            'offenseCapacity' => $restOffense->noOfCancellation,
+                                            'offenseDaysBlock' => $restOffense->blockDays,
+                                        ]);
+                                        $custMainOffenseId = $createMainOffense->id;
+                                    }
+                                } 
+                            } 
+                        } else {
+                            // null sya so meaning di pa sya na bablock
+                            if(($mainOffense->totalOffense + 1) == $mainOffense->offenseCapacity) {
+                                // dito naman syempre mag iinsert tayo ng isa, kapag nag insert tayo ng isa tas nag equal sa capacity ma bablock yon
+                                if($mainOffense->offenseDaysBlock == "Permanent"){
+                                    //so kapag permanent yung pagkablock nya ganito mangyayari
+                                    CustOffenseMain::where('id', $mainOffense->id)
+                                    ->update([
+                                        'totalOffense' => $mainOffense->totalOffense + 1,
+                                        'offenseValidity' => $getDateTimeToday,
+                                    ]);
+                                    $custMainOffenseId = $mainOffense->id;
+                                } else {
+                                    //kung hindi permanent yung pagkablock gawin naten yung pag add ng offenseValidity
+                                    for($i=1; $i<=$mainOffense->offenseDaysBlock; $i++){
+                                        $finalOffenseValidity = date('Y-m-d H:i:s', strtotime($getDateTimeToday. ' + 1 days'));
+                                        $getDateTimeToday = $finalOffenseValidity;
+                                    }
+                                    CustOffenseMain::where('id', $mainOffense->id)
+                                    ->update([
+                                        'totalOffense' => $mainOffense->totalOffense + 1,
+                                        'offenseValidity' => $finalOffenseValidity,
+                                    ]);
+                                    $custMainOffenseId = $mainOffense->id;
+                                }
+                            } else {
+                                //walang block na mangyayari, update lang
+                                CustOffenseMain::where('id', $mainOffense->id)
+                                ->update([
+                                    'totalOffense' => $mainOffense->totalOffense + 1,
+                                ]);
+                                $custMainOffenseId = $mainOffense->id;
+                            }
+                        }
+                    } else {
+                        //so wala pang offense totally like first time neto, lalagyan naten ng offense
+                        if($restOffense->noOfCancellation == 1){
+                            //check kung isa lang ininput, kase kung isa lang matik maboblock agad
+                            if($restOffense->blockDays == "Permanent"){
+                                //check kung permanent, kase yung ngayon date ang ilalagay
+                                $createMainOffense = CustOffenseMain::create([
+                                    'customer_id' => $customerReserve->customer_id,
+                                    'restAcc_id' => $restaurant->id,
+                                    'offenseType' => "runaway",
+                                    'totalOffense' => 1,
+                                    'offenseCapacity' => $restOffense->noOfCancellation,
+                                    'offenseDaysBlock' => $restOffense->blockDays,
+                                    'offenseValidity' => $getDateTimeToday,
+                                ]);
+                                $custMainOffenseId = $createMainOffense->id;
+                            } else {
+                                //check kung hindi permanent kase bibilangin yung kung ilang days ang ban tas iseset yung date na yon sa offensevalidity
+                                for($i=1; $i<=$restOffense->blockDays; $i++){
+                                    $finalOffenseValidity = date('Y-m-d H:i:s', strtotime($getDateTimeToday. ' + 1 days'));
+                                    $getDateTimeToday = $finalOffenseValidity;
+                                }
+                                $createMainOffense = CustOffenseMain::create([
+                                    'customer_id' => $customerReserve->customer_id,
+                                    'restAcc_id' => $restaurant->id,
+                                    'offenseType' => "runaway",
+                                    'totalOffense' => 1,
+                                    'offenseCapacity' => $restOffense->noOfCancellation,
+                                    'offenseDaysBlock' => $restOffense->blockDays,
+                                    'offenseValidity' => $finalOffenseValidity,
+                                ]);
+                                $custMainOffenseId = $createMainOffense->id;
+                            }
+                        } else {
+                            //kung yung noOfcanccellation ay lagpas sa isa then create na tayo tas di pa to block
+                            $createMainOffense = CustOffenseMain::create([
+                                'customer_id' => $customerReserve->customer_id,
+                                'restAcc_id' => $restaurant->id,
+                                'offenseType' => "runaway",
+                                'totalOffense' => 1,
+                                'offenseCapacity' => $restOffense->noOfCancellation,
+                                'offenseDaysBlock' => $restOffense->blockDays,
+                            ]);
+                            $custMainOffenseId = $createMainOffense->id;
+                        }
+                    }
+                    //lastly add naten to sa database
+                    if($custMainOffenseId != ""){
+                        CustOffenseEach::create([
+                            'custOffMain_id' => $custMainOffenseId,
+                            'customer_id' => $customerReserve->customer_id,
+                            'restAcc_id' => $restaurant->id,
+                            'book_id' => $customerReserve->id,
+                            'book_type' => "reserve",
+                            'offenseType' => "runaway",
+                        ]);
+                    }
+                }
+
+
+                $notif = CustomerNotification::create([
+                    'customer_id' => $customerReserve->customer_id,
+                    'restAcc_id' => $customerReserve->restAcc_id,
                     'notificationType' => "Runaway",
-                    'notificationId' => $notif->id,
-                    'notificationRLogo' => $finalImageUrl,
-                );
-                $this->sendFirebaseNotification($to, $notification, $data);
+                    'notificationTitle' => "You have left without Paying",
+                    'notificationDescription' => "$restaurant->rAddress, $restaurant->rCity",
+                    'notificationStatus' => "Unread",
+                ]);
+                
+                $customerAccount = CustomerAccount::where('id', $customerReserve->customer_id)->first();
+
+                $finalImageUrl = "";
+                if ($restaurant->rLogo == ""){
+                    $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+                } else {
+                    $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
+                }
+
+                if($customerAccount != null){
+                    $to = $customerAccount->deviceToken;
+                    $notification = array(
+                        'title' => "$restaurant->rAddress, $restaurant->rCity",
+                        'body' => "You have left without Paying!",
+                    );
+                    $data = array(
+                        'notificationType' => "Runaway",
+                        'notificationId' => $notif->id,
+                        'notificationRLogo' => $finalImageUrl,
+                    );
+                    $this->sendFirebaseNotification($to, $notification, $data);
+                }
             }
 
             Session::flash('runaway');
@@ -3060,38 +3414,39 @@ class RestaurantController extends Controller
             'grantedAccess' => "Yes"
         ]);
         
-        $notif = CustomerNotification::create([
-            'customer_id' => $customerId,
-            'restAcc_id' => $restAcc_id,
-            'notificationType' => "Table is Ready",
-            'notificationTitle' => "Your table is now Ready. Enjoy your meal!",
-            'notificationDescription' => "$restaurant->rAddress, $restaurant->rCity",
-            'notificationStatus' => "Unread",
-        ]);
-
-        $customerAccount = CustomerAccount::where('id', $customerId)->first();
-        
-        $finalImageUrl = "";
-        if ($restaurant->rLogo == ""){
-            $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
-        } else {
-            $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
-        }
-
-        if($customerAccount != null){
-            $to = $customerAccount->deviceToken;
-            $notification = array(
-                'title' => "$restaurant->rAddress, $restaurant->rCity",
-                'body' => "Your table is now Ready. Enjoy your meal!",
-            );
-            $data = array(
+        if($customerId != 0){
+            $notif = CustomerNotification::create([
+                'customer_id' => $customerId,
+                'restAcc_id' => $restAcc_id,
                 'notificationType' => "Table is Ready",
-                'notificationId' => $notif->id,
-                'notificationRLogo' => $finalImageUrl,
-            );
-            $this->sendFirebaseNotification($to, $notification, $data);
+                'notificationTitle' => "Your table is now Ready. Enjoy your meal!",
+                'notificationDescription' => "$restaurant->rAddress, $restaurant->rCity",
+                'notificationStatus' => "Unread",
+            ]);
+    
+            $customerAccount = CustomerAccount::where('id', $customerId)->first();
+            
+            $finalImageUrl = "";
+            if ($restaurant->rLogo == ""){
+                $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+            } else {
+                $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
+            }
+    
+            if($customerAccount != null){
+                $to = $customerAccount->deviceToken;
+                $notification = array(
+                    'title' => "$restaurant->rAddress, $restaurant->rCity",
+                    'body' => "Your table is now Ready. Enjoy your meal!",
+                );
+                $data = array(
+                    'notificationType' => "Table is Ready",
+                    'notificationId' => $notif->id,
+                    'notificationRLogo' => $finalImageUrl,
+                );
+                $this->sendFirebaseNotification($to, $notification, $data);
+            }
         }
-
         Session::flash('grantedAccess');
         return redirect('/restaurant/live-transaction/customer-ordering/list/'.$id.'/order-request');
     }
@@ -3289,6 +3644,7 @@ class RestaurantController extends Controller
         }
     }
     public function ltAppCustRNoShow($id){
+        $getDateTimeToday = date('Y-m-d H:i:s');
         $customerReserve = CustomerReserve::where('id', $id)->first();
         $restaurant = RestaurantAccount::select('rName', 'rBranch', 'rAddress', 'rCity', 'rLogo', 'id')->where('id', $customerReserve->restAcc_id)->first();
         $customer = CustomerAccount::where('id', $customerReserve->customer_id)->first();
@@ -3297,6 +3653,165 @@ class RestaurantController extends Controller
         ->update([
             'status' => 'noShow',
         ]);
+
+
+        // CHECK IF THERES LATEST CANCEL OFFENSE
+        $mainOffense = CustOffenseMain::where('customer_id', $customerReserve->customer_id)
+        ->where('restAcc_id', $restaurant->id)
+        ->where('offenseType', "noshow")
+        ->latest()
+        ->first();
+
+        $restOffense = Cancellation::where('restAcc_id', $restaurant->id)->first();
+        $custMainOffenseId = "";
+
+        if($restOffense->blockDays != 0){
+            //check muna kung nag apply yuing restaurant ng offense
+            if($mainOffense != null){
+                //kapag may exisint offense yung customer
+                if($mainOffense->offenseValidity != null){
+                    //kapag hindi null meaning nakablock na sya sa part na yon so dapat icompare naten yung dates kung tapos na ba, kung hindi pa then walang mangyayari kung tapos na then block natin ule
+                    if(strtotime($mainOffense->offenseValidity) < strtotime($getDateTimeToday)){
+                        // meanning nag lift na yung ban kaso check muna kung permanent ba or hindi kase kung permanent yan ibigsabihin wala na yan di na magdadagdag pero kung hindi edi mag dagdagtayo
+                        if($mainOffense->offenseDaysBlock != "Permanent"){
+                            //so hindi sya permanent block, so pwede pa natin ule sya mablock
+                            if($restOffense->noOfCancellation == 1){
+                                //check kung isa lang ininput, kase kung isa lang matik maboblock agad
+                                if($restOffense->blockDays == "Permanent"){
+                                    //check kung permanent, kase yung ngayon date ang ilalagay
+                                    $createMainOffense = CustOffenseMain::create([
+                                        'customer_id' => $customerReserve->customer_id,
+                                        'restAcc_id' => $restaurant->id,
+                                        'offenseType' => "noshow",
+                                        'totalOffense' => 1,
+                                        'offenseCapacity' => $restOffense->noOfCancellation,
+                                        'offenseDaysBlock' => $restOffense->blockDays,
+                                        'offenseValidity' => $getDateTimeToday,
+                                    ]);
+                                    $custMainOffenseId = $createMainOffense->id;
+                                } else {
+                                    //check kung hindi permanent kase bibilangin yung kung ilang days ang ban tas iseset yung date na yon sa offensevalidity
+                                    for($i=1; $i<=$restOffense->blockDays; $i++){
+                                        $finalOffenseValidity = date('Y-m-d H:i:s', strtotime($getDateTimeToday. ' + 1 days'));
+                                        $getDateTimeToday = $finalOffenseValidity;
+                                    }
+                                    $createMainOffense = CustOffenseMain::create([
+                                        'customer_id' => $customerReserve->customer_id,
+                                        'restAcc_id' => $restaurant->id,
+                                        'offenseType' => "noshow",
+                                        'totalOffense' => 1,
+                                        'offenseCapacity' => $restOffense->noOfCancellation,
+                                        'offenseDaysBlock' => $restOffense->blockDays,
+                                        'offenseValidity' => $finalOffenseValidity,
+                                    ]);
+                                    $custMainOffenseId = $createMainOffense->id;
+                                }
+                            } else {
+                                //kung yung noOfcanccellation ay lagpas sa isa then create na tayo tas di pa to block
+                                $createMainOffense = CustOffenseMain::create([
+                                    'customer_id' => $customerReserve->customer_id,
+                                    'restAcc_id' => $restaurant->id,
+                                    'offenseType' => "noshow",
+                                    'totalOffense' => 1,
+                                    'offenseCapacity' => $restOffense->noOfCancellation,
+                                    'offenseDaysBlock' => $restOffense->blockDays,
+                                ]);
+                                $custMainOffenseId = $createMainOffense->id;
+                            }
+                        } 
+                    } 
+                } else {
+                    // null sya so meaning di pa sya na bablock
+                    if(($mainOffense->totalOffense + 1) == $mainOffense->offenseCapacity) {
+                        // dito naman syempre mag iinsert tayo ng isa, kapag nag insert tayo ng isa tas nag equal sa capacity ma bablock yon
+                        if($mainOffense->offenseDaysBlock == "Permanent"){
+                            //so kapag permanent yung pagkablock nya ganito mangyayari
+                            CustOffenseMain::where('id', $mainOffense->id)
+                            ->update([
+                                'totalOffense' => $mainOffense->totalOffense + 1,
+                                'offenseValidity' => $getDateTimeToday,
+                            ]);
+                            $custMainOffenseId = $mainOffense->id;
+                        } else {
+                            //kung hindi permanent yung pagkablock gawin naten yung pag add ng offenseValidity
+                            for($i=1; $i<=$mainOffense->offenseDaysBlock; $i++){
+                                $finalOffenseValidity = date('Y-m-d H:i:s', strtotime($getDateTimeToday. ' + 1 days'));
+                                $getDateTimeToday = $finalOffenseValidity;
+                            }
+                            CustOffenseMain::where('id', $mainOffense->id)
+                            ->update([
+                                'totalOffense' => $mainOffense->totalOffense + 1,
+                                'offenseValidity' => $finalOffenseValidity,
+                            ]);
+                            $custMainOffenseId = $mainOffense->id;
+                        }
+                    } else {
+                        //walang block na mangyayari, update lang
+                        CustOffenseMain::where('id', $mainOffense->id)
+                        ->update([
+                            'totalOffense' => $mainOffense->totalOffense + 1,
+                        ]);
+                        $custMainOffenseId = $mainOffense->id;
+                    }
+                }
+            } else {
+                //so wala pang offense totally like first time neto, lalagyan naten ng offense
+                if($restOffense->noOfCancellation == 1){
+                    //check kung isa lang ininput, kase kung isa lang matik maboblock agad
+                    if($restOffense->blockDays == "Permanent"){
+                        //check kung permanent, kase yung ngayon date ang ilalagay
+                        $createMainOffense = CustOffenseMain::create([
+                            'customer_id' => $customerReserve->customer_id,
+                            'restAcc_id' => $restaurant->id,
+                            'offenseType' => "noshow",
+                            'totalOffense' => 1,
+                            'offenseCapacity' => $restOffense->noOfCancellation,
+                            'offenseDaysBlock' => $restOffense->blockDays,
+                            'offenseValidity' => $getDateTimeToday,
+                        ]);
+                        $custMainOffenseId = $createMainOffense->id;
+                    } else {
+                        //check kung hindi permanent kase bibilangin yung kung ilang days ang ban tas iseset yung date na yon sa offensevalidity
+                        for($i=1; $i<=$restOffense->blockDays; $i++){
+                            $finalOffenseValidity = date('Y-m-d H:i:s', strtotime($getDateTimeToday. ' + 1 days'));
+                            $getDateTimeToday = $finalOffenseValidity;
+                        }
+                        $createMainOffense = CustOffenseMain::create([
+                            'customer_id' => $customerReserve->customer_id,
+                            'restAcc_id' => $restaurant->id,
+                            'offenseType' => "noshow",
+                            'totalOffense' => 1,
+                            'offenseCapacity' => $restOffense->noOfCancellation,
+                            'offenseDaysBlock' => $restOffense->blockDays,
+                            'offenseValidity' => $finalOffenseValidity,
+                        ]);
+                        $custMainOffenseId = $createMainOffense->id;
+                    }
+                } else {
+                    //kung yung noOfcanccellation ay lagpas sa isa then create na tayo tas di pa to block
+                    $createMainOffense = CustOffenseMain::create([
+                        'customer_id' => $customerReserve->customer_id,
+                        'restAcc_id' => $restaurant->id,
+                        'offenseType' => "noshow",
+                        'totalOffense' => 1,
+                        'offenseCapacity' => $restOffense->noOfCancellation,
+                        'offenseDaysBlock' => $restOffense->blockDays,
+                    ]);
+                    $custMainOffenseId = $createMainOffense->id;
+                }
+            }
+            //lastly add naten to sa database
+            if($custMainOffenseId != ""){
+                CustOffenseEach::create([
+                    'custOffMain_id' => $custMainOffenseId,
+                    'customer_id' => $customerReserve->customer_id,
+                    'restAcc_id' => $restaurant->id,
+                    'book_id' => $customerReserve->id,
+                    'book_type' => "reserve",
+                    'offenseType' => "noshow",
+                ]);
+            }
+        }
 
         
         $notif = CustomerNotification::create([
@@ -3342,7 +3857,7 @@ class RestaurantController extends Controller
 
         $customerQueue = CustomerQueue::where('id', $id)->where('restAcc_id', $restAcc_id)->where('queueDate', $getDateToday)->first();
         $restaurant = RestaurantAccount::select('rName', 'rBranch', 'rAddress', 'rCity', 'rLogo', 'id', 'rNumberOfTables')->where('id', $customerQueue->restAcc_id)->first();
-        
+        $customer = CustomerAccount::where('id', $customerQueue->customer_id)->first();
         $tableNumbers = explode(',', $request->tableNumbers);
         
         $count = 0;
@@ -3409,7 +3924,6 @@ class RestaurantController extends Controller
                         } else {
                             // UPDATE NA NG DATA
                             if($customerQueue->name == null){
-                                $customer = CustomerAccount::where('id', $customerQueue->customer_id)->first();
                                 $finaleCustName = $customer->name;
                             } else {
                                 $finaleCustName = $customerQueue->name;
@@ -3433,24 +3947,24 @@ class RestaurantController extends Controller
                                 'tableSettingDateTime' => date('Y-m-d H:i:s'),
                             ]);
 
-                            $notif = CustomerNotification::create([
-                                'customer_id' => $customerQueue->customer_id,
-                                'restAcc_id' => $customerQueue->restAcc_id,
-                                'notificationType' => "Table Setting Up",
-                                'notificationTitle' => "Your Table is Setting up",
-                                'notificationDescription' => "$restaurant->rAddress, $restaurant->rCity",
-                                'notificationStatus' => "Unread",
-                            ]);
-
-
-                            $finalImageUrl = "";
-                            if ($restaurant->rLogo == ""){
-                                $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
-                            } else {
-                                $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
-                            }
-
                             if($customer != null){
+                                $notif = CustomerNotification::create([
+                                    'customer_id' => $customerQueue->customer_id,
+                                    'restAcc_id' => $customerQueue->restAcc_id,
+                                    'notificationType' => "Table Setting Up",
+                                    'notificationTitle' => "Your Table is Setting up",
+                                    'notificationDescription' => "$restaurant->rAddress, $restaurant->rCity",
+                                    'notificationStatus' => "Unread",
+                                ]);
+
+
+                                $finalImageUrl = "";
+                                if ($restaurant->rLogo == ""){
+                                    $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+                                } else {
+                                    $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
+                                }
+
                                 $to = $customer->deviceToken;
                                 $notification = array(
                                     'title' => "$restaurant->rAddress, $restaurant->rCity",
@@ -3474,6 +3988,7 @@ class RestaurantController extends Controller
         
     }
     public function ltAppCustQNoShow($id){
+        $getDateTimeToday = date('Y-m-d H:i:s');
         $customerQueue = CustomerQueue::where('id', $id)->first();
         $restaurant = RestaurantAccount::select('rName', 'rBranch', 'rAddress', 'rCity', 'rLogo', 'id')->where('id', $customerQueue->restAcc_id)->first();
         $customer = CustomerAccount::where('id', $customerQueue->customer_id)->first();
@@ -3483,24 +3998,184 @@ class RestaurantController extends Controller
             'status' => 'noShow',
         ]);
 
-        $notif = CustomerNotification::create([
-            'customer_id' => $customerQueue->customer_id,
-            'restAcc_id' => $customerQueue->restAcc_id,
-            'notificationType' => "No Show",
-            'notificationTitle' => "Your Booking is labelled as No Show",
-            'notificationDescription' => "$restaurant->rAddress, $restaurant->rCity",
-            'notificationStatus' => "Unread",
-        ]);
-
-        
-        $finalImageUrl = "";
-        if ($restaurant->rLogo == ""){
-            $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
-        } else {
-            $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
-        }
-        
         if($customer != null){
+            // CHECK IF THERES LATEST CANCEL OFFENSE
+            $mainOffense = CustOffenseMain::where('customer_id', $customerQueue->customer_id)
+            ->where('restAcc_id', $restaurant->id)
+            ->where('offenseType', "noshow")
+            ->latest()
+            ->first();
+
+            $restOffense = Cancellation::where('restAcc_id', $restaurant->id)->first();
+            $custMainOffenseId = "";
+
+            if($restOffense->blockDays != 0){
+                //check muna kung nag apply yuing restaurant ng offense
+                if($mainOffense != null){
+                    //kapag may exisint offense yung customer
+                    if($mainOffense->offenseValidity != null){
+                        //kapag hindi null meaning nakablock na sya sa part na yon so dapat icompare naten yung dates kung tapos na ba, kung hindi pa then walang mangyayari kung tapos na then block natin ule
+                        if(strtotime($mainOffense->offenseValidity) < strtotime($getDateTimeToday)){
+                            // meanning nag lift na yung ban kaso check muna kung permanent ba or hindi kase kung permanent yan ibigsabihin wala na yan di na magdadagdag pero kung hindi edi mag dagdagtayo
+                            if($mainOffense->offenseDaysBlock != "Permanent"){
+                                //so hindi sya permanent block, so pwede pa natin ule sya mablock
+                                if($restOffense->noOfCancellation == 1){
+                                    //check kung isa lang ininput, kase kung isa lang matik maboblock agad
+                                    if($restOffense->blockDays == "Permanent"){
+                                        //check kung permanent, kase yung ngayon date ang ilalagay
+                                        $createMainOffense = CustOffenseMain::create([
+                                            'customer_id' => $customerQueue->customer_id,
+                                            'restAcc_id' => $restaurant->id,
+                                            'offenseType' => "noshow",
+                                            'totalOffense' => 1,
+                                            'offenseCapacity' => $restOffense->noOfCancellation,
+                                            'offenseDaysBlock' => $restOffense->blockDays,
+                                            'offenseValidity' => $getDateTimeToday,
+                                        ]);
+                                        $custMainOffenseId = $createMainOffense->id;
+                                    } else {
+                                        //check kung hindi permanent kase bibilangin yung kung ilang days ang ban tas iseset yung date na yon sa offensevalidity
+                                        for($i=1; $i<=$restOffense->blockDays; $i++){
+                                            $finalOffenseValidity = date('Y-m-d H:i:s', strtotime($getDateTimeToday. ' + 1 days'));
+                                            $getDateTimeToday = $finalOffenseValidity;
+                                        }
+                                        $createMainOffense = CustOffenseMain::create([
+                                            'customer_id' => $customerQueue->customer_id,
+                                            'restAcc_id' => $restaurant->id,
+                                            'offenseType' => "noshow",
+                                            'totalOffense' => 1,
+                                            'offenseCapacity' => $restOffense->noOfCancellation,
+                                            'offenseDaysBlock' => $restOffense->blockDays,
+                                            'offenseValidity' => $finalOffenseValidity,
+                                        ]);
+                                        $custMainOffenseId = $createMainOffense->id;
+                                    }
+                                } else {
+                                    //kung yung noOfcanccellation ay lagpas sa isa then create na tayo tas di pa to block
+                                    $createMainOffense = CustOffenseMain::create([
+                                        'customer_id' => $customerQueue->customer_id,
+                                        'restAcc_id' => $restaurant->id,
+                                        'offenseType' => "noshow",
+                                        'totalOffense' => 1,
+                                        'offenseCapacity' => $restOffense->noOfCancellation,
+                                        'offenseDaysBlock' => $restOffense->blockDays,
+                                    ]);
+                                    $custMainOffenseId = $createMainOffense->id;
+                                }
+                            } 
+                        } 
+                    } else {
+                        // null sya so meaning di pa sya na bablock
+                        if(($mainOffense->totalOffense + 1) == $mainOffense->offenseCapacity) {
+                            // dito naman syempre mag iinsert tayo ng isa, kapag nag insert tayo ng isa tas nag equal sa capacity ma bablock yon
+                            if($mainOffense->offenseDaysBlock == "Permanent"){
+                                //so kapag permanent yung pagkablock nya ganito mangyayari
+                                CustOffenseMain::where('id', $mainOffense->id)
+                                ->update([
+                                    'totalOffense' => $mainOffense->totalOffense + 1,
+                                    'offenseValidity' => $getDateTimeToday,
+                                ]);
+                                $custMainOffenseId = $mainOffense->id;
+                            } else {
+                                //kung hindi permanent yung pagkablock gawin naten yung pag add ng offenseValidity
+                                for($i=1; $i<=$mainOffense->offenseDaysBlock; $i++){
+                                    $finalOffenseValidity = date('Y-m-d H:i:s', strtotime($getDateTimeToday. ' + 1 days'));
+                                    $getDateTimeToday = $finalOffenseValidity;
+                                }
+                                CustOffenseMain::where('id', $mainOffense->id)
+                                ->update([
+                                    'totalOffense' => $mainOffense->totalOffense + 1,
+                                    'offenseValidity' => $finalOffenseValidity,
+                                ]);
+                                $custMainOffenseId = $mainOffense->id;
+                            }
+                        } else {
+                            //walang block na mangyayari, update lang
+                            CustOffenseMain::where('id', $mainOffense->id)
+                            ->update([
+                                'totalOffense' => $mainOffense->totalOffense + 1,
+                            ]);
+                            $custMainOffenseId = $mainOffense->id;
+                        }
+                    }
+                } else {
+                    //so wala pang offense totally like first time neto, lalagyan naten ng offense
+                    if($restOffense->noOfCancellation == 1){
+                        //check kung isa lang ininput, kase kung isa lang matik maboblock agad
+                        if($restOffense->blockDays == "Permanent"){
+                            //check kung permanent, kase yung ngayon date ang ilalagay
+                            $createMainOffense = CustOffenseMain::create([
+                                'customer_id' => $customerQueue->customer_id,
+                                'restAcc_id' => $restaurant->id,
+                                'offenseType' => "noshow",
+                                'totalOffense' => 1,
+                                'offenseCapacity' => $restOffense->noOfCancellation,
+                                'offenseDaysBlock' => $restOffense->blockDays,
+                                'offenseValidity' => $getDateTimeToday,
+                            ]);
+                            $custMainOffenseId = $createMainOffense->id;
+                        } else {
+                            //check kung hindi permanent kase bibilangin yung kung ilang days ang ban tas iseset yung date na yon sa offensevalidity
+                            for($i=1; $i<=$restOffense->blockDays; $i++){
+                                $finalOffenseValidity = date('Y-m-d H:i:s', strtotime($getDateTimeToday. ' + 1 days'));
+                                $getDateTimeToday = $finalOffenseValidity;
+                            }
+                            $createMainOffense = CustOffenseMain::create([
+                                'customer_id' => $customerQueue->customer_id,
+                                'restAcc_id' => $restaurant->id,
+                                'offenseType' => "noshow",
+                                'totalOffense' => 1,
+                                'offenseCapacity' => $restOffense->noOfCancellation,
+                                'offenseDaysBlock' => $restOffense->blockDays,
+                                'offenseValidity' => $finalOffenseValidity,
+                            ]);
+                            $custMainOffenseId = $createMainOffense->id;
+                        }
+                    } else {
+                        //kung yung noOfcanccellation ay lagpas sa isa then create na tayo tas di pa to block
+                        $createMainOffense = CustOffenseMain::create([
+                            'customer_id' => $customerQueue->customer_id,
+                            'restAcc_id' => $restaurant->id,
+                            'offenseType' => "noshow",
+                            'totalOffense' => 1,
+                            'offenseCapacity' => $restOffense->noOfCancellation,
+                            'offenseDaysBlock' => $restOffense->blockDays,
+                        ]);
+                        $custMainOffenseId = $createMainOffense->id;
+                    }
+                }
+                //lastly add naten to sa database
+                if($custMainOffenseId != ""){
+                    CustOffenseEach::create([
+                        'custOffMain_id' => $custMainOffenseId,
+                        'customer_id' => $customerQueue->customer_id,
+                        'restAcc_id' => $restaurant->id,
+                        'book_id' => $customerQueue->id,
+                        'book_type' => "queue",
+                        'offenseType' => "noshow",
+                    ]);
+                }
+            }
+
+
+
+            $notif = CustomerNotification::create([
+                'customer_id' => $customerQueue->customer_id,
+                'restAcc_id' => $customerQueue->restAcc_id,
+                'notificationType' => "No Show",
+                'notificationTitle' => "Your Booking is labelled as No Show",
+                'notificationDescription' => "$restaurant->rAddress, $restaurant->rCity",
+                'notificationStatus' => "Unread",
+            ]);
+
+            
+            $finalImageUrl = "";
+            if ($restaurant->rLogo == ""){
+                $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+            } else {
+                $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
+            }
+            
             $to = $customer->deviceToken;
             $notification = array(
                 'title' => "$restaurant->rName, $restaurant->rBranch",
@@ -3571,25 +4246,24 @@ class RestaurantController extends Controller
             'status' => 'validation',
             'validationDateTime' => date('Y-m-d H:i:s'),
         ]);
-
-        $notif = CustomerNotification::create([
-            'customer_id' => $customerQueue->customer_id,
-            'restAcc_id' => $customerQueue->restAcc_id,
-            'notificationType' => "Validation",
-            'notificationTitle' => "Please go to the front desk to Confirm your Booking",
-            'notificationDescription' => "$restaurant->rAddress, $restaurant->rCity",
-            'notificationStatus' => "Unread",
-        ]);
-
-
-        $finalImageUrl = "";
-        if ($restaurant->rLogo == ""){
-            $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
-        } else {
-            $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
-        }
         
         if($customer != null){
+            $notif = CustomerNotification::create([
+                'customer_id' => $customerQueue->customer_id,
+                'restAcc_id' => $customerQueue->restAcc_id,
+                'notificationType' => "Validation",
+                'notificationTitle' => "Please go to the front desk to Confirm your Booking",
+                'notificationDescription' => "$restaurant->rAddress, $restaurant->rCity",
+                'notificationStatus' => "Unread",
+            ]);
+    
+    
+            $finalImageUrl = "";
+            if ($restaurant->rLogo == ""){
+                $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+            } else {
+                $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
+            }
             $to = $customer->deviceToken;
             $notification = array(
                 'title' => "$restaurant->rName, $restaurant->rBranch",

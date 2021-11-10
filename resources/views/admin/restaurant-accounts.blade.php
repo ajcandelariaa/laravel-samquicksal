@@ -41,7 +41,7 @@
                             <div class="col-span-1">{{ $account->rCity }}</div>
                             <div class="col-span-1">{{ $account->rCountry }}</div>
                             <div class="col-span-1">
-                                <a href="/admin/restaurant-accounts/{{ $account->id }}" target="_blank"><i class="fas fa-eye"></i></a>
+                                <a href="/admin/restaurant-accounts/{{ $account->id }}"><i class="fas fa-eye"></i></a>
                             </div>
                         </div>
                     @else
@@ -54,7 +54,7 @@
                             <div class="col-span-1">{{ $account->rCity }}</div>
                             <div class="col-span-1">{{ $account->rCountry }}</div>
                             <div class="col-span-1">
-                                <a href="/admin/restaurant-accounts/{{ $account->id }}" target="_blank"><i class="fas fa-eye"></i></a>
+                                <a href="/admin/restaurant-accounts/{{ $account->id }}"><i class="fas fa-eye"></i></a>
                             </div>
                         </div>
                     @endif

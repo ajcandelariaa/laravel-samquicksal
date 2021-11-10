@@ -55,7 +55,7 @@
                         </select>
                         <span class="mt-2 text-red-600 italic text-sm">@error('walkInHoursOfStay'){{ $message }}@enderror</span>
                     @else
-                        <input type="text" name="walkInHoursOfStay" class="w-full py-2 px-3 bg-gray-200 border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none focus:border-black" value="{{ $rTimeLimit }} hours" disabled>
+                        <input type="text" name="walkInHoursOfStay" class="w-full py-2 px-3 bg-gray-200 border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none focus:border-black" value="{{ $rTimeLimit }}" readonly>
                     @endif
                 </div>
                 

@@ -53,8 +53,11 @@
                         <i class="fas fa-user-tie"></i>
                     </a>
                 </div>
-                <div class="grid items-center justify-center mt-4 text-white hover:bg-sideBarHoverBgColor">
-                    <a href="/admin/customer-accounts" class="pt-3 pb-3"><i class="fas fa-users"></i></a>
+                <div class="grid items-center mt-4 text-white {{ (request()->is('admin/customer-accounts*')) ? 'relative bg-black' : 'hover:bg-sideBarHoverBgColor' }}">
+                    <div class="{{ (request()->is('admin/customer-accounts*')) ? 'h-full w-1 bg-headerActiveTextColor absolute left-0' : '' }}"></div>
+                    <a href="/admin/customer-accounts" class="pt-3 pb-3 text-center">
+                        <i class="fas fa-users"></i>
+                    </a>
                 </div>
             </div>
             <div class="bg-black min-h-screen w-80">

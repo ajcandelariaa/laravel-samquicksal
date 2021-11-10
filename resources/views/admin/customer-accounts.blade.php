@@ -16,13 +16,12 @@
             </form>
         </div>
         <div class="mx-auto w-11/12 mt-6 bg-tableBgHeader shadow-xl">
-            <div class="grid grid-cols-12 items-center text-center font-bold h-16 px-5">
+            <div class="grid grid-cols-11 items-center text-center font-bold h-16 px-5">
                 <div class="col-span-1">No.</div>
                 <div class="col-span-3">Name</div>
                 <div class="col-span-3">Email Address</div>
                 <div class="col-span-1">Email Verified</div>
                 <div class="col-span-2">Contact Number</div>
-                <div class="col-span-1">Contact Verified</div>
                 <div class="col-span-1">View</div>
             </div>
         @if (!$accounts->isEmpty())
@@ -31,27 +30,25 @@
                 @endphp
                 @foreach ($accounts as $account)
                     @if ($count % 2 == 0)
-                        <div class="bg-white grid grid-cols-12 items-center text-center h-10 px-5 mb-3 text-sm">
+                        <div class="bg-white grid grid-cols-11 items-center text-center h-10 px-5 mb-3 text-sm">
                             <div class="col-span-1">{{ $count }}</div>
                             <div class="col-span-3">{{ $account->name }}</div>
                             <div class="col-span-3">{{ $account->emailAddress }}</div>
                             <div class="col-span-1">{{ $account->emailAddressVerified }}</div>
                             <div class="col-span-2">{{ $account->contactNumber }}</div>
-                            <div class="col-span-1">{{ $account->contactNumberVerified }}</div>
                             <div class="col-span-1">
-                                <a href="/admin/customer-accounts/{{ $account->id }}" target="_blank"><i class="fas fa-eye"></i></a>
+                                <a href="/admin/customer-accounts/{{ $account->id }}"><i class="fas fa-eye"></i></a>
                             </div>
                         </div>
                     @else
-                        <div class="bg-gray-100 grid grid-cols-12 items-center text-center h-10 px-5 mb-3 text-sm">
+                        <div class="bg-gray-100 grid grid-cols-11 items-center text-center h-10 px-5 mb-3 text-sm">
                             <div class="col-span-1">{{ $count }}</div>
                             <div class="col-span-3">{{ $account->name }}</div>
                             <div class="col-span-3">{{ $account->emailAddress }}</div>
                             <div class="col-span-1">{{ $account->emailAddressVerified }}</div>
                             <div class="col-span-2">{{ $account->contactNumber }}</div>
-                            <div class="col-span-1">{{ $account->contactNumberVerified }}</div>
                             <div class="col-span-1">
-                                <a href="/admin/customer-accounts/{{ $account->id }}" target="_blank"><i class="fas fa-eye"></i></a>
+                                <a href="/admin/customer-accounts/{{ $account->id }}"><i class="fas fa-eye"></i></a>
                             </div>
                         </div>
                     @endif

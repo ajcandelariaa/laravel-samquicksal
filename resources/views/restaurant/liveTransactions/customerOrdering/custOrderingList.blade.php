@@ -37,7 +37,6 @@
         
         <div class="grid grid-cols-4 gap-5 mx-5 my-10">
             @foreach ($finalCustomers as $finalCustomer)
-
                 <div class="col-span-1 {{ ($finalCustomer['custOrdering_id'] == "") ? 'bg-manageRestaurantSidebarColor' : 'bg-headerActiveTextColor' }} rounded-2xl items-stretch">
                     <div class="grid grid-rows-customerOrderingTableRow text-center pt-3 pb-1 text-white">
                         <p class="row-span-1">

@@ -6,11 +6,20 @@
         <div class="text-base ml-12 py-3 font-bold uppercase text-center">Restaurant Information</div>
     </div>
     <div class="relative w-full h-56">
-        <div style="background-image: linear-gradient(rgba(255, 226, 226, 0.75), rgba(255, 226, 226, 0.75)), url({{asset('images/defaultAccountImage.png')}}); background-repeat: no-repeat; background-size: cover; background-position: center;" class="h-full"></div>
+        @if ($account->rLogo == null)
+            <div style="background-image: linear-gradient(rgba(255, 226, 226, 0.75), rgba(255, 226, 226, 0.75)), url({{asset('images/resto-default.png')}}); background-repeat: no-repeat; background-size: cover; background-position: center;" class="h-full"></div>
+        @else
+            <div style="background-image: linear-gradient(rgba(255, 226, 226, 0.75), rgba(255, 226, 226, 0.75)), url({{asset('uploads/restaurantAccounts/logo/'.$account->id.'/'.$account->rLogo)}}); background-repeat: no-repeat; background-size: cover; background-position: center;" class="h-full"></div>
+        @endif
+        
         <div class="absolute top-0 left-headerLogoLeftMargin h-full">
             <div class="grid grid-cols-1 items-center h-full">
                 <div class="col-span-1 grid grid-cols-2 items-center">
-                    <img src="{{ asset('images/defaultAccountImage.png') }}" alt="accountImage" class="w-44">
+                    @if ($account->rLogo == null)
+                        <img src="{{ asset('images/resto-default.png') }}" alt="accountImage" class="w-44 h-44">
+                    @else
+                        <img src="{{ asset('uploads/restaurantAccounts/logo/'.$account->id.'/'.$account->rLogo) }}" alt="accountImage" class="w-44 h-44">
+                    @endif
                     <div>
                         <p class="uppercase font-bold text-4xl">{{ $account->rName }}</p>
                         <p class="text-lg">{{ $account->rBranch }}</p>

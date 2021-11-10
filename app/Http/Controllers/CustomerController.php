@@ -37,6 +37,9 @@ use App\Models\RestaurantRewardList;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\CustomerPasswordChanged;
+use App\Models\Cancellation;
+use App\Models\CustOffenseEach;
+use App\Models\CustOffenseMain;
 use App\Models\CustomerResetPassword;
 
 class CustomerController extends Controller
@@ -462,11 +465,12 @@ class CustomerController extends Controller
             'promos' => $finalPromos,
         ]);
     }
-    public function getRestaurantsMenuInfo($id){
+    public function getRestaurantsMenuInfo($id, $cust_id){
         $orderSets = OrderSet::where('restAcc_id', $id)->get();
-
+        $getDateToday = date('Y-m-d');
+        $getDateTimeToday = date('Y-m-d H:i:s');
+        
         $finalData = array();
-
         foreach ($orderSets as $orderSet){
             $foodSets = array();
             $orderSetFoodSets = OrderSetFoodSet::where('orderSet_id', $orderSet->id)->get();
@@ -512,7 +516,109 @@ class CustomerController extends Controller
             ]);
         }
 
-        return response()->json($finalData);
+        // CHECKING IF CAN QUEUE OR BOOK
+        /*
+            1. check muna kung naka queue / reserve
+            2. check kung may qr access
+            3. check kung naka blocked
+            4. check if the store is close for queue only 
+        */
+
+        $description = "";
+        $status = "";
+
+        $customerQueue = CustomerQueue::where('customer_id', $cust_id)
+        ->where('queueDate', $getDateToday)
+        ->where('status', '!=', 'cancelled')
+        ->where('status', '!=', 'declined')
+        ->where('status', '!=', 'noShow')
+        ->where('status', '!=', 'runaway')
+        ->orderBy('created_at', 'DESC')
+        ->first();
+
+        $customerReserve = CustomerReserve::where('customer_id', $cust_id)
+        ->where('status', '!=', 'cancelled')
+        ->where('status', '!=', 'declined')
+        ->where('status', '!=', 'noShow')
+        ->where('status', '!=', 'runaway')
+        ->orderBy('created_at', 'DESC')
+        ->first();
+
+        $custMainOff = CustOffenseMain::where('customer_id', $cust_id)
+        ->where('restAcc_id', $id)
+        ->orderBy('created_at', 'DESC')
+        ->first();
+
+        $customerQrAccess = CustomerQrAccess::where('subCust_id', $cust_id)
+        ->where('status', "approved")
+        ->orderBy('created_at', 'DESC')
+        ->first();
+
+        if ($customerQueue != null){
+            $description = "You cannot book as of now because you are currently queue.";
+            $status = "onGoing";
+        } else if ($customerReserve != null){
+            $description = "You cannot book as of now because you are currently reserve.";
+            $status = "onGoing";
+        } else {
+            if($custMainOff != null){
+                if(strtotime($custMainOff->offenseValidity) >= strtotime($getDateTimeToday)){
+                    $description = "You cannot book to this restaurant because you are currently blocked";
+                    $status = "onGoing";
+                }
+            }
+            if($customerQrAccess != null){
+                $customerOrdering = CustomerOrdering::where('id', $customerQrAccess->custOrdering_id)->where('status', "checkout")->first();
+                if($customerOrdering != null){
+                    $description = "You cannot book as of now because you currently have an access to your friend that are currently booked.";
+                    $status = "onGoing";
+                }
+            }
+        }
+
+        $getAvailability = "";
+        $rSchedule = "";
+
+        $restaurantUnavailableDates = UnavailableDate::select('unavailableDatesDate')->where('restAcc_id', $id)->get();
+        foreach ($restaurantUnavailableDates as $restaurantUnavailableDate) {
+            if($restaurantUnavailableDate->unavailableDatesDate == date("Y-m-d")){
+                $getAvailability = "Closed";
+            }
+        }
+
+        if($getAvailability == "Closed"){
+            $rSchedule = "Closed Now";
+        } else {
+            $restaurantStoreHours = StoreHour::where('restAcc_id', $id)->get();
+            foreach ($restaurantStoreHours as $restaurantStoreHour){
+                foreach (explode(",", $restaurantStoreHour->days) as $day){
+                    if($this->convertDays($day) == date('l')){
+                        $currentTime = date("H:i");
+                        if($currentTime < $restaurantStoreHour->openingTime || $currentTime > $restaurantStoreHour->closingTime){
+                            $rSchedule = "Closed Now";
+                        } else {
+                            $openingTime = date("g:i a", strtotime($restaurantStoreHour->openingTime));
+                            $closingTime = date("g:i a", strtotime($restaurantStoreHour->closingTime));
+                            $rSchedule = "Open today at ".$openingTime." to ".$closingTime;
+                        }
+                    }
+                }
+            }
+        }
+        if($rSchedule == ""){
+            $rSchedule = "Closed Now";
+        }
+
+        if($rSchedule == "Closed Now"){
+            $description = "You cannot queue as of now wait til the restaurant is open.";
+            $status = "closed";
+        }
+
+        return response()->json([
+            'description' => $description,
+            'status' => $status,
+            'menu' => $finalData,
+        ]);
     }
     public function getListOfPromos(){
         $finalData = array();
@@ -1425,6 +1531,7 @@ class CustomerController extends Controller
     }
     public function cancelCustomerBooking($id){
         $getDateToday = date("Y-m-d");
+        $getDateTimeToday = date('Y-m-d H:i:s');
         $customerQueue = CustomerQueue::where('customer_id', $id)
         ->where('queueDate', $getDateToday)
         ->where('status', 'pending')
@@ -1447,6 +1554,165 @@ class CustomerController extends Controller
                 'status' => 'cancelled',
                 'cancelDateTime' => date('Y-m-d H:i:s'),
             ]);
+
+            // CHECK IF THERES LATEST CANCEL OFFENSE
+            $mainOffense = CustOffenseMain::where('customer_id', $customerQueue->customer_id)
+            ->where('restAcc_id', $restaurant->id)
+            ->where('offenseType', "cancellation")
+            ->latest()
+            ->first();
+
+            $restOffense = Cancellation::where('restAcc_id', $restaurant->id)->first();
+            $custMainOffenseId = "";
+
+            if($restOffense->blockDays != 0){
+                //check muna kung nag apply yuing restaurant ng offense
+                if($mainOffense != null){
+                    //kapag may exisint offense yung customer
+                    if($mainOffense->offenseValidity != null){
+                        //kapag hindi null meaning nakablock na sya sa part na yon so dapat icompare naten yung dates kung tapos na ba, kung hindi pa then walang mangyayari kung tapos na then block natin ule
+                        if(strtotime($mainOffense->offenseValidity) < strtotime($getDateTimeToday)){
+                            // meanning nag lift na yung ban kaso check muna kung permanent ba or hindi kase kung permanent yan ibigsabihin wala na yan di na magdadagdag pero kung hindi edi mag dagdagtayo
+                            if($mainOffense->offenseDaysBlock != "Permanent"){
+                                //so hindi sya permanent block, so pwede pa natin ule sya mablock
+                                if($restOffense->noOfCancellation == 1){
+                                    //check kung isa lang ininput, kase kung isa lang matik maboblock agad
+                                    if($restOffense->blockDays == "Permanent"){
+                                        //check kung permanent, kase yung ngayon date ang ilalagay
+                                        $createMainOffense = CustOffenseMain::create([
+                                            'customer_id' => $customerQueue->customer_id,
+                                            'restAcc_id' => $restaurant->id,
+                                            'offenseType' => "cancellation",
+                                            'totalOffense' => 1,
+                                            'offenseCapacity' => $restOffense->noOfCancellation,
+                                            'offenseDaysBlock' => $restOffense->blockDays,
+                                            'offenseValidity' => $getDateTimeToday,
+                                        ]);
+                                        $custMainOffenseId = $createMainOffense->id;
+                                    } else {
+                                        //check kung hindi permanent kase bibilangin yung kung ilang days ang ban tas iseset yung date na yon sa offensevalidity
+                                        for($i=1; $i<=$restOffense->blockDays; $i++){
+                                            $finalOffenseValidity = date('Y-m-d H:i:s', strtotime($getDateTimeToday. ' + 1 days'));
+                                            $getDateTimeToday = $finalOffenseValidity;
+                                        }
+                                        $createMainOffense = CustOffenseMain::create([
+                                            'customer_id' => $customerQueue->customer_id,
+                                            'restAcc_id' => $restaurant->id,
+                                            'offenseType' => "cancellation",
+                                            'totalOffense' => 1,
+                                            'offenseCapacity' => $restOffense->noOfCancellation,
+                                            'offenseDaysBlock' => $restOffense->blockDays,
+                                            'offenseValidity' => $finalOffenseValidity,
+                                        ]);
+                                        $custMainOffenseId = $createMainOffense->id;
+                                    }
+                                } else {
+                                    //kung yung noOfcanccellation ay lagpas sa isa then create na tayo tas di pa to block
+                                    $createMainOffense = CustOffenseMain::create([
+                                        'customer_id' => $customerQueue->customer_id,
+                                        'restAcc_id' => $restaurant->id,
+                                        'offenseType' => "cancellation",
+                                        'totalOffense' => 1,
+                                        'offenseCapacity' => $restOffense->noOfCancellation,
+                                        'offenseDaysBlock' => $restOffense->blockDays,
+                                    ]);
+                                    $custMainOffenseId = $createMainOffense->id;
+                                }
+                            } 
+                        } 
+                    } else {
+                        // null sya so meaning di pa sya na bablock
+                        if(($mainOffense->totalOffense + 1) == $mainOffense->offenseCapacity) {
+                            // dito naman syempre mag iinsert tayo ng isa, kapag nag insert tayo ng isa tas nag equal sa capacity ma bablock yon
+                            if($mainOffense->offenseDaysBlock == "Permanent"){
+                                //so kapag permanent yung pagkablock nya ganito mangyayari
+                                CustOffenseMain::where('id', $mainOffense->id)
+                                ->update([
+                                    'totalOffense' => $mainOffense->totalOffense + 1,
+                                    'offenseValidity' => $getDateTimeToday,
+                                ]);
+                                $custMainOffenseId = $mainOffense->id;
+                            } else {
+                                //kung hindi permanent yung pagkablock gawin naten yung pag add ng offenseValidity
+                                for($i=1; $i<=$mainOffense->offenseDaysBlock; $i++){
+                                    $finalOffenseValidity = date('Y-m-d H:i:s', strtotime($getDateTimeToday. ' + 1 days'));
+                                    $getDateTimeToday = $finalOffenseValidity;
+                                }
+                                CustOffenseMain::where('id', $mainOffense->id)
+                                ->update([
+                                    'totalOffense' => $mainOffense->totalOffense + 1,
+                                    'offenseValidity' => $finalOffenseValidity,
+                                ]);
+                                $custMainOffenseId = $mainOffense->id;
+                            }
+                        } else {
+                            //walang block na mangyayari, update lang
+                            CustOffenseMain::where('id', $mainOffense->id)
+                            ->update([
+                                'totalOffense' => $mainOffense->totalOffense + 1,
+                            ]);
+                            $custMainOffenseId = $mainOffense->id;
+                        }
+                    }
+                } else {
+                    //so wala pang offense totally like first time neto, lalagyan naten ng offense
+                    if($restOffense->noOfCancellation == 1){
+                        //check kung isa lang ininput, kase kung isa lang matik maboblock agad
+                        if($restOffense->blockDays == "Permanent"){
+                            //check kung permanent, kase yung ngayon date ang ilalagay
+                            $createMainOffense = CustOffenseMain::create([
+                                'customer_id' => $customerQueue->customer_id,
+                                'restAcc_id' => $restaurant->id,
+                                'offenseType' => "cancellation",
+                                'totalOffense' => 1,
+                                'offenseCapacity' => $restOffense->noOfCancellation,
+                                'offenseDaysBlock' => $restOffense->blockDays,
+                                'offenseValidity' => $getDateTimeToday,
+                            ]);
+                            $custMainOffenseId = $createMainOffense->id;
+                        } else {
+                            //check kung hindi permanent kase bibilangin yung kung ilang days ang ban tas iseset yung date na yon sa offensevalidity
+                            for($i=1; $i<=$restOffense->blockDays; $i++){
+                                $finalOffenseValidity = date('Y-m-d H:i:s', strtotime($getDateTimeToday. ' + 1 days'));
+                                $getDateTimeToday = $finalOffenseValidity;
+                            }
+                            $createMainOffense = CustOffenseMain::create([
+                                'customer_id' => $customerQueue->customer_id,
+                                'restAcc_id' => $restaurant->id,
+                                'offenseType' => "cancellation",
+                                'totalOffense' => 1,
+                                'offenseCapacity' => $restOffense->noOfCancellation,
+                                'offenseDaysBlock' => $restOffense->blockDays,
+                                'offenseValidity' => $finalOffenseValidity,
+                            ]);
+                            $custMainOffenseId = $createMainOffense->id;
+                        }
+                    } else {
+                        //kung yung noOfcanccellation ay lagpas sa isa then create na tayo tas di pa to block
+                        $createMainOffense = CustOffenseMain::create([
+                            'customer_id' => $customerQueue->customer_id,
+                            'restAcc_id' => $restaurant->id,
+                            'offenseType' => "cancellation",
+                            'totalOffense' => 1,
+                            'offenseCapacity' => $restOffense->noOfCancellation,
+                            'offenseDaysBlock' => $restOffense->blockDays,
+                        ]);
+                        $custMainOffenseId = $createMainOffense->id;
+                    }
+                }
+                //lastly add naten to sa database
+                if($custMainOffenseId != ""){
+                    CustOffenseEach::create([
+                        'custOffMain_id' => $custMainOffenseId,
+                        'customer_id' => $customerQueue->customer_id,
+                        'restAcc_id' => $restaurant->id,
+                        'book_id' => $customerQueue->id,
+                        'book_type' => "queue",
+                        'offenseType' => "cancellation",
+                    ]);
+                }
+            }
+            
     
             $notif = CustomerNotification::create([
                 'customer_id' => $customerQueue->customer_id,
@@ -1487,6 +1753,167 @@ class CustomerController extends Controller
                 'status' => 'cancelled',
                 'cancelDateTime' => date('Y-m-d H:i:s'),
             ]);
+
+
+            // CHECK IF THERES LATEST CANCEL OFFENSE
+            $mainOffense = CustOffenseMain::where('customer_id', $customerReserve->customer_id)
+            ->where('restAcc_id', $restaurant->id)
+            ->where('offenseType', "cancellation")
+            ->latest()
+            ->first();
+
+            $restOffense = Cancellation::where('restAcc_id', $restaurant->id)->first();
+            $custMainOffenseId = "";
+
+            if($restOffense->blockDays != 0){
+                //check muna kung nag apply yuing restaurant ng offense
+                if($mainOffense != null){
+                    //kapag may exisint offense yung customer
+                    if($mainOffense->offenseValidity != null){
+                        //kapag hindi null meaning nakablock na sya sa part na yon so dapat icompare naten yung dates kung tapos na ba, kung hindi pa then walang mangyayari kung tapos na then block natin ule
+                        if(strtotime($mainOffense->offenseValidity) < strtotime($getDateTimeToday)){
+                            // meanning nag lift na yung ban kaso check muna kung permanent ba or hindi kase kung permanent yan ibigsabihin wala na yan di na magdadagdag pero kung hindi edi mag dagdagtayo
+                            if($mainOffense->offenseDaysBlock != "Permanent"){
+                                //so hindi sya permanent block, so pwede pa natin ule sya mablock
+                                if($restOffense->noOfCancellation == 1){
+                                    //check kung isa lang ininput, kase kung isa lang matik maboblock agad
+                                    if($restOffense->blockDays == "Permanent"){
+                                        //check kung permanent, kase yung ngayon date ang ilalagay
+                                        $createMainOffense = CustOffenseMain::create([
+                                            'customer_id' => $customerReserve->customer_id,
+                                            'restAcc_id' => $restaurant->id,
+                                            'offenseType' => "cancellation",
+                                            'totalOffense' => 1,
+                                            'offenseCapacity' => $restOffense->noOfCancellation,
+                                            'offenseDaysBlock' => $restOffense->blockDays,
+                                            'offenseValidity' => $getDateTimeToday,
+                                        ]);
+                                        $custMainOffenseId = $createMainOffense->id;
+                                    } else {
+                                        //check kung hindi permanent kase bibilangin yung kung ilang days ang ban tas iseset yung date na yon sa offensevalidity
+                                        for($i=1; $i<=$restOffense->blockDays; $i++){
+                                            $finalOffenseValidity = date('Y-m-d H:i:s', strtotime($getDateTimeToday. ' + 1 days'));
+                                            $getDateTimeToday = $finalOffenseValidity;
+                                        }
+                                        $createMainOffense = CustOffenseMain::create([
+                                            'customer_id' => $customerReserve->customer_id,
+                                            'restAcc_id' => $restaurant->id,
+                                            'offenseType' => "cancellation",
+                                            'totalOffense' => 1,
+                                            'offenseCapacity' => $restOffense->noOfCancellation,
+                                            'offenseDaysBlock' => $restOffense->blockDays,
+                                            'offenseValidity' => $finalOffenseValidity,
+                                        ]);
+                                        $custMainOffenseId = $createMainOffense->id;
+                                    }
+                                } else {
+                                    //kung yung noOfcanccellation ay lagpas sa isa then create na tayo tas di pa to block
+                                    $createMainOffense = CustOffenseMain::create([
+                                        'customer_id' => $customerReserve->customer_id,
+                                        'restAcc_id' => $restaurant->id,
+                                        'offenseType' => "cancellation",
+                                        'totalOffense' => 1,
+                                        'offenseCapacity' => $restOffense->noOfCancellation,
+                                        'offenseDaysBlock' => $restOffense->blockDays,
+                                    ]);
+                                    $custMainOffenseId = $createMainOffense->id;
+                                }
+                            } 
+                        } 
+                    } else {
+                        // null sya so meaning di pa sya na bablock
+                        if(($mainOffense->totalOffense + 1) == $mainOffense->offenseCapacity) {
+                            // dito naman syempre mag iinsert tayo ng isa, kapag nag insert tayo ng isa tas nag equal sa capacity ma bablock yon
+                            if($mainOffense->offenseDaysBlock == "Permanent"){
+                                //so kapag permanent yung pagkablock nya ganito mangyayari
+                                CustOffenseMain::where('id', $mainOffense->id)
+                                ->update([
+                                    'totalOffense' => $mainOffense->totalOffense + 1,
+                                    'offenseValidity' => $getDateTimeToday,
+                                ]);
+                                $custMainOffenseId = $mainOffense->id;
+                            } else {
+                                //kung hindi permanent yung pagkablock gawin naten yung pag add ng offenseValidity
+                                for($i=1; $i<=$mainOffense->offenseDaysBlock; $i++){
+                                    $finalOffenseValidity = date('Y-m-d H:i:s', strtotime($getDateTimeToday. ' + 1 days'));
+                                    $getDateTimeToday = $finalOffenseValidity;
+                                }
+                                CustOffenseMain::where('id', $mainOffense->id)
+                                ->update([
+                                    'totalOffense' => $mainOffense->totalOffense + 1,
+                                    'offenseValidity' => $finalOffenseValidity,
+                                ]);
+                                $custMainOffenseId = $mainOffense->id;
+                            }
+                        } else {
+                            //walang block na mangyayari, update lang
+                            CustOffenseMain::where('id', $mainOffense->id)
+                            ->update([
+                                'totalOffense' => $mainOffense->totalOffense + 1,
+                            ]);
+                            $custMainOffenseId = $mainOffense->id;
+                        }
+                    }
+                } else {
+                    //so wala pang offense totally like first time neto, lalagyan naten ng offense
+                    if($restOffense->noOfCancellation == 1){
+                        //check kung isa lang ininput, kase kung isa lang matik maboblock agad
+                        if($restOffense->blockDays == "Permanent"){
+                            //check kung permanent, kase yung ngayon date ang ilalagay
+                            $createMainOffense = CustOffenseMain::create([
+                                'customer_id' => $customerReserve->customer_id,
+                                'restAcc_id' => $restaurant->id,
+                                'offenseType' => "cancellation",
+                                'totalOffense' => 1,
+                                'offenseCapacity' => $restOffense->noOfCancellation,
+                                'offenseDaysBlock' => $restOffense->blockDays,
+                                'offenseValidity' => $getDateTimeToday,
+                            ]);
+                            $custMainOffenseId = $createMainOffense->id;
+                        } else {
+                            //check kung hindi permanent kase bibilangin yung kung ilang days ang ban tas iseset yung date na yon sa offensevalidity
+                            for($i=1; $i<=$restOffense->blockDays; $i++){
+                                $finalOffenseValidity = date('Y-m-d H:i:s', strtotime($getDateTimeToday. ' + 1 days'));
+                                $getDateTimeToday = $finalOffenseValidity;
+                            }
+                            $createMainOffense = CustOffenseMain::create([
+                                'customer_id' => $customerReserve->customer_id,
+                                'restAcc_id' => $restaurant->id,
+                                'offenseType' => "cancellation",
+                                'totalOffense' => 1,
+                                'offenseCapacity' => $restOffense->noOfCancellation,
+                                'offenseDaysBlock' => $restOffense->blockDays,
+                                'offenseValidity' => $finalOffenseValidity,
+                            ]);
+                            $custMainOffenseId = $createMainOffense->id;
+                        }
+                    } else {
+                        //kung yung noOfcanccellation ay lagpas sa isa then create na tayo tas di pa to block
+                        $createMainOffense = CustOffenseMain::create([
+                            'customer_id' => $customerReserve->customer_id,
+                            'restAcc_id' => $restaurant->id,
+                            'offenseType' => "cancellation",
+                            'totalOffense' => 1,
+                            'offenseCapacity' => $restOffense->noOfCancellation,
+                            'offenseDaysBlock' => $restOffense->blockDays,
+                        ]);
+                        $custMainOffenseId = $createMainOffense->id;
+                    }
+                }
+                //lastly add naten to sa database
+                if($custMainOffenseId != ""){
+                    CustOffenseEach::create([
+                        'custOffMain_id' => $custMainOffenseId,
+                        'customer_id' => $customerReserve->customer_id,
+                        'restAcc_id' => $restaurant->id,
+                        'book_id' => $customerReserve->id,
+                        'book_type' => "reserve",
+                        'offenseType' => "cancellation",
+                    ]);
+                }
+            }
+
+
     
             $notif = CustomerNotification::create([
                 'customer_id' => $customerReserve->customer_id,
@@ -1519,6 +1946,7 @@ class CustomerController extends Controller
                 $this->sendFirebaseNotification($to, $notification, $data);
             }
         }
+
 
         return response()->json([
             'status' => "Success"

@@ -29,10 +29,14 @@
                     <div class="uppercase font-bold text-center text-lg py-2 bg-adminViewAccountHeaderColor2">CUSTOMER DETAILS</div>
                     <div class="grid grid-cols-orderCustDetailsGrid items-center py-7 gap-x-5 w-10/12 mx-auto">
                         <div class="self-start">
-                            @if ($customerImage->profileImage == null)
-                                <img src="{{ asset('images/user-default.png') }}" alt="customerImage" class="w-24 h-24 rounded-3xl start">
+                            @if ($customerImage != null)
+                                @if ($customerImage->profileImage == null)
+                                    <img src="{{ asset('images/user-default.png') }}" alt="customerImage" class="w-24 h-24 rounded-3xl start">
+                                @else
+                                    <img src="{{ asset('uploads/customerAccounts/logo/'.$customerImage->id.'/'.$customerImage->profileImage) }}" alt="customerImage" class="w-24 h-24 rounded-3xl start">
+                                @endif
                             @else
-                                <img src="{{ asset('uploads/customerAccounts/logo/'.$customerImage->id.'/'.$customerImage->profileImage) }}" alt="customerImage" class="w-24 h-24 rounded-3xl start">
+                                <img src="{{ asset('images/user-default.png') }}" alt="customerImage" class="w-24 h-24 rounded-3xl start">
                             @endif
                         </div>
                         <div class="grid grid-cols-2">

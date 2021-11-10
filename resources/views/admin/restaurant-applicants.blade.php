@@ -66,7 +66,7 @@
                             <div class="col-span-1">{{ $applicant->rState }}</div>
                             <div class="col-span-1">{{ $applicant->rCity }}</div>
                             <div class="col-span-1">
-                                <a href="/admin/restaurant-applicants/{{ $applicant->id }}" target="_blank"><i class="fas fa-eye"></i></a>
+                                <a href="/admin/restaurant-applicants/{{ $applicant->id }}"><i class="fas fa-eye"></i></a>
                             </div>
                         </div>
                     @else
@@ -79,7 +79,7 @@
                             <div class="col-span-1">{{ $applicant->rState }}</div>
                             <div class="col-span-1">{{ $applicant->rCity }}</div>
                             <div class="col-span-1">
-                                <a href="/admin/restaurant-applicants/{{ $applicant->id }}" target="_blank"><i class="fas fa-eye"></i></a>
+                                <a href="/admin/restaurant-applicants/{{ $applicant->id }}"><i class="fas fa-eye"></i></a>
                             </div>
                         </div>
                     @endif
