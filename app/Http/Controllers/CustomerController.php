@@ -44,25 +44,25 @@ use App\Models\CustomerResetPassword;
 
 class CustomerController extends Controller
 {
-    public $RESTAURANT_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/logo";
-    public $ACCOUNT_NO_IMAGE_PATH = "http://192.168.1.53:8000/images";
-    public $CUSTOMER_IMAGE_PATH = "http://192.168.1.53:8000/uploads/customerAccounts/logo";
-    public $POST_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/post";
-    public $PROMO_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/promo";
-    public $ORDER_SET_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/orderSet";
-    public $FOOD_SET_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/foodSet";
-    public $FOOD_ITEM_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/foodItem";
-    public $RESTAURANT_GCASH_QR_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/gcashQr";
+    // public $RESTAURANT_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/logo";
+    // public $ACCOUNT_NO_IMAGE_PATH = "http://192.168.1.53:8000/images";
+    // public $CUSTOMER_IMAGE_PATH = "http://192.168.1.53:8000/uploads/customerAccounts/logo";
+    // public $POST_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/post";
+    // public $PROMO_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/promo";
+    // public $ORDER_SET_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/orderSet";
+    // public $FOOD_SET_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/foodSet";
+    // public $FOOD_ITEM_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/foodItem";
+    // public $RESTAURANT_GCASH_QR_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/gcashQr";
     
-    // public $RESTAURANT_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/logo";
-    // public $ACCOUNT_NO_IMAGE_PATH = "https://www.samquicksal.com/images";
-    // public $CUSTOMER_IMAGE_PATH = "https://www.samquicksal.com/uploads/customerAccounts/logo";
-    // public $POST_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/post";
-    // public $PROMO_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/promo";
-    // public $ORDER_SET_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/orderSet";
-    // public $FOOD_SET_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/foodSet";
-    // public $FOOD_ITEM_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/foodItem";
-    // public $RESTAURANT_GCASH_QR_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/gcashQr";
+    public $RESTAURANT_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/logo";
+    public $ACCOUNT_NO_IMAGE_PATH = "https://www.samquicksal.com/images";
+    public $CUSTOMER_IMAGE_PATH = "https://www.samquicksal.com/uploads/customerAccounts/logo";
+    public $POST_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/post";
+    public $PROMO_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/promo";
+    public $ORDER_SET_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/orderSet";
+    public $FOOD_SET_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/foodSet";
+    public $FOOD_ITEM_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/foodItem";
+    public $RESTAURANT_GCASH_QR_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/gcashQr";
 
 
     public function sendFirebaseNotification($to, $notification, $data){
