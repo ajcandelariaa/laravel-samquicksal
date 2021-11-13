@@ -29,7 +29,7 @@
     <div class="flex items-center justify-center">
         <div class="w-adminDashboardBox max-w-full shadow-2xl bg-white rounded-2xl my-10">
             <div class="w-3/5 mx-auto pt-10 pb-12">
-            <form action="/restaurant/register2" method="POST" enctype="multipart/form-data">
+            <form action="/restaurant/register" method="POST" enctype="multipart/form-data">
                 @csrf
                 <h3 class="text-xl font-semibold text-center">Tell us about yourself</h3>
                 <div class="mt-5">

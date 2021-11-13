@@ -8,8 +8,9 @@
         </div>
         
         <div class="grid grid-rows-1 gap-y-2">
-            <div class="grid grid-cols-9 pt-4 pb-2 text-center">
+            <div class="grid grid-cols-11 pt-4 pb-2 text-center">
                 <div class="col-span-1">No.</div>
+                <div class="col-span-2">Type</div>
                 <div class="col-span-3">Name</div>
                 <div class="col-span-2">Book Date</div>
                 <div class="col-span-2">Book Time</div>
@@ -23,7 +24,7 @@
                 @endphp
                 @for ($i=0; $i<sizeOf($storeCustomer); $i++)
                     @if ($count % 2 == 0)
-                        <div class="grid grid-cols-9 py-2 text-center bg-manageFoodItemHeaderBgColor">
+                        <div class="grid grid-cols-11 py-2 text-center bg-manageFoodItemHeaderBgColor">
                             <div class="col-span-1">
                                 @if (isset($_GET['page']))
                                     @if ($_GET['page'] == 1)
@@ -35,17 +36,18 @@
                                     {{ $count }}
                                 @endif
                             </div>
+                            <div class="col-span-2">{{ $storeCustomer[$i]['queueType'] }}</div>
                             <div class="col-span-3">{{ $storeCustomer[$i]['custName'] }}</div>
                             <div class="col-span-2">{{ $storeCustomer[$i]['bookDate'] }}</div>
                             <div class="col-span-2">{{ $storeCustomer[$i]['bookTime'] }}</div>
                             <div class="col-span-1">
-                                <a href="#">
+                                <a href="/restaurant/transaction-history/runaway/queue/{{ $storeCustomer[$i]['bookId'] }}">
                                     <i class="fas fa-eye"></i>
                                 </a>
                             </div>
                         </div>
                     @else
-                        <div class="grid grid-cols-9 py-2 text-center bg-white">
+                        <div class="grid grid-cols-11 py-2 text-center bg-white">
                             <div class="col-span-1">
                                 @if (isset($_GET['page']))
                                     @if ($_GET['page'] == 1)
@@ -57,11 +59,12 @@
                                     {{ $count }}
                                 @endif
                             </div>
+                            <div class="col-span-2">{{ $storeCustomer[$i]['queueType'] }}</div>
                             <div class="col-span-3">{{ $storeCustomer[$i]['custName'] }}</div>
                             <div class="col-span-2">{{ $storeCustomer[$i]['bookDate'] }}</div>
                             <div class="col-span-2">{{ $storeCustomer[$i]['bookTime'] }}</div>
                             <div class="col-span-1">
-                                <a href="#">
+                                <a href="/restaurant/transaction-history/runaway/queue/{{ $storeCustomer[$i]['bookId'] }}">
                                     <i class="fas fa-eye"></i>
                                 </a>
                             </div>

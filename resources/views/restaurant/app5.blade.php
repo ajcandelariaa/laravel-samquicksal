@@ -73,13 +73,20 @@
                             <div class="border-multiStepBoxBorder border-manageRestaurantHrColor mt-3"></div>
                         </div>
                         <div class="text-sm mt-5 w-10/12 mx-auto">
-                            <a href="/restaurant/stamp-offenses/customer-offenses" class="ml-5 {{ (request()->is('restaurant/stamp-offenses/customer-offenses*')) ? 'text-manageRestaurantSidebarColorActive' : 'text-manageRestaurantSidebarColor hover:underline' }}"><i class="fas fa-file w-3 mr-3"></i> Customer Offenses</a>
+                            <a href="/restaurant/stamp-offenses/offenses/cancellation" class="ml-5 {{ (request()->is('restaurant/stamp-offenses/offenses*')) ? 'text-manageRestaurantSidebarColorActive' : 'text-manageRestaurantSidebarColor hover:underline' }}"><i class="fas fa-file w-3 mr-3"></i> Customer Offenses</a>
                             <div class="border-multiStepBoxBorder border-manageRestaurantHrColor mt-3"></div>
                         </div>
                     @endif
                 </div>
             </div>
             <div class="bg-gray-200 w-full">
+                @if (request()->is('restaurant/stamp-offenses/offenses*'))
+                    <div class="grid grid-cols-3 gap-x-1 w-full px-1 mt-1 text-center font-bold uppercase">
+                        <a href="/restaurant/stamp-offenses/offenses/cancellation" class="w-full py-3 rounded-sm {{ (request()->is('restaurant/stamp-offenses/offenses/cancellation*')) ? 'bg-tableBgHeader text-submitButton shadow-adminDownloadButton ' : 'bg-white text-manageRestaurantSidebarColor' }}">Cancellation</a>
+                        <a href="/restaurant/stamp-offenses/offenses/no-show" class="w-full py-3 rounded-sm {{ (request()->is('restaurant/stamp-offenses/offenses/no-show*')) ? 'bg-tableBgHeader text-submitButton shadow-adminDownloadButton ' : 'bg-white text-manageRestaurantSidebarColor' }}">No Show</a>
+                        <a href="/restaurant/stamp-offenses/offenses/runaway" class="w-full py-3 rounded-sm {{ (request()->is('restaurant/stamp-offenses/offenses/runaway*')) ? 'bg-tableBgHeader text-submitButton shadow-adminDownloadButton ' : 'bg-white text-manageRestaurantSidebarColor' }}">Runaway</a>
+                    </div>
+                @endif
                 @yield('content')
             </div>
         </div>

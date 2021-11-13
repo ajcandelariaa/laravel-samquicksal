@@ -28,8 +28,6 @@ Route::get('/restaurant', function () {
 Route::get('/restaurant/register', [RestaurantController::class, 'registerView2']);
 Route::post('/restaurant/register', [RestaurantController::class, 'register2']);
 
-Route::get('/restaurant/register2', [RestaurantController::class, 'registerView2']);
-Route::post('/restaurant/register2', [RestaurantController::class, 'register2']);
 Route::get('/restaurant/email-verification/{id}/{status}', [RestaurantController::class, 'verifyEmail']);
 
 Route::middleware(['restaurantLoggedIn'])->group(function(){
@@ -180,7 +178,12 @@ Route::middleware(['restaurantLoggedIn'])->group(function(){
     // -------STAMP & OFFENSES------------ //
     Route::get('/restaurant/stamp-offenses/stamp', [RestaurantController::class, 'soStampList']);
     Route::get('/restaurant/stamp-offenses/stamp/{stamp_id}', [RestaurantController::class, 'soStampView']);
-    Route::get('/restaurant/stamp-offenses/customer-offenses', [RestaurantController::class, 'soCustomerOffenses']);
+    Route::get('/restaurant/stamp-offenses/offenses/cancellation', [RestaurantController::class, 'soCancellationListView']);
+    Route::get('/restaurant/stamp-offenses/offenses/cancellation/{offense_id}', [RestaurantController::class, 'soCancellationPartView']);
+    Route::get('/restaurant/stamp-offenses/offenses/no-show', [RestaurantController::class, 'soNoshowListView']);
+    Route::get('/restaurant/stamp-offenses/offenses/no-show/{offense_id}', [RestaurantController::class, 'soNoshowPartView']);
+    Route::get('/restaurant/stamp-offenses/offenses/runaway', [RestaurantController::class, 'soRunawayListView']);
+    Route::get('/restaurant/stamp-offenses/offenses/runaway/{offense_id}', [RestaurantController::class, 'soRunawayPartView']);
 
 });
 Route::middleware(['restaurantLoggedOut'])->group(function(){

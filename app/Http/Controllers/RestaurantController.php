@@ -134,11 +134,12 @@ class RestaurantController extends Controller
 
 
     // RENDER VIEWS
-    public function soCustomerOffenses(){
+    public function soRunawayListView(){
         $restAcc_id = Session::get('loginId');
         $storeName = array();
         $storeValidity = array();
         $custMainOffenses = CustOffenseMain::where('restAcc_id', $restAcc_id)
+        ->where('offenseType', 'runaway')
         ->orderBy('created_at', 'DESC')
         ->paginate(10);
 
@@ -159,10 +160,1246 @@ class RestaurantController extends Controller
                 
             }
         }
-        return view('restaurant.stampOffenses.customerOffenses', [
+        return view('restaurant.stampOffenses.runaway.runawayListView', [
             'custMainOffenses' => $custMainOffenses,
             'storeName' => $storeName,
             'storeValidity' => $storeValidity,
+        ]);
+    }
+    public function soNoshowListView(){
+        $restAcc_id = Session::get('loginId');
+        $storeName = array();
+        $storeValidity = array();
+        $custMainOffenses = CustOffenseMain::where('restAcc_id', $restAcc_id)
+        ->where('offenseType', 'noshow')
+        ->orderBy('created_at', 'DESC')
+        ->paginate(10);
+
+        if(!$custMainOffenses->isEmpty()){
+            foreach($custMainOffenses as $custMainOffense){
+                $customer = CustomerAccount::where('id', $custMainOffense->customer_id)->first();
+                array_push($storeName, $customer->name);
+
+                if($custMainOffense->offenseValidity != null){
+                    $bookDate = explode('-', date('Y-m-d', strtotime($custMainOffense->offenseValidity)));
+                    $month = $this->convertMonths($bookDate[1]);
+                    $year = $bookDate[0];
+                    $day  = $bookDate[2];
+                    array_push($storeValidity, "$month $day, $year");
+                } else {
+                    array_push($storeValidity, "Not Yet Block");
+                }
+                
+            }
+        }
+        return view('restaurant.stampOffenses.noshow.noshowListView', [
+            'custMainOffenses' => $custMainOffenses,
+            'storeName' => $storeName,
+            'storeValidity' => $storeValidity,
+        ]);
+    }
+    public function soCancellationListView(){
+        $restAcc_id = Session::get('loginId');
+        $storeName = array();
+        $storeValidity = array();
+        $custMainOffenses = CustOffenseMain::where('restAcc_id', $restAcc_id)
+        ->where('offenseType', 'cancellation')
+        ->orderBy('created_at', 'DESC')
+        ->paginate(10);
+
+        if(!$custMainOffenses->isEmpty()){
+            foreach($custMainOffenses as $custMainOffense){
+                $customer = CustomerAccount::where('id', $custMainOffense->customer_id)->first();
+                array_push($storeName, $customer->name);
+
+                if($custMainOffense->offenseValidity != null){
+                    $bookDate = explode('-', date('Y-m-d', strtotime($custMainOffense->offenseValidity)));
+                    $month = $this->convertMonths($bookDate[1]);
+                    $year = $bookDate[0];
+                    $day  = $bookDate[2];
+                    array_push($storeValidity, "$month $day, $year");
+                } else {
+                    array_push($storeValidity, "Not Yet Block");
+                }
+                
+            }
+        }
+        return view('restaurant.stampOffenses.cancellation.cancellationListView', [
+            'custMainOffenses' => $custMainOffenses,
+            'storeName' => $storeName,
+            'storeValidity' => $storeValidity,
+        ]);
+    }
+    public function thCompletedPartRView($book_id){
+        $restAcc_id = Session::get('loginId');
+        $customerReserve = CustomerReserve::where('id', $book_id)->where('restAcc_id', $restAcc_id)->where('status', 'completed')->first();
+        $customerInfo = CustomerAccount::where('id', $customerReserve->customer_id)->first();
+        $orderSet = OrderSet::where('id', $customerReserve->orderSet_id)->first();
+        $orderSetName = $orderSet->orderSetName;
+
+        $countBook1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('customer_id', $customerReserve->customer_id)->count();
+        $countBook2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('customer_id', $customerReserve->customer_id)->count();
+
+        $countCancelled1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('status', 'cancelled')->where('customer_id', $customerReserve->customer_id)->count();
+        $countCancelled2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('status', 'cancelled')->where('customer_id', $customerReserve->customer_id)->count();
+
+        $countNoShow1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('status', 'noShow')->where('customer_id', $customerReserve->customer_id)->count();
+        $countNoShow2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('status', 'noShow')->where('customer_id', $customerReserve->customer_id)->count();
+
+        $countRunaway1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('status', 'runaway')->where('customer_id', $customerReserve->customer_id)->count();
+        $countRunaway2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('status', 'runaway')->where('customer_id', $customerReserve->customer_id)->count();
+        
+        $countQueues = $countBook1 + $countBook2;
+        $countCancelled = $countCancelled1 + $countCancelled2;
+        $countNoShow = $countNoShow1 + $countNoShow2;
+        $countRunaway = $countRunaway1 + $countRunaway2;
+
+        $bookTime = date('g:i a', strtotime($customerReserve->created_at));
+
+        $bookDate = explode('-', date('Y-m-d', strtotime($customerReserve->created_at)));
+        $month1 = $this->convertMonths($bookDate[1]);
+        $year1 = $bookDate[0];
+        $day1  = $bookDate[2];
+
+        $userSinceDateF = "N/A";
+        if($customerInfo != null){
+            $userSinceDate = explode('-', date('Y-m-d', strtotime($customerInfo->created_at)));
+            $month2 = $this->convertMonths($userSinceDate[1]);
+            $year2 = $userSinceDate[0];
+            $day2  = $userSinceDate[2];
+            $userSinceDateF = $month2." ".$day2.", ".$year2;
+        }
+
+        $customerOrdering = CustomerOrdering::where('custBook_id', $customerReserve->id)
+        ->where('restAcc_id', $restAcc_id)
+        ->where('custBookType', 'reserve')
+        ->first();
+        
+        $mainTable = explode(',', $customerOrdering->tableNumbers);
+
+        $cancelledTime = date('g:i a', strtotime($customerReserve->completeDateTime));
+        $cancelledDate = explode('-', date('Y-m-d', strtotime($customerReserve->completeDateTime)));
+        $month3 = $this->convertMonths($cancelledDate[1]);
+        $year3 = $cancelledDate[0];
+        $day3  = $cancelledDate[2];
+        
+        $reserveDate = explode('-', $customerReserve->reserveDate);
+        $month4 = $this->convertMonths($reserveDate[1]);
+        $year4 = $reserveDate[0];
+        $day4 = $reserveDate[2];
+        
+        $customerOrders = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)->where('orderDone', 'Yes')->get();
+        $addOns = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)->where('orderDone', 'Yes')->sum('price');
+        $subTotal = ($orderSet->orderSetPrice * $customerReserve->numberOfPersons) + $addOns;
+
+        $finalReward = "None";
+        $rewardDiscount = null;
+        if($customerReserve->rewardStatus == "Complete" && $customerReserve->rewardClaimed == "Yes"){
+            switch($customerReserve->rewardType){
+                case "DSCN": 
+                    $finalReward = "Discount $customerReserve->rewardInput% in a Total Bill";
+                    $rewardDiscount = ($customerReserve->numberOfPersons * $orderSet->orderSetPrice) * ($customerReserve->rewardInput / 100);
+                    break;
+                case "FRPE": 
+                    $finalReward = "Free $customerReserve->rewardInput person in a group";
+                    $rewardDiscount = $orderSet->orderSetPrice * $customerReserve->rewardInput;
+                    break;
+                case "HLF": 
+                    $finalReward = "Half in the group will be free";
+                    $rewardDiscount = ($customerReserve->numberOfPersons * $orderSet->orderSetPrice) / 2;
+                    break;
+                case "ALL": 
+                    $finalReward = "All people in the group will be free";
+                    $rewardDiscount = $customerReserve->numberOfPersons * $orderSet->orderSetPrice;
+                    break;
+                default: 
+                    $finalReward = "None";
+            }
+        }
+
+        $seniorDiscount = $orderSet->orderSetPrice * ($customerReserve->numberOfPwd * 0.2);
+        $childrenDiscount = $orderSet->orderSetPrice * ($customerReserve->numberOfChildren * ($customerReserve->childrenDiscount / 100));
+        $totalPrice = $subTotal - (
+            $rewardDiscount + 
+            $seniorDiscount + 
+            $childrenDiscount + 
+            $customerReserve->additionalDiscount + 
+            $customerReserve->promoDiscount +
+            $customerReserve->offenseCharges 
+        );
+
+
+        $customerQrAccess = CustomerQrAccess::where('custOrdering_id', $customerOrdering->id)
+        ->where('status', "completed")
+        ->get();
+
+        $finalCustomerAccess = array();
+        if(!$customerQrAccess->isEmpty()){
+            foreach($customerQrAccess as $customerQr){
+                $customer = CustomerAccount::where('id', $customerQr->subCust_id)->first();
+
+                if($customer != null){
+                    $userSinceDate = explode('-', date('Y-m-d', strtotime($customer->created_at)));
+                    $month2 = $this->convertMonths($userSinceDate[1]);
+                    $year2 = $userSinceDate[0];
+                    $day2  = $userSinceDate[2];
+    
+                    array_push($finalCustomerAccess, [
+                        'custId' => $customer->id,
+                        'custName' => $customer->name,
+                        'custImage' => $customer->profileImage,
+                        'tableNumber' => $customerQr->tableNumber,
+                        'userSince' => "$month2 $day2, $year2",
+                    ]);
+                }
+            }
+        }
+
+
+
+        return view('restaurant.transactionHistory.completed.completedViewR', [
+            'customerReserve' => $customerReserve,
+            'customerInfo' => $customerInfo,
+            'countQueues' => $countQueues,
+            'countCancelled' => $countCancelled,
+            'countNoShow' => $countNoShow,
+            'countRunaway' => $countRunaway,
+            'bookTime' => $bookTime,
+            'bookDate' => $month1." ".$day1.", ".$year1,
+            'userSinceDate' => $userSinceDateF,
+            'cancelledDate' => $month3." ".$day3.", ".$year3,
+            'cancelledTime' => $cancelledTime,
+            'finalReward' => $finalReward,
+            'orderSet' => $orderSet,
+            'rewardDiscount' => $rewardDiscount,
+            'seniorDiscount' => $seniorDiscount,
+            'childrenDiscount' => $childrenDiscount,
+            'reserveDate' => $month4." ".$day4.", ".$year4,
+            'customerOrdering' => $customerOrdering,
+            'customerOrders' => $customerOrders,
+            'order' => $orderSetName,
+            'subTotal' => $subTotal,
+            'totalPrice' => $totalPrice,
+            'mainTable' => $mainTable[0],
+            
+            'finalCustomerAccess' => $finalCustomerAccess,
+        ]);
+    }
+    public function thCompletedPartQView($book_id){
+        $restAcc_id = Session::get('loginId');
+        $customerQueue = CustomerQueue::where('id', $book_id)->where('restAcc_id', $restAcc_id)->where('status', 'completed')->first();
+        $customerInfo = CustomerAccount::where('id', $customerQueue->customer_id)->first();
+        $orderSet = OrderSet::where('id', $customerQueue->orderSet_id)->first();
+        $orderSetName = $orderSet->orderSetName;
+
+        $countBook1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('customer_id', $customerQueue->customer_id)->count();
+        $countBook2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('customer_id', $customerQueue->customer_id)->count();
+
+        $countCancelled1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('status', 'cancelled')->where('customer_id', $customerQueue->customer_id)->count();
+        $countCancelled2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('status', 'cancelled')->where('customer_id', $customerQueue->customer_id)->count();
+
+        $countNoShow1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('status', 'noShow')->where('customer_id', $customerQueue->customer_id)->count();
+        $countNoShow2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('status', 'noShow')->where('customer_id', $customerQueue->customer_id)->count();
+
+        $countRunaway1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('status', 'runaway')->where('customer_id', $customerQueue->customer_id)->count();
+        $countRunaway2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('status', 'runaway')->where('customer_id', $customerQueue->customer_id)->count();
+        
+        $countQueues = $countBook1 + $countBook2;
+        $countCancelled = $countCancelled1 + $countCancelled2;
+        $countNoShow = $countNoShow1 + $countNoShow2;
+        $countRunaway = $countRunaway1 + $countRunaway2;
+
+        $bookTime = date('g:i a', strtotime($customerQueue->created_at));
+
+        $bookDate = explode('-', date('Y-m-d', strtotime($customerQueue->created_at)));
+        $month1 = $this->convertMonths($bookDate[1]);
+        $year1 = $bookDate[0];
+        $day1  = $bookDate[2];
+
+        $userSinceDateF = "N/A";
+        if($customerInfo != null){
+            $userSinceDate = explode('-', date('Y-m-d', strtotime($customerInfo->created_at)));
+            $month2 = $this->convertMonths($userSinceDate[1]);
+            $year2 = $userSinceDate[0];
+            $day2  = $userSinceDate[2];
+            $userSinceDateF = $month2." ".$day2.", ".$year2;
+        }
+
+        $customerOrdering = CustomerOrdering::where('custBook_id', $customerQueue->id)
+        ->where('restAcc_id', $restAcc_id)
+        ->where('custBookType', 'queue')
+        ->first();
+
+        
+        $mainTable = explode(',', $customerOrdering->tableNumbers);
+
+        $cancelledTime = date('g:i a', strtotime($customerQueue->completeDateTime));
+        $cancelledDate = explode('-', date('Y-m-d', strtotime($customerQueue->completeDateTime)));
+        $month3 = $this->convertMonths($cancelledDate[1]);
+        $year3 = $cancelledDate[0];
+        $day3  = $cancelledDate[2];
+        
+        $customerOrders = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)->where('orderDone', 'Yes')->get();
+        $addOns = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)->where('orderDone', 'Yes')->sum('price');
+        $subTotal = ($orderSet->orderSetPrice * $customerQueue->numberOfPersons) + $addOns;
+
+        $finalReward = "None";
+        $rewardDiscount = null;
+        if($customerQueue->rewardStatus == "Complete" && $customerQueue->rewardClaimed == "Yes"){
+            switch($customerQueue->rewardType){
+                case "DSCN": 
+                    $finalReward = "Discount $customerQueue->rewardInput% in a Total Bill";
+                    $rewardDiscount = ($customerQueue->numberOfPersons * $orderSet->orderSetPrice) * ($customerQueue->rewardInput / 100);
+                    break;
+                case "FRPE": 
+                    $finalReward = "Free $customerQueue->rewardInput person in a group";
+                    $rewardDiscount = $orderSet->orderSetPrice * $customerQueue->rewardInput;
+                    break;
+                case "HLF": 
+                    $finalReward = "Half in the group will be free";
+                    $rewardDiscount = ($customerQueue->numberOfPersons * $orderSet->orderSetPrice) / 2;
+                    break;
+                case "ALL": 
+                    $finalReward = "All people in the group will be free";
+                    $rewardDiscount = $customerQueue->numberOfPersons * $orderSet->orderSetPrice;
+                    break;
+                default: 
+                    $finalReward = "None";
+            }
+        }
+
+        $seniorDiscount = $orderSet->orderSetPrice * ($customerQueue->numberOfPwd * 0.2);
+        $childrenDiscount = $orderSet->orderSetPrice * ($customerQueue->numberOfChildren * ($customerQueue->childrenDiscount / 100));
+        $totalPrice = $subTotal - (
+            $rewardDiscount + 
+            $seniorDiscount + 
+            $childrenDiscount + 
+            $customerQueue->additionalDiscount + 
+            $customerQueue->promoDiscount +
+            $customerQueue->offenseCharges 
+        );
+
+
+        $customerQrAccess = CustomerQrAccess::where('custOrdering_id', $customerOrdering->id)
+        ->where('status', "completed")
+        ->get();
+
+        $finalCustomerAccess = array();
+        if(!$customerQrAccess->isEmpty()){
+            foreach($customerQrAccess as $customerQr){
+                $customer = CustomerAccount::where('id', $customerQr->subCust_id)->first();
+
+                if($customer != null){
+                    $userSinceDate = explode('-', date('Y-m-d', strtotime($customer->created_at)));
+                    $month2 = $this->convertMonths($userSinceDate[1]);
+                    $year2 = $userSinceDate[0];
+                    $day2  = $userSinceDate[2];
+    
+                    array_push($finalCustomerAccess, [
+                        'custId' => $customer->id,
+                        'custName' => $customer->name,
+                        'custImage' => $customer->profileImage,
+                        'tableNumber' => $customerQr->tableNumber,
+                        'userSince' => "$month2 $day2, $year2",
+                    ]);
+                }
+            }
+        }
+
+
+
+        return view('restaurant.transactionHistory.completed.completedViewQ', [
+            'customerQueue' => $customerQueue,
+            'customerInfo' => $customerInfo,
+            'countQueues' => $countQueues,
+            'countCancelled' => $countCancelled,
+            'countNoShow' => $countNoShow,
+            'countRunaway' => $countRunaway,
+            'bookTime' => $bookTime,
+            'bookDate' => $month1." ".$day1.", ".$year1,
+            'userSinceDate' => $userSinceDateF,
+            'cancelledDate' => $month3." ".$day3.", ".$year3,
+            'cancelledTime' => $cancelledTime,
+            'finalReward' => $finalReward,
+            'orderSet' => $orderSet,
+            'rewardDiscount' => $rewardDiscount,
+            'seniorDiscount' => $seniorDiscount,
+            'childrenDiscount' => $childrenDiscount,
+            
+            'customerOrdering' => $customerOrdering,
+            'customerOrders' => $customerOrders,
+            'order' => $orderSetName,
+            'subTotal' => $subTotal,
+            'totalPrice' => $totalPrice,
+            'mainTable' => $mainTable[0],
+            
+            'finalCustomerAccess' => $finalCustomerAccess,
+        ]);
+    }
+    public function thRunawayPartRView($book_id){
+        $restAcc_id = Session::get('loginId');
+        $customerReserve = CustomerReserve::where('id', $book_id)->where('restAcc_id', $restAcc_id)->where('status', 'runaway')->first();
+        $customerInfo = CustomerAccount::where('id', $customerReserve->customer_id)->first();
+        $orderSet = OrderSet::where('id', $customerReserve->orderSet_id)->first();
+        $orderSetName = $orderSet->orderSetName;
+
+        $countBook1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('customer_id', $customerReserve->customer_id)->count();
+        $countBook2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('customer_id', $customerReserve->customer_id)->count();
+
+        $countCancelled1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('status', 'cancelled')->where('customer_id', $customerReserve->customer_id)->count();
+        $countCancelled2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('status', 'cancelled')->where('customer_id', $customerReserve->customer_id)->count();
+
+        $countNoShow1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('status', 'noShow')->where('customer_id', $customerReserve->customer_id)->count();
+        $countNoShow2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('status', 'noShow')->where('customer_id', $customerReserve->customer_id)->count();
+
+        $countRunaway1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('status', 'runaway')->where('customer_id', $customerReserve->customer_id)->count();
+        $countRunaway2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('status', 'runaway')->where('customer_id', $customerReserve->customer_id)->count();
+        
+        $countQueues = $countBook1 + $countBook2;
+        $countCancelled = $countCancelled1 + $countCancelled2;
+        $countNoShow = $countNoShow1 + $countNoShow2;
+        $countRunaway = $countRunaway1 + $countRunaway2;
+
+        $bookTime = date('g:i a', strtotime($customerReserve->created_at));
+
+        $bookDate = explode('-', date('Y-m-d', strtotime($customerReserve->created_at)));
+        $month1 = $this->convertMonths($bookDate[1]);
+        $year1 = $bookDate[0];
+        $day1  = $bookDate[2];
+
+        $userSinceDateF = "N/A";
+        if($customerInfo != null){
+            $userSinceDate = explode('-', date('Y-m-d', strtotime($customerInfo->created_at)));
+            $month2 = $this->convertMonths($userSinceDate[1]);
+            $year2 = $userSinceDate[0];
+            $day2  = $userSinceDate[2];
+            $userSinceDateF = $month2." ".$day2.", ".$year2;
+        }
+
+        $customerOrdering = CustomerOrdering::where('custBook_id', $customerReserve->id)
+        ->where('restAcc_id', $restAcc_id)
+        ->where('custBookType', 'reserve')
+        ->first();
+        
+        $mainTable = explode(',', $customerOrdering->tableNumbers);
+
+        $cancelledTime = date('g:i a', strtotime($customerReserve->runawayDateTime));
+        $cancelledDate = explode('-', date('Y-m-d', strtotime($customerReserve->runawayDateTime)));
+        $month3 = $this->convertMonths($cancelledDate[1]);
+        $year3 = $cancelledDate[0];
+        $day3  = $cancelledDate[2];
+        
+        $reserveDate = explode('-', $customerReserve->reserveDate);
+        $month4 = $this->convertMonths($reserveDate[1]);
+        $year4 = $reserveDate[0];
+        $day4 = $reserveDate[2];
+        
+        $customerOrders = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)->where('orderDone', 'Yes')->get();
+        $addOns = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)->where('orderDone', 'Yes')->sum('price');
+        $subTotal = ($orderSet->orderSetPrice * $customerReserve->numberOfPersons) + $addOns;
+
+        $finalReward = "None";
+        $rewardDiscount = null;
+        if($customerReserve->rewardStatus == "Complete" && $customerReserve->rewardClaimed == "Yes"){
+            switch($customerReserve->rewardType){
+                case "DSCN": 
+                    $finalReward = "Discount $customerReserve->rewardInput% in a Total Bill";
+                    $rewardDiscount = ($customerReserve->numberOfPersons * $orderSet->orderSetPrice) * ($customerReserve->rewardInput / 100);
+                    break;
+                case "FRPE": 
+                    $finalReward = "Free $customerReserve->rewardInput person in a group";
+                    $rewardDiscount = $orderSet->orderSetPrice * $customerReserve->rewardInput;
+                    break;
+                case "HLF": 
+                    $finalReward = "Half in the group will be free";
+                    $rewardDiscount = ($customerReserve->numberOfPersons * $orderSet->orderSetPrice) / 2;
+                    break;
+                case "ALL": 
+                    $finalReward = "All people in the group will be free";
+                    $rewardDiscount = $customerReserve->numberOfPersons * $orderSet->orderSetPrice;
+                    break;
+                default: 
+                    $finalReward = "None";
+            }
+        }
+
+        $seniorDiscount = $orderSet->orderSetPrice * ($customerReserve->numberOfPwd * 0.2);
+        $childrenDiscount = $orderSet->orderSetPrice * ($customerReserve->numberOfChildren * ($customerReserve->childrenDiscount / 100));
+        $totalPrice = $subTotal - (
+            $rewardDiscount + 
+            $seniorDiscount + 
+            $childrenDiscount + 
+            $customerReserve->additionalDiscount + 
+            $customerReserve->promoDiscount +
+            $customerReserve->offenseCharges 
+        );
+
+
+        $customerQrAccess = CustomerQrAccess::where('custOrdering_id', $customerOrdering->id)
+        ->where('status', "completed")
+        ->get();
+
+        $finalCustomerAccess = array();
+        if(!$customerQrAccess->isEmpty()){
+            foreach($customerQrAccess as $customerQr){
+                $customer = CustomerAccount::where('id', $customerQr->subCust_id)->first();
+
+                if($customer != null){
+                    $userSinceDate = explode('-', date('Y-m-d', strtotime($customer->created_at)));
+                    $month2 = $this->convertMonths($userSinceDate[1]);
+                    $year2 = $userSinceDate[0];
+                    $day2  = $userSinceDate[2];
+    
+                    array_push($finalCustomerAccess, [
+                        'custId' => $customer->id,
+                        'custName' => $customer->name,
+                        'custImage' => $customer->profileImage,
+                        'tableNumber' => $customerQr->tableNumber,
+                        'userSince' => "$month2 $day2, $year2",
+                    ]);
+                }
+            }
+        }
+
+
+
+        return view('restaurant.transactionHistory.runaway.runawayViewR', [
+            'customerReserve' => $customerReserve,
+            'customerInfo' => $customerInfo,
+            'countQueues' => $countQueues,
+            'countCancelled' => $countCancelled,
+            'countNoShow' => $countNoShow,
+            'countRunaway' => $countRunaway,
+            'bookTime' => $bookTime,
+            'bookDate' => $month1." ".$day1.", ".$year1,
+            'userSinceDate' => $userSinceDateF,
+            'cancelledDate' => $month3." ".$day3.", ".$year3,
+            'cancelledTime' => $cancelledTime,
+            'finalReward' => $finalReward,
+            'orderSet' => $orderSet,
+            'rewardDiscount' => $rewardDiscount,
+            'seniorDiscount' => $seniorDiscount,
+            'childrenDiscount' => $childrenDiscount,
+            'reserveDate' => $month4." ".$day4.", ".$year4,
+            'customerOrdering' => $customerOrdering,
+            'customerOrders' => $customerOrders,
+            'order' => $orderSetName,
+            'subTotal' => $subTotal,
+            'totalPrice' => $totalPrice,
+            'mainTable' => $mainTable[0],
+            
+            'finalCustomerAccess' => $finalCustomerAccess,
+        ]);
+    }
+    public function thRunawayPartQView($book_id){
+        $restAcc_id = Session::get('loginId');
+        $customerQueue = CustomerQueue::where('id', $book_id)->where('restAcc_id', $restAcc_id)->where('status', 'runaway')->first();
+        $customerInfo = CustomerAccount::where('id', $customerQueue->customer_id)->first();
+        $orderSet = OrderSet::where('id', $customerQueue->orderSet_id)->first();
+        $orderSetName = $orderSet->orderSetName;
+
+        $countBook1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('customer_id', $customerQueue->customer_id)->count();
+        $countBook2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('customer_id', $customerQueue->customer_id)->count();
+
+        $countCancelled1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('status', 'cancelled')->where('customer_id', $customerQueue->customer_id)->count();
+        $countCancelled2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('status', 'cancelled')->where('customer_id', $customerQueue->customer_id)->count();
+
+        $countNoShow1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('status', 'noShow')->where('customer_id', $customerQueue->customer_id)->count();
+        $countNoShow2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('status', 'noShow')->where('customer_id', $customerQueue->customer_id)->count();
+
+        $countRunaway1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('status', 'runaway')->where('customer_id', $customerQueue->customer_id)->count();
+        $countRunaway2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('status', 'runaway')->where('customer_id', $customerQueue->customer_id)->count();
+        
+        $countQueues = $countBook1 + $countBook2;
+        $countCancelled = $countCancelled1 + $countCancelled2;
+        $countNoShow = $countNoShow1 + $countNoShow2;
+        $countRunaway = $countRunaway1 + $countRunaway2;
+
+        $bookTime = date('g:i a', strtotime($customerQueue->created_at));
+
+        $bookDate = explode('-', date('Y-m-d', strtotime($customerQueue->created_at)));
+        $month1 = $this->convertMonths($bookDate[1]);
+        $year1 = $bookDate[0];
+        $day1  = $bookDate[2];
+
+        $userSinceDateF = "N/A";
+        if($customerInfo != null){
+            $userSinceDate = explode('-', date('Y-m-d', strtotime($customerInfo->created_at)));
+            $month2 = $this->convertMonths($userSinceDate[1]);
+            $year2 = $userSinceDate[0];
+            $day2  = $userSinceDate[2];
+            $userSinceDateF = $month2." ".$day2.", ".$year2;
+        }
+
+        $customerOrdering = CustomerOrdering::where('custBook_id', $customerQueue->id)
+        ->where('restAcc_id', $restAcc_id)
+        ->where('custBookType', 'queue')
+        ->first();
+
+        
+        $mainTable = explode(',', $customerOrdering->tableNumbers);
+
+        $cancelledTime = date('g:i a', strtotime($customerQueue->runawayDateTime));
+        $cancelledDate = explode('-', date('Y-m-d', strtotime($customerQueue->runawayDateTime)));
+        $month3 = $this->convertMonths($cancelledDate[1]);
+        $year3 = $cancelledDate[0];
+        $day3  = $cancelledDate[2];
+        
+        $customerOrders = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)->where('orderDone', 'Yes')->get();
+        $addOns = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)->where('orderDone', 'Yes')->sum('price');
+        $subTotal = ($orderSet->orderSetPrice * $customerQueue->numberOfPersons) + $addOns;
+
+        $finalReward = "None";
+        $rewardDiscount = null;
+        if($customerQueue->rewardStatus == "Complete" && $customerQueue->rewardClaimed == "Yes"){
+            switch($customerQueue->rewardType){
+                case "DSCN": 
+                    $finalReward = "Discount $customerQueue->rewardInput% in a Total Bill";
+                    $rewardDiscount = ($customerQueue->numberOfPersons * $orderSet->orderSetPrice) * ($customerQueue->rewardInput / 100);
+                    break;
+                case "FRPE": 
+                    $finalReward = "Free $customerQueue->rewardInput person in a group";
+                    $rewardDiscount = $orderSet->orderSetPrice * $customerQueue->rewardInput;
+                    break;
+                case "HLF": 
+                    $finalReward = "Half in the group will be free";
+                    $rewardDiscount = ($customerQueue->numberOfPersons * $orderSet->orderSetPrice) / 2;
+                    break;
+                case "ALL": 
+                    $finalReward = "All people in the group will be free";
+                    $rewardDiscount = $customerQueue->numberOfPersons * $orderSet->orderSetPrice;
+                    break;
+                default: 
+                    $finalReward = "None";
+            }
+        }
+
+        $seniorDiscount = $orderSet->orderSetPrice * ($customerQueue->numberOfPwd * 0.2);
+        $childrenDiscount = $orderSet->orderSetPrice * ($customerQueue->numberOfChildren * ($customerQueue->childrenDiscount / 100));
+        $totalPrice = $subTotal - (
+            $rewardDiscount + 
+            $seniorDiscount + 
+            $childrenDiscount + 
+            $customerQueue->additionalDiscount + 
+            $customerQueue->promoDiscount +
+            $customerQueue->offenseCharges 
+        );
+
+
+        $customerQrAccess = CustomerQrAccess::where('custOrdering_id', $customerOrdering->id)
+        ->where('status', "completed")
+        ->get();
+
+        $finalCustomerAccess = array();
+        if(!$customerQrAccess->isEmpty()){
+            foreach($customerQrAccess as $customerQr){
+                $customer = CustomerAccount::where('id', $customerQr->subCust_id)->first();
+
+                if($customer != null){
+                    $userSinceDate = explode('-', date('Y-m-d', strtotime($customer->created_at)));
+                    $month2 = $this->convertMonths($userSinceDate[1]);
+                    $year2 = $userSinceDate[0];
+                    $day2  = $userSinceDate[2];
+    
+                    array_push($finalCustomerAccess, [
+                        'custId' => $customer->id,
+                        'custName' => $customer->name,
+                        'custImage' => $customer->profileImage,
+                        'tableNumber' => $customerQr->tableNumber,
+                        'userSince' => "$month2 $day2, $year2",
+                    ]);
+                }
+            }
+        }
+
+
+
+        return view('restaurant.transactionHistory.runaway.runawayViewQ', [
+            'customerQueue' => $customerQueue,
+            'customerInfo' => $customerInfo,
+            'countQueues' => $countQueues,
+            'countCancelled' => $countCancelled,
+            'countNoShow' => $countNoShow,
+            'countRunaway' => $countRunaway,
+            'bookTime' => $bookTime,
+            'bookDate' => $month1." ".$day1.", ".$year1,
+            'userSinceDate' => $userSinceDateF,
+            'cancelledDate' => $month3." ".$day3.", ".$year3,
+            'cancelledTime' => $cancelledTime,
+            'finalReward' => $finalReward,
+            'orderSet' => $orderSet,
+            'rewardDiscount' => $rewardDiscount,
+            'seniorDiscount' => $seniorDiscount,
+            'childrenDiscount' => $childrenDiscount,
+            
+            'customerOrdering' => $customerOrdering,
+            'customerOrders' => $customerOrders,
+            'order' => $orderSetName,
+            'subTotal' => $subTotal,
+            'totalPrice' => $totalPrice,
+            'mainTable' => $mainTable[0],
+            
+            'finalCustomerAccess' => $finalCustomerAccess,
+        ]);
+    }
+    public function thNoshowPartRView($book_id){
+        $restAcc_id = Session::get('loginId');
+        $customerReserve = CustomerReserve::where('id', $book_id)->where('restAcc_id', $restAcc_id)->where('status', 'noShow')->first();
+        $customerInfo = CustomerAccount::where('id', $customerReserve->customer_id)->first();
+        $orderSet = OrderSet::where('id', $customerReserve->orderSet_id)->first();
+
+        $countBook1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('customer_id', $customerReserve->customer_id)->count();
+        $countBook2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('customer_id', $customerReserve->customer_id)->count();
+
+        $countCancelled1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('status', 'cancelled')->where('customer_id', $customerReserve->customer_id)->count();
+        $countCancelled2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('status', 'cancelled')->where('customer_id', $customerReserve->customer_id)->count();
+
+        $countNoShow1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('status', 'noShow')->where('customer_id', $customerReserve->customer_id)->count();
+        $countNoShow2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('status', 'noShow')->where('customer_id', $customerReserve->customer_id)->count();
+
+        $countRunaway1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('status', 'runaway')->where('customer_id', $customerReserve->customer_id)->count();
+        $countRunaway2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('status', 'runaway')->where('customer_id', $customerReserve->customer_id)->count();
+
+        $countQueues = $countBook1 + $countBook2;
+        $countCancelled = $countCancelled1 + $countCancelled2;
+        $countNoShow = $countNoShow1 + $countNoShow2;
+        $countRunaway = $countRunaway1 + $countRunaway2;
+
+        $bookTime = date('g:i a', strtotime($customerReserve->created_at));
+
+        $bookDate = explode('-', date('Y-m-d', strtotime($customerReserve->created_at)));
+        $month1 = $this->convertMonths($bookDate[1]);
+        $year1 = $bookDate[0];
+        $day1  = $bookDate[2];
+
+        $userSinceDate = explode('-', date('Y-m-d', strtotime($customerInfo->created_at)));
+        $month2 = $this->convertMonths($userSinceDate[1]);
+        $year2 = $userSinceDate[0];
+        $day2  = $userSinceDate[2];
+
+        $cancelledTime = date('g:i a', strtotime($customerReserve->updated_at));
+        $cancelledDate = explode('-', date('Y-m-d', strtotime($customerReserve->updated_at)));
+        $month3 = $this->convertMonths($cancelledDate[1]);
+        $year3 = $cancelledDate[0];
+        $day3  = $cancelledDate[2];
+        
+        $reserveDate = explode('-', $customerReserve->reserveDate);
+        $month4 = $this->convertMonths($reserveDate[1]);
+        $year4 = $reserveDate[0];
+        $day4 = $reserveDate[2];
+
+        $finalReward = "None";
+        $rewardDiscount = null;
+        if($customerReserve->rewardStatus == "Complete" && $customerReserve->rewardClaimed == "Yes"){
+            switch($customerReserve->rewardType){
+                case "DSCN": 
+                    $finalReward = "Discount $customerReserve->rewardInput% in a Total Bill";
+                    $rewardDiscount = ($customerReserve->numberOfPersons * $orderSet->orderSetPrice) * ($customerReserve->rewardInput / 100);
+                    break;
+                case "FRPE": 
+                    $finalReward = "Free $customerReserve->rewardInput person in a group";
+                    $rewardDiscount = $orderSet->orderSetPrice * $customerReserve->rewardInput;
+                    break;
+                case "HLF": 
+                    $finalReward = "Half in the group will be free";
+                    $rewardDiscount = ($customerReserve->numberOfPersons * $orderSet->orderSetPrice) / 2;
+                    break;
+                case "ALL": 
+                    $finalReward = "All people in the group will be free";
+                    $rewardDiscount = $customerReserve->numberOfPersons * $orderSet->orderSetPrice;
+                    break;
+                default: 
+                    $finalReward = "None";
+            }
+        }
+
+        $seniorDiscount = $orderSet->orderSetPrice * ($customerReserve->numberOfPwd * 0.2);
+        $childrenDiscount = $orderSet->orderSetPrice * $customerReserve->numberOfChildren;
+
+
+        return view('restaurant.transactionHistory.noshow.noshowViewR', [
+            'customerReserve' => $customerReserve,
+            'customerInfo' => $customerInfo,
+            'countQueues' => $countQueues,
+            'countCancelled' => $countCancelled,
+            'countNoShow' => $countNoShow,
+            'countRunaway' => $countRunaway,
+            'bookTime' => $bookTime,
+            'bookDate' => $month1." ".$day1.", ".$year1,
+            'userSinceDate' => $month2." ".$day2.", ".$year2,
+            'cancelledDate' => $month3." ".$day3.", ".$year3,
+            'cancelledTime' => $cancelledTime,
+            'reserveDate' => $month4." ".$day4.", ".$year4,
+            'finalReward' => $finalReward,
+            'orderSet' => $orderSet,
+            'rewardDiscount' => $rewardDiscount,
+            'seniorDiscount' => $seniorDiscount,
+            'childrenDiscount' => $childrenDiscount,
+        ]);
+    }
+    public function thNoshowPartQView($book_id){
+        $restAcc_id = Session::get('loginId');
+        $customerQueue = CustomerQueue::where('id', $book_id)->where('restAcc_id', $restAcc_id)->where('status', 'noShow')->first();
+        $customerInfo = CustomerAccount::where('id', $customerQueue->customer_id)->first();
+        $orderSet = OrderSet::where('id', $customerQueue->orderSet_id)->first();
+
+        $countBook1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('customer_id', $customerQueue->customer_id)->count();
+        $countBook2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('customer_id', $customerQueue->customer_id)->count();
+
+        $countCancelled1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('status', 'cancelled')->where('customer_id', $customerQueue->customer_id)->count();
+        $countCancelled2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('status', 'cancelled')->where('customer_id', $customerQueue->customer_id)->count();
+
+        $countNoShow1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('status', 'noShow')->where('customer_id', $customerQueue->customer_id)->count();
+        $countNoShow2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('status', 'noShow')->where('customer_id', $customerQueue->customer_id)->count();
+
+        $countRunaway1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('status', 'runaway')->where('customer_id', $customerQueue->customer_id)->count();
+        $countRunaway2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('status', 'runaway')->where('customer_id', $customerQueue->customer_id)->count();
+        
+        $countQueues = $countBook1 + $countBook2;
+        $countCancelled = $countCancelled1 + $countCancelled2;
+        $countNoShow = $countNoShow1 + $countNoShow2;
+        $countRunaway = $countRunaway1 + $countRunaway2;
+
+        $bookTime = date('g:i a', strtotime($customerQueue->created_at));
+
+        $bookDate = explode('-', date('Y-m-d', strtotime($customerQueue->created_at)));
+        $month1 = $this->convertMonths($bookDate[1]);
+        $year1 = $bookDate[0];
+        $day1  = $bookDate[2];
+
+        $userSinceDateF = "N/A";
+        if($customerInfo != null){
+            $userSinceDate = explode('-', date('Y-m-d', strtotime($customerInfo->created_at)));
+            $month2 = $this->convertMonths($userSinceDate[1]);
+            $year2 = $userSinceDate[0];
+            $day2  = $userSinceDate[2];
+            $userSinceDateF = $month2." ".$day2.", ".$year2;
+        }
+
+        $cancelledTime = date('g:i a', strtotime($customerQueue->updated_at));
+        $cancelledDate = explode('-', date('Y-m-d', strtotime($customerQueue->updated_at)));
+        $month3 = $this->convertMonths($cancelledDate[1]);
+        $year3 = $cancelledDate[0];
+        $day3  = $cancelledDate[2];
+
+        $finalReward = "None";
+        $rewardDiscount = null;
+        if($customerQueue->rewardStatus == "Complete" && $customerQueue->rewardClaimed == "Yes"){
+            switch($customerQueue->rewardType){
+                case "DSCN": 
+                    $finalReward = "Discount $customerQueue->rewardInput% in a Total Bill";
+                    $rewardDiscount = ($customerQueue->numberOfPersons * $orderSet->orderSetPrice) * ($customerQueue->rewardInput / 100);
+                    break;
+                case "FRPE": 
+                    $finalReward = "Free $customerQueue->rewardInput person in a group";
+                    $rewardDiscount = $orderSet->orderSetPrice * $customerQueue->rewardInput;
+                    break;
+                case "HLF": 
+                    $finalReward = "Half in the group will be free";
+                    $rewardDiscount = ($customerQueue->numberOfPersons * $orderSet->orderSetPrice) / 2;
+                    break;
+                case "ALL": 
+                    $finalReward = "All people in the group will be free";
+                    $rewardDiscount = $customerQueue->numberOfPersons * $orderSet->orderSetPrice;
+                    break;
+                default: 
+                    $finalReward = "None";
+            }
+        }
+
+        $seniorDiscount = $orderSet->orderSetPrice * ($customerQueue->numberOfPwd * 0.2);
+        $childrenDiscount = $orderSet->orderSetPrice * $customerQueue->numberOfChildren;
+
+        return view('restaurant.transactionHistory.noshow.noshowViewQ', [
+            'customerQueue' => $customerQueue,
+            'customerInfo' => $customerInfo,
+            'countQueues' => $countQueues,
+            'countCancelled' => $countCancelled,
+            'countNoShow' => $countNoShow,
+            'countRunaway' => $countRunaway,
+            'bookTime' => $bookTime,
+            'bookDate' => $month1." ".$day1.", ".$year1,
+            'userSinceDate' => $userSinceDateF,
+            'cancelledDate' => $month3." ".$day3.", ".$year3,
+            'cancelledTime' => $cancelledTime,
+            'finalReward' => $finalReward,
+            'orderSet' => $orderSet,
+            'rewardDiscount' => $rewardDiscount,
+            'seniorDiscount' => $seniorDiscount,
+            'childrenDiscount' => $childrenDiscount,
+        ]);
+
+    }
+    public function thDeclinedPartRView($book_id){
+        $restAcc_id = Session::get('loginId');
+        $customerReserve = CustomerReserve::where('id', $book_id)->where('restAcc_id', $restAcc_id)->where('status', 'declined')->first();
+        $customerInfo = CustomerAccount::where('id', $customerReserve->customer_id)->first();
+        $orderSet = OrderSet::where('id', $customerReserve->orderSet_id)->first();
+
+        $countBook1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('customer_id', $customerReserve->customer_id)->count();
+        $countBook2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('customer_id', $customerReserve->customer_id)->count();
+
+        $countCancelled1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('status', 'cancelled')->where('customer_id', $customerReserve->customer_id)->count();
+        $countCancelled2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('status', 'cancelled')->where('customer_id', $customerReserve->customer_id)->count();
+
+        $countNoShow1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('status', 'noShow')->where('customer_id', $customerReserve->customer_id)->count();
+        $countNoShow2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('status', 'noShow')->where('customer_id', $customerReserve->customer_id)->count();
+
+        $countRunaway1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('status', 'runaway')->where('customer_id', $customerReserve->customer_id)->count();
+        $countRunaway2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('status', 'runaway')->where('customer_id', $customerReserve->customer_id)->count();
+
+        $countQueues = $countBook1 + $countBook2;
+        $countCancelled = $countCancelled1 + $countCancelled2;
+        $countNoShow = $countNoShow1 + $countNoShow2;
+        $countRunaway = $countRunaway1 + $countRunaway2;
+
+        $bookTime = date('g:i a', strtotime($customerReserve->created_at));
+
+        $bookDate = explode('-', date('Y-m-d', strtotime($customerReserve->created_at)));
+        $month1 = $this->convertMonths($bookDate[1]);
+        $year1 = $bookDate[0];
+        $day1  = $bookDate[2];
+
+        $userSinceDate = explode('-', date('Y-m-d', strtotime($customerInfo->created_at)));
+        $month2 = $this->convertMonths($userSinceDate[1]);
+        $year2 = $userSinceDate[0];
+        $day2  = $userSinceDate[2];
+
+        $cancelledTime = date('g:i a', strtotime($customerReserve->declinedDateTime));
+        $cancelledDate = explode('-', date('Y-m-d', strtotime($customerReserve->declinedDateTime)));
+        $month3 = $this->convertMonths($cancelledDate[1]);
+        $year3 = $cancelledDate[0];
+        $day3  = $cancelledDate[2];
+        
+        $reserveDate = explode('-', $customerReserve->reserveDate);
+        $month4 = $this->convertMonths($reserveDate[1]);
+        $year4 = $reserveDate[0];
+        $day4 = $reserveDate[2];
+
+        $finalReward = "None";
+        $rewardDiscount = null;
+        if($customerReserve->rewardStatus == "Complete" && $customerReserve->rewardClaimed == "Yes"){
+            switch($customerReserve->rewardType){
+                case "DSCN": 
+                    $finalReward = "Discount $customerReserve->rewardInput% in a Total Bill";
+                    $rewardDiscount = ($customerReserve->numberOfPersons * $orderSet->orderSetPrice) * ($customerReserve->rewardInput / 100);
+                    break;
+                case "FRPE": 
+                    $finalReward = "Free $customerReserve->rewardInput person in a group";
+                    $rewardDiscount = $orderSet->orderSetPrice * $customerReserve->rewardInput;
+                    break;
+                case "HLF": 
+                    $finalReward = "Half in the group will be free";
+                    $rewardDiscount = ($customerReserve->numberOfPersons * $orderSet->orderSetPrice) / 2;
+                    break;
+                case "ALL": 
+                    $finalReward = "All people in the group will be free";
+                    $rewardDiscount = $customerReserve->numberOfPersons * $orderSet->orderSetPrice;
+                    break;
+                default: 
+                    $finalReward = "None";
+            }
+        }
+
+        $seniorDiscount = $orderSet->orderSetPrice * ($customerReserve->numberOfPwd * 0.2);
+        $childrenDiscount = $orderSet->orderSetPrice * $customerReserve->numberOfChildren;
+
+
+
+        return view('restaurant.transactionHistory.declined.declinedViewR', [
+            'customerReserve' => $customerReserve,
+            'customerInfo' => $customerInfo,
+            'countQueues' => $countQueues,
+            'countCancelled' => $countCancelled,
+            'countNoShow' => $countNoShow,
+            'countRunaway' => $countRunaway,
+            'bookTime' => $bookTime,
+            'bookDate' => $month1." ".$day1.", ".$year1,
+            'userSinceDate' => $month2." ".$day2.", ".$year2,
+            'cancelledDate' => $month3." ".$day3.", ".$year3,
+            'cancelledTime' => $cancelledTime,
+            'reserveDate' => $month4." ".$day4.", ".$year4,
+            'finalReward' => $finalReward,
+            'orderSet' => $orderSet,
+            'rewardDiscount' => $rewardDiscount,
+            'seniorDiscount' => $seniorDiscount,
+            'childrenDiscount' => $childrenDiscount,
+        ]);
+    }
+    public function thDeclinedPartQView($book_id){
+        $restAcc_id = Session::get('loginId');
+        $customerQueue = CustomerQueue::where('id', $book_id)->where('restAcc_id', $restAcc_id)->where('status', 'declined')->first();
+        $customerInfo = CustomerAccount::where('id', $customerQueue->customer_id)->first();
+        $orderSet = OrderSet::where('id', $customerQueue->orderSet_id)->first();
+
+        $countBook1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('customer_id', $customerQueue->customer_id)->count();
+        $countBook2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('customer_id', $customerQueue->customer_id)->count();
+
+        $countCancelled1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('status', 'cancelled')->where('customer_id', $customerQueue->customer_id)->count();
+        $countCancelled2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('status', 'cancelled')->where('customer_id', $customerQueue->customer_id)->count();
+
+        $countNoShow1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('status', 'noShow')->where('customer_id', $customerQueue->customer_id)->count();
+        $countNoShow2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('status', 'noShow')->where('customer_id', $customerQueue->customer_id)->count();
+
+        $countRunaway1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('status', 'runaway')->where('customer_id', $customerQueue->customer_id)->count();
+        $countRunaway2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('status', 'runaway')->where('customer_id', $customerQueue->customer_id)->count();
+
+        $countQueues = $countBook1 + $countBook2;
+        $countCancelled = $countCancelled1 + $countCancelled2;
+        $countNoShow = $countNoShow1 + $countNoShow2;
+        $countRunaway = $countRunaway1 + $countRunaway2;
+
+        $bookTime = date('g:i a', strtotime($customerQueue->created_at));
+
+        $bookDate = explode('-', date('Y-m-d', strtotime($customerQueue->created_at)));
+        $month1 = $this->convertMonths($bookDate[1]);
+        $year1 = $bookDate[0];
+        $day1  = $bookDate[2];
+
+        $userSinceDate = explode('-', date('Y-m-d', strtotime($customerInfo->created_at)));
+        $month2 = $this->convertMonths($userSinceDate[1]);
+        $year2 = $userSinceDate[0];
+        $day2  = $userSinceDate[2];
+
+        $cancelledTime = date('g:i a', strtotime($customerQueue->declinedDateTime));
+        $cancelledDate = explode('-', date('Y-m-d', strtotime($customerQueue->declinedDateTime)));
+        $month3 = $this->convertMonths($cancelledDate[1]);
+        $year3 = $cancelledDate[0];
+        $day3  = $cancelledDate[2];
+
+        $finalReward = "None";
+        $rewardDiscount = null;
+        if($customerQueue->rewardStatus == "Complete" && $customerQueue->rewardClaimed == "Yes"){
+            switch($customerQueue->rewardType){
+                case "DSCN": 
+                    $finalReward = "Discount $customerQueue->rewardInput% in a Total Bill";
+                    $rewardDiscount = ($customerQueue->numberOfPersons * $orderSet->orderSetPrice) * ($customerQueue->rewardInput / 100);
+                    break;
+                case "FRPE": 
+                    $finalReward = "Free $customerQueue->rewardInput person in a group";
+                    $rewardDiscount = $orderSet->orderSetPrice * $customerQueue->rewardInput;
+                    break;
+                case "HLF": 
+                    $finalReward = "Half in the group will be free";
+                    $rewardDiscount = ($customerQueue->numberOfPersons * $orderSet->orderSetPrice) / 2;
+                    break;
+                case "ALL": 
+                    $finalReward = "All people in the group will be free";
+                    $rewardDiscount = $customerQueue->numberOfPersons * $orderSet->orderSetPrice;
+                    break;
+                default: 
+                    $finalReward = "None";
+            }
+        }
+
+        $seniorDiscount = $orderSet->orderSetPrice * ($customerQueue->numberOfPwd * 0.2);
+        $childrenDiscount = $orderSet->orderSetPrice * $customerQueue->numberOfChildren;
+
+
+        return view('restaurant.transactionHistory.declined.declinedViewQ', [
+            'customerQueue' => $customerQueue,
+            'customerInfo' => $customerInfo,
+            'countQueues' => $countQueues,
+            'countCancelled' => $countCancelled,
+            'countNoShow' => $countNoShow,
+            'countRunaway' => $countRunaway,
+            'bookTime' => $bookTime,
+            'bookDate' => $month1." ".$day1.", ".$year1,
+            'userSinceDate' => $month2." ".$day2.", ".$year2,
+            'cancelledDate' => $month3." ".$day3.", ".$year3,
+            'cancelledTime' => $cancelledTime,
+            'finalReward' => $finalReward,
+            'orderSet' => $orderSet,
+            'rewardDiscount' => $rewardDiscount,
+            'seniorDiscount' => $seniorDiscount,
+            'childrenDiscount' => $childrenDiscount,
+        ]);
+        
+    }
+    public function thCancelledPartRView($book_id){
+        $restAcc_id = Session::get('loginId');
+        $customerReserve = CustomerReserve::where('id', $book_id)->where('restAcc_id', $restAcc_id)->where('status', 'cancelled')->first();
+        $customerInfo = CustomerAccount::where('id', $customerReserve->customer_id)->first();
+        $orderSet = OrderSet::where('id', $customerReserve->orderSet_id)->first();
+
+        $countBook1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('customer_id', $customerReserve->customer_id)->count();
+        $countBook2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('customer_id', $customerReserve->customer_id)->count();
+
+        $countCancelled1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('status', 'cancelled')->where('customer_id', $customerReserve->customer_id)->count();
+        $countCancelled2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('status', 'cancelled')->where('customer_id', $customerReserve->customer_id)->count();
+
+        $countNoShow1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('status', 'noShow')->where('customer_id', $customerReserve->customer_id)->count();
+        $countNoShow2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('status', 'noShow')->where('customer_id', $customerReserve->customer_id)->count();
+
+        $countRunaway1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('status', 'runaway')->where('customer_id', $customerReserve->customer_id)->count();
+        $countRunaway2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('status', 'runaway')->where('customer_id', $customerReserve->customer_id)->count();
+
+        $countQueues = $countBook1 + $countBook2;
+        $countCancelled = $countCancelled1 + $countCancelled2;
+        $countNoShow = $countNoShow1 + $countNoShow2;
+        $countRunaway = $countRunaway1 + $countRunaway2;
+
+        $bookTime = date('g:i a', strtotime($customerReserve->created_at));
+
+        $bookDate = explode('-', date('Y-m-d', strtotime($customerReserve->created_at)));
+        $month1 = $this->convertMonths($bookDate[1]);
+        $year1 = $bookDate[0];
+        $day1  = $bookDate[2];
+
+        $userSinceDate = explode('-', date('Y-m-d', strtotime($customerInfo->created_at)));
+        $month2 = $this->convertMonths($userSinceDate[1]);
+        $year2 = $userSinceDate[0];
+        $day2  = $userSinceDate[2];
+
+        $cancelledTime = date('g:i a', strtotime($customerReserve->cancelDateTime));
+        $cancelledDate = explode('-', date('Y-m-d', strtotime($customerReserve->cancelDateTime)));
+        $month3 = $this->convertMonths($cancelledDate[1]);
+        $year3 = $cancelledDate[0];
+        $day3  = $cancelledDate[2];
+        
+        $reserveDate = explode('-', $customerReserve->reserveDate);
+        $month4 = $this->convertMonths($reserveDate[1]);
+        $year4 = $reserveDate[0];
+        $day4 = $reserveDate[2];
+
+        $finalReward = "None";
+        $rewardDiscount = null;
+        if($customerReserve->rewardStatus == "Complete" && $customerReserve->rewardClaimed == "Yes"){
+            switch($customerReserve->rewardType){
+                case "DSCN": 
+                    $finalReward = "Discount $customerReserve->rewardInput% in a Total Bill";
+                    $rewardDiscount = ($customerReserve->numberOfPersons * $orderSet->orderSetPrice) * ($customerReserve->rewardInput / 100);
+                    break;
+                case "FRPE": 
+                    $finalReward = "Free $customerReserve->rewardInput person in a group";
+                    $rewardDiscount = $orderSet->orderSetPrice * $customerReserve->rewardInput;
+                    break;
+                case "HLF": 
+                    $finalReward = "Half in the group will be free";
+                    $rewardDiscount = ($customerReserve->numberOfPersons * $orderSet->orderSetPrice) / 2;
+                    break;
+                case "ALL": 
+                    $finalReward = "All people in the group will be free";
+                    $rewardDiscount = $customerReserve->numberOfPersons * $orderSet->orderSetPrice;
+                    break;
+                default: 
+                    $finalReward = "None";
+            }
+        }
+
+        $seniorDiscount = $orderSet->orderSetPrice * ($customerReserve->numberOfPwd * 0.2);
+        $childrenDiscount = $orderSet->orderSetPrice * $customerReserve->numberOfChildren;
+
+
+
+        return view('restaurant.transactionHistory.cancelled.cancelledViewR', [
+            'customerReserve' => $customerReserve,
+            'customerInfo' => $customerInfo,
+            'countQueues' => $countQueues,
+            'countCancelled' => $countCancelled,
+            'countNoShow' => $countNoShow,
+            'countRunaway' => $countRunaway,
+            'bookTime' => $bookTime,
+            'bookDate' => $month1." ".$day1.", ".$year1,
+            'userSinceDate' => $month2." ".$day2.", ".$year2,
+            'cancelledDate' => $month3." ".$day3.", ".$year3,
+            'cancelledTime' => $cancelledTime,
+            'reserveDate' => $month4." ".$day4.", ".$year4,
+            'finalReward' => $finalReward,
+            'orderSet' => $orderSet,
+            'rewardDiscount' => $rewardDiscount,
+            'seniorDiscount' => $seniorDiscount,
+            'childrenDiscount' => $childrenDiscount,
+        ]);
+    }
+    public function thCancelledPartQView($book_id){
+        $restAcc_id = Session::get('loginId');
+        $customerQueue = CustomerQueue::where('id', $book_id)->where('restAcc_id', $restAcc_id)->where('status', 'cancelled')->first();
+        $customerInfo = CustomerAccount::where('id', $customerQueue->customer_id)->first();
+        $orderSet = OrderSet::where('id', $customerQueue->orderSet_id)->first();
+
+        $countBook1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('customer_id', $customerQueue->customer_id)->count();
+        $countBook2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('customer_id', $customerQueue->customer_id)->count();
+
+        $countCancelled1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('status', 'cancelled')->where('customer_id', $customerQueue->customer_id)->count();
+        $countCancelled2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('status', 'cancelled')->where('customer_id', $customerQueue->customer_id)->count();
+
+        $countNoShow1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('status', 'noShow')->where('customer_id', $customerQueue->customer_id)->count();
+        $countNoShow2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('status', 'noShow')->where('customer_id', $customerQueue->customer_id)->count();
+
+        $countRunaway1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('status', 'runaway')->where('customer_id', $customerQueue->customer_id)->count();
+        $countRunaway2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('status', 'runaway')->where('customer_id', $customerQueue->customer_id)->count();
+
+        $countQueues = $countBook1 + $countBook2;
+        $countCancelled = $countCancelled1 + $countCancelled2;
+        $countNoShow = $countNoShow1 + $countNoShow2;
+        $countRunaway = $countRunaway1 + $countRunaway2;
+
+        $bookTime = date('g:i a', strtotime($customerQueue->created_at));
+
+        $bookDate = explode('-', date('Y-m-d', strtotime($customerQueue->created_at)));
+        $month1 = $this->convertMonths($bookDate[1]);
+        $year1 = $bookDate[0];
+        $day1  = $bookDate[2];
+
+        $userSinceDate = explode('-', date('Y-m-d', strtotime($customerInfo->created_at)));
+        $month2 = $this->convertMonths($userSinceDate[1]);
+        $year2 = $userSinceDate[0];
+        $day2  = $userSinceDate[2];
+
+        $cancelledTime = date('g:i a', strtotime($customerQueue->cancelDateTime));
+        $cancelledDate = explode('-', date('Y-m-d', strtotime($customerQueue->cancelDateTime)));
+        $month3 = $this->convertMonths($cancelledDate[1]);
+        $year3 = $cancelledDate[0];
+        $day3  = $cancelledDate[2];
+
+        $finalReward = "None";
+        $rewardDiscount = null;
+        if($customerQueue->rewardStatus == "Complete" && $customerQueue->rewardClaimed == "Yes"){
+            switch($customerQueue->rewardType){
+                case "DSCN": 
+                    $finalReward = "Discount $customerQueue->rewardInput% in a Total Bill";
+                    $rewardDiscount = ($customerQueue->numberOfPersons * $orderSet->orderSetPrice) * ($customerQueue->rewardInput / 100);
+                    break;
+                case "FRPE": 
+                    $finalReward = "Free $customerQueue->rewardInput person in a group";
+                    $rewardDiscount = $orderSet->orderSetPrice * $customerQueue->rewardInput;
+                    break;
+                case "HLF": 
+                    $finalReward = "Half in the group will be free";
+                    $rewardDiscount = ($customerQueue->numberOfPersons * $orderSet->orderSetPrice) / 2;
+                    break;
+                case "ALL": 
+                    $finalReward = "All people in the group will be free";
+                    $rewardDiscount = $customerQueue->numberOfPersons * $orderSet->orderSetPrice;
+                    break;
+                default: 
+                    $finalReward = "None";
+            }
+        }
+
+        $seniorDiscount = $orderSet->orderSetPrice * ($customerQueue->numberOfPwd * 0.2);
+        $childrenDiscount = $orderSet->orderSetPrice * $customerQueue->numberOfChildren;
+
+
+
+        return view('restaurant.transactionHistory.cancelled.cancelledViewQ', [
+            'customerQueue' => $customerQueue,
+            'customerInfo' => $customerInfo,
+            'countQueues' => $countQueues,
+            'countCancelled' => $countCancelled,
+            'countNoShow' => $countNoShow,
+            'countRunaway' => $countRunaway,
+            'bookTime' => $bookTime,
+            'bookDate' => $month1." ".$day1.", ".$year1,
+            'userSinceDate' => $month2." ".$day2.", ".$year2,
+            'cancelledDate' => $month3." ".$day3.", ".$year3,
+            'cancelledTime' => $cancelledTime,
+            'finalReward' => $finalReward,
+            'orderSet' => $orderSet,
+            'rewardDiscount' => $rewardDiscount,
+            'seniorDiscount' => $seniorDiscount,
+            'childrenDiscount' => $childrenDiscount,
         ]);
     }
     public function soStampList(){
@@ -257,9 +1494,11 @@ class RestaurantController extends Controller
             foreach($customerQueue as $custQ){
                 if($custQ->customer_id == 0){
                     $customerName = $custQ->name;
+                    $queueType = "Walk-in Queue";
                 } else {
                     $customer = CustomerAccount::where('id', $custQ->customer_id)->first();
                     $customerName = $customer->name;
+                    $queueType = "App Queue";
                 }
 
                 $bookDate = explode('-', date('Y-m-d', strtotime($custQ->created_at)));
@@ -271,6 +1510,7 @@ class RestaurantController extends Controller
 
                 array_push($storeCustomer, [
                     'bookId' => $custQ->id,
+                    'queueType' => $queueType,
                     'custName' => $customerName,
                     'bookDate' => "$month $day, $year",
                     'bookTime' => $time,
@@ -326,9 +1566,11 @@ class RestaurantController extends Controller
             foreach($customerQueue as $custQ){
                 if($custQ->customer_id == 0){
                     $customerName = $custQ->name;
+                    $queueType = "Walk-in Queue";
                 } else {
                     $customer = CustomerAccount::where('id', $custQ->customer_id)->first();
                     $customerName = $customer->name;
+                    $queueType = "App Queue";
                 }
 
                 $bookDate = explode('-', date('Y-m-d', strtotime($custQ->created_at)));
@@ -340,12 +1582,13 @@ class RestaurantController extends Controller
 
                 array_push($storeCustomer, [
                     'bookId' => $custQ->id,
+                    'queueType' => $queueType,
                     'custName' => $customerName,
                     'bookDate' => "$month $day, $year",
                     'bookTime' => $time,
                 ]);
             }
-        } 
+        }
 
         return view('restaurant.transactionHistory.runaway.runawayListQ', [
             'storeCustomer' => $storeCustomer,
@@ -395,9 +1638,11 @@ class RestaurantController extends Controller
             foreach($customerQueue as $custQ){
                 if($custQ->customer_id == 0){
                     $customerName = $custQ->name;
+                    $queueType = "Walk-in Queue";
                 } else {
                     $customer = CustomerAccount::where('id', $custQ->customer_id)->first();
                     $customerName = $customer->name;
+                    $queueType = "App Queue";
                 }
 
                 $bookDate = explode('-', date('Y-m-d', strtotime($custQ->created_at)));
@@ -409,6 +1654,7 @@ class RestaurantController extends Controller
 
                 array_push($storeCustomer, [
                     'bookId' => $custQ->id,
+                    'queueType' => $queueType,
                     'custName' => $customerName,
                     'bookDate' => "$month $day, $year",
                     'bookTime' => $time,
@@ -2445,9 +3691,6 @@ class RestaurantController extends Controller
     }
     public function registerView2(){
         return view('restaurant.register2');
-    }
-    public function registerView(){
-        return view('restaurant.register');
     }
     public function loginView(){
         return view('restaurant.login');

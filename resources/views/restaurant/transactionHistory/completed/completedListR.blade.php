@@ -39,7 +39,7 @@
                             <div class="col-span-2">{{ $storeCustomer[$i]['bookDate'] }}</div>
                             <div class="col-span-2">{{ $storeCustomer[$i]['bookTime'] }}</div>
                             <div class="col-span-1">
-                                <a href="#">
+                                <a href="/restaurant/transaction-history/completed/reserve/{{ $storeCustomer[$i]['bookId'] }}">
                                     <i class="fas fa-eye"></i>
                                 </a>
                             </div>
@@ -61,7 +61,7 @@
                             <div class="col-span-2">{{ $storeCustomer[$i]['bookDate'] }}</div>
                             <div class="col-span-2">{{ $storeCustomer[$i]['bookTime'] }}</div>
                             <div class="col-span-1">
-                                <a href="#">
+                                <a href="/restaurant/transaction-history/completed/reserve/{{ $storeCustomer[$i]['bookId'] }}">
                                     <i class="fas fa-eye"></i>
                                 </a>
                             </div>

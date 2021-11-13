@@ -76,7 +76,6 @@ Route::post('/customer/ordering/checkout/rating-feedback/submit', [CustomerContr
 
 Route::post('/customer/ordering/checkout/gcash-upload-image', [CustomerController::class, 'submitGcashReceipt']);
 
-
 Route::get('/customer/get-stamp-cards/{cust_id}', [CustomerController::class, 'getStampCards']);
 Route::get('/customer/get-stamp-cards/details/{stamp_id}', [CustomerController::class, 'getStampCardDetails']);
 

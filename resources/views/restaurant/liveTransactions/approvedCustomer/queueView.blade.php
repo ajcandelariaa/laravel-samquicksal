@@ -80,7 +80,6 @@
                 @else
                     <a href="/restaurant/live-transaction/approved-customer/queue/no-show/{{ $customerQueue->id }}" class="btn-no-show px-8 py-2 bg-adminDeleteFormColor ml-2">No show</a>
                     <button id="btn-admit" class="px-8 py-2 bg-postedStatus ml-2">Admit</button>
-                    {{-- <a href="/restaurant/live-transaction/approved-customer/queue/admit/{{ $customerQueue->id }}" class="btn-admit px-8 py-2 bg-postedStatus ml-2">Admit</a> --}}
                 @endif
 
             </div>
@@ -112,7 +111,8 @@
                                         @else
                                             {{ $customerInfo->name }}
                                         @endif
-                                    </span></p>
+                                    </span>
+                                </p>
                                 @if ($customerQueue->customer_id != 0)
                                     <p class="mt-2">Contact Number: <span class="font-bold">{{ $customerInfo->contactNumber }}</span></p>
                                 @else
