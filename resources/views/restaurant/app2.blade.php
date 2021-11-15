@@ -51,7 +51,7 @@
                 </div>
                 <div class="grid items-center mt-4 text-white {{ (request()->is('restaurant/stamp-offenses*')) ? 'relative bg-black' : 'hover:bg-sideBarHoverBgColor' }}">
                     <div class="{{ (request()->is('restaurant/stamp-offenses*')) ? 'h-full w-1 bg-headerActiveTextColor absolute left-0' : '' }}"></div>
-                    <a href="/restaurant/stamp-offenses/stamp" class="pt-3 pb-3 text-center">
+                    <a href="/restaurant/stamp-offenses/stamp-history" class="pt-3 pb-3 text-center">
                         <i class="fas fa-stamp"></i>
                     </a>
                 </div>

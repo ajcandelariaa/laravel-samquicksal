@@ -3,7 +3,7 @@
 @section('content')
 <div class="container mx-auto">
     <div class="w-11/12 mx-auto mt-10 pb-2">
-        <a href="/restaurant/stamp-offenses/offenses/cancellation" class="text-submitButton uppercase font-bold">
+        <a href="/restaurant/stamp-offenses/offenses/runaway" class="text-submitButton uppercase font-bold">
             <i class="fas fa-chevron-left mr-2"></i>Back
         </a>
     </div>
@@ -40,7 +40,7 @@
                     <div>
                         <p class="mt-2">Email: <span class="font-bold">{{ $customerInfo->emailAddress }}</span></p>
                         <p class="mt-2">User since: <span class="font-bold">{{ $userSinceDate }}</span></p>
-                        <p class="mt-2">No. of Cancellation: <span class="font-bold">{{ $countCancelled }}</span></p>
+                        <p class="mt-2">No. of Runaway: <span class="font-bold">{{ $countCancelled }}</span></p>
                         <p class="mt-2">Offense Maximum Limit: <span class="font-bold">{{ $custMainOffenses->offenseCapacity }}</span></p>
                         <p class="mt-2">Offense Validity: <span class="font-bold">{{ $offenseValidity }}</span></p>
                     </div>

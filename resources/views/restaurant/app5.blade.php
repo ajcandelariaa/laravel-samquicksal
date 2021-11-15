@@ -51,7 +51,7 @@
                 </div>
                 <div class="grid items-center mt-4 text-white {{ (request()->is('restaurant/stamp-offenses*')) ? 'relative bg-black' : 'hover:bg-sideBarHoverBgColor' }}">
                     <div class="{{ (request()->is('restaurant/stamp-offenses*')) ? 'h-full w-1 bg-headerActiveTextColor absolute left-0' : '' }}"></div>
-                    <a href="/restaurant/stamp-offenses/stamp" class="pt-3 pb-3 text-center">
+                    <a href="/restaurant/stamp-offenses/stamp-history" class="pt-3 pb-3 text-center">
                         <i class="fas fa-stamp"></i>
                     </a>
                 </div>
@@ -69,7 +69,11 @@
                             <i class="fas fa-arrow-left mr-4 ml-8 "></i> Stamp & Offenses
                         </a>
                         <div class="text-sm mt-5 w-10/12 mx-auto">
-                            <a href="/restaurant/stamp-offenses/stamp" class="ml-5 {{ (request()->is('restaurant/stamp-offenses/stamp*')) ? 'text-manageRestaurantSidebarColorActive' : 'text-manageRestaurantSidebarColor hover:underline' }}"><i class="fas fa-file w-3 mr-3"></i> Stamp Cards</a>
+                            <a href="/restaurant/stamp-offenses/stamp-history" class="ml-5 {{ (request()->is('restaurant/stamp-offenses/stamp-history*')) ? 'text-manageRestaurantSidebarColorActive' : 'text-manageRestaurantSidebarColor hover:underline' }}"><i class="fas fa-file w-3 mr-3"></i> Stamp History</a>
+                            <div class="border-multiStepBoxBorder border-manageRestaurantHrColor mt-3"></div>
+                        </div>
+                        <div class="text-sm mt-5 w-10/12 mx-auto">
+                            <a href="/restaurant/stamp-offenses/customer-stamp-history" class="ml-5 {{ (request()->is('restaurant/stamp-offenses/customer-stamp-history*')) ? 'text-manageRestaurantSidebarColorActive' : 'text-manageRestaurantSidebarColor hover:underline' }}"><i class="fas fa-file w-3 mr-3"></i> Customer Stamp History</a>
                             <div class="border-multiStepBoxBorder border-manageRestaurantHrColor mt-3"></div>
                         </div>
                         <div class="text-sm mt-5 w-10/12 mx-auto">

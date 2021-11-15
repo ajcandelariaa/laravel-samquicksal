@@ -48,6 +48,8 @@ use App\Mail\RestaurantPasswordChanged;
 use App\Models\RestaurantResetPassword;
 use Illuminate\Support\Facades\Session;
 use App\Mail\RestaurantFormAppreciation;
+use App\Models\RestStampCardHis;
+use App\Models\RestStampTasksHis;
 
 class RestaurantController extends Controller
 {
@@ -134,6 +136,174 @@ class RestaurantController extends Controller
 
 
     // RENDER VIEWS
+    public function soCustStampHistPartView($stamp_id){
+        $restAcc_id = Session::get('loginId');
+        $custStampCards = CustomerStampCard::where('id', $stamp_id)->where('restAcc_id', $restAcc_id)->first();
+        $customerInfo = CustomerAccount::where('id', $custStampCards->customer_id)->first();
+
+        $userSinceDate = explode('-', date('Y-m-d', strtotime($customerInfo->created_at)));
+        $month2 = $this->convertMonths($userSinceDate[1]);
+        $year2 = $userSinceDate[0];
+        $day2  = $userSinceDate[2];
+        
+        $stampValidity = explode('-', date('Y-m-d', strtotime($custStampCards->stampValidity)));
+        $month4 = $this->convertMonths($stampValidity[1]);
+        $year4 = $stampValidity[0];
+        $day4  = $stampValidity[2];
+
+        $claimedDate = "";
+        if($custStampCards->claimed == "Yes"){
+            $stampClaimedDate = explode('-', date('Y-m-d', strtotime($custStampCards->updated_at)));
+            $month3 = $this->convertMonths($stampClaimedDate[1]);
+            $year3 = $stampClaimedDate[0];
+            $day3  = $stampClaimedDate[2];
+
+            $claimedDate = $month3." ".$day3.", ".$year3;
+        }
+
+        $storeTasksDone = array();
+        $custStampTasks = CustomerTasksDone::where('customerStampCard_id', $stamp_id)->get();
+
+        foreach($custStampTasks as $custStampTask){
+
+            $taskDate = explode('-', date('Y-m-d', strtotime($custStampTask->taskAccomplishDate)));
+            $month5 = $this->convertMonths($taskDate[1]);
+            $year5 = $taskDate[0];
+            $day5  = $taskDate[2];
+            $taskDateFinal = $month5." ".$day5.", ".$year5;
+
+            $bookType = "Queue";
+            $transactionLink = "/restaurant/transaction-history/completed/queue/".$custStampTask->booking_id;
+            if($custStampTask->booking_type == "reserve"){
+                $bookType = "Reserve";
+                $transactionLink = "/restaurant/transaction-history/completed/reserve/".$custStampTask->booking_id;
+            }
+
+            array_push($storeTasksDone, [
+                'taskName' => $custStampTask->taskName,
+                'taskDate' => $taskDateFinal,
+                'bookType' => $bookType,
+                'transactionLink' => $transactionLink,
+            ]);
+        }
+
+        $customerTasks = CustomerStampTasks::where('customerStampCard_id', $stamp_id)->get();
+
+        
+        return view('restaurant.stampOffenses.stamp.custStampCardPart', [
+            'custStampCards' => $custStampCards,
+            'customerInfo' => $customerInfo,
+            'userSinceDate' => $month2." ".$day2.", ".$year2,
+            'stampValidity' => $month4." ".$day4.", ".$year4,
+            'claimedDate' => $claimedDate,
+            'storeTasksDone' => $storeTasksDone,
+            'customerTasks' => $customerTasks,
+        ]);
+    }
+    public function soCustStampHistListView(){
+        $restAcc_id = Session::get('loginId');
+        $storeCustStampCards = array();
+        $custStampCards = CustomerStampCard::where('restAcc_id', $restAcc_id)
+        ->orderBy('updated_at', 'DESC')
+        ->paginate(10);
+
+        foreach($custStampCards as $custStampCard){
+            $customer = CustomerAccount::where('id', $custStampCard->customer_id)->first();
+
+            $stampValidity = explode('-', date('Y-m-d', strtotime($custStampCard->stampValidity)));
+            $month1 = $this->convertMonths($stampValidity[1]);
+            $year1 = $stampValidity[0];
+            $day1  = $stampValidity[2];
+
+            array_push($storeCustStampCards, [
+                'stamp_id' => $custStampCard->id,
+                'custName' => $customer->name,
+                'stampStatus' => $custStampCard->status,
+                'stampClaimed' => $custStampCard->claimed,
+                'stampReward' => $custStampCard->stampReward,
+                'stampValidity' => $month1." ".$day1.", ".$year1,
+            ]);
+        }
+        
+        return view('restaurant.stampOffenses.stamp.custStampCardList', [
+            'storeCustStampCards' => $storeCustStampCards,
+            'custStampCards' => $custStampCards,
+        ]);
+    }
+    public function soRunawayPartView($offense_id){
+        $restAcc_id = Session::get('loginId');
+        $custMainOffenses = CustOffenseMain::where('id', $offense_id)
+        ->where('restAcc_id', $restAcc_id)
+        ->where('offenseType', 'runaway')
+        ->first();
+
+        $customerInfo = CustomerAccount::where('id', $custMainOffenses->customer_id)->first();
+
+        $custBlockCount = CustOffenseMain::where('customer_id', $custMainOffenses->customer_id)
+        ->where('restAcc_id', $restAcc_id)
+        ->where('offenseValidity', '!=', NULL)
+        ->where('offenseType', 'runaway')
+        ->count();
+
+        $offenseValidity = "Not Yet Block";
+        if($custMainOffenses->offenseValidity != null){
+            if($custMainOffenses->offenseDaysBlock == "Permanent"){
+                $offenseValidity = "Permanent Block";
+            } else {
+                $offenseValidityTemp = explode('-', date('Y-m-d', strtotime($custMainOffenses->offenseValidity)));
+                $month1 = $this->convertMonths($offenseValidityTemp[1]);
+                $year1 = $offenseValidityTemp[0];
+                $day1  = $offenseValidityTemp[2];
+                
+                $offenseValidity = $month1." ".$day1.", ".$year1;
+            }
+        }
+
+
+        $countCancelled1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('status', 'runaway')->where('customer_id', $custMainOffenses->customer_id)->count();
+        $countCancelled2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('status', 'runaway')->where('customer_id', $custMainOffenses->customer_id)->count();
+        $countCancelled = $countCancelled1 + $countCancelled2;
+
+        $userSinceDate = explode('-', date('Y-m-d', strtotime($customerInfo->created_at)));
+        $month2 = $this->convertMonths($userSinceDate[1]);
+        $year2 = $userSinceDate[0];
+        $day2  = $userSinceDate[2];
+
+        $storeOffenseEach = array();
+
+        $custOffenseEaches = CustOffenseEach::where('custOffMain_id', $offense_id)->where('restAcc_id', $restAcc_id)->get();
+        foreach($custOffenseEaches as $custOffenseEach){
+            $bookType = "Queue";
+            $transactionLink = "/restaurant/transaction-history/runaway/queue/".$custOffenseEach->book_id;
+            if($custOffenseEach->book_type == "reserve"){
+                $bookType = "Reserve";
+                $transactionLink = "/restaurant/transaction-history/runaway/reserve/".$custOffenseEach->book_id;
+            }
+            
+            $custOffenseEachTime = date('g:i a', strtotime($custOffenseEach->created_at));
+            $custOffenseEachDate = explode('-', date('Y-m-d', strtotime($custOffenseEach->created_at)));
+            $month5 = $this->convertMonths($custOffenseEachDate[1]);
+            $year5 = $custOffenseEachDate[0];
+            $day5  = $custOffenseEachDate[2];
+
+            array_push($storeOffenseEach, [
+                'date' => $month5." ".$day5.", ".$year5,
+                'time' => $custOffenseEachTime,
+                'bookType' => $bookType,
+                'transactionLink' => $transactionLink,
+            ]);
+        }
+        
+        return view('restaurant.stampOffenses.runaway.runawayPartView', [
+            'customerInfo' => $customerInfo,
+            'custMainOffenses' => $custMainOffenses,
+            'countCancelled' => $countCancelled,
+            'userSinceDate' => $month2." ".$day2.", ".$year2,
+            'custBlockCount' => $custBlockCount,
+            'offenseValidity' => $offenseValidity,
+            'storeOffenseEach' => $storeOffenseEach,
+        ]);
+    }
     public function soRunawayListView(){
         $restAcc_id = Session::get('loginId');
         $storeName = array();
@@ -166,6 +336,80 @@ class RestaurantController extends Controller
             'storeValidity' => $storeValidity,
         ]);
     }
+    public function soNoshowPartView($offense_id){
+        $restAcc_id = Session::get('loginId');
+        $custMainOffenses = CustOffenseMain::where('id', $offense_id)
+        ->where('restAcc_id', $restAcc_id)
+        ->where('offenseType', 'noshow')
+        ->first();
+
+        $customerInfo = CustomerAccount::where('id', $custMainOffenses->customer_id)->first();
+
+        $custBlockCount = CustOffenseMain::where('customer_id', $custMainOffenses->customer_id)
+        ->where('restAcc_id', $restAcc_id)
+        ->where('offenseValidity', '!=', NULL)
+        ->where('offenseType', 'noshow')
+        ->count();
+
+        $offenseValidity = "Not Yet Block";
+        if($custMainOffenses->offenseValidity != null){
+            if($custMainOffenses->offenseDaysBlock == "Permanent"){
+                $offenseValidity = "Permanent Block";
+            } else {
+                $offenseValidityTemp = explode('-', date('Y-m-d', strtotime($custMainOffenses->offenseValidity)));
+                $month1 = $this->convertMonths($offenseValidityTemp[1]);
+                $year1 = $offenseValidityTemp[0];
+                $day1  = $offenseValidityTemp[2];
+                
+                $offenseValidity = $month1." ".$day1.", ".$year1;
+            }
+        }
+
+
+        $countCancelled1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('status', 'noshow')->where('customer_id', $custMainOffenses->customer_id)->count();
+        $countCancelled2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('status', 'noshow')->where('customer_id', $custMainOffenses->customer_id)->count();
+        $countCancelled = $countCancelled1 + $countCancelled2;
+
+        $userSinceDate = explode('-', date('Y-m-d', strtotime($customerInfo->created_at)));
+        $month2 = $this->convertMonths($userSinceDate[1]);
+        $year2 = $userSinceDate[0];
+        $day2  = $userSinceDate[2];
+
+        $storeOffenseEach = array();
+
+        $custOffenseEaches = CustOffenseEach::where('custOffMain_id', $offense_id)->where('restAcc_id', $restAcc_id)->get();
+        foreach($custOffenseEaches as $custOffenseEach){
+            $bookType = "Queue";
+            $transactionLink = "/restaurant/transaction-history/no-show/queue/".$custOffenseEach->book_id;
+            if($custOffenseEach->book_type == "reserve"){
+                $bookType = "Reserve";
+                $transactionLink = "/restaurant/transaction-history/no-show/reserve/".$custOffenseEach->book_id;
+            }
+            
+            $custOffenseEachTime = date('g:i a', strtotime($custOffenseEach->created_at));
+            $custOffenseEachDate = explode('-', date('Y-m-d', strtotime($custOffenseEach->created_at)));
+            $month5 = $this->convertMonths($custOffenseEachDate[1]);
+            $year5 = $custOffenseEachDate[0];
+            $day5  = $custOffenseEachDate[2];
+
+            array_push($storeOffenseEach, [
+                'date' => $month5." ".$day5.", ".$year5,
+                'time' => $custOffenseEachTime,
+                'bookType' => $bookType,
+                'transactionLink' => $transactionLink,
+            ]);
+        }
+        
+        return view('restaurant.stampOffenses.noshow.noshowPartView', [
+            'customerInfo' => $customerInfo,
+            'custMainOffenses' => $custMainOffenses,
+            'countCancelled' => $countCancelled,
+            'userSinceDate' => $month2." ".$day2.", ".$year2,
+            'custBlockCount' => $custBlockCount,
+            'offenseValidity' => $offenseValidity,
+            'storeOffenseEach' => $storeOffenseEach,
+        ]);
+    }
     public function soNoshowListView(){
         $restAcc_id = Session::get('loginId');
         $storeName = array();
@@ -196,6 +440,80 @@ class RestaurantController extends Controller
             'custMainOffenses' => $custMainOffenses,
             'storeName' => $storeName,
             'storeValidity' => $storeValidity,
+        ]);
+    }
+    public function soCancellationPartView($offense_id){
+        $restAcc_id = Session::get('loginId');
+        $custMainOffenses = CustOffenseMain::where('id', $offense_id)
+        ->where('restAcc_id', $restAcc_id)
+        ->where('offenseType', 'cancellation')
+        ->first();
+
+        $customerInfo = CustomerAccount::where('id', $custMainOffenses->customer_id)->first();
+
+        $custBlockCount = CustOffenseMain::where('customer_id', $custMainOffenses->customer_id)
+        ->where('restAcc_id', $restAcc_id)
+        ->where('offenseValidity', '!=', NULL)
+        ->where('offenseType', 'cancellation')
+        ->count();
+
+        $offenseValidity = "Not Yet Block";
+        if($custMainOffenses->offenseValidity != null){
+            if($custMainOffenses->offenseDaysBlock == "Permanent"){
+                $offenseValidity = "Permanent Block";
+            } else {
+                $offenseValidityTemp = explode('-', date('Y-m-d', strtotime($custMainOffenses->offenseValidity)));
+                $month1 = $this->convertMonths($offenseValidityTemp[1]);
+                $year1 = $offenseValidityTemp[0];
+                $day1  = $offenseValidityTemp[2];
+                
+                $offenseValidity = $month1." ".$day1.", ".$year1;
+            }
+        }
+
+
+        $countCancelled1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('status', 'cancelled')->where('customer_id', $custMainOffenses->customer_id)->count();
+        $countCancelled2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('status', 'cancelled')->where('customer_id', $custMainOffenses->customer_id)->count();
+        $countCancelled = $countCancelled1 + $countCancelled2;
+
+        $userSinceDate = explode('-', date('Y-m-d', strtotime($customerInfo->created_at)));
+        $month2 = $this->convertMonths($userSinceDate[1]);
+        $year2 = $userSinceDate[0];
+        $day2  = $userSinceDate[2];
+
+        $storeOffenseEach = array();
+
+        $custOffenseEaches = CustOffenseEach::where('custOffMain_id', $offense_id)->where('restAcc_id', $restAcc_id)->get();
+        foreach($custOffenseEaches as $custOffenseEach){
+            $bookType = "Queue";
+            $transactionLink = "/restaurant/transaction-history/cancelled/queue/".$custOffenseEach->book_id;
+            if($custOffenseEach->book_type == "reserve"){
+                $bookType = "Reserve";
+                $transactionLink = "/restaurant/transaction-history/cancelled/reserve/".$custOffenseEach->book_id;
+            }
+            
+            $custOffenseEachTime = date('g:i a', strtotime($custOffenseEach->created_at));
+            $custOffenseEachDate = explode('-', date('Y-m-d', strtotime($custOffenseEach->created_at)));
+            $month5 = $this->convertMonths($custOffenseEachDate[1]);
+            $year5 = $custOffenseEachDate[0];
+            $day5  = $custOffenseEachDate[2];
+
+            array_push($storeOffenseEach, [
+                'date' => $month5." ".$day5.", ".$year5,
+                'time' => $custOffenseEachTime,
+                'bookType' => $bookType,
+                'transactionLink' => $transactionLink,
+            ]);
+        }
+        
+        return view('restaurant.stampOffenses.cancellation.cancellationPartView', [
+            'customerInfo' => $customerInfo,
+            'custMainOffenses' => $custMainOffenses,
+            'countCancelled' => $countCancelled,
+            'userSinceDate' => $month2." ".$day2.", ".$year2,
+            'custBlockCount' => $custBlockCount,
+            'offenseValidity' => $offenseValidity,
+            'storeOffenseEach' => $storeOffenseEach,
         ]);
     }
     public function soCancellationListView(){
@@ -1402,51 +1720,39 @@ class RestaurantController extends Controller
             'childrenDiscount' => $childrenDiscount,
         ]);
     }
-    public function soStampList(){
+    public function soStampHistoryListView(){
         $restAcc_id = Session::get('loginId');
         $storeStamps = array();
 
-        $stampCards = StampCard::where('restAcc_id', $restAcc_id)
+        $stampCards = RestStampCardHis::where('restAcc_id', $restAcc_id)
         ->orderBy('created_at', 'DESC')
         ->paginate(10);
+
+        
         
         if(!$stampCards->isEmpty()){
-
             foreach($stampCards as $stampCard){
-                $finalReward = "None";
-                $reward = RestaurantRewardList::where('id', $stampCard->stampReward_id)->first();
-                
-                switch($reward->rewardCode){
-                    case "DSCN": 
-                        $finalReward = "Discount $reward->rewardInput% in a Total Bill";
-                        break;
-                    case "FRPE": 
-                        $finalReward = "Free $reward->rewardInput person in a group";
-                        break;
-                    case "HLF": 
-                        $finalReward = "Half in the group will be free";
-                        break;
-                    case "ALL": 
-                        $finalReward = "All people in the group will be free";
-                        break;
-                    default: 
-                        $finalReward = "None";
-                }
-
                 $bookDate = explode('-', date('Y-m-d', strtotime($stampCard->stampValidity)));
                 $month = $this->convertMonths($bookDate[1]);
                 $year = $bookDate[0];
                 $day  = $bookDate[2];
 
+                $storeTasks = array();
+                $stampCardTasks = RestStampTasksHis::where('restStampCardHis_id', $stampCard->id)->get();
+                foreach($stampCardTasks as $stampCardTask){
+                    array_push($storeTasks, $stampCardTask->taskName);
+                }
+
                 array_push($storeStamps, [
                     'stampCapacity' => $stampCard->stampCapacity,
-                    'finalReward' => $finalReward,
+                    'finalReward' => $stampCard->stampReward,
                     'stampValidity' => "$month $day, $year",
+                    'storeTasks' => $storeTasks,
                 ]);
             }
         }
 
-        return view('restaurant.stampOffenses.stampCards', [
+        return view('restaurant.stampOffenses.stamp.stampCardList', [
             'storeStamps' => $storeStamps,
             'stampCards' => $stampCards,
         ]);
@@ -5865,21 +6171,24 @@ class RestaurantController extends Controller
     public function addStampCard(Request $request){
         $getDateToday = date("Y-m-d");
         $restAccId = Session::get('loginId');
-        $checkStampExist = StampCard::where('restAcc_id', $restAccId)->latest()->first();
         
-        if($checkStampExist != null){
-            if($getDateToday <= $checkStampExist->stampValidity){
-                $request->session()->flash('invalid');
-                return redirect('/restaurant/manage-restaurant/task-rewards/stamp-card');
-            }
-        }
-
         $request->validate([
             'stampCapacity' => 'required',
             'stampReward'  => 'required',
             'tasks'          => 'required',
             'stampValidity' => 'required',
         ]);
+        
+
+        $checkStampExist = StampCard::where('restAcc_id', $restAccId)->latest()->first();
+        if($checkStampExist != null){
+            if($getDateToday <= $checkStampExist->stampValidity){
+                $request->session()->flash('invalid');
+                return redirect('/restaurant/manage-restaurant/task-rewards/stamp-card');
+            } else {
+                StampCard::where('restAcc_id', $restAccId)->delete();
+            }
+        }
 
         $getLatestStamp = StampCard::create([
             'restAcc_id' => $restAccId,
@@ -5888,12 +6197,74 @@ class RestaurantController extends Controller
             'stampValidity' => $request->stampValidity,
         ]);
 
+        $storeTasks = array();
         foreach ($request->tasks as $taskId){
             StampCardTasks::create([
                 'stampCards_id' => $getLatestStamp->id,
                 'restaurantTaskLists_id' => $taskId,
             ]);
+
+            $task = RestaurantTaskList::where('id', $taskId)->first();
+            switch($task->taskCode){
+                case "SPND":
+                    array_push($storeTasks, "Spend ".$task->taskInput." pesos in 1 visit only");
+                    break;
+                case "BRNG":
+                    array_push($storeTasks, "Bring ".$task->taskInput." friends in our store");
+                    break;
+                case "ORDR":
+                    array_push($storeTasks, "Order ".$task->taskInput." add on/s per visit");
+                    break;
+                case "VST":
+                    array_push($storeTasks, "Visit in our store");
+                    break;
+                case "FDBK":
+                    array_push($storeTasks, "Give a feedback/review per visit");
+                    break;
+                case "PUGC":
+                    array_push($storeTasks, "Pay using gcash");
+                    break;
+                case "LUDN":
+                    array_push($storeTasks, "Eat during lunch/dinner hours");
+                    break;
+                default: 
+            }
+
         }
+
+        $restoReward = RestaurantRewardList::where('id', $request->stampReward)->first();
+        $finalReward = "";
+        switch($restoReward->rewardCode){
+            case "DSCN": 
+                $finalReward = "Discount $restoReward->rewardInput% in a Total Bill";
+                break;
+            case "FRPE": 
+                $finalReward = "Free $restoReward->rewardInput person in a group";
+                break;
+            case "HLF": 
+                $finalReward = "Half in the group will be free";
+                break;
+            case "ALL": 
+                $finalReward = "All people in the group will be free";
+                break;
+            default: 
+                $finalReward = "None";
+        }
+        
+        $getLatestStamp2 = RestStampCardHis::create([
+            'restAcc_id' => $restAccId,
+            'stampCapacity' => $request->stampCapacity,
+            'stampReward' => $finalReward,
+            'stampValidity' => $request->stampValidity,
+        ]);
+
+        foreach($storeTasks as $taskname){
+            RestStampTasksHis::create([
+                'restStampCardHis_id' => $getLatestStamp2->id,
+                'taskName' => $taskname,
+            ]);
+        }
+
         $request->session()->flash('added');
         return redirect('/restaurant/manage-restaurant/task-rewards/stamp-card');
     }

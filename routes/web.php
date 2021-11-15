@@ -176,8 +176,9 @@ Route::middleware(['restaurantLoggedIn'])->group(function(){
     Route::get('/restaurant/transaction-history/completed/queue/{book_id}', [RestaurantController::class, 'thCompletedPartQView']);
     Route::get('/restaurant/transaction-history/completed/reserve/{book_id}', [RestaurantController::class, 'thCompletedPartRView']);
     // -------STAMP & OFFENSES------------ //
-    Route::get('/restaurant/stamp-offenses/stamp', [RestaurantController::class, 'soStampList']);
-    Route::get('/restaurant/stamp-offenses/stamp/{stamp_id}', [RestaurantController::class, 'soStampView']);
+    Route::get('/restaurant/stamp-offenses/stamp-history', [RestaurantController::class, 'soStampHistoryListView']);
+    Route::get('/restaurant/stamp-offenses/customer-stamp-history', [RestaurantController::class, 'soCustStampHistListView']);
+    Route::get('/restaurant/stamp-offenses/customer-stamp-history/{stamp_id}', [RestaurantController::class, 'soCustStampHistPartView']);
     Route::get('/restaurant/stamp-offenses/offenses/cancellation', [RestaurantController::class, 'soCancellationListView']);
     Route::get('/restaurant/stamp-offenses/offenses/cancellation/{offense_id}', [RestaurantController::class, 'soCancellationPartView']);
     Route::get('/restaurant/stamp-offenses/offenses/no-show', [RestaurantController::class, 'soNoshowListView']);
