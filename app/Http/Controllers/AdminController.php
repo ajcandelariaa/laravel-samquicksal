@@ -402,6 +402,7 @@ class AdminController extends Controller
             
             'rLatitudeLoc' => $request->applicantLocLat,
             'rLongitudeLoc' => $request->applicantLocLong,
+            'rRadius' => 500,
 
             'rNumberOfTables' => 10,
             'rCapacityPerTable' => 4,

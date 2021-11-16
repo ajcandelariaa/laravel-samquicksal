@@ -58,6 +58,14 @@
                  'success'
              );
          </script>
+    @elseif (session()->has('radiusUpdated'))
+         <script>
+             Swal.fire(
+                 'Radius Updated',
+                 '',
+                 'success'
+             );
+         </script>
     @elseif (session()->has('emailAddressNotVerified'))
         <script>
             Swal.fire(
@@ -296,6 +304,28 @@
                 </div>
                 <div class="w-10/12 mx-auto text-right mt-3 mb-5">
                     <button type="submit" class="bg-submitButton hover:bg-btnHoverColor text-white hover:text-gray-300 w-36 h-9 rounded-md transition duration-200 ease-in-out ">Reset Password</button>
+                </div>
+            </form>
+
+
+            <div class="uppercase font-bold bg-gradient-to-r from-adminViewAccountHeaderColor to-adminViewAccountHeaderColor2 py-2 text-submitButton pl-5">Update Restaurant Radius</div>
+            <form action="/restaurant/manage-restaurant/about/restaurant-information/updateRadius" method="POST">
+                @csrf
+                <div class="grid grid-cols-formsThreeCols w-10/12 mx-auto mt-5">
+                    <div class="text-left text-submitButton">Meters</div>
+                    <div class="text-left text-submitButton">:</div>
+                    <div>
+                        <div class="font-bold mb-4">
+                            <button id="btn-radiusMin" type="button" class="bg-gray-400 hover:bg-gray-500 px-3 rounded-sm text-sm">Min</button>
+                            <input type="number" id="inputRadius" name="rRadius" min=100 max=10000 value="{{ $account->rRadius }}" class="w-28 border pl-1 border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none {{ $errors->has('rRadius') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }}" required>
+                            <span class="mt-2 text-red-600 italic text-sm">@error('rRadius'){{ $message }}@enderror</span>
+                            <button id="btn-radiusMax" type="button" class="bg-gray-400 hover:bg-gray-500 px-3 rounded-sm text-sm">Max</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="w-10/12 mx-auto text-right mt-3 mb-5">
+                    <button type="submit" class="bg-submitButton hover:bg-btnHoverColor text-white hover:text-gray-300 w-36 h-9 rounded-md transition duration-200 ease-in-out ">Update Radius</button>
                 </div>
             </form>
 

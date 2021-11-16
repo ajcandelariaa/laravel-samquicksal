@@ -66,7 +66,6 @@ Route::get('/customer/ordering/orders/submit/{cust_id}', [CustomerController::cl
 Route::post('/customer/ordering/food-item/add', [CustomerController::class, 'orderingAddFoodItem']);
 Route::post('/customer/ordering/food-item/update', [CustomerController::class, 'orderingUpdateFoodItem']);
 Route::post('/customer/ordering/assistance', [CustomerController::class, 'orderingAddAssistance']);
-Route::post('/customer/ordering/checkout', [CustomerController::class, 'orderingCheckout']);
 Route::get('/customer/ordering/assistance/history/{cust_id}', [CustomerController::class, 'getOrderingAssistHist']);
 Route::get('/customer/ordering/bill/{cust_id}', [CustomerController::class, 'getOrderingBill']);
 Route::get('/customer/ordering/checkout/status/{cust_id}', [CustomerController::class, 'getOrderingCheckoutStatus']);
@@ -74,7 +73,8 @@ Route::get('/customer/ordering/gcash/status/{cust_id}', [CustomerController::cla
 Route::get('/customer/ordering/checkout/rating-feedback/{cust_id}', [CustomerController::class, 'getOrderingRatingFeedback']);
 Route::post('/customer/ordering/checkout/rating-feedback/submit', [CustomerController::class, 'ratingFeedbackSubmit']);
 
-Route::post('/customer/ordering/checkout/gcash-upload-image', [CustomerController::class, 'submitGcashReceipt']);
+Route::post('/customer/ordering/checkout', [CustomerController::class, 'orderingCheckout']);
+Route::post('/customer/ordering/checkout/gcash-upload-receipt', [CustomerController::class, 'gcashUploadReceipt']);
 
 Route::get('/customer/get-stamp-cards/{cust_id}', [CustomerController::class, 'getStampCards']);
 Route::get('/customer/get-stamp-cards/details/{stamp_id}', [CustomerController::class, 'getStampCardDetails']);
@@ -90,6 +90,9 @@ Route::post('/customer/submit-reserve-form', [CustomerController::class, 'submit
 Route::post('/customer/forgot-password', [CustomerController::class, 'forgotPassword']);
 Route::post('/customer/update-device-token', [CustomerController::class, 'updateDeviceToken']);
 
+Route::post('/customer/account/update-single-info', [CustomerController::class, 'custUpdateSInfo']);
+Route::post('/customer/account/update-password', [CustomerController::class, 'custUpdatePass']);
+Route::post('/customer/account/update-user-image', [CustomerController::class, 'custUpdateUImage']);
 
 
 

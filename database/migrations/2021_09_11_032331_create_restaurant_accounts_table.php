@@ -46,6 +46,7 @@ class CreateRestaurantAccountsTable extends Migration
            
             $table->string('rLatitudeLoc');
             $table->string('rLongitudeLoc');
+            $table->integer('rRadius');
 
             $table->integer('rNumberOfTables');
             $table->integer('rCapacityPerTable');

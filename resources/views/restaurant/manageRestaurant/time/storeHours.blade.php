@@ -34,6 +34,30 @@
                 'error'
             );
         </script>
+    @elseif (session()->has('openingTimeExceed'))
+        <script>
+            Swal.fire(
+                'Opening Time should not between 12am to 5am',
+                '',
+                'error'
+            );
+        </script>
+    @elseif (session()->has('closingTimeExceed'))
+        <script>
+            Swal.fire(
+                'Closing Time should not exceed than 4am',
+                '',
+                'error'
+            );
+        </script>
+    @elseif (session()->has('closingTimeExceed2'))
+        <script>
+            Swal.fire(
+                'Store should open more than 2 hours',
+                '',
+                'error'
+            );
+        </script>
     @elseif (session()->has('deleted'))
         <script>
             Swal.fire(
@@ -42,7 +66,16 @@
                 'success'
             );
         </script>
+    @elseif (session()->has('mustNotTheSame'))
+        <script>
+            Swal.fire(
+                'Opening Time and Closing Time must be different',
+                '',
+                'error'
+            );
+        </script>
     @endif
+    
     <div class="w-11/12 mx-auto mt-10 font-Montserrat">
         <div class="w-full mt-3 rounded-2xl shadow-adminDownloadButton items-center bg-manageRestaurantSidebarColorActive pb-7">
             <div class="flex justify-between rounded-t-2xl px-5 py-4 items-center">
@@ -178,7 +211,7 @@
                     </div>
                 </div>
                 <div class="text-center mt-5">
-                    <button class="bg-submitButton hover:bg-darkerSubmitButton text-white hover:text-gray-300 rounded-md rounded-w-9/12 w-32 h-10 text-sm uppercase font-bold transition duration-200 ease-in-out" type="submit">ADD</button>
+                    <button class="bg-submitButton hover:bg-darkerSubmitButton text-white hover:text-gray-300 rounded-md rounded-w-9/12 w-32 h-10 text-sm uppercase font-bold transition duration-200 ease-in-out" type="submit">UPDATE</button>
                 </div>
             </form>
         </div> 

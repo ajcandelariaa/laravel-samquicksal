@@ -21,3 +21,11 @@ function previewGcashQr(input){
         reader.readAsDataURL(file);
     }
 }
+
+$( "#btn-radiusMin" ).click(function() {
+    $("#inputRadius").val(100);
+});
+
+$( "#btn-radiusMax" ).click(function() {
+    $("#inputRadius").val(10000);
+});

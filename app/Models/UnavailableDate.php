@@ -12,6 +12,7 @@ class UnavailableDate extends Model
     protected $fillable = [
         'restAcc_id',
         'unavailableDatesDate',
+        'startTime',
         'unavailableDatesDesc',
     ];
 }

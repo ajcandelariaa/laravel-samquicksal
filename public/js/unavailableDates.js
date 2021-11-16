@@ -32,6 +32,7 @@ $(".btn-edit-item" ).click(function() {
     $('#updateUnavailableDateId').val(data[0])
     $('#updateDate').val(data[1])
     $('#updateDescription').val(data[2])
+    $('#updateTime').val(data[3])
 });
 
 $(".overlay").click(function(){

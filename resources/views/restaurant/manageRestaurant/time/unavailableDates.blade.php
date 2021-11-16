@@ -91,10 +91,12 @@
                     <p class="td" hidden>{{ $unavailableDate->id }}</p>
                     <p class="td" hidden>{{ $unavailableDate->unavailableDatesDate }}</p>
                     <p class="td" hidden>{{ $unavailableDate->unavailableDatesDesc }}</p>
+                    <p class="td" hidden>{{ $unavailableDate->startTime }}</p>
                     <div class="bg-adminViewAccountHeaderColor2 flex justify-center items-center text-5xl font-bold">{{ $day }}</div>
                     <div>
                         <p class="text-submitButton font-bold text-xl">{{ $month }}, {{ $year }}</p>
-                        <p class="text-xs mt-2">{{ $unavailableDate->unavailableDatesDesc }}</p>
+                        <p class="text-xs">Start Time: {{ date('g:i a', strtotime($unavailableDate->startTime)) }}</p>
+                        <p class="text-xs">{{ $unavailableDate->unavailableDatesDesc }}</p>
                     </div>
                     <div>
                         <button class="btn-edit-item text-white bg-manageRestaurantSidebarColorActive inline-block text-center leading-6 w-6 h-6 rounded-full text-xs transition duration-200 ease-in-out hover:bg-hoverManageRestaurantSidebarColorActive hover:text-gray-300"><i class="fas fa-edit"></i></button>
@@ -109,10 +111,6 @@
                 <div class="text-center text-white">There are no Unavailable Dates right now</div>
             </div>
         @endif
-
-
-
-
 
 
         <div class="create-form font-Montserrat" id="create-form">
@@ -130,7 +128,14 @@
                             <input type="date" name="date" class="border rounded-md focus:border-black w-full py-1 px-2 text-sm focus:outline-non text-gray-700" required>
                         </div>
                     </div>
-                    <div class="grid grid-cols-storeHoursThreeCols justify-center mt-5">
+                    <div class="grid grid-cols-storeHoursThreeCols justify-center mt-2">
+                        <div>Start Time</div>
+                        <div>:</div>
+                        <div>
+                            <input type="time" id="time" name="time" class="border focus:border-black w-9/12 py-1 px-2 text-sm focus:outline-non text-gray-700" required>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-storeHoursThreeCols justify-center mt-2">
                         <div>Description</div>
                         <div>:</div>
                         <div>
@@ -143,7 +148,6 @@
                 </div>
             </form>
         </div> 
-
 
 
         <div class="edit-form font-Montserrat" id="edit-form">
@@ -162,7 +166,14 @@
                             <input type="date" id="updateDate" name="updateDate" class="border focus:border-black w-9/12 py-1 px-2 text-sm focus:outline-non text-gray-700" required>
                         </div>
                     </div>
-                    <div class="grid grid-cols-storeHoursThreeCols justify-center mt-5">
+                    <div class="grid grid-cols-storeHoursThreeCols justify-center mt-2">
+                        <div>Start Time</div>
+                        <div>:</div>
+                        <div>
+                            <input type="time" id="updateTime" name="updateTime" class="border focus:border-black w-9/12 py-1 px-2 text-sm focus:outline-non text-gray-700" required>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-storeHoursThreeCols justify-center mt-2">
                         <div>Description</div>
                         <div>:</div>
                         <div>

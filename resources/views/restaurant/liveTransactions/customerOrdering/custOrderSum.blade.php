@@ -10,6 +10,14 @@
                 'success'
             );
         </script>
+    @elseif (session()->has('responseSubmitted'))
+        <script>
+            Swal.fire(
+                'Response Submitted',
+                '',
+                'success'
+            );
+        </script>
     @endif
     <div class="w-11/12 mx-auto mt-10 pb-2 grid grid-cols-2">
         <a href="/restaurant/live-transaction/customer-ordering/list" class="text-submitButton uppercase font-bold"><i class="fas fa-chevron-left mr-2"></i>Back</a>
@@ -196,15 +204,17 @@
                         <div class="py-5 w-11/12 mx-auto">
                             <p class="text-center">Please validate if Payment is received.</p>
 
-                            <img src="{{ asset('uploads/restaurantAccounts/gcashQr/1/1635933855.png') }}" class="mx-auto mt-2 w-full" alt="gcashQr">
-                            
-                            <div class="text-center">
-                                <a href="" id="btn-insAmount" class="inline-block py-2 w-full bg-red-500 hover:bg-red-600 text-white mt-6">Inssuficient Amount</a>
-                            </div>
-                            
-                            <div class="text-center">
-                                <a href="" id="btn-inReceipt" class="inline-block py-2 w-full bg-yellow-500 hover:bg-yellow-600 text-white mt-2">Invalid Receipt</a>
-                            </div>
+                            <img src="{{ asset('uploads/customerAccounts/gcashQr/'.$customerBook->customer_id.'/'.$customerBook->gcashCheckoutReceipt) }}" class="mx-auto mt-2 w-full" alt="gcashQr">
+
+                            @if ($customerBook->checkoutStatus == "gcashCheckoutValidation")
+                                <div class="text-center">
+                                    <a href="/restaurant/live-transaction/customer-ordering/list/{{ $customerOrdering->id }}/order-summary/insufficient-amount" id="btn-insAmount" class="inline-block py-2 w-full bg-red-500 hover:bg-red-600 text-white mt-6">Inssuficient Amount</a>
+                                </div>
+                                
+                                <div class="text-center">
+                                    <a href="/restaurant/live-transaction/customer-ordering/list/{{ $customerOrdering->id }}/order-summary/invalid-receipt" id="btn-inReceipt" class="inline-block py-2 w-full bg-yellow-500 hover:bg-yellow-600 text-white mt-2">Invalid Receipt</a>
+                                </div>
+                            @endif
                         </div>
                     </div>
                 @endif

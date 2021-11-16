@@ -11,12 +11,15 @@ use App\Models\OrderSet;
 use App\Models\StampCard;
 use App\Models\StoreHour;
 use App\Models\FoodSetItem;
+use App\Models\Cancellation;
 use Illuminate\Http\Request;
 use App\Models\CustomerQueue;
 use App\Models\CustomerLOrder;
 use App\Models\PromoMechanics;
 use App\Models\StampCardTasks;
 use Illuminate\Support\Carbon;
+use App\Models\CustOffenseEach;
+use App\Models\CustOffenseMain;
 use App\Models\CustomerAccount;
 use App\Models\CustomerReserve;
 use App\Models\CustRestoRating;
@@ -34,12 +37,10 @@ use App\Models\RestaurantTaskList;
 use App\Mail\CustomerForgotPassword;
 use App\Models\CustomerNotification;
 use App\Models\RestaurantRewardList;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\CustomerPasswordChanged;
-use App\Models\Cancellation;
-use App\Models\CustOffenseEach;
-use App\Models\CustOffenseMain;
 use App\Models\CustomerResetPassword;
 
 class CustomerController extends Controller
@@ -3528,8 +3529,16 @@ class CustomerController extends Controller
         $finalAmount = null;
         $finalRestGCQr = null;
         $finalStatus = null;
+        $book_id = null;
+        $book_type = null;
 
         $customerQueue = CustomerQueue::where('customer_id', $cust_id)->where('status', 'eating')
+        ->where(function ($query) {
+            $query->where('checkoutStatus', "gcashCheckout")
+            ->orWhere('checkoutStatus', "gcashIncorretFormat");
+        })->first();
+
+        $customerReserve = CustomerReserve::where('customer_id', $cust_id)->where('status', 'eating')
         ->where(function ($query) {
             $query->where('checkoutStatus', "gcashCheckout")
             ->orWhere('checkoutStatus', "gcashIncorretFormat");
@@ -3540,13 +3549,24 @@ class CustomerController extends Controller
             $finalAmount = (number_format($customerQueue->totalPrice, 2, '.'));
             $finalRestGCQr = $this->RESTAURANT_GCASH_QR_IMAGE_PATH."/".$restaurant->id."/".$restaurant->rGcashQrCodeImage;
             $finalStatus = $customerQueue->checkoutStatus;
-        }
+            $book_id = $customerQueue->id;
+            $book_type = "queue";
+        } else if($customerReserve != null){
+            $restaurant = RestaurantAccount::select('rGcashQrCodeImage', 'id')->where('id', $customerReserve->restAcc_id)->first();
+            $finalAmount = (number_format($customerReserve->totalPrice, 2, '.'));
+            $finalRestGCQr = $this->RESTAURANT_GCASH_QR_IMAGE_PATH."/".$restaurant->id."/".$restaurant->rGcashQrCodeImage;
+            $finalStatus = $customerReserve->checkoutStatus;
+            $book_id = $customerReserve->id;
+            $book_type = "reserve";
+        } else {}
 
         return response()->json([
             'amount' => $finalAmount,
             'restGCashQr' => $finalRestGCQr,
             'status' => $finalStatus,
             'filename' => $restaurant->rGcashQrCodeImage,
+            'book_id' => $book_id,
+            'book_type' => $book_type,
         ]);
     }
     public function getOrderingRatingFeedback($cust_id){
@@ -4224,12 +4244,10 @@ class CustomerController extends Controller
         $cust_id = $request->cust_id;
         $cust_lat = $request->cust_lat;
         $cust_long = $request->cust_long;
-        $CONST_RADIUS = 1000;
 
         $finalResult = array();
-        
         if($cust_lat != $cust_long){
-            $restaurants = RestaurantAccount::select('id', 'rName', 'rAddress', 'rBranch', 'rLogo', 'rLatitudeLoc', 'rLongitudeLoc')->get();
+            $restaurants = RestaurantAccount::select('id', 'rName', 'rAddress', 'rBranch', 'rLogo', 'rLatitudeLoc', 'rLongitudeLoc', 'rRadius')->get();
             $storeGeo = array();
             foreach ($restaurants as $restaurant){
                 $rest_lat = $restaurant->rLatitudeLoc;
@@ -4255,6 +4273,7 @@ class CustomerController extends Controller
                     $DistanceMeter = $DistanceKM * 1000;
 
                     //i-check kung pasok
+                    $CONST_RADIUS = $restaurant->rRadius;
                     if($CONST_RADIUS >= $DistanceMeter){
 
                         $finalImageUrl = "";
@@ -5153,10 +5172,127 @@ class CustomerController extends Controller
 
 
 
-    public function submitGcashReceipt(Request $request){
+    public function gcashUploadReceipt(){
+        $finalStatus = "";
+        $params = $_REQUEST;
+        $cust_id = strval($params['cust_id']);
+        $book_id = strval($params['book_id']);
+        $book_type = strval($params['book_type']);
+        $extension = pathinfo($_FILES['gCashReceipt']['name'], PATHINFO_EXTENSION);
+        $filename = time().'.'.$extension;
+        $target_file = 'uploads/customerAccounts/gcashQr/'.$cust_id.'/'.$filename;
+
+        if($book_type == "queue"){
+            $customerQueue = CustomerQueue::where('id', $book_id)->first();
+
+            if($customerQueue->gcashCheckoutReceipt != null){
+                File::delete(public_path('uploads/customerAccounts/gcashQr/'.$cust_id.'/'.$customerQueue->gcashCheckoutReceipt));
+            }
+            
+            move_uploaded_file($_FILES['gCashReceipt']['tmp_name'], $target_file);
+            
+            CustomerQueue::where('id', $book_id)
+            ->update([
+                'gcashCheckoutReceipt' => $filename,
+                'checkoutStatus' => "gcashCheckoutValidation",
+            ]);
+
+        } else {
+            $customerReserve = CustomerReserve::where('id', $book_id)->first();
+
+            if($customerReserve->gcashCheckoutReceipt != null){
+                File::delete(public_path('uploads/customerAccounts/gcashQr/'.$cust_id.'/'.$customerReserve->gcashCheckoutReceipt));
+            }
+            
+            move_uploaded_file($_FILES['gCashReceipt']['tmp_name'], $target_file);
+            
+            CustomerReserve::where('id', $book_id)
+            ->update([
+                'gcashCheckoutReceipt' => $filename,
+                'checkoutStatus' => "gcashCheckoutValidation",
+            ]);
+        }
 
         return response()->json([
-            'status' => $_FILES['gcashReceipt']
+            'status' => "Success"
+        ]);
+    }
+    public function custUpdateSInfo(Request $request){
+        $status = "Error Updating Info";
+        if($request->infoType == "Name"){
+            CustomerAccount::where('id', $request->cust_id)
+            ->update([
+                'name' => $request->input
+            ]);
+            $status = "nameUpdated";
+        } else if ($request->infoType == "Email Address"){
+            $customer = CustomerAccount::where('id', $request->cust_id)->first();
+            if($customer->emailAddressVerified == "No"){
+                $status = "Please Verify your email first before changing";
+            } else {
+                $custCheckEmail = CustomerAccount::where('emailAddress', $request->input)->first();
+                if($custCheckEmail != null){
+                    $status = "Email is already taken";
+                } else {
+                    CustomerAccount::where('id', $request->cust_id)
+                    ->update([
+                        'emailAddress' => $request->input,
+                        'emailAddressVerified' => "No"
+                    ]);
+                    $status = "emailUpdated";
+                }
+            }
+        } else if ($request->infoType == "Contact Number"){
+            CustomerAccount::where('id', $request->cust_id)
+            ->update([
+                'contactNumber' => $request->input
+            ]);
+            $status = "numberUpdated";
+        } else {}
+
+        return response()->json([
+            'status' => $status
+        ]);
+    }
+    public function custUpdatePass(Request $request){
+        $status = "Error Updating Info";
+        $customer = CustomerAccount::where('id', $request->cust_id)->first();
+
+        if(!Hash::check($request->oldPassword, $customer->password)){
+            $status = "Current Password does not match Old Password";
+        } else {
+            CustomerAccount::where('id', $request->cust_id)
+            ->update([
+                'password' => Hash::make($request->newPassword)
+            ]);
+            $status = "passwordUpdated";
+        }
+
+        return response()->json([
+            'status' => $status
+        ]);
+    }
+    public function custUpdateUImage(){
+        $params = $_REQUEST;
+        $cust_id = strval($params['cust_id']);
+        $extension = pathinfo($_FILES['userProfile']['name'], PATHINFO_EXTENSION);
+        $filename = time().'.'.$extension;
+        $target_file = 'uploads/customerAccounts/logo/'.$cust_id.'/'.$filename;
+
+        $customer = CustomerAccount::where('id', $cust_id)->first();
+        if($customer->profileImage != null){
+            File::delete(public_path('uploads/customerAccounts/logo/'.$cust_id.'/'.$customer->profileImage));
+        }
+        
+        move_uploaded_file($_FILES['userProfile']['tmp_name'], $target_file);
+
+        CustomerAccount::where('id', $cust_id)
+        ->update([
+            'profileImage' => $filename
+        ]);
+
+        return response()->json([
+            'status' => "success"
         ]);
     }
 }

@@ -4546,6 +4546,140 @@ class RestaurantController extends Controller
             return redirect('/restaurant/live-transaction/customer-ordering/list');
         }
     }
+    public function ltCustOrderOSInsAmount($id){
+        $customerOrdering = CustomerOrdering::where('id', $id)->where('status', 'eating')->first();
+
+        if($customerOrdering->custBookType == "queue"){
+            $customerQueue = CustomerQueue::where('id', $customerOrdering->custBook_id)->first();
+            CustomerQueue::where('id', $customerOrdering->custBook_id)
+            ->update([
+                'checkoutStatus' => "gcashInsufficientAmount"
+            ]);
+
+            $customerAccount = CustomerAccount::where('id', $customerQueue->customer_id)->first();
+            $restaurant = RestaurantAccount::select('id', 'rAddress', 'rCity', 'rLogo')->where('id', $customerQueue->restAcc_id)->first();
+
+            $finalImageUrl = "";
+            if ($restaurant->rLogo == ""){
+                $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+            } else {
+                $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
+            }
+    
+            if($customerAccount != null){
+                $to = $customerAccount->deviceToken;
+                $notification = array(
+                    'title' => "$restaurant->rAddress, $restaurant->rCity",
+                    'body' => "Your payment via gcash is insufficient please wait for the staff to collect your remaining balance.",
+                );
+                $data = array(
+                    'notificationType' => "Insufficient Amount",
+                    'notificationId' => 0,
+                    'notificationRLogo' => $finalImageUrl,
+                );
+                $this->sendFirebaseNotification($to, $notification, $data);
+            }
+        } else {
+            $customerReserve = CustomerReserve::where('id', $customerOrdering->custBook_id)->first();
+            CustomerReserve::where('id', $customerOrdering->custBook_id)
+            ->update([
+                'checkoutStatus' => "gcashInsufficientAmount"
+            ]);
+
+            $customerAccount = CustomerAccount::where('id', $customerReserve->customer_id)->first();
+            $restaurant = RestaurantAccount::select('id', 'rAddress', 'rCity', 'rLogo')->where('id', $customerReserve->restAcc_id)->first();
+
+            $finalImageUrl = "";
+            if ($restaurant->rLogo == ""){
+                $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+            } else {
+                $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
+            }
+    
+            if($customerAccount != null){
+                $to = $customerAccount->deviceToken;
+                $notification = array(
+                    'title' => "$restaurant->rAddress, $restaurant->rCity",
+                    'body' => "Your payment via gcash is insufficient please wait for the staff to collect your remaining balance.",
+                );
+                $data = array(
+                    'notificationType' => "Insufficient Amount",
+                    'notificationId' => 0,
+                    'notificationRLogo' => $finalImageUrl,
+                );
+                $this->sendFirebaseNotification($to, $notification, $data);
+            }
+        }
+        Session::flash('responseSubmitted');
+        return redirect('/restaurant/live-transaction/customer-ordering/list/'.$id.'/order-summary');
+    }
+    public function ltCustOrderOSInvReceipt($id){
+        $customerOrdering = CustomerOrdering::where('id', $id)->where('status', 'eating')->first();
+
+        if($customerOrdering->custBookType == "queue"){
+            $customerQueue = CustomerQueue::where('id', $customerOrdering->custBook_id)->first();
+            CustomerQueue::where('id', $customerOrdering->custBook_id)
+            ->update([
+                'checkoutStatus' => "gcashIncorretFormat"
+            ]);
+
+            $customerAccount = CustomerAccount::where('id', $customerQueue->customer_id)->first();
+            $restaurant = RestaurantAccount::select('id', 'rAddress', 'rCity', 'rLogo')->where('id', $customerQueue->restAcc_id)->first();
+
+            $finalImageUrl = "";
+            if ($restaurant->rLogo == ""){
+                $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+            } else {
+                $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
+            }
+    
+            if($customerAccount != null){
+                $to = $customerAccount->deviceToken;
+                $notification = array(
+                    'title' => "$restaurant->rAddress, $restaurant->rCity",
+                    'body' => "Your gcash receipt is invalid please upload the correct receipt.",
+                );
+                $data = array(
+                    'notificationType' => "Invalid Receipt",
+                    'notificationId' => 0,
+                    'notificationRLogo' => $finalImageUrl,
+                );
+                $this->sendFirebaseNotification($to, $notification, $data);
+            }
+        } else {
+            $customerReserve = CustomerReserve::where('id', $customerOrdering->custBook_id)->first();
+            CustomerReserve::where('id', $customerOrdering->custBook_id)
+            ->update([
+                'checkoutStatus' => "gcashIncorretFormat"
+            ]);
+
+            $customerAccount = CustomerAccount::where('id', $customerReserve->customer_id)->first();
+            $restaurant = RestaurantAccount::select('id', 'rAddress', 'rCity', 'rLogo')->where('id', $customerReserve->restAcc_id)->first();
+
+            $finalImageUrl = "";
+            if ($restaurant->rLogo == ""){
+                $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+            } else {
+                $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
+            }
+    
+            if($customerAccount != null){
+                $to = $customerAccount->deviceToken;
+                $notification = array(
+                    'title' => "$restaurant->rAddress, $restaurant->rCity",
+                    'body' => "Your gcash receipt is invalid please upload the correct receipt.",
+                );
+                $data = array(
+                    'notificationType' => "Invalid Receipt",
+                    'notificationId' => 0,
+                    'notificationRLogo' => $finalImageUrl,
+                );
+                $this->sendFirebaseNotification($to, $notification, $data);
+            }
+        }
+        Session::flash('responseSubmitted');
+        return redirect('/restaurant/live-transaction/customer-ordering/list/'.$id.'/order-summary');
+    }
     public function ltCustOrderOSRunaway($id){
         $getDateToday = date("Y-m-d");
         $getDateTimeToday = date('Y-m-d H:i:s');
@@ -6550,6 +6684,7 @@ class RestaurantController extends Controller
             UnavailableDate::where('id', $request->updateUnavailableDateId)
             ->update([
                 'unavailableDatesDate' => $request->updateDate,
+                'startTime' => $request->updateTime,
                 'unavailableDatesDesc' => $request->updateDescription,
             ]);
             $request->session()->flash('edited');
@@ -6579,6 +6714,7 @@ class RestaurantController extends Controller
             UnavailableDate::create([
                 'restAcc_id' => $restAccId,
                 'unavailableDatesDate' => $request->date,
+                'startTime' => $request->time,
                 'unavailableDatesDesc' => $request->description,
             ]);
             $request->session()->flash('added');
@@ -6589,30 +6725,37 @@ class RestaurantController extends Controller
         if($request->updateDays == null){
             $request->session()->flash('emptyDays');
             return redirect('/restaurant/manage-restaurant/time/store-hours');
-        } 
-        $daysToString = "";
-        if(count($request->updateDays) == 1){
-            $daysToString = $request->updateDays[0];
+        } else if (strtotime($request->updateOpeningTime) < strtotime("05:00") && strtotime($request->updateOpeningTime) >= strtotime("04:00")) {
+            $request->session()->flash('openingTimeExceed');
+            return redirect('/restaurant/manage-restaurant/time/store-hours');
+        } else if (strtotime($request->updateClosingTime) > strtotime("04:00") && strtotime($request->updateClosingTime) <= strtotime("05:00")) {
+            $request->session()->flash('closingTimeExceed');
+            return redirect('/restaurant/manage-restaurant/time/store-hours');
         } else {
-            for ($i=0; $i<count($request->updateDays); $i++){
-                if($i == 0){
-                    $daysToString = $request->updateDays[$i].',';
-                } else if ($i == count($request->updateDays)-1){
-                    $daysToString = $daysToString.$request->updateDays[$i];
-                } else {
-                    $daysToString = $daysToString.$request->updateDays[$i].',';
+            $daysToString = "";
+            if(count($request->updateDays) == 1){
+                $daysToString = $request->updateDays[0];
+            } else {
+                for ($i=0; $i<count($request->updateDays); $i++){
+                    if($i == 0){
+                        $daysToString = $request->updateDays[$i].',';
+                    } else if ($i == count($request->updateDays)-1){
+                        $daysToString = $daysToString.$request->updateDays[$i];
+                    } else {
+                        $daysToString = $daysToString.$request->updateDays[$i].',';
+                    }
                 }
             }
+            StoreHour::where('id', $request->storeId)
+            ->update([
+                'openingTime' => $request->updateOpeningTime,
+                'closingTime' => $request->updateClosingTime,
+                'days' => $daysToString,
+            ]);
+            
+            $request->session()->flash('edited');
+            return redirect('/restaurant/manage-restaurant/time/store-hours');
         }
-        StoreHour::where('id', $request->storeId)
-        ->update([
-            'openingTime' => $request->updateOpeningTime,
-            'closingTime' => $request->updateClosingTime,
-            'days' => $daysToString,
-        ]);
-        
-        $request->session()->flash('edited');
-        return redirect('/restaurant/manage-restaurant/time/store-hours');
     }
     public function deleteStoreHours($id){
         $restAccId = Session::get('loginId');
@@ -6627,10 +6770,31 @@ class RestaurantController extends Controller
     }
     public function addStoreHours(Request $request){
         $restAccId = Session::get('loginId');
+        $compareClosingTime = date('H:i', strtotime($request->openingTime) + 60*60*3);
         if($request->days == null){
             $request->session()->flash('emptyDays');
             return redirect('/restaurant/manage-restaurant/time/store-hours');
-        } 
+        } else if (strtotime($request->openingTime) == strtotime($request->closingTime)) {
+            $request->session()->flash('mustNotTheSame');
+            return redirect('/restaurant/manage-restaurant/time/store-hours');
+        } else if (strtotime($request->openingTime) < strtotime("05:00") && strtotime($request->openingTime) >= strtotime("00:00")) {
+            $request->session()->flash('openingTimeExceed');
+            return redirect('/restaurant/manage-restaurant/time/store-hours');
+        } else if (strtotime($compareClosingTime) >= strtotime("00:00") && strtotime($compareClosingTime) < strtotime("03:00")){
+            if(strtotime($request->closingTime) < strtotime($compareClosingTime)){
+                $request->session()->flash('closingTimeExceed2');
+                return redirect('/restaurant/manage-restaurant/time/store-hours');
+            } else if(strtotime($request->closingTime) >= strtotime("04:00")){
+                $request->session()->flash('closingTimeExceed');
+                return redirect('/restaurant/manage-restaurant/time/store-hours');
+            }
+        } else if (strtotime($compareClosingTime) <= strtotime("23:59") && strtotime($compareClosingTime) > strtotime("05:00")){
+            if(strtotime($request->closingTime) >= strtotime("04:00") && strtotime($request->closingTime) < strtotime($compareClosingTime)){
+                $request->session()->flash('closingTimeExceed2');
+                return redirect('/restaurant/manage-restaurant/time/store-hours');
+            }
+        } else {}
+
         $daysToString = "";
         if(count($request->days) == 1){
             $daysToString = $request->days[0];
@@ -6906,6 +7070,27 @@ class RestaurantController extends Controller
 
         $request->session()->flash('tablesUpdated');
         return redirect('/restaurant/manage-restaurant/about/restaurant-information');
+    }
+    public function updateRestaurantRadius(Request $request){
+        $restAccId = Session::get('loginId');
+
+        $request->validate([
+            'rRadius' => 'required|numeric|min:100',
+        ],
+        [
+            'rRadius.required' => 'Radius is required',
+            'rRadius.numeric' => 'Radius must be number only',
+            'rRadius.min' => 'Radius must be greater than 100',
+        ]);
+
+        RestaurantAccount::where('id', $restAccId)
+        ->update([
+            'rRadius' => $request->rRadius,
+        ]);
+
+        $request->session()->flash('radiusUpdated');
+        return redirect('/restaurant/manage-restaurant/about/restaurant-information');
+
     }
     public function updateRestaurantPassword(Request $request){
         $restAccId = Session::get('loginId');

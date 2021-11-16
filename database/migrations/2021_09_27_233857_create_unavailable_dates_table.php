@@ -17,6 +17,7 @@ class CreateUnavailableDatesTable extends Migration
             $table->id();
             $table->unsignedBigInteger('restAcc_id');
             $table->date('unavailableDatesDate');
+            $table->string('startTime');
             $table->mediumText('unavailableDatesDesc');
             $table->timestamps();
             $table->foreign('restAcc_id')->references('id')->on('restaurant_accounts')->onDelete('cascade');

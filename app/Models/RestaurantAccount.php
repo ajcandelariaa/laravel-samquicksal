@@ -41,6 +41,7 @@ class RestaurantAccount extends Model
 
         'rLatitudeLoc',
         'rLongitudeLoc',
+        'rRadius',
 
         'rNumberOfTables',
         'rCapacityPerTable',
