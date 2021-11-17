@@ -29,3 +29,23 @@ $( "#btn-radiusMin" ).click(function() {
 $( "#btn-radiusMax" ).click(function() {
     $("#inputRadius").val(10000);
 });
+
+
+
+// UPDATE TABLES
+$('#formUpdateTables').submit(function(e) {
+    e.preventDefault();
+    Swal.fire({
+        title: 'Update Table?',
+        text: 'Are you sure you want to update?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes'
+    }).then((result) =>{
+        if(result.value){
+          e.currentTarget.submit();
+        }
+    });
+});

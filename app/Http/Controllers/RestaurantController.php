@@ -3728,11 +3728,16 @@ class RestaurantController extends Controller
         ]);
     }
     public function manageRestaurantChecklistView(){
-        $id = Session::get('loginId');
-        $account = RestaurantAccount::where('id', '=', $id)->first();
+        $restAcc_id = Session::get('loginId');
+        $restaurant = RestaurantAccount::select('emailAddress', 'status', 'verified', 'rLogo', 'rGcashQrCodeImage')->where('id', $restAcc_id)->first();
+
+        $orderSet = OrderSet::where('restAcc_id', $restAcc_id)->count();
+
+
         return view('restaurant.manageRestaurant.checkList.checkList',[
-            'account' => $account,
-            'title' => 'Manage Checklist'
+            'restaurant' => $restaurant,
+            'title' => 'Manage Checklist',
+            'orderSet' => $orderSet
         ]);
     }
     public function manageRestaurantPromoView(Request $request){
@@ -4022,6 +4027,34 @@ class RestaurantController extends Controller
 
 
     // RENDER LOGICS
+    public function manageRestaurantPublish(){
+        $restAcc_id = Session::get('loginId');
+        //publish restaurant
+        
+        $restaurant = RestaurantAccount::select('emailAddress', 'status', 'verified', 'rLogo', 'rGcashQrCodeImage')->where('id', $restAcc_id)->first();
+        $orderSet = OrderSet::where('restAcc_id', $restAcc_id)->count();
+
+        if($restaurant->status == "Unpublished" 
+            && $restaurant->verified == "Yes"
+            && $restaurant->rLogo != null 
+            && $restaurant->rGcashQrCodeImage != null 
+            && $orderSet > 0){
+            
+            RestaurantAccount::where('id', $restAcc_id)
+            ->update([
+                'status' => "Published"
+            ]);
+
+            // LAGAY SANA NANG PANG NOTIFY SA LAHAT NG CUSTOMERS
+
+
+            Session::flash('published');
+            return redirect('/restaurant/manage-restaurant/checklist');
+        } else {
+            Session::flash('cantPublished');
+            return redirect('/restaurant/manage-restaurant/checklist');
+        }
+    }
     public function ltCustOrderOSComplete($id){
         $getDateToday = date("Y-m-d");
 
@@ -6722,40 +6755,55 @@ class RestaurantController extends Controller
         }
     }
     public function editStoreHours(Request $request){
+        $compareClosingTime = date('H:i', strtotime($request->updateOpeningTime) + 60*60*3);
+
         if($request->updateDays == null){
             $request->session()->flash('emptyDays');
             return redirect('/restaurant/manage-restaurant/time/store-hours');
-        } else if (strtotime($request->updateOpeningTime) < strtotime("05:00") && strtotime($request->updateOpeningTime) >= strtotime("04:00")) {
+        } else if (strtotime($request->updateOpeningTime) == strtotime($request->updateClosingTime)) {
+            $request->session()->flash('mustNotTheSame');
+            return redirect('/restaurant/manage-restaurant/time/store-hours');
+        } else if (strtotime($request->updateOpeningTime) < strtotime("05:00") || strtotime($request->updateOpeningTime) > strtotime("23:00")) {
             $request->session()->flash('openingTimeExceed');
             return redirect('/restaurant/manage-restaurant/time/store-hours');
-        } else if (strtotime($request->updateClosingTime) > strtotime("04:00") && strtotime($request->updateClosingTime) <= strtotime("05:00")) {
-            $request->session()->flash('closingTimeExceed');
-            return redirect('/restaurant/manage-restaurant/time/store-hours');
+        } else if (strtotime($compareClosingTime) >= strtotime("00:00") && strtotime($compareClosingTime) <= strtotime("03:00")){
+            if (strtotime($request->updateClosingTime) > strtotime("04:00") && strtotime($request->updateClosingTime) <= strtotime("23:59")){
+                $request->session()->flash('closingTimeExceed2');
+                return redirect('/restaurant/manage-restaurant/time/store-hours');
+            } else if (strtotime($request->updateClosingTime) < strtotime($compareClosingTime)){
+                $request->session()->flash('closingTimeExceed2');
+                return redirect('/restaurant/manage-restaurant/time/store-hours');
+            } else {}
+        } else if (strtotime($compareClosingTime) <= strtotime("23:59") && strtotime($compareClosingTime) > strtotime("05:00")){
+            if(strtotime($request->updateClosingTime) > strtotime("04:00") && strtotime($request->updateClosingTime) < strtotime($compareClosingTime)){
+                $request->session()->flash('closingTimeExceed2');
+                return redirect('/restaurant/manage-restaurant/time/store-hours');
+            } else {}
+        } else {}
+
+        $daysToString = "";
+        if(count($request->updateDays) == 1){
+            $daysToString = $request->updateDays[0];
         } else {
-            $daysToString = "";
-            if(count($request->updateDays) == 1){
-                $daysToString = $request->updateDays[0];
-            } else {
-                for ($i=0; $i<count($request->updateDays); $i++){
-                    if($i == 0){
-                        $daysToString = $request->updateDays[$i].',';
-                    } else if ($i == count($request->updateDays)-1){
-                        $daysToString = $daysToString.$request->updateDays[$i];
-                    } else {
-                        $daysToString = $daysToString.$request->updateDays[$i].',';
-                    }
+            for ($i=0; $i<count($request->updateDays); $i++){
+                if($i == 0){
+                    $daysToString = $request->updateDays[$i].',';
+                } else if ($i == count($request->updateDays)-1){
+                    $daysToString = $daysToString.$request->updateDays[$i];
+                } else {
+                    $daysToString = $daysToString.$request->updateDays[$i].',';
                 }
             }
-            StoreHour::where('id', $request->storeId)
-            ->update([
-                'openingTime' => $request->updateOpeningTime,
-                'closingTime' => $request->updateClosingTime,
-                'days' => $daysToString,
-            ]);
-            
-            $request->session()->flash('edited');
-            return redirect('/restaurant/manage-restaurant/time/store-hours');
         }
+        StoreHour::where('id', $request->storeId)
+        ->update([
+            'openingTime' => $request->updateOpeningTime,
+            'closingTime' => $request->updateClosingTime,
+            'days' => $daysToString,
+        ]);
+        
+        $request->session()->flash('edited');
+        return redirect('/restaurant/manage-restaurant/time/store-hours');
     }
     public function deleteStoreHours($id){
         $restAccId = Session::get('loginId');
@@ -6771,28 +6819,29 @@ class RestaurantController extends Controller
     public function addStoreHours(Request $request){
         $restAccId = Session::get('loginId');
         $compareClosingTime = date('H:i', strtotime($request->openingTime) + 60*60*3);
+
         if($request->days == null){
             $request->session()->flash('emptyDays');
             return redirect('/restaurant/manage-restaurant/time/store-hours');
         } else if (strtotime($request->openingTime) == strtotime($request->closingTime)) {
             $request->session()->flash('mustNotTheSame');
             return redirect('/restaurant/manage-restaurant/time/store-hours');
-        } else if (strtotime($request->openingTime) < strtotime("05:00") && strtotime($request->openingTime) >= strtotime("00:00")) {
+        } else if (strtotime($request->openingTime) < strtotime("05:00") || strtotime($request->openingTime) > strtotime("23:00")) {
             $request->session()->flash('openingTimeExceed');
             return redirect('/restaurant/manage-restaurant/time/store-hours');
-        } else if (strtotime($compareClosingTime) >= strtotime("00:00") && strtotime($compareClosingTime) < strtotime("03:00")){
-            if(strtotime($request->closingTime) < strtotime($compareClosingTime)){
+        } else if (strtotime($compareClosingTime) >= strtotime("00:00") && strtotime($compareClosingTime) <= strtotime("03:00")){
+            if (strtotime($request->closingTime) > strtotime("04:00") && strtotime($request->closingTime) <= strtotime("23:59")){
                 $request->session()->flash('closingTimeExceed2');
                 return redirect('/restaurant/manage-restaurant/time/store-hours');
-            } else if(strtotime($request->closingTime) >= strtotime("04:00")){
-                $request->session()->flash('closingTimeExceed');
+            } else if (strtotime($request->closingTime) < strtotime($compareClosingTime)){
+                $request->session()->flash('closingTimeExceed2');
                 return redirect('/restaurant/manage-restaurant/time/store-hours');
-            }
+            } else {}
         } else if (strtotime($compareClosingTime) <= strtotime("23:59") && strtotime($compareClosingTime) > strtotime("05:00")){
-            if(strtotime($request->closingTime) >= strtotime("04:00") && strtotime($request->closingTime) < strtotime($compareClosingTime)){
+            if(strtotime($request->closingTime) > strtotime("04:00") && strtotime($request->closingTime) < strtotime($compareClosingTime)){
                 $request->session()->flash('closingTimeExceed2');
                 return redirect('/restaurant/manage-restaurant/time/store-hours');
-            }
+            } else {}
         } else {}
 
         $daysToString = "";
@@ -7051,25 +7100,33 @@ class RestaurantController extends Controller
 
         $request->validate([
             'rNumberOfTables' => 'required|numeric|min:1',
-            'rCapacityPerTable' => 'required|numeric|min:1',
+            'rCapacityPerTable' => 'required|numeric|min:2',
         ],
         [
             'rNumberOfTables.required' => 'Number of Tables is required',
             'rNumberOfTables.numeric' => 'Number of Tables must be number only',
-            'rNumberOfTables.min' => 'Number of Tables must be greater than zero',
+            'rNumberOfTables.min' => 'Number of Tables must be greater than 1',
             'rCapacityPerTable.required' => 'Capacity per Table is required',
             'rCapacityPerTable.numeric' => 'Capacity per Table must be number only',
-            'rCapacityPerTable.min' => 'Capacity per Table must be greater than zero',
+            'rCapacityPerTable.min' => 'Capacity per Table must be greater than 2',
         ]);
 
-        RestaurantAccount::where('id', $restAccId)
-        ->update([
-            'rNumberOfTables' => $request->rNumberOfTables,
-            'rCapacityPerTable' => $request->rCapacityPerTable,
-        ]);
+        $restaurant = RestaurantAccount::select('status')->where('id', $restAccId)->first();
 
-        $request->session()->flash('tablesUpdated');
-        return redirect('/restaurant/manage-restaurant/about/restaurant-information');
+        if($restaurant->status == "Published"){
+            //check first kung hindi sakop ng  opening hours ngayon
+            //tanggalin lahat ng mga nakareserve onwards its either delete or declined then notify customer
+
+        } else {
+            RestaurantAccount::where('id', $restAccId)
+            ->update([
+                'rNumberOfTables' => $request->rNumberOfTables,
+                'rCapacityPerTable' => $request->rCapacityPerTable,
+            ]);
+    
+            $request->session()->flash('tablesUpdated');
+            return redirect('/restaurant/manage-restaurant/about/restaurant-information');
+        }
     }
     public function updateRestaurantRadius(Request $request){
         $restAccId = Session::get('loginId');

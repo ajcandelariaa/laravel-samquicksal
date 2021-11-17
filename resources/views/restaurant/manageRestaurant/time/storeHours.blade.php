@@ -53,7 +53,7 @@
     @elseif (session()->has('closingTimeExceed2'))
         <script>
             Swal.fire(
-                'Store should open more than 2 hours',
+                'Store should open more than 3 hours',
                 '',
                 'error'
             );

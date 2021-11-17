@@ -93,7 +93,7 @@
                             <div class="border-multiStepBoxBorder border-manageRestaurantHrColor mt-3"></div>
                         </div>
                         <div class="text-sm mt-3 w-10/12 mx-auto">
-                            <a href="/restaurant/manage-restaurant/checklist" class="ml-5 {{ (request()->is('restaurant/manage-restaurant/checklist*')) ? 'text-manageRestaurantSidebarColorActive' : 'text-manageRestaurantSidebarColor hover:underline' }}"><i class="fas fa-file w-3 mr-3"></i> Current Status</a>
+                            <a href="/restaurant/manage-restaurant/checklist" class="ml-5 {{ (request()->is('restaurant/manage-restaurant/checklist*')) ? 'text-manageRestaurantSidebarColorActive' : 'text-manageRestaurantSidebarColor hover:underline' }}"><i class="fas fa-file w-3 mr-3"></i> Publish Restaurant</a>
                             <div class="border-multiStepBoxBorder border-manageRestaurantHrColor mt-3"></div>
                         </div>
                     @endif

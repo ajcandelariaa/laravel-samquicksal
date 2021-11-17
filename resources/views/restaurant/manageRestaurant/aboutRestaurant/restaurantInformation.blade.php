@@ -239,7 +239,7 @@
             </form>
 
             <div class="uppercase font-bold bg-gradient-to-r from-adminViewAccountHeaderColor to-adminViewAccountHeaderColor2 py-2 text-submitButton pl-5">Tables</div>
-            <form action="/restaurant/manage-restaurant/about/restaurant-information/updateTables" method="POST">
+            <form action="/restaurant/manage-restaurant/about/restaurant-information/updateTables" id="formUpdateTables" method="POST">
                 @csrf
                 <div class="grid grid-cols-formsThreeCols w-10/12 mx-auto mt-5">
                     <div class="text-left text-submitButton">Number of Tables</div>
@@ -258,7 +258,7 @@
                     </div>
                 </div>
                 <div class="w-10/12 mx-auto text-right mt-3 mb-5">
-                    <button type="submit" class="bg-submitButton hover:bg-btnHoverColor text-white hover:text-gray-300 w-36 h-9 rounded-md transition duration-200 ease-in-out ">Update Table</button>
+                    <button type="submit" id="btnUpdateTables" class="bg-submitButton hover:bg-btnHoverColor text-white hover:text-gray-300 w-36 h-9 rounded-md transition duration-200 ease-in-out ">Update Table</button>
                 </div>
             </form>
 

@@ -1,53 +1,19 @@
-$("#clickAboutRestaurant").click(function(){
-  $("#aboutRestaurant").show();
-  $("#foodMenu").hide();
-  $("#taskRewards").hide();
-  $("#promos").hide();
-  $("#time").hide();
-  $("#offense").hide();
-});
+// PUBLISH RESTO
+$('#btnPublish').on('click', function(e){
+    e.preventDefault();
+    const href = $(this).attr('href')
 
-$("#clickFoodMenu").click(function(){
-    $("#aboutRestaurant").hide();
-    $("#foodMenu").show();
-    $("#taskRewards").hide();
-    $("#promos").hide();
-    $("#time").hide();
-    $("#offense").hide();
-});
-
-$("#clickTaskRewards").click(function(){
-    $("#aboutRestaurant").hide();
-    $("#foodMenu").hide();
-    $("#taskRewards").show();
-    $("#promos").hide();
-    $("#time").hide();
-    $("#offense").hide();
-});
-
-$("#clickPromos").click(function(){
-    $("#aboutRestaurant").hide();
-    $("#foodMenu").hide();
-    $("#taskRewards").hide();
-    $("#promos").show();
-    $("#time").hide();
-    $("#offense").hide();
-});
-
-$("#clickManageTime").click(function(){
-    $("#aboutRestaurant").hide();
-    $("#foodMenu").hide();
-    $("#taskRewards").hide();
-    $("#promos").hide();
-    $("#time").show();
-    $("#offense").hide();
-});
-
-$("#clickManageOffense").click(function(){
-    $("#aboutRestaurant").hide();
-    $("#foodMenu").hide();
-    $("#taskRewards").hide();
-    $("#promos").hide();
-    $("#time").hide();
-    $("#offense").show();
-});
+    Swal.fire({
+        title: 'Publish Restaurant?',
+        text: 'Are you sure you want to Publish your Restaurant?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes'
+    }).then((result) =>{
+        if(result.value){
+            document.location.href = href;
+        }
+    })
+})

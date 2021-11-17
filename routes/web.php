@@ -123,6 +123,7 @@ Route::middleware(['restaurantLoggedIn'])->group(function(){
     Route::get('/restaurant/manage-restaurant/offense/policy/delete/{id}', [RestaurantController::class, 'deletePolicy']);
     // -------CHECKLIST------------ //
     Route::get('/restaurant/manage-restaurant/checklist', [RestaurantController::class, 'manageRestaurantChecklistView']);
+    Route::get('/restaurant/manage-restaurant/checklist/publish', [RestaurantController::class, 'manageRestaurantPublish']);
     // -------CUSTOMER BOOKING------------ //
     Route::get('/restaurant/live-transaction/customer-booking/queue', [RestaurantController::class, 'ltCustBookQListView']);
     Route::get('/restaurant/live-transaction/customer-booking/queue/{id}', [RestaurantController::class, 'ltCustBookQParticularView']);
