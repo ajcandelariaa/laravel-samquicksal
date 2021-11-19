@@ -76,7 +76,7 @@
                             <div class="grid grid-cols-3 mt-2">
                                 <p class="col-span-1">{{ $order }}</p>
                                 <p class="col-span-1 text-center">{{ $customerReserve->numberOfPersons }}x</p>
-                                <p class="justify-self-end col-span-1 font-bold">{{ (number_format($orderSet->orderSetPrice * $customerReserve->numberOfPersons, 2, '.')) }} <span class="text-xs text-manageRestaurantSidebarColor font-normal">Php</span></p>
+                                <p class="justify-self-end col-span-1 font-bold">{{ (number_format($customerReserve->orderSetPrice * $customerReserve->numberOfPersons, 2, '.')) }} <span class="text-xs text-manageRestaurantSidebarColor font-normal">Php</span></p>
                             </div>
     
     
@@ -173,7 +173,7 @@
                                 <div>
                                     <p class="mt-2">Reserved Date: <span class="font-bold">{{ $reserveDate }}</span></p>
                                     <p class="mt-2">Runaway Date: <span class="font-bold">{{ $cancelledDate }}</span></p>
-                                    <p class="mt-2">Order Set: <span class="font-bold">{{ $orderSet->orderSetName }}</span></p>
+                                    <p class="mt-2">Order Set: <span class="font-bold">{{ $customerReserve->orderSetName }}</span></p>
                                     <p class="mt-2">No. of Persons: <span class="font-bold">{{ $customerReserve->numberOfPersons }}</span></p>
                                     <p class="mt-2">Senior Citizen/PWD: <span class="font-bold">{{ $customerReserve->numberOfPwd }}</span></p>
                                     <p class="mt-2">Reward: <span class="font-bold">{{ $finalReward }}</span></p>

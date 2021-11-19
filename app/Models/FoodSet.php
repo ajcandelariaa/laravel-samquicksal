@@ -11,6 +11,8 @@ class FoodSet extends Model
 
     protected $fillable = [
         'restAcc_id',
+        'status',
+        'available',
         'foodSetName',
         'foodSetDescription',
         'foodSetPrice',

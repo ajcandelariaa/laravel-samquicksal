@@ -10,6 +10,14 @@
                 'success'
             );
         </script>
+    @elseif (session()->has('stillOpenHours'))
+        <script>
+            Swal.fire(
+                'You are currently Open',
+                'Wait till your store is closed',
+                'error'
+            );
+        </script>
     @endif
     <div class="w-11/12 mx-auto mt-10">
         <a href="/restaurant/manage-restaurant/food-menu/order-set/detail/{{ $orderSet->id }}" class="mt-2 text-submitButton uppercase font-bold"><i class="fas fa-chevron-left mr-2"></i>Back</a>

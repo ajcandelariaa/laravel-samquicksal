@@ -13,6 +13,8 @@ class CustomerQueue extends Model
         'customer_id',
         'restAcc_id',
         'orderSet_id',
+        'orderSetName',
+        'orderSetPrice',
         'status',
         'checkoutStatus',
         'gcashCheckoutReceipt',

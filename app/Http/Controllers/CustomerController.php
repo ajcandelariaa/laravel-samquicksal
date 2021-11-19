@@ -175,61 +175,82 @@ class CustomerController extends Controller
         $finalData = array();
         $restaurants = RestaurantAccount::select('id', 'rName', 'rAddress', 'rLogo')->where('status', "Published")->get();
         foreach ($restaurants as $restaurant){
-            $getAvailability = "";
+            $getAvailability = "Open";
             $rSchedule = "";
 
             $restaurantUnavailableDates = UnavailableDate::select('unavailableDatesDate')->where('restAcc_id', $restaurant->id)->get();
             foreach ($restaurantUnavailableDates as $restaurantUnavailableDate) {
                 if($restaurantUnavailableDate->unavailableDatesDate == date("Y-m-d") && $restaurantUnavailableDate->startTime <= date('H:i')){
-                    $getAvailability = "Closed";
+                    $getAvailability = "Closed Now";
                 }
             }
+            
+            if($getAvailability == "Open"){
+                $storeDay = array();
+                $storeOpeningTime = array();
+                $storeClosingTime = array();
 
-            if($getAvailability == "Closed"){
-                $rSchedule = "Closed Now";
-            } else {
+                $currentDay = date('l');
+                $prevDay = date('l', strtotime(date('Y-m-d') . " -1 days"));
+
+                $isHasCurr = false;
+                $isHasCurrIndex = "";
+
+                $isHasPrev = false;
+                $isHasPrevIndex = "";
+
+                $currentTime = date("H:i");
+
                 $restaurantStoreHours = StoreHour::where('restAcc_id', $restaurant->id)->get();
                 foreach ($restaurantStoreHours as $restaurantStoreHour){
                     foreach (explode(",", $restaurantStoreHour->days) as $day){
-
-                        if(strtotime($restaurantStoreHour->closingTime) >= strtotime("00:00") && 
-                        strtotime($restaurantStoreHour->closingTime) <= strtotime("04:00")){
-                            if($this->convertDays($day) == date('l', strtotime(date('Y-m-d') . " -1 days"))){
-                                $currentTime = date("H:i");
-                                if(strtotime($currentTime) >= strtotime("00:00") && strtotime($currentTime) <= strtotime("04:00")){
-                                    if($currentTime > $restaurantStoreHour->closingTime){
-                                        $rSchedule = "Closed Now";
-                                    } else  {
-                                        $openingTime = date("g:i a", strtotime($restaurantStoreHour->openingTime));
-                                        $closingTime = date("g:i a", strtotime($restaurantStoreHour->closingTime));
-                                        $rSchedule = "Open today at ".$openingTime." to ".$closingTime;
-                                    }
-                                } else {
-                                    if($currentTime < $restaurantStoreHour->openingTime || $currentTime > $restaurantStoreHour->closingTime){
-                                        $rSchedule = "Closed Now";
-                                    } else {
-                                        $openingTime = date("g:i a", strtotime($restaurantStoreHour->openingTime));
-                                        $closingTime = date("g:i a", strtotime($restaurantStoreHour->closingTime));
-                                        $rSchedule = "Open today at ".$openingTime." to ".$closingTime;
-                                    }
-                                }
-                            }
-                        } else {
-                            if($this->convertDays($day) == date('l')){
-                                $currentTime = date("H:i");
-                                if($currentTime < $restaurantStoreHour->openingTime || $currentTime > $restaurantStoreHour->closingTime){
-                                    $rSchedule = "Closed Now";
-                                } else {
-                                    $openingTime = date("g:i a", strtotime($restaurantStoreHour->openingTime));
-                                    $closingTime = date("g:i a", strtotime($restaurantStoreHour->closingTime));
-                                    $rSchedule = "Open today at ".$openingTime." to ".$closingTime;
-                                }
-                            }
-                        }
+                        array_push($storeDay, $this->convertDays($day));
+                        array_push($storeOpeningTime, $restaurantStoreHour->openingTime);
+                        array_push($storeClosingTime, $restaurantStoreHour->closingTime);
                     }
                 }
-            }
-            if($rSchedule == ""){
+
+                for($i=0; $i<sizeOf($storeDay); $i++){
+                    if($prevDay == $storeDay[$i]){
+                        if(strtotime($storeClosingTime[$i]) >= strtotime("00:00") && strtotime($storeClosingTime[$i]) <= strtotime("04:00")){
+                            $isHasPrev = true;
+                            $isHasPrevIndex = $i;
+                        }
+                    }
+                    if($currentDay == $storeDay[$i]){
+                        $isHasCurr = true;
+                        $isHasCurrIndex = $i;
+                    }
+                }
+             
+                if(strtotime($currentTime) >= strtotime("00:00") && strtotime($currentTime) <= strtotime("04:00")){
+                    if($isHasPrev){
+                        if(strtotime($currentTime) <= strtotime($storeClosingTime[$isHasPrevIndex])){
+                            $openingTime = date("g:i a", strtotime($storeOpeningTime[$isHasPrevIndex]));
+                            $closingTime = date("g:i a", strtotime($storeClosingTime[$isHasPrevIndex]));
+                            $rSchedule = "Open today at ".$openingTime." to ".$closingTime;
+                        } else {
+                            $rSchedule = "Closed Now";
+                        }
+                    } else {
+                        $rSchedule = "Closed Now";
+                    }
+                } else if(strtotime($currentTime) >= strtotime("05:00") && strtotime($currentTime) <= strtotime("23:59")){
+                    if($isHasCurr){
+                        if(strtotime($currentTime) >= strtotime($storeOpeningTime[$isHasCurrIndex]) && strtotime($currentTime) <= strtotime($storeClosingTime[$isHasCurrIndex])){
+                            $openingTime = date("g:i a", strtotime($storeOpeningTime[$isHasCurrIndex]));
+                            $closingTime = date("g:i a", strtotime($storeClosingTime[$isHasCurrIndex]));
+                            $rSchedule = "Open today at ".$openingTime." to ".$closingTime;
+                        } else {
+                            $rSchedule = "Closed Now";
+                        }
+                    } else {
+                        $rSchedule = "Closed Now";
+                    }
+                } else {
+                    $rSchedule = "Closed Now";
+                }
+            } else {
                 $rSchedule = "Closed Now";
             }
 
@@ -245,7 +266,7 @@ class CustomerController extends Controller
                 'rName' => $restaurant->rName,
                 'rAddress' => $restaurant->rAddress,
                 'rLogo' => $finalImageUrl,
-                'rSchedule' => $rSchedule
+                'rSchedule' => $rSchedule,
             ]);
         }
         return response()->json($finalData);
@@ -498,54 +519,66 @@ class CustomerController extends Controller
         ]);
     }
     public function getRestaurantsMenuInfo($id, $cust_id){
-        $orderSets = OrderSet::where('restAcc_id', $id)->get();
+        $orderSets = OrderSet::where('restAcc_id', $id)->where('status', "Visible")->get();
         $getDateToday = date('Y-m-d');
         $getDateTimeToday = date('Y-m-d H:i:s');
         
         $finalData = array();
-        foreach ($orderSets as $orderSet){
-            $foodSets = array();
-            $orderSetFoodSets = OrderSetFoodSet::where('orderSet_id', $orderSet->id)->get();
-            $orderSetFoodItems = OrderSetFoodItem::where('orderSet_id', $orderSet->id)->get();
-
-            // GET FOOD SETS
-            if(!$orderSetFoodSets->isEmpty()){
-                foreach($orderSetFoodSets as $orderSetFoodSet){
-                    $foodItems = array();
-                    $foodSetName = FoodSet::select('foodSetName', 'id')->where('id', $orderSetFoodSet->foodSet_id)->where('restAcc_id', $id)->first();
-                    $foodSetItems = FoodSetItem::where('foodSet_id', $foodSetName->id)->get();
-                    foreach($foodSetItems as $foodSetItem){
-                        $foodItemName = FoodItem::where('id', $foodSetItem->foodItem_id)->where('restAcc_id', $id)->first();
-                        array_push($foodItems, $foodItemName->foodItemName);
+        if(!$orderSets->isEmpty()){
+            foreach ($orderSets as $orderSet){
+                $foodSets = array();
+                $orderSetFoodSets = OrderSetFoodSet::where('orderSet_id', $orderSet->id)->get();
+                $orderSetFoodItems = OrderSetFoodItem::where('orderSet_id', $orderSet->id)->get();
+    
+                // GET FOOD SETS
+                if(!$orderSetFoodSets->isEmpty()){
+                    foreach($orderSetFoodSets as $orderSetFoodSet){
+                        $foodItems = array();
+                        $foodSetName = FoodSet::where('id', $orderSetFoodSet->foodSet_id)->where('restAcc_id', $id)->where('status', "Visible")->first();
+                        if($foodSetName != null){
+                            $foodSetItems = FoodSetItem::where('foodSet_id', $foodSetName->id)->get();
+                            foreach($foodSetItems as $foodSetItem){
+                                $foodItemName = FoodItem::where('id', $foodSetItem->foodItem_id)->where('restAcc_id', $id)->where('status', "Visible")->first();
+                                if($foodItemName != null){
+                                    array_push($foodItems, $foodItemName->foodItemName);
+                                }
+                            }
+                            if($foodItems != null){
+                                array_push($foodSets, [
+                                    'foodSetName' => $foodSetName->foodSetName,
+                                    'foodItem' => $foodItems,
+                                ]);
+                            }
+                        }
                     }
-                    array_push($foodSets, [
-                        'foodSetName' => $foodSetName->foodSetName,
-                        'foodItem' => $foodItems,
-                    ]);
                 }
-            }
-            
-            // GET OTHER FOOD SET (FOOD ITEMS)
-            if(!$orderSetFoodItems->isEmpty()){
-                $foodItems = array();
-                foreach($orderSetFoodItems as $orderSetFoodItem){
-                    $foodItemName = FoodItem::where('id', $orderSetFoodItem->foodItem_id)->where('restAcc_id', $id)->first();
-                    array_push($foodItems, $foodItemName->foodItemName);
+                
+                // GET OTHER FOOD SET (FOOD ITEMS)
+                if(!$orderSetFoodItems->isEmpty()){
+                    $foodItems = array();
+                    foreach($orderSetFoodItems as $orderSetFoodItem){
+                        $foodItemName = FoodItem::where('id', $orderSetFoodItem->foodItem_id)->where('restAcc_id', $id)->where('status', "Visible")->first();
+                        if($foodItemName != null){
+                            array_push($foodItems, $foodItemName->foodItemName);
+                        }
+                    }
+                    if($foodItems != null){
+                        array_push($foodSets, [
+                            'foodSetName' => "Add-on/s (Not Free)",
+                            'foodItem' => $foodItems,
+                        ]);
+                    }
                 }
-                array_push($foodSets, [
-                    'foodSetName' => "Add-on/s (Not Free)",
-                    'foodItem' => $foodItems,
+    
+                array_push($finalData, [
+                    'orderSetName' => $orderSet->orderSetName,
+                    'orderSetTagline' => $orderSet->orderSetTagline,
+                    'orderSetDescription' => $orderSet->orderSetDescription,
+                    'orderSetPrice' => "Price: ".$orderSet->orderSetPrice,
+                    'orderSetImage' => $this->ORDER_SET_IMAGE_PATH."/".$id."/".$orderSet->orderSetImage,
+                    'foodSet' => $foodSets,
                 ]);
             }
-
-            array_push($finalData, [
-                'orderSetName' => $orderSet->orderSetName,
-                'orderSetTagline' => $orderSet->orderSetTagline,
-                'orderSetDescription' => $orderSet->orderSetDescription,
-                'orderSetPrice' => "Price: ".$orderSet->orderSetPrice,
-                'orderSetImage' => $this->ORDER_SET_IMAGE_PATH."/".$id."/".$orderSet->orderSetImage,
-                'foodSet' => $foodSets,
-            ]);
         }
 
         // CHECKING IF CAN QUEUE OR BOOK
@@ -610,36 +643,78 @@ class CustomerController extends Controller
             }
         }
 
-        $getAvailability = "";
+        $getAvailability = "Open";
         $rSchedule = "";
 
         $restaurantUnavailableDates = UnavailableDate::select('unavailableDatesDate')->where('restAcc_id', $id)->get();
         foreach ($restaurantUnavailableDates as $restaurantUnavailableDate) {
-            if($restaurantUnavailableDate->unavailableDatesDate == date("Y-m-d")){
-                $getAvailability = "Closed";
+            if($restaurantUnavailableDate->unavailableDatesDate == date("Y-m-d") && $restaurantUnavailableDate->startTime <= date('H:i')){
+                $getAvailability = "Closed Now";
             }
         }
+        
+        if($getAvailability == "Open"){
+            $storeDay = array();
+            $storeOpeningTime = array();
+            $storeClosingTime = array();
 
-        if($getAvailability == "Closed"){
-            $rSchedule = "Closed Now";
-        } else {
+            $currentDay = date('l');
+            $prevDay = date('l', strtotime(date('Y-m-d') . " -1 days"));
+
+            $isHasCurr = false;
+            $isHasCurrIndex = "";
+
+            $isHasPrev = false;
+            $isHasPrevIndex = "";
+
+            $currentTime = date("H:i");
+
             $restaurantStoreHours = StoreHour::where('restAcc_id', $id)->get();
             foreach ($restaurantStoreHours as $restaurantStoreHour){
                 foreach (explode(",", $restaurantStoreHour->days) as $day){
-                    if($this->convertDays($day) == date('l')){
-                        $currentTime = date("H:i");
-                        if($currentTime < $restaurantStoreHour->openingTime || $currentTime > $restaurantStoreHour->closingTime){
-                            $rSchedule = "Closed Now";
-                        } else {
-                            $openingTime = date("g:i a", strtotime($restaurantStoreHour->openingTime));
-                            $closingTime = date("g:i a", strtotime($restaurantStoreHour->closingTime));
-                            $rSchedule = "Open today at ".$openingTime." to ".$closingTime;
-                        }
-                    }
+                    array_push($storeDay, $this->convertDays($day));
+                    array_push($storeOpeningTime, $restaurantStoreHour->openingTime);
+                    array_push($storeClosingTime, $restaurantStoreHour->closingTime);
                 }
             }
-        }
-        if($rSchedule == ""){
+
+            for($i=0; $i<sizeOf($storeDay); $i++){
+                if($prevDay == $storeDay[$i]){
+                    if(strtotime($storeClosingTime[$i]) >= strtotime("00:00") && strtotime($storeClosingTime[$i]) <= strtotime("04:00")){
+                        $isHasPrev = true;
+                        $isHasPrevIndex = $i;
+                    }
+                }
+                if($currentDay == $storeDay[$i]){
+                    $isHasCurr = true;
+                    $isHasCurrIndex = $i;
+                }
+            }
+            
+            if(strtotime($currentTime) >= strtotime("00:00") && strtotime($currentTime) <= strtotime("04:00")){
+                if($isHasPrev){
+                    if(strtotime($currentTime) <= strtotime($storeClosingTime[$isHasPrevIndex])){
+                        $rSchedule = "Open today";
+                    } else {
+                        $rSchedule = "Closed Now";
+                    }
+                } else {
+                    $rSchedule = "Closed Now";
+                }
+            } else if(strtotime($currentTime) >= strtotime("05:00") && strtotime($currentTime) <= strtotime("23:59")){
+                if($isHasCurr){
+                    if(strtotime($currentTime) >= strtotime($storeOpeningTime[$isHasCurrIndex]) && strtotime($currentTime) <= strtotime($storeClosingTime[$isHasCurrIndex])){
+                        $rSchedule = "Open today";
+                    } else {
+                        $rSchedule = "Closed Now";
+                    }
+                } else {
+                    $rSchedule = "Closed Now";
+                }
+            } else {
+                $rSchedule = "Closed Now";
+            }
+        } else {
             $rSchedule = "Closed Now";
         }
 
@@ -698,7 +773,7 @@ class CustomerController extends Controller
         $finalRewardInput = "";
 
         $restaurant = RestaurantAccount::select('rName', 'rTimeLimit', 'rCapacityPerTable')->where('id', $id)->first();
-        $orderSets = OrderSet::where('restAcc_id', $id)->get();
+        $orderSets = OrderSet::where('restAcc_id', $id)->where('status', "Visible")->get();
         $getStamp = StampCard::select('stampValidity', 'stampReward_id')->where('restAcc_id', $id)->first();
 
         if($getStamp == null){
@@ -710,7 +785,8 @@ class CustomerController extends Controller
                             ->where('restAcc_id', $id)
                             ->where('stampValidity', $getStamp->stampValidity)
                             ->where('claimed', "No")
-                            ->where('status', "Complete")->first();
+                            ->where('status', "Complete")
+                            ->first();
             if($checkIfComplete == null){
                 $finalRewardStatus = "Incomplete";
                 $finalRewardType = "";
@@ -722,15 +798,19 @@ class CustomerController extends Controller
             }
         }
         
-        foreach ($orderSets as $orderSet){
-            array_push($finalData, [
-                'orderSetId' => $orderSet->id,
-                'orderSetPrice' => $orderSet->orderSetPrice,
-                'orderSetName' => $orderSet->orderSetName,
-                'orderSetTagline' => $orderSet->orderSetTagline,
-                'orderSetImage' => $this->ORDER_SET_IMAGE_PATH."/".$id."/".$orderSet->orderSetImage,
-            ]);
+        if(!$orderSets->isEmpty()){
+            foreach ($orderSets as $orderSet){
+                array_push($finalData, [
+                    'orderSetId' => $orderSet->id,
+                    'orderSetPrice' => $orderSet->orderSetPrice,
+                    'orderSetName' => $orderSet->orderSetName,
+                    'orderSetTagline' => $orderSet->orderSetTagline,
+                    'orderSetImage' => $this->ORDER_SET_IMAGE_PATH."/".$id."/".$orderSet->orderSetImage,
+                    'orderSetAvailable' => $orderSet->available,
+                ]);
+            }
         }
+        
         return response()->json([
             'restaurantName' => $restaurant->rName,
             'rTimeLimit' => $restaurant->rTimeLimit,
@@ -1186,12 +1266,14 @@ class CustomerController extends Controller
     public function submitQueueForm(Request $request){
         $restaurant = RestaurantAccount::select('id', 'rName', 'rBranch', 'rAddress', 'rCity', 'rLogo')->where('id', $request->restAcc_id)->first();
         $customer = CustomerAccount::select('deviceToken')->where('id', $request->customer_id)->first();
+        $orderSet = OrderSet::where('id', $request->orderSet_id)->first();
 
-        
         CustomerQueue::create([
             'customer_id' => $request->customer_id,
             'restAcc_id' => $request->restAcc_id,
             'orderSet_id' => $request->orderSet_id,
+            'orderSetName' => $orderSet->orderSetName,
+            'orderSetPrice' => $orderSet->orderSetPrice,
             'status' => "pending",
             'numberOfPersons' => $request->numberOfPersons,
             'numberOfTables' => $request->numberOfTables,
@@ -1249,11 +1331,14 @@ class CustomerController extends Controller
     public function submitReserveForm(Request $request){
         $restaurant = RestaurantAccount::select('id', 'rName', 'rBranch', 'rAddress', 'rCity', 'rLogo')->where('id', $request->restAcc_id)->first();
         $customer = CustomerAccount::select('deviceToken')->where('id', $request->customer_id)->first();
+        $orderSet = OrderSet::where('id', $request->orderSet_id)->first();
 
         CustomerReserve::create([
             'customer_id' => $request->customer_id,
             'restAcc_id' => $request->restAcc_id,
             'orderSet_id' => $request->orderSet_id,
+            'orderSetName' => $orderSet->orderSetName,
+            'orderSetPrice' => $orderSet->orderSetPrice,
             'status' => "pending",
             'reserveDate' => $request->date,
             'reserveTime' => $request->time,
@@ -2117,7 +2202,6 @@ class CustomerController extends Controller
 
         if($customerQueue != null){
 
-            $orderSet = OrderSet::select('orderSetName')->where('id', $customerQueue->orderSet_id)->first();
             if($customerQueue->status == "pending"){
                 $viewable = "yes";
             } else {
@@ -2125,7 +2209,7 @@ class CustomerController extends Controller
             }
     
             return response()->json([
-                'orderName' => $orderSet->orderSetName,
+                'orderName' => $customerQueue->orderSetName,
                 'numberOfPersons' => $customerQueue->numberOfPersons,
                 'numberOfTables' => $customerQueue->numberOfTables,
                 'hoursOfStay' => $customerQueue->hoursOfStay,
@@ -2139,7 +2223,6 @@ class CustomerController extends Controller
             ]);
         } else {
 
-            $orderSet = OrderSet::select('orderSetName')->where('id', $customerReserve->orderSet_id)->first();
             if($customerReserve->status == "pending"){
                 $viewable = "yes";
             } else {
@@ -2152,7 +2235,7 @@ class CustomerController extends Controller
             $day  = $bookDate[2];
     
             return response()->json([
-                'orderName' => $orderSet->orderSetName,
+                'orderName' => $customerReserve->orderSetName,
                 'numberOfPersons' => $customerReserve->numberOfPersons,
                 'numberOfTables' => $customerReserve->numberOfTables,
                 'hoursOfStay' => $customerReserve->hoursOfStay,
@@ -2355,7 +2438,7 @@ class CustomerController extends Controller
 
         }
 
-        $getOrderSets = OrderSet::where('restAcc_id', $restaurant->id)->get();
+        $getOrderSets = OrderSet::where('restAcc_id', $restaurant->id)->where('status', "Visible")->get();
         if($getOrderSets->isEmpty()){
             $orderSets = null;
         } else {
@@ -2629,7 +2712,6 @@ class CustomerController extends Controller
         if($request->book_type == "queue"){
             $customerQueue = CustomerQueue::where('id', $request->book_id)->where('customer_id', $request->cust_id)->first();
             $restaurant = RestaurantAccount::select('rName', 'rAddress', 'rBranch', 'rCity')->where('id', $customerQueue->restAcc_id)->first();
-            $orderSet = OrderSet::select('orderSetName')->where('id', $customerQueue->orderSet_id)->where('restAcc_id', $customerQueue->restAcc_id)->first();
             
             $bookDate = explode('-', $customerQueue->queueDate);
             $year = $bookDate[0];
@@ -2672,7 +2754,7 @@ class CustomerController extends Controller
                 'reserveTime' => null,
                 'rName' => $restaurant->rName,
                 'rAddress' => "$restaurant->rAddress, $restaurant->rBranch, $restaurant->rCity",
-                'orderName' => $orderSet->orderSetName,
+                'orderName' => $customerQueue->orderSetName,
                 'hoursOfStay' => "$customerQueue->hoursOfStay hours",
                 'numberOfPwd' => $customerQueue->numberOfPwd,
                 'numberOfChildren' => $customerQueue->totalPwdChild,
@@ -2685,7 +2767,6 @@ class CustomerController extends Controller
         } else {
             $customerReserve = CustomerReserve::where('id', $request->book_id)->where('customer_id', $request->cust_id)->first();
             $restaurant = RestaurantAccount::select('rName', 'rAddress', 'rBranch', 'rCity')->where('id', $customerReserve->restAcc_id)->first();
-            $orderSet = OrderSet::select('orderSetName')->where('id', $customerReserve->orderSet_id)->where('restAcc_id', $customerReserve->restAcc_id)->first();
             
             $bookDate = explode('-', date("Y-m-d", strtotime($customerReserve->created_at->toTimeString())));
             $year = $bookDate[0];
@@ -2734,7 +2815,7 @@ class CustomerController extends Controller
                 'reserveTime' => $reserveTime,
                 'rName' => $restaurant->rName,
                 'rAddress' => "$restaurant->rAddress, $restaurant->rBranch, $restaurant->rCity",
-                'orderName' => $orderSet->orderSetName,
+                'orderName' => $customerReserve->orderSetName,
                 'hoursOfStay' => "$customerReserve->hoursOfStay hours",
                 'numberOfPwd' => $customerReserve->numberOfPwd,
                 'numberOfChildren' => $customerReserve->totalPwdChild,
@@ -2759,52 +2840,81 @@ class CustomerController extends Controller
             $orderSetId = $customerQueue->orderSet_id;
             $foodSets = OrderSetFoodSet::where('orderSet_id', $customerQueue->orderSet_id)->get();
             $foodItems = OrderSetFoodItem::where('orderSet_id', $customerQueue->orderSet_id)->get();
-            
+            $countFoodItems = OrderSetFoodItem::where('orderSet_id', $customerQueue->orderSet_id)->count();
+
             foreach($foodSets as $foodSet){
-                $getFoodSet = FoodSet::where('id', $foodSet->foodSet_id)->first();
-                array_push($finalFoodSets, [
-                    'foodSetId' => $foodSet->foodSet_id,
-                    'foodSetImage' => $this->FOOD_SET_IMAGE_PATH.'/'.$getFoodSet->restAcc_id.'/'. $getFoodSet->foodSetImage,
-                    'foodSetName' => $getFoodSet->foodSetName,
-                    'foodSetDescription' => $getFoodSet->foodSetDescription,
-                ]);
+                $getFoodSet = FoodSet::where('id', $foodSet->foodSet_id)->where('status', "Visible")->first();
+                if($getFoodSet != null){
+                    array_push($finalFoodSets, [
+                        'foodSetId' => $foodSet->foodSet_id,
+                        'foodSetImage' => $this->FOOD_SET_IMAGE_PATH.'/'.$getFoodSet->restAcc_id.'/'. $getFoodSet->foodSetImage,
+                        'foodSetName' => $getFoodSet->foodSetName,
+                        'foodSetDescription' => $getFoodSet->foodSetDescription,
+                        'foodSetAvailable' => $getFoodSet->available,
+                    ]);
+                }
             }
             
             if(!$foodItems->isEmpty()){
-                array_push($finalFoodSets, [
-                    'foodSetId' => 0,
-                    'foodSetImage' => $this->ACCOUNT_NO_IMAGE_PATH."/add_ons_img.png",
-                    'foodSetName' => "Add Ons",
-                    'foodSetDescription' => "Includes extra charges on your total bill",
-                ]);
+                $count = 0;
+
+                foreach($foodItems as $foodItem){
+                    $food = FoodItem::where('id', $foodItem->foodItem_id)->where('status', 'Hidden')->first();
+                    if($food != null){
+                        $count++;
+                    }
+                }
+
+                if($count != $countFoodItems){
+                    array_push($finalFoodSets, [
+                        'foodSetId' => 0,
+                        'foodSetImage' => $this->ACCOUNT_NO_IMAGE_PATH."/add_ons_img.png",
+                        'foodSetName' => "Add Ons",
+                        'foodSetDescription' => "Includes extra charges on your total bill",
+                    ]);
+                }
+
             }
         } else if($customerReserve != null){
             $restAccId = $customerReserve->restAcc_id;
             $orderSetId = $customerReserve->orderSet_id;
             $foodSets = OrderSetFoodSet::where('orderSet_id', $customerReserve->orderSet_id)->get();
             $foodItems = OrderSetFoodItem::where('orderSet_id', $customerReserve->orderSet_id)->get();
+            $countFoodItems = OrderSetFoodItem::where('orderSet_id', $customerQueue->orderSet_id)->count();
             
             foreach($foodSets as $foodSet){
-                $getFoodSet = FoodSet::where('id', $foodSet->foodSet_id)->first();
-                array_push($finalFoodSets, [
-                    'foodSetId' => $foodSet->foodSet_id,
-                    'foodSetImage' => $this->FOOD_SET_IMAGE_PATH.'/'.$getFoodSet->restAcc_id.'/'. $getFoodSet->foodSetImage,
-                    'foodSetName' => $getFoodSet->foodSetName,
-                    'foodSetDescription' => $getFoodSet->foodSetDescription,
-                ]);
+                $getFoodSet = FoodSet::where('id', $foodSet->foodSet_id)->where('status', "Visible")->first();
+                if($getFoodSet != null){
+                    array_push($finalFoodSets, [
+                        'foodSetId' => $foodSet->foodSet_id,
+                        'foodSetImage' => $this->FOOD_SET_IMAGE_PATH.'/'.$getFoodSet->restAcc_id.'/'. $getFoodSet->foodSetImage,
+                        'foodSetName' => $getFoodSet->foodSetName,
+                        'foodSetDescription' => $getFoodSet->foodSetDescription,
+                        'foodSetAvailable' => $getFoodSet->available,
+                    ]);
+                }
             }
             
             if(!$foodItems->isEmpty()){
-                array_push($finalFoodSets, [
-                    'foodSetId' => 0,
-                    'foodSetImage' => $this->ACCOUNT_NO_IMAGE_PATH."/add_ons_img.png",
-                    'foodSetName' => "Add Ons",
-                    'foodSetDescription' => "Add ons contain price",
-                ]);
-            }
-        } else {
+                $count = 0;
 
-        }
+                foreach($foodItems as $foodItem){
+                    $food = FoodItem::where('id', $foodItem->foodItem_id)->where('status', 'Hidden')->first();
+                    if($food != null){
+                        $count++;
+                    }
+                }
+                
+                if($count != $countFoodItems){
+                    array_push($finalFoodSets, [
+                        'foodSetId' => 0,
+                        'foodSetImage' => $this->ACCOUNT_NO_IMAGE_PATH."/add_ons_img.png",
+                        'foodSetName' => "Add Ons",
+                        'foodSetDescription' => "Add ons contain price",
+                    ]);
+                }
+            }
+        } else { }
         return response()->json([
             'restAccId' => $restAccId,
             'orderSetId' => $orderSetId,
@@ -2815,29 +2925,39 @@ class CustomerController extends Controller
         $finalFoodItems = array();
         if($foodSet_id == 0){
             $foodItems = OrderSetFoodItem::where('orderSet_id', $orderSet_id)->get();
-            foreach ($foodItems as $foodItem){
-                $food = FoodItem::where('id', $foodItem->foodItem_id)->where('restAcc_id', $restAcc_id)->first();
-                array_push($finalFoodItems, [
-                    'foodItemId' => $food->id,
-                    'foodItemName' => $food->foodItemName,
-                    'foodItemDescription' => $food->foodItemDescription,
-                    'foodItemPrice' => "$food->foodItemPrice",
-                    'foodItemImage' => $this->FOOD_ITEM_IMAGE_PATH.'/'.$restAcc_id.'/'. $food->foodItemImage,
-                    'foodItemType' => "not free"
-                ]);
+            if(!$foodItems->isEmpty()){
+                foreach ($foodItems as $foodItem){
+                    $food = FoodItem::where('id', $foodItem->foodItem_id)->where('restAcc_id', $restAcc_id)->where('status', "Visible")->first();
+                    if($food != null){
+                        array_push($finalFoodItems, [
+                            'foodItemId' => $food->id,
+                            'foodItemName' => $food->foodItemName,
+                            'foodItemDescription' => $food->foodItemDescription,
+                            'foodItemPrice' => "$food->foodItemPrice",
+                            'foodItemImage' => $this->FOOD_ITEM_IMAGE_PATH.'/'.$restAcc_id.'/'. $food->foodItemImage,
+                            'foodItemType' => "not free",
+                            'foodItemAvailable' => $food->available
+                        ]);
+                    }
+                }
             }
         } else {
             $foodItems = FoodSetItem::where('foodSet_id', $foodSet_id)->get();
-            foreach ($foodItems as $foodItem){
-                $food = FoodItem::where('id', $foodItem->foodItem_id)->where('restAcc_id', $restAcc_id)->first();
-                array_push($finalFoodItems, [
-                    'foodItemId' => $food->id,
-                    'foodItemName' => $food->foodItemName,
-                    'foodItemDescription' => $food->foodItemDescription,
-                    'foodItemPrice' => "0.00",
-                    'foodItemImage' => $this->FOOD_ITEM_IMAGE_PATH.'/'.$restAcc_id.'/'. $food->foodItemImage,
-                    'foodItemType' => "free"
-                ]);
+            if(!$foodItems->isEmpty()){
+                foreach ($foodItems as $foodItem){
+                    $food = FoodItem::where('id', $foodItem->foodItem_id)->where('restAcc_id', $restAcc_id)->where('status', "Visible")->first();
+                    if($food != null){
+                        array_push($finalFoodItems, [
+                            'foodItemId' => $food->id,
+                            'foodItemName' => $food->foodItemName,
+                            'foodItemDescription' => $food->foodItemDescription,
+                            'foodItemPrice' => "0.00",
+                            'foodItemImage' => $this->FOOD_ITEM_IMAGE_PATH.'/'.$restAcc_id.'/'. $food->foodItemImage,
+                            'foodItemType' => "free",
+                            'foodItemAvailable' => $food->available
+                        ]);
+                    }
+                }
             }
         }
 
@@ -4111,7 +4231,6 @@ class CustomerController extends Controller
             $customerOrdering = CustomerOrdering::where('custBook_id', $customerQueue->id)->where('custBookType', "queue")->first();
 
             $finalOrders = array();
-            $orderSet = OrderSet::where('id', $customerQueue->orderSet_id)->first();
             $orders = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)->get();
 
             $orderTotalPrice = 0.0;
@@ -4130,28 +4249,28 @@ class CustomerController extends Controller
                 switch($customerQueue->rewardType){
                     case "DSCN": 
                         $finalReward = "Discount $customerQueue->rewardInput% in a Total Bill";
-                        $rewardDiscount = ($customerQueue->numberOfPersons * $orderSet->orderSetPrice) * ($customerQueue->rewardInput / 100);
+                        $rewardDiscount = ($customerQueue->numberOfPersons * $customerQueue->orderSetPrice) * ($customerQueue->rewardInput / 100);
                         break;
                     case "FRPE": 
                         $finalReward = "Free $customerQueue->rewardInput person in a group";
-                        $rewardDiscount = $orderSet->orderSetPrice * $customerQueue->rewardInput;
+                        $rewardDiscount = $customerQueue->orderSetPrice * $customerQueue->rewardInput;
                         break;
                     case "HLF": 
                         $finalReward = "Half in the group will be free";
-                        $rewardDiscount = ($customerQueue->numberOfPersons * $orderSet->orderSetPrice) / 2;
+                        $rewardDiscount = ($customerQueue->numberOfPersons * $customerQueue->orderSetPrice) / 2;
                         break;
                     case "ALL": 
                         $finalReward = "All people in the group will be free";
-                        $rewardDiscount = $customerQueue->numberOfPersons * $orderSet->orderSetPrice;
+                        $rewardDiscount = $customerQueue->numberOfPersons * $customerQueue->orderSetPrice;
                         break;
                     default: 
                         $finalReward = "None";
                 }
             }
 
-            $seniorDiscount = $orderSet->orderSetPrice * ($customerQueue->numberOfPwd * 0.2);
-            $childrenDiscount = $orderSet->orderSetPrice * ($customerQueue->numberOfChildren * ($customerQueue->childrenDiscount / 100));
-            $subTotal = ($customerQueue->numberOfPersons * $orderSet->orderSetPrice) + $orderTotalPrice;
+            $seniorDiscount = $customerQueue->orderSetPrice * ($customerQueue->numberOfPwd * 0.2);
+            $childrenDiscount = $customerQueue->orderSetPrice * ($customerQueue->numberOfChildren * ($customerQueue->childrenDiscount / 100));
+            $subTotal = ($customerQueue->numberOfPersons * $customerQueue->orderSetPrice) + $orderTotalPrice;
 
             $totalPrice = $subTotal - (
                 $rewardDiscount + 
@@ -4172,9 +4291,9 @@ class CustomerController extends Controller
                 'numberOfPersons' => $customerQueue->numberOfPersons,
                 'bookingType' => "Queue",
 
-                'orderSetName' => $orderSet->orderSetName,
+                'orderSetName' => $customerQueue->orderSetName,
                 'numberOfPersons' => $customerQueue->numberOfPersons,
-                'orderSetPriceTotal' => (number_format($customerQueue->numberOfPersons * $orderSet->orderSetPrice, 2, '.')),
+                'orderSetPriceTotal' => (number_format($customerQueue->numberOfPersons * $customerQueue->orderSetPrice, 2, '.')),
                 'orders' => $finalOrders,
                 'subtotal' => (number_format($subTotal, 2, '.')),
                 'numberOfPwd' => $customerQueue->numberOfPwd,
@@ -4203,7 +4322,6 @@ class CustomerController extends Controller
             $customerOrdering = CustomerOrdering::where('custBook_id', $customerReserve->id)->where('custBookType', "reserve")->first();
 
             $finalOrders = array();
-            $orderSet = OrderSet::where('id', $customerReserve->orderSet_id)->first();
             $orders = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)->get();
 
             $orderTotalPrice = 0.0;
@@ -4222,28 +4340,28 @@ class CustomerController extends Controller
                 switch($customerReserve->rewardType){
                     case "DSCN": 
                         $finalReward = "Discount $customerReserve->rewardInput% in a Total Bill";
-                        $rewardDiscount = ($customerReserve->numberOfPersons * $orderSet->orderSetPrice) * ($customerReserve->rewardInput / 100);
+                        $rewardDiscount = ($customerReserve->numberOfPersons * $customerReserve->orderSetPrice) * ($customerReserve->rewardInput / 100);
                         break;
                     case "FRPE": 
                         $finalReward = "Free $customerReserve->rewardInput person in a group";
-                        $rewardDiscount = $orderSet->orderSetPrice * $customerReserve->rewardInput;
+                        $rewardDiscount = $customerReserve->orderSetPrice * $customerReserve->rewardInput;
                         break;
                     case "HLF": 
                         $finalReward = "Half in the group will be free";
-                        $rewardDiscount = ($customerReserve->numberOfPersons * $orderSet->orderSetPrice) / 2;
+                        $rewardDiscount = ($customerReserve->numberOfPersons * $customerReserve->orderSetPrice) / 2;
                         break;
                     case "ALL": 
                         $finalReward = "All people in the group will be free";
-                        $rewardDiscount = $customerReserve->numberOfPersons * $orderSet->orderSetPrice;
+                        $rewardDiscount = $customerReserve->numberOfPersons * $customerReserve->orderSetPrice;
                         break;
                     default: 
                         $finalReward = "None";
                 }
             }
 
-            $seniorDiscount = $orderSet->orderSetPrice * ($customerReserve->numberOfPwd * 0.2);
-            $childrenDiscount = $orderSet->orderSetPrice * ($customerReserve->numberOfChildren * ($customerReserve->childrenDiscount / 100));
-            $subTotal = ($customerReserve->numberOfPersons * $orderSet->orderSetPrice) + $orderTotalPrice;
+            $seniorDiscount = $customerReserve->orderSetPrice * ($customerReserve->numberOfPwd * 0.2);
+            $childrenDiscount = $customerReserve->orderSetPrice * ($customerReserve->numberOfChildren * ($customerReserve->childrenDiscount / 100));
+            $subTotal = ($customerReserve->numberOfPersons * $customerReserve->orderSetPrice) + $orderTotalPrice;
 
             $totalPrice = $subTotal - (
                 $rewardDiscount + 
@@ -4264,9 +4382,9 @@ class CustomerController extends Controller
                 'numberOfPersons' => $customerReserve->numberOfPersons,
                 'bookingType' => "Reserve",
 
-                'orderSetName' => $orderSet->orderSetName,
+                'orderSetName' => $customerReserve->orderSetName,
                 'numberOfPersons' => $customerReserve->numberOfPersons,
-                'orderSetPriceTotal' => (number_format($customerReserve->numberOfPersons * $orderSet->orderSetPrice, 2, '.')),
+                'orderSetPriceTotal' => (number_format($customerReserve->numberOfPersons * $customerReserve->orderSetPrice, 2, '.')),
                 'orders' => $finalOrders,
                 'subtotal' => (number_format($subTotal, 2, '.')),
                 'numberOfPwd' => $customerReserve->numberOfPwd,
@@ -4558,62 +4676,82 @@ class CustomerController extends Controller
                             $finalDistance = (number_format($DistanceMeter, 1, '.'))." m away";
                         }
 
-                        $getAvailability = "";
+                        $getAvailability = "Open";
                         $rSchedule = "";
 
                         $restaurantUnavailableDates = UnavailableDate::select('unavailableDatesDate')->where('restAcc_id', $restaurant->id)->get();
                         foreach ($restaurantUnavailableDates as $restaurantUnavailableDate) {
                             if($restaurantUnavailableDate->unavailableDatesDate == date("Y-m-d") && $restaurantUnavailableDate->startTime <= date('H:i')){
-                                $getAvailability = "Closed";
+                                $getAvailability = "Closed Now";
                             }
                         }
                         
+                        if($getAvailability == "Open"){
+                            $storeDay = array();
+                            $storeOpeningTime = array();
+                            $storeClosingTime = array();
 
-                        if($getAvailability == "Closed"){
-                            $rSchedule = "Closed Now";
-                        } else {
+                            $currentDay = date('l');
+                            $prevDay = date('l', strtotime(date('Y-m-d') . " -1 days"));
+
+                            $isHasCurr = false;
+                            $isHasCurrIndex = "";
+
+                            $isHasPrev = false;
+                            $isHasPrevIndex = "";
+
+                            $currentTime = date("H:i");
+
                             $restaurantStoreHours = StoreHour::where('restAcc_id', $restaurant->id)->get();
                             foreach ($restaurantStoreHours as $restaurantStoreHour){
                                 foreach (explode(",", $restaurantStoreHour->days) as $day){
-            
-                                    if(strtotime($restaurantStoreHour->closingTime) >= strtotime("00:00") && 
-                                    strtotime($restaurantStoreHour->closingTime) <= strtotime("04:00")){
-                                        if($this->convertDays($day) == date('l', strtotime(date('Y-m-d') . " -1 days"))){
-                                            $currentTime = date("H:i");
-                                            if(strtotime($currentTime) >= strtotime("00:00") && strtotime($currentTime) <= strtotime("04:00")){
-                                                if($currentTime > $restaurantStoreHour->closingTime){
-                                                    $rSchedule = "Closed Now";
-                                                } else  {
-                                                    $openingTime = date("g:i a", strtotime($restaurantStoreHour->openingTime));
-                                                    $closingTime = date("g:i a", strtotime($restaurantStoreHour->closingTime));
-                                                    $rSchedule = "Open today at ".$openingTime." to ".$closingTime;
-                                                }
-                                            } else {
-                                                if($currentTime < $restaurantStoreHour->openingTime || $currentTime > $restaurantStoreHour->closingTime){
-                                                    $rSchedule = "Closed Now";
-                                                } else {
-                                                    $openingTime = date("g:i a", strtotime($restaurantStoreHour->openingTime));
-                                                    $closingTime = date("g:i a", strtotime($restaurantStoreHour->closingTime));
-                                                    $rSchedule = "Open today at ".$openingTime." to ".$closingTime;
-                                                }
-                                            }
-                                        }
-                                    } else {
-                                        if($this->convertDays($day) == date('l')){
-                                            $currentTime = date("H:i");
-                                            if($currentTime < $restaurantStoreHour->openingTime || $currentTime > $restaurantStoreHour->closingTime){
-                                                $rSchedule = "Closed Now";
-                                            } else {
-                                                $openingTime = date("g:i a", strtotime($restaurantStoreHour->openingTime));
-                                                $closingTime = date("g:i a", strtotime($restaurantStoreHour->closingTime));
-                                                $rSchedule = "Open today at ".$openingTime." to ".$closingTime;
-                                            }
-                                        }
-                                    }
+                                    array_push($storeDay, $this->convertDays($day));
+                                    array_push($storeOpeningTime, $restaurantStoreHour->openingTime);
+                                    array_push($storeClosingTime, $restaurantStoreHour->closingTime);
                                 }
                             }
-                        }
-                        if($rSchedule == ""){
+
+                            for($i=0; $i<sizeOf($storeDay); $i++){
+                                if($prevDay == $storeDay[$i]){
+                                    if(strtotime($storeClosingTime[$i]) >= strtotime("00:00") && strtotime($storeClosingTime[$i]) <= strtotime("04:00")){
+                                        $isHasPrev = true;
+                                        $isHasPrevIndex = $i;
+                                    }
+                                }
+                                if($currentDay == $storeDay[$i]){
+                                    $isHasCurr = true;
+                                    $isHasCurrIndex = $i;
+                                }
+                            }
+                        
+                            if(strtotime($currentTime) >= strtotime("00:00") && strtotime($currentTime) <= strtotime("04:00")){
+                                if($isHasPrev){
+                                    if(strtotime($currentTime) <= strtotime($storeClosingTime[$isHasPrevIndex])){
+                                        $openingTime = date("g:i a", strtotime($storeOpeningTime[$isHasPrevIndex]));
+                                        $closingTime = date("g:i a", strtotime($storeClosingTime[$isHasPrevIndex]));
+                                        $rSchedule = "Open today at ".$openingTime." to ".$closingTime;
+                                    } else {
+                                        $rSchedule = "Closed Now";
+                                    }
+                                } else {
+                                    $rSchedule = "Closed Now";
+                                }
+                            } else if(strtotime($currentTime) >= strtotime("05:00") && strtotime($currentTime) <= strtotime("23:59")){
+                                if($isHasCurr){
+                                    if(strtotime($currentTime) >= strtotime($storeOpeningTime[$isHasCurrIndex]) && strtotime($currentTime) <= strtotime($storeClosingTime[$isHasCurrIndex])){
+                                        $openingTime = date("g:i a", strtotime($storeOpeningTime[$isHasCurrIndex]));
+                                        $closingTime = date("g:i a", strtotime($storeClosingTime[$isHasCurrIndex]));
+                                        $rSchedule = "Open today at ".$openingTime." to ".$closingTime;
+                                    } else {
+                                        $rSchedule = "Closed Now";
+                                    }
+                                } else {
+                                    $rSchedule = "Closed Now";
+                                }
+                            } else {
+                                $rSchedule = "Closed Now";
+                            }
+                        } else {
                             $rSchedule = "Closed Now";
                         }
 

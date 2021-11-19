@@ -18,6 +18,47 @@
                 'success'
             );
         </script>
+    @elseif (session()->has('fiAvailable'))
+        <script>
+            Swal.fire(
+                'Food Item Available',
+                '',
+                'success'
+            );
+        </script>
+    @elseif (session()->has('fiUnavailable'))
+        <script>
+            Swal.fire(
+                'Food Item Not Available',
+                '',
+                'success'
+            );
+        </script>
+    @elseif (session()->has('fiVisible'))
+        <script>
+            Swal.fire(
+                'Food Item Visible',
+                '',
+                'success'
+            );
+        </script>
+    @elseif (session()->has('fiHidden'))
+        <script>
+            Swal.fire(
+                'Food Item Hidden',
+                '',
+                'success'
+            );
+        </script>
+    @elseif (session()->has('stillOpenHours'))
+        <script>
+            Swal.fire(
+                'You are currently Open',
+                'Wait till your store is closed',
+                'error'
+            );
+        </script>
+        
     @endif
     <div class="w-11/12 mx-auto mt-10">
         <div class="flex justify-between w-full">
@@ -41,10 +82,11 @@
             <div class="grid grid-cols-12 items-center text-center font-bold h-16 px-5 bg-adminViewAccountHeaderColor2 shadow-adminDownloadButton font-Montserrat">
                 <div class="col-span-1">No.</div>
                 <div class="col-span-3">Image</div>
-                <div class="col-span-3">Name</div>
-                <div class="col-span-3">Price</div>
-                <div class="col-span-1">Edit</div>
-                <div class="col-span-1">Delete</div>
+                <div class="col-span-2">Name</div>
+                <div class="col-span-2">Price</div>
+                <div class="col-span-1">Status</div>
+                <div class="col-span-1">Available</div>
+                <div class="col-span-2">Actions</div>
             </div>
             @if (!$foodItems->isEmpty())
                 @php
@@ -53,33 +95,79 @@
                 @foreach ($foodItems as $foodItem)  
                     @if ($count % 2 == 0)
                         <div class="tr bg-manageFoodItemHeaderBgColor grid grid-cols-12 justify-items-center items-center py-3 px-5 mb-3">
-                            <div class="td col-span-1">{{ $count }}</div>
+                            <div class="td col-span-1">
+                                @if (isset($_GET['page']))
+                                    @if ($_GET['page'] == 1)
+                                        {{ $count }}
+                                    @else
+                                        {{ ((($_GET['page'] - 1) * 10) + $count) }}
+                                    @endif
+                                @else
+                                    {{ $count }}
+                                @endif
+                            </div>
                             <div class="td col-span-3">
                                 <span class="hidden">{{ $foodItem->foodItemImage }}</span>
                                 <img src="{{ asset('uploads/restaurantAccounts/foodItem/'.$id.'/'.$foodItem->foodItemImage) }}" alt="foodItemImage" class="w-16 h-16">
                             </div>
-                            <div class="td col-span-3">{{ $foodItem->foodItemName }}</div>
-                            <div class="td col-span-3">₱ {{ $foodItem->foodItemPrice }}</div>
-                            <div class="col-span-1">
-                                <a href="/restaurant/manage-restaurant/food-menu/food-item/edit/{{ $foodItem->id }}"><i class="fas fa-edit hover:text-gray-400 transition duration-200 ease-in-out"></i></a>
+                            <div class="td col-span-2">{{ $foodItem->foodItemName }}</div>
+                            <div class="td col-span-2">₱ {{ $foodItem->foodItemPrice }}</div>
+                            <div class="td col-span-1">
+                                @if ($foodItem->status == "Visible")
+                                    <a href="/restaurant/manage-restaurant/food-menu/food-item/make-hidden/{{ $foodItem->id }}" class="text-postedStatus py-2 px-5 border-multiStepBoxBorder rounded-md border-postedStatus hover:bg-gray-200">{{ $foodItem->status }}</a>
+                                @else
+                                    <a href="/restaurant/manage-restaurant/food-menu/food-item/make-visible/{{ $foodItem->id }}" class="text-manageRestaurantSidebarColor py-2 px-5 border-multiStepBoxBorder rounded-md border-manageRestaurantSidebarColor hover:bg-gray-200">{{ $foodItem->status }}</a>
+                                @endif
                             </div>
-                            <div class="col-span-1">
+                            <div class="td col-span-1">
+                                
+                                @if ($foodItem->available == "Yes")
+                                    <a href="/restaurant/manage-restaurant/food-menu/food-item/make-unavailable/{{ $foodItem->id }}" class="text-postedStatus py-2 px-5 border-multiStepBoxBorder rounded-md border-postedStatus hover:bg-gray-200">{{ $foodItem->available }}</a>
+                                @else
+                                    <a href="/restaurant/manage-restaurant/food-menu/food-item/make-available/{{ $foodItem->id }}" class="text-manageRestaurantSidebarColor py-2 px-5 border-multiStepBoxBorder rounded-md border-manageRestaurantSidebarColor hover:bg-gray-200">{{ $foodItem->available }}</a>
+                                @endif
+                            </div>
+                            <div class="col-span-2">
+                                <a href="/restaurant/manage-restaurant/food-menu/food-item/edit/{{ $foodItem->id }}" class="mr-6"><i class="fas fa-edit hover:text-gray-400 transition duration-200 ease-in-out"></i></a>
                                 <a href="/restaurant/manage-restaurant/food-menu/food-item/delete/{{ $foodItem->id }}" class="btn-delete"><i class="fas fa-trash-alt hover:text-gray-400 transition duration-200 ease-in-out"></i></a>
                             </div>
                         </div>
                     @else
                         <div class="tr bg-white grid grid-cols-12 justify-items-center items-center py-3 px-5 mb-3">
-                            <div class="td col-span-1">{{ $count }}</div>
+                            <div class="td col-span-1">
+                                @if (isset($_GET['page']))
+                                    @if ($_GET['page'] == 1)
+                                        {{ $count }}
+                                    @else
+                                        {{ ((($_GET['page'] - 1) * 10) + $count) }}
+                                    @endif
+                                @else
+                                    {{ $count }}
+                                @endif
+                            </div>
                             <div class="td col-span-3">
                                 <span class="hidden">{{ $foodItem->foodItemImage }}</span>
                                 <img src="{{ asset('uploads/restaurantAccounts/foodItem/'.$id.'/'.$foodItem->foodItemImage) }}" alt="foodItemImage" class="w-16 h-16">
                             </div>
-                            <div class="td col-span-3">{{ $foodItem->foodItemName }}</div>
-                            <div class="td col-span-3">₱ {{ $foodItem->foodItemPrice }}</div>
-                            <div class="col-span-1">
-                                <a href="/restaurant/manage-restaurant/food-menu/food-item/edit/{{ $foodItem->id }}"><i class="fas fa-edit hover:text-gray-400 transition duration-200 ease-in-out"></i></a>
+                            <div class="td col-span-2">{{ $foodItem->foodItemName }}</div>
+                            <div class="td col-span-2">₱ {{ $foodItem->foodItemPrice }}</div>
+                            <div class="td col-span-1">
+                                @if ($foodItem->status == "Visible")
+                                    <a href="/restaurant/manage-restaurant/food-menu/food-item/make-hidden/{{ $foodItem->id }}" class="text-postedStatus py-2 px-5 border-multiStepBoxBorder rounded-md border-postedStatus hover:bg-gray-200">{{ $foodItem->status }}</a>
+                                @else
+                                    <a href="/restaurant/manage-restaurant/food-menu/food-item/make-visible/{{ $foodItem->id }}" class="text-manageRestaurantSidebarColor py-2 px-5 border-multiStepBoxBorder rounded-md border-manageRestaurantSidebarColor hover:bg-gray-200">{{ $foodItem->status }}</a>
+                                @endif
                             </div>
-                            <div class="col-span-1">
+                            <div class="td col-span-1">
+                                
+                                @if ($foodItem->available == "Yes")
+                                    <a href="/restaurant/manage-restaurant/food-menu/food-item/make-unavailable/{{ $foodItem->id }}" class="text-postedStatus py-2 px-5 border-multiStepBoxBorder rounded-md border-postedStatus hover:bg-gray-200">{{ $foodItem->available }}</a>
+                                @else
+                                    <a href="/restaurant/manage-restaurant/food-menu/food-item/make-available/{{ $foodItem->id }}" class="text-manageRestaurantSidebarColor py-2 px-5 border-multiStepBoxBorder rounded-md border-manageRestaurantSidebarColor hover:bg-gray-200">{{ $foodItem->available }}</a>
+                                @endif
+                            </div>
+                            <div class="col-span-2">
+                                <a href="/restaurant/manage-restaurant/food-menu/food-item/edit/{{ $foodItem->id }}" class="mr-6"><i class="fas fa-edit hover:text-gray-400 transition duration-200 ease-in-out"></i></a>
                                 <a href="/restaurant/manage-restaurant/food-menu/food-item/delete/{{ $foodItem->id }}" class="btn-delete"><i class="fas fa-trash-alt hover:text-gray-400 transition duration-200 ease-in-out"></i></a>
                             </div>
                         </div>
@@ -143,36 +231,4 @@
         <div class="overlay"></div>
     </div>
 </div>
-
-{{-- <script>
-    $(document).ready(function () {
-        $('#fofood-itemrm').validate({ 
-            rules: {
-                foodName: {
-                    required: true
-                },
-                foodPrice: {
-                    required: true
-                },
-                foodDesc: {
-                    required: true
-                },
-                foodImage: {
-                    required: true,      
-                },
-            },
-            errorElement: 'span',
-            errorPlacement: function (error, element) {
-                error.addClass('mt-2 text-red-600 italic text-sm');
-                element.closest('.form-group').append(error);
-            },
-            highlight: function (element, errorClass, validClass) {
-                $(element).addClass('is-invalid');
-            },
-            unhighlight: function (element, errorClass, validClass) {
-                $(element).removeClass('is-invalid');
-            }
-        });
-    });
-</script> --}}
 @endsection

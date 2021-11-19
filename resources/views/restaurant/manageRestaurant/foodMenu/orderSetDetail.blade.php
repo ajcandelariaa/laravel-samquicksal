@@ -133,17 +133,71 @@
                 'success'
             );
         </script>
+    @elseif (session()->has('fiAvailable'))
+        <script>
+            Swal.fire(
+                'Order Set Available',
+                '',
+                'success'
+            );
+        </script>
+    @elseif (session()->has('fiUnavailable'))
+        <script>
+            Swal.fire(
+                'Order Set Not Available',
+                '',
+                'success'
+            );
+        </script>
+    @elseif (session()->has('fiVisible'))
+        <script>
+            Swal.fire(
+                'Order Set Visible',
+                '',
+                'success'
+            );
+        </script>
+    @elseif (session()->has('fiHidden'))
+        <script>
+            Swal.fire(
+                'Order Set Hidden',
+                '',
+                'success'
+            );
+        </script>
+    @elseif (session()->has('stillOpenHours'))
+        <script>
+            Swal.fire(
+                'You are currently Open',
+                'Wait till your store is closed',
+                'error'
+            );
+        </script>
     @endif
     
     <div class="w-11/12 mx-auto mt-10">
         <a href="/restaurant/manage-restaurant/food-menu/order-set" class="mt-2 text-submitButton uppercase font-bold"><i class="fas fa-chevron-left mr-2"></i>Back</a>
         <div class="w-full mt-3 text-right">
-            <a href="/restaurant/manage-restaurant/food-menu/order-set/detail/edit/{{ $orderSet->id }}" class="text-white bg-manageRestaurantSidebarColorActive inline-block text-center leading-9 w-9 h-9 rounded-full mr-3"><i class="fas fa-edit"></i></a>
-            <a href="/restaurant/manage-restaurant/food-menu/order-set/delete/{{ $orderSet->id }}" class="btn-delete text-white bg-red-800 inline-block text-center leading-9 w-9 h-9 rounded-full"><i class="fas fa-trash-alt"></i></a>
+            
+            @if ($orderSet->available == "Yes")
+            <a href="/restaurant/manage-restaurant/food-menu/order-set/detail/make-unavailable/{{ $orderSet->id }}" class="text-white bg-submitButton inline-block text-center leading-9 w-9 h-9 rounded-full mr-3"><i class="fas fa-thumbs-down"></i></a>
+            @else
+                <a href="/restaurant/manage-restaurant/food-menu/order-set/detail/make-available/{{ $orderSet->id }}" class="text-white bg-submitButton inline-block text-center leading-9 w-9 h-9 rounded-full mr-3"><i class="fas fa-thumbs-up"></i></a>
+            @endif
+            
+            @if ($orderSet->status == "Visible")
+                <a href="/restaurant/manage-restaurant/food-menu/order-set/detail/make-hidden/{{ $orderSet->id }}" class="text-white bg-submitButton inline-block text-center leading-9 w-9 h-9 rounded-full mr-3"><i class="fas fa-eye-slash"></i></a>
+            @else
+                <a href="/restaurant/manage-restaurant/food-menu/order-set/detail/make-visible/{{ $orderSet->id }}" class="text-white bg-submitButton inline-block text-center leading-9 w-9 h-9 rounded-full mr-3"><i class="fas fa-eye"></i></a>
+            @endif
+
+            <a href="/restaurant/manage-restaurant/food-menu/order-set/detail/edit/{{ $orderSet->id }}" class="text-white bg-submitButton inline-block text-center leading-9 w-9 h-9 rounded-full mr-3"><i class="fas fa-edit"></i></a>
+
+            <a href="/restaurant/manage-restaurant/food-menu/order-set/delete/{{ $orderSet->id }}" class="btn-delete text-white bg-submitButton inline-block text-center leading-9 w-9 h-9 rounded-full"><i class="fas fa-trash-alt"></i></a>
         </div>
         
         <div class="w-full mt-3 rounded-2xl shadow-adminDownloadButton">
-            <div class="rounded-t-2xl bg-manageRestaurantSidebarColorActive text-white font-bold text-center w-full h-11 grid items-center">Order Set</div>
+            <div class="rounded-t-2xl bg-manageRestaurantSidebarColorActive uppercase font-Montserrat text-xl text-white font-bold text-center w-full h-11 grid items-center">Order Set</div>
             <div class="rounded-b-xl grid grid-cols-foodSet px-4 bg-adminViewAccountHeaderColor2 py-7">
                 <div class="self-center">
                     <img src="{{ asset('uploads/restaurantAccounts/orderSet/'.$id.'/'.$orderSet->orderSetImage) }}" alt="orderSetImage" class="w-40 h-40">
@@ -153,7 +207,9 @@
                         <p class="text-4xl uppercase font-bold">{{ $orderSet->orderSetName }}</p>
                         <p class="text-lg font-bold text-manageRestaurantSidebarColor">Price: <span class="text-red-800"> ₱ {{ $orderSet->orderSetPrice }} </span></p>
                     </div>
-                    <p class="mt-3 text-sm">{{ $orderSet->orderSetDescription }}</p>
+                    <p class="mt-3 text-sm">Description: {{ $orderSet->orderSetDescription }}</p>
+                    <p class="mt-1 text-sm">Status: {{ $orderSet->status }}</p>
+                    <p class="mt-1 text-sm">Available: {{ $orderSet->available }}</p>
                 </div>
             </div>
         </div>

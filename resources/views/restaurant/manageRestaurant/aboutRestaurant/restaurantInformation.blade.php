@@ -34,6 +34,14 @@
                 'success'
             );
         </script>
+    @elseif (session()->has('storeStillopen'))
+        <script>
+            Swal.fire(
+                'Cant update tables',
+                'Your store is still open wait for the closing hours to update the tables',
+                'error'
+            );
+        </script>
     @elseif (session()->has('usernameUpdated'))
         <script>
             Swal.fire(

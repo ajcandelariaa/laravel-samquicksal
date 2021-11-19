@@ -50,7 +50,7 @@
                             <div>
                                 <p class="mt-2">Reserved Date: <span class="font-bold">{{ $reserveDate }}</span></p>
                                 <p class="mt-2">Declined Date: <span class="font-bold">{{ $cancelledDate }}</span></p>
-                                <p class="mt-2">Order Set: <span class="font-bold">{{ $orderSet->orderSetName }}</span></p>
+                                <p class="mt-2">Order Set: <span class="font-bold">{{ $customerReserve->orderSetName }}</span></p>
                                 <p class="mt-2">No. of Persons: <span class="font-bold">{{ $customerReserve->numberOfPersons }}</span></p>
                                 <p class="mt-2">Senior Citizen/PWD: <span class="font-bold">{{ $customerReserve->numberOfPwd }}</span></p>
                                 <p class="mt-2">Reward: <span class="font-bold">{{ $finalReward }}</span></p>
@@ -72,9 +72,9 @@
                     </div>
                     <div class="col-span-1">
                         <div class="grid grid-cols-3 mt-2">
-                            <p class="col-span-1">{{ $orderSet->orderSetName }}</p>
+                            <p class="col-span-1">{{ $customerReserve->orderSetName }}</p>
                             <p class="col-span-1 text-center">{{ $customerReserve->numberOfPersons }}x</p>
-                            <p class="justify-self-end col-span-1">{{ (number_format(($customerReserve->numberOfPersons * $orderSet->orderSetPrice), 2)) }} <span class="text-xs">Php</span></p>
+                            <p class="justify-self-end col-span-1">{{ (number_format(($customerReserve->numberOfPersons * $customerReserve->orderSetPrice), 2)) }} <span class="text-xs">Php</span></p>
                         </div>
 
                         <div class="bg-sundayToSaturdayBoxColor h-height1Px my-2"></div>

@@ -11,6 +11,8 @@ class OrderSet extends Model
 
     protected $fillable = [
         'restAcc_id',
+        'status',
+        'available',
         'orderSetName',
         'orderSetTagline',
         'orderSetDescription',

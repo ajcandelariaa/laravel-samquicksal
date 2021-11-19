@@ -16,6 +16,8 @@ class CreateFoodItemsTable extends Migration
         Schema::create('food_items', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('restAcc_id');
+            $table->string('status');
+            $table->string('available');
             $table->string('foodItemName');
             $table->mediumText('foodItemDescription');
             $table->decimal('foodItemPrice', 5, 2);

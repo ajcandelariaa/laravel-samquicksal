@@ -49,7 +49,7 @@
                         <div class="grid grid-cols-2">
                             <div>
                                 <p class="mt-2">Cancelled Date: <span class="font-bold">{{ $cancelledDate }}</span></p>
-                                <p class="mt-2">Order Set: <span class="font-bold">{{ $orderSet->orderSetName }}</span></p>
+                                <p class="mt-2">Order Set: <span class="font-bold">{{ $customerQueue->orderSetName }}</span></p>
                                 <p class="mt-2">No. of Persons: <span class="font-bold">{{ $customerQueue->numberOfPersons }}</span></p>
                                 <p class="mt-2">Senior Citizen/PWD: <span class="font-bold">{{ $customerQueue->numberOfPwd }}</span></p>
                                 <p class="mt-2">Reward: <span class="font-bold">{{ $finalReward }}</span></p>
@@ -70,9 +70,9 @@
                     </div>
                     <div class="col-span-1">
                         <div class="grid grid-cols-3 mt-2">
-                            <p class="col-span-1">{{ $orderSet->orderSetName }}</p>
+                            <p class="col-span-1">{{ $customerQueue->orderSetName }}</p>
                             <p class="col-span-1 text-center">{{ $customerQueue->numberOfPersons }}x</p>
-                            <p class="justify-self-end col-span-1">{{ (number_format(($customerQueue->numberOfPersons * $orderSet->orderSetPrice), 2)) }} <span class="text-xs">Php</span></p>
+                            <p class="justify-self-end col-span-1">{{ (number_format(($customerQueue->numberOfPersons * $customerQueue->orderSetPrice), 2)) }} <span class="text-xs">Php</span></p>
                         </div>
 
                         <div class="bg-sundayToSaturdayBoxColor h-height1Px my-2"></div>

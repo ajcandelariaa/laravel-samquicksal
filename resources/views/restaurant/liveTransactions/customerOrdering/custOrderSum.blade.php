@@ -111,7 +111,7 @@
                         <div class="grid grid-cols-3 mt-2">
                             <p class="col-span-1">{{ $order }}</p>
                             <p class="col-span-1 text-center">{{ $customerBook->numberOfPersons }}x</p>
-                            <p class="justify-self-end col-span-1 font-bold">{{ (number_format($orderSet->orderSetPrice * $customerBook->numberOfPersons, 2, '.')) }} <span class="text-xs text-manageRestaurantSidebarColor font-normal">Php</span></p>
+                            <p class="justify-self-end col-span-1 font-bold">{{ (number_format($customerBook->orderSetPrice * $customerBook->numberOfPersons, 2, '.')) }} <span class="text-xs text-manageRestaurantSidebarColor font-normal">Php</span></p>
                         </div>
 
 

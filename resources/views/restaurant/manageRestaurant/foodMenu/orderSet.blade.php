@@ -48,7 +48,9 @@
                         </div>
                         <div class="overflow-hidden">
                             <a href="/restaurant/manage-restaurant/food-menu/order-set/detail/{{ $orderSet->id }}" class="text-4xl uppercase font-bold hover:underline">{{ $orderSet->orderSetName }}</a>
-                            <p class="mt-4 text-sm ">{{ $orderSet->orderSetDescription }}</p>
+                            <p class="mt-4 text-sm ">Description: {{ $orderSet->orderSetDescription }}</p>
+                            <p class="mt-1 text-sm">Status: {{ $orderSet->status }}</p>
+                            <p class="mt-1 text-sm">Available: {{ $orderSet->available }}</p>
                         </div>
                     </div>
                 @endforeach

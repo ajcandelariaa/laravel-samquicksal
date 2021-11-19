@@ -130,6 +130,110 @@ class RestaurantController extends Controller
                 break;
         }
     }
+    public function convertDays($day){
+        if ($day == "MO"){
+            return "Monday";
+        } else if ($day == "TU"){
+            return "Tuesday";
+        } else if ($day == "WE"){
+            return "Wednesday";
+        } else if ($day == "TH"){
+            return "Thursday";
+        } else if ($day == "FR"){
+            return "Friday";
+        } else if ($day == "SA"){
+            return "Saturday";
+        } else if ($day == "SU"){
+            return "Sunday";
+        } else {
+            return "";
+        }
+    }
+    public function checkTodaySched(){
+        $restAcc_id = Session::get('loginId');
+        $restaurant = RestaurantAccount::select('status', 'id')->where('id', $restAcc_id)->first();
+
+        $getAvailability = "Open";
+        $rSchedule = "";
+
+        $restaurantUnavailableDates = UnavailableDate::select('unavailableDatesDate')->where('restAcc_id', $restaurant->id)->get();
+        foreach ($restaurantUnavailableDates as $restaurantUnavailableDate) {
+            if($restaurantUnavailableDate->unavailableDatesDate == date("Y-m-d") && $restaurantUnavailableDate->startTime <= date('H:i')){
+                $getAvailability = "Closed Now";
+            }
+        }
+        
+        if($getAvailability == "Open"){
+            $storeDay = array();
+            $storeOpeningTime = array();
+            $storeClosingTime = array();
+
+            $currentDay = date('l');
+            $prevDay = date('l', strtotime(date('Y-m-d') . " -1 days"));
+
+            $isHasCurr = false;
+            $isHasCurrIndex = "";
+
+            $isHasPrev = false;
+            $isHasPrevIndex = "";
+
+            $currentTime = date("H:i");
+
+            $restaurantStoreHours = StoreHour::where('restAcc_id', $restaurant->id)->get();
+            foreach ($restaurantStoreHours as $restaurantStoreHour){
+                foreach (explode(",", $restaurantStoreHour->days) as $day){
+                    array_push($storeDay, $this->convertDays($day));
+                    array_push($storeOpeningTime, $restaurantStoreHour->openingTime);
+                    array_push($storeClosingTime, $restaurantStoreHour->closingTime);
+                }
+            }
+
+            for($i=0; $i<sizeOf($storeDay); $i++){
+                if($prevDay == $storeDay[$i]){
+                    if(strtotime($storeClosingTime[$i]) >= strtotime("00:00") && strtotime($storeClosingTime[$i]) <= strtotime("04:00")){
+                        $isHasPrev = true;
+                        $isHasPrevIndex = $i;
+                    }
+                }
+                if($currentDay == $storeDay[$i]){
+                    $isHasCurr = true;
+                    $isHasCurrIndex = $i;
+                }
+            }
+            
+            if(strtotime($currentTime) >= strtotime("00:00") && strtotime($currentTime) <= strtotime("04:00")){
+                if($isHasPrev){
+                    if(strtotime($currentTime) <= strtotime($storeClosingTime[$isHasPrevIndex])){
+                        $openingTime = date("g:i a", strtotime($storeOpeningTime[$isHasPrevIndex]));
+                        $closingTime = date("g:i a", strtotime($storeClosingTime[$isHasPrevIndex]));
+                        $rSchedule = "Open today at ".$openingTime." to ".$closingTime;
+                    } else {
+                        $rSchedule = "Closed Now";
+                    }
+                } else {
+                    $rSchedule = "Closed Now";
+                }
+            } else if(strtotime($currentTime) >= strtotime("05:00") && strtotime($currentTime) <= strtotime("23:59")){
+                if($isHasCurr){
+                    if(strtotime($currentTime) >= strtotime($storeOpeningTime[$isHasCurrIndex]) && strtotime($currentTime) <= strtotime($storeClosingTime[$isHasCurrIndex])){
+                        $openingTime = date("g:i a", strtotime($storeOpeningTime[$isHasCurrIndex]));
+                        $closingTime = date("g:i a", strtotime($storeClosingTime[$isHasCurrIndex]));
+                        $rSchedule = "Open today at ".$openingTime." to ".$closingTime;
+                    } else {
+                        $rSchedule = "Closed Now";
+                    }
+                } else {
+                    $rSchedule = "Closed Now";
+                }
+            } else {
+                $rSchedule = "Closed Now";
+            }
+        } else {
+            $rSchedule = "Closed Now";
+        }
+
+        return $rSchedule;
+    }
 
 
 
@@ -552,8 +656,7 @@ class RestaurantController extends Controller
         $restAcc_id = Session::get('loginId');
         $customerReserve = CustomerReserve::where('id', $book_id)->where('restAcc_id', $restAcc_id)->where('status', 'completed')->first();
         $customerInfo = CustomerAccount::where('id', $customerReserve->customer_id)->first();
-        $orderSet = OrderSet::where('id', $customerReserve->orderSet_id)->first();
-        $orderSetName = $orderSet->orderSetName;
+        $orderSetName = $customerReserve->orderSetName;
 
         $countBook1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('customer_id', $customerReserve->customer_id)->count();
         $countBook2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('customer_id', $customerReserve->customer_id)->count();
@@ -608,7 +711,7 @@ class RestaurantController extends Controller
         
         $customerOrders = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)->where('orderDone', 'Yes')->get();
         $addOns = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)->where('orderDone', 'Yes')->sum('price');
-        $subTotal = ($orderSet->orderSetPrice * $customerReserve->numberOfPersons) + $addOns;
+        $subTotal = ($customerReserve->orderSetPrice * $customerReserve->numberOfPersons) + $addOns;
 
         $finalReward = "None";
         $rewardDiscount = null;
@@ -616,27 +719,27 @@ class RestaurantController extends Controller
             switch($customerReserve->rewardType){
                 case "DSCN": 
                     $finalReward = "Discount $customerReserve->rewardInput% in a Total Bill";
-                    $rewardDiscount = ($customerReserve->numberOfPersons * $orderSet->orderSetPrice) * ($customerReserve->rewardInput / 100);
+                    $rewardDiscount = ($customerReserve->numberOfPersons * $customerReserve->orderSetPrice) * ($customerReserve->rewardInput / 100);
                     break;
                 case "FRPE": 
                     $finalReward = "Free $customerReserve->rewardInput person in a group";
-                    $rewardDiscount = $orderSet->orderSetPrice * $customerReserve->rewardInput;
+                    $rewardDiscount = $customerReserve->orderSetPrice * $customerReserve->rewardInput;
                     break;
                 case "HLF": 
                     $finalReward = "Half in the group will be free";
-                    $rewardDiscount = ($customerReserve->numberOfPersons * $orderSet->orderSetPrice) / 2;
+                    $rewardDiscount = ($customerReserve->numberOfPersons * $customerReserve->orderSetPrice) / 2;
                     break;
                 case "ALL": 
                     $finalReward = "All people in the group will be free";
-                    $rewardDiscount = $customerReserve->numberOfPersons * $orderSet->orderSetPrice;
+                    $rewardDiscount = $customerReserve->numberOfPersons * $customerReserve->orderSetPrice;
                     break;
                 default: 
                     $finalReward = "None";
             }
         }
 
-        $seniorDiscount = $orderSet->orderSetPrice * ($customerReserve->numberOfPwd * 0.2);
-        $childrenDiscount = $orderSet->orderSetPrice * ($customerReserve->numberOfChildren * ($customerReserve->childrenDiscount / 100));
+        $seniorDiscount = $customerReserve->orderSetPrice * ($customerReserve->numberOfPwd * 0.2);
+        $childrenDiscount = $customerReserve->orderSetPrice * ($customerReserve->numberOfChildren * ($customerReserve->childrenDiscount / 100));
         $totalPrice = $subTotal - (
             $rewardDiscount + 
             $seniorDiscount + 
@@ -688,7 +791,6 @@ class RestaurantController extends Controller
             'cancelledDate' => $month3." ".$day3.", ".$year3,
             'cancelledTime' => $cancelledTime,
             'finalReward' => $finalReward,
-            'orderSet' => $orderSet,
             'rewardDiscount' => $rewardDiscount,
             'seniorDiscount' => $seniorDiscount,
             'childrenDiscount' => $childrenDiscount,
@@ -707,8 +809,7 @@ class RestaurantController extends Controller
         $restAcc_id = Session::get('loginId');
         $customerQueue = CustomerQueue::where('id', $book_id)->where('restAcc_id', $restAcc_id)->where('status', 'completed')->first();
         $customerInfo = CustomerAccount::where('id', $customerQueue->customer_id)->first();
-        $orderSet = OrderSet::where('id', $customerQueue->orderSet_id)->first();
-        $orderSetName = $orderSet->orderSetName;
+        $orderSetName = $customerQueue->orderSetName;
 
         $countBook1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('customer_id', $customerQueue->customer_id)->count();
         $countBook2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('customer_id', $customerQueue->customer_id)->count();
@@ -759,7 +860,7 @@ class RestaurantController extends Controller
         
         $customerOrders = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)->where('orderDone', 'Yes')->get();
         $addOns = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)->where('orderDone', 'Yes')->sum('price');
-        $subTotal = ($orderSet->orderSetPrice * $customerQueue->numberOfPersons) + $addOns;
+        $subTotal = ($customerQueue->orderSetPrice * $customerQueue->numberOfPersons) + $addOns;
 
         $finalReward = "None";
         $rewardDiscount = null;
@@ -767,27 +868,27 @@ class RestaurantController extends Controller
             switch($customerQueue->rewardType){
                 case "DSCN": 
                     $finalReward = "Discount $customerQueue->rewardInput% in a Total Bill";
-                    $rewardDiscount = ($customerQueue->numberOfPersons * $orderSet->orderSetPrice) * ($customerQueue->rewardInput / 100);
+                    $rewardDiscount = ($customerQueue->numberOfPersons * $customerQueue->orderSetPrice) * ($customerQueue->rewardInput / 100);
                     break;
                 case "FRPE": 
                     $finalReward = "Free $customerQueue->rewardInput person in a group";
-                    $rewardDiscount = $orderSet->orderSetPrice * $customerQueue->rewardInput;
+                    $rewardDiscount = $customerQueue->orderSetPrice * $customerQueue->rewardInput;
                     break;
                 case "HLF": 
                     $finalReward = "Half in the group will be free";
-                    $rewardDiscount = ($customerQueue->numberOfPersons * $orderSet->orderSetPrice) / 2;
+                    $rewardDiscount = ($customerQueue->numberOfPersons * $customerQueue->orderSetPrice) / 2;
                     break;
                 case "ALL": 
                     $finalReward = "All people in the group will be free";
-                    $rewardDiscount = $customerQueue->numberOfPersons * $orderSet->orderSetPrice;
+                    $rewardDiscount = $customerQueue->numberOfPersons * $customerQueue->orderSetPrice;
                     break;
                 default: 
                     $finalReward = "None";
             }
         }
 
-        $seniorDiscount = $orderSet->orderSetPrice * ($customerQueue->numberOfPwd * 0.2);
-        $childrenDiscount = $orderSet->orderSetPrice * ($customerQueue->numberOfChildren * ($customerQueue->childrenDiscount / 100));
+        $seniorDiscount = $customerQueue->orderSetPrice * ($customerQueue->numberOfPwd * 0.2);
+        $childrenDiscount = $customerQueue->orderSetPrice * ($customerQueue->numberOfChildren * ($customerQueue->childrenDiscount / 100));
         $totalPrice = $subTotal - (
             $rewardDiscount + 
             $seniorDiscount + 
@@ -839,7 +940,6 @@ class RestaurantController extends Controller
             'cancelledDate' => $month3." ".$day3.", ".$year3,
             'cancelledTime' => $cancelledTime,
             'finalReward' => $finalReward,
-            'orderSet' => $orderSet,
             'rewardDiscount' => $rewardDiscount,
             'seniorDiscount' => $seniorDiscount,
             'childrenDiscount' => $childrenDiscount,
@@ -858,8 +958,7 @@ class RestaurantController extends Controller
         $restAcc_id = Session::get('loginId');
         $customerReserve = CustomerReserve::where('id', $book_id)->where('restAcc_id', $restAcc_id)->where('status', 'runaway')->first();
         $customerInfo = CustomerAccount::where('id', $customerReserve->customer_id)->first();
-        $orderSet = OrderSet::where('id', $customerReserve->orderSet_id)->first();
-        $orderSetName = $orderSet->orderSetName;
+        $orderSetName = $customerReserve->orderSetName;
 
         $countBook1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('customer_id', $customerReserve->customer_id)->count();
         $countBook2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('customer_id', $customerReserve->customer_id)->count();
@@ -914,7 +1013,7 @@ class RestaurantController extends Controller
         
         $customerOrders = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)->where('orderDone', 'Yes')->get();
         $addOns = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)->where('orderDone', 'Yes')->sum('price');
-        $subTotal = ($orderSet->orderSetPrice * $customerReserve->numberOfPersons) + $addOns;
+        $subTotal = ($customerReserve->orderSetPrice * $customerReserve->numberOfPersons) + $addOns;
 
         $finalReward = "None";
         $rewardDiscount = null;
@@ -922,27 +1021,27 @@ class RestaurantController extends Controller
             switch($customerReserve->rewardType){
                 case "DSCN": 
                     $finalReward = "Discount $customerReserve->rewardInput% in a Total Bill";
-                    $rewardDiscount = ($customerReserve->numberOfPersons * $orderSet->orderSetPrice) * ($customerReserve->rewardInput / 100);
+                    $rewardDiscount = ($customerReserve->numberOfPersons * $customerReserve->orderSetPrice) * ($customerReserve->rewardInput / 100);
                     break;
                 case "FRPE": 
                     $finalReward = "Free $customerReserve->rewardInput person in a group";
-                    $rewardDiscount = $orderSet->orderSetPrice * $customerReserve->rewardInput;
+                    $rewardDiscount = $customerReserve->orderSetPrice * $customerReserve->rewardInput;
                     break;
                 case "HLF": 
                     $finalReward = "Half in the group will be free";
-                    $rewardDiscount = ($customerReserve->numberOfPersons * $orderSet->orderSetPrice) / 2;
+                    $rewardDiscount = ($customerReserve->numberOfPersons * $customerReserve->orderSetPrice) / 2;
                     break;
                 case "ALL": 
                     $finalReward = "All people in the group will be free";
-                    $rewardDiscount = $customerReserve->numberOfPersons * $orderSet->orderSetPrice;
+                    $rewardDiscount = $customerReserve->numberOfPersons * $customerReserve->orderSetPrice;
                     break;
                 default: 
                     $finalReward = "None";
             }
         }
 
-        $seniorDiscount = $orderSet->orderSetPrice * ($customerReserve->numberOfPwd * 0.2);
-        $childrenDiscount = $orderSet->orderSetPrice * ($customerReserve->numberOfChildren * ($customerReserve->childrenDiscount / 100));
+        $seniorDiscount = $customerReserve->orderSetPrice * ($customerReserve->numberOfPwd * 0.2);
+        $childrenDiscount = $customerReserve->orderSetPrice * ($customerReserve->numberOfChildren * ($customerReserve->childrenDiscount / 100));
         $totalPrice = $subTotal - (
             $rewardDiscount + 
             $seniorDiscount + 
@@ -994,7 +1093,6 @@ class RestaurantController extends Controller
             'cancelledDate' => $month3." ".$day3.", ".$year3,
             'cancelledTime' => $cancelledTime,
             'finalReward' => $finalReward,
-            'orderSet' => $orderSet,
             'rewardDiscount' => $rewardDiscount,
             'seniorDiscount' => $seniorDiscount,
             'childrenDiscount' => $childrenDiscount,
@@ -1013,8 +1111,7 @@ class RestaurantController extends Controller
         $restAcc_id = Session::get('loginId');
         $customerQueue = CustomerQueue::where('id', $book_id)->where('restAcc_id', $restAcc_id)->where('status', 'runaway')->first();
         $customerInfo = CustomerAccount::where('id', $customerQueue->customer_id)->first();
-        $orderSet = OrderSet::where('id', $customerQueue->orderSet_id)->first();
-        $orderSetName = $orderSet->orderSetName;
+        $orderSetName = $customerQueue->orderSetName;
 
         $countBook1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('customer_id', $customerQueue->customer_id)->count();
         $countBook2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('customer_id', $customerQueue->customer_id)->count();
@@ -1065,7 +1162,7 @@ class RestaurantController extends Controller
         
         $customerOrders = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)->where('orderDone', 'Yes')->get();
         $addOns = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)->where('orderDone', 'Yes')->sum('price');
-        $subTotal = ($orderSet->orderSetPrice * $customerQueue->numberOfPersons) + $addOns;
+        $subTotal = ($customerQueue->orderSetPrice * $customerQueue->numberOfPersons) + $addOns;
 
         $finalReward = "None";
         $rewardDiscount = null;
@@ -1073,27 +1170,27 @@ class RestaurantController extends Controller
             switch($customerQueue->rewardType){
                 case "DSCN": 
                     $finalReward = "Discount $customerQueue->rewardInput% in a Total Bill";
-                    $rewardDiscount = ($customerQueue->numberOfPersons * $orderSet->orderSetPrice) * ($customerQueue->rewardInput / 100);
+                    $rewardDiscount = ($customerQueue->numberOfPersons * $customerQueue->orderSetPrice) * ($customerQueue->rewardInput / 100);
                     break;
                 case "FRPE": 
                     $finalReward = "Free $customerQueue->rewardInput person in a group";
-                    $rewardDiscount = $orderSet->orderSetPrice * $customerQueue->rewardInput;
+                    $rewardDiscount = $customerQueue->orderSetPrice * $customerQueue->rewardInput;
                     break;
                 case "HLF": 
                     $finalReward = "Half in the group will be free";
-                    $rewardDiscount = ($customerQueue->numberOfPersons * $orderSet->orderSetPrice) / 2;
+                    $rewardDiscount = ($customerQueue->numberOfPersons * $customerQueue->orderSetPrice) / 2;
                     break;
                 case "ALL": 
                     $finalReward = "All people in the group will be free";
-                    $rewardDiscount = $customerQueue->numberOfPersons * $orderSet->orderSetPrice;
+                    $rewardDiscount = $customerQueue->numberOfPersons * $customerQueue->orderSetPrice;
                     break;
                 default: 
                     $finalReward = "None";
             }
         }
 
-        $seniorDiscount = $orderSet->orderSetPrice * ($customerQueue->numberOfPwd * 0.2);
-        $childrenDiscount = $orderSet->orderSetPrice * ($customerQueue->numberOfChildren * ($customerQueue->childrenDiscount / 100));
+        $seniorDiscount = $customerQueue->orderSetPrice * ($customerQueue->numberOfPwd * 0.2);
+        $childrenDiscount = $customerQueue->orderSetPrice * ($customerQueue->numberOfChildren * ($customerQueue->childrenDiscount / 100));
         $totalPrice = $subTotal - (
             $rewardDiscount + 
             $seniorDiscount + 
@@ -1145,7 +1242,6 @@ class RestaurantController extends Controller
             'cancelledDate' => $month3." ".$day3.", ".$year3,
             'cancelledTime' => $cancelledTime,
             'finalReward' => $finalReward,
-            'orderSet' => $orderSet,
             'rewardDiscount' => $rewardDiscount,
             'seniorDiscount' => $seniorDiscount,
             'childrenDiscount' => $childrenDiscount,
@@ -1164,7 +1260,6 @@ class RestaurantController extends Controller
         $restAcc_id = Session::get('loginId');
         $customerReserve = CustomerReserve::where('id', $book_id)->where('restAcc_id', $restAcc_id)->where('status', 'noShow')->first();
         $customerInfo = CustomerAccount::where('id', $customerReserve->customer_id)->first();
-        $orderSet = OrderSet::where('id', $customerReserve->orderSet_id)->first();
 
         $countBook1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('customer_id', $customerReserve->customer_id)->count();
         $countBook2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('customer_id', $customerReserve->customer_id)->count();
@@ -1212,27 +1307,27 @@ class RestaurantController extends Controller
             switch($customerReserve->rewardType){
                 case "DSCN": 
                     $finalReward = "Discount $customerReserve->rewardInput% in a Total Bill";
-                    $rewardDiscount = ($customerReserve->numberOfPersons * $orderSet->orderSetPrice) * ($customerReserve->rewardInput / 100);
+                    $rewardDiscount = ($customerReserve->numberOfPersons * $customerReserve->orderSetPrice) * ($customerReserve->rewardInput / 100);
                     break;
                 case "FRPE": 
                     $finalReward = "Free $customerReserve->rewardInput person in a group";
-                    $rewardDiscount = $orderSet->orderSetPrice * $customerReserve->rewardInput;
+                    $rewardDiscount = $customerReserve->orderSetPrice * $customerReserve->rewardInput;
                     break;
                 case "HLF": 
                     $finalReward = "Half in the group will be free";
-                    $rewardDiscount = ($customerReserve->numberOfPersons * $orderSet->orderSetPrice) / 2;
+                    $rewardDiscount = ($customerReserve->numberOfPersons * $customerReserve->orderSetPrice) / 2;
                     break;
                 case "ALL": 
                     $finalReward = "All people in the group will be free";
-                    $rewardDiscount = $customerReserve->numberOfPersons * $orderSet->orderSetPrice;
+                    $rewardDiscount = $customerReserve->numberOfPersons * $customerReserve->orderSetPrice;
                     break;
                 default: 
                     $finalReward = "None";
             }
         }
 
-        $seniorDiscount = $orderSet->orderSetPrice * ($customerReserve->numberOfPwd * 0.2);
-        $childrenDiscount = $orderSet->orderSetPrice * $customerReserve->numberOfChildren;
+        $seniorDiscount = $customerReserve->orderSetPrice * ($customerReserve->numberOfPwd * 0.2);
+        $childrenDiscount = $customerReserve->orderSetPrice * $customerReserve->numberOfChildren;
 
 
         return view('restaurant.transactionHistory.noshow.noshowViewR', [
@@ -1249,7 +1344,6 @@ class RestaurantController extends Controller
             'cancelledTime' => $cancelledTime,
             'reserveDate' => $month4." ".$day4.", ".$year4,
             'finalReward' => $finalReward,
-            'orderSet' => $orderSet,
             'rewardDiscount' => $rewardDiscount,
             'seniorDiscount' => $seniorDiscount,
             'childrenDiscount' => $childrenDiscount,
@@ -1259,7 +1353,6 @@ class RestaurantController extends Controller
         $restAcc_id = Session::get('loginId');
         $customerQueue = CustomerQueue::where('id', $book_id)->where('restAcc_id', $restAcc_id)->where('status', 'noShow')->first();
         $customerInfo = CustomerAccount::where('id', $customerQueue->customer_id)->first();
-        $orderSet = OrderSet::where('id', $customerQueue->orderSet_id)->first();
 
         $countBook1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('customer_id', $customerQueue->customer_id)->count();
         $countBook2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('customer_id', $customerQueue->customer_id)->count();
@@ -1306,27 +1399,27 @@ class RestaurantController extends Controller
             switch($customerQueue->rewardType){
                 case "DSCN": 
                     $finalReward = "Discount $customerQueue->rewardInput% in a Total Bill";
-                    $rewardDiscount = ($customerQueue->numberOfPersons * $orderSet->orderSetPrice) * ($customerQueue->rewardInput / 100);
+                    $rewardDiscount = ($customerQueue->numberOfPersons * $customerQueue->orderSetPrice) * ($customerQueue->rewardInput / 100);
                     break;
                 case "FRPE": 
                     $finalReward = "Free $customerQueue->rewardInput person in a group";
-                    $rewardDiscount = $orderSet->orderSetPrice * $customerQueue->rewardInput;
+                    $rewardDiscount = $customerQueue->orderSetPrice * $customerQueue->rewardInput;
                     break;
                 case "HLF": 
                     $finalReward = "Half in the group will be free";
-                    $rewardDiscount = ($customerQueue->numberOfPersons * $orderSet->orderSetPrice) / 2;
+                    $rewardDiscount = ($customerQueue->numberOfPersons * $customerQueue->orderSetPrice) / 2;
                     break;
                 case "ALL": 
                     $finalReward = "All people in the group will be free";
-                    $rewardDiscount = $customerQueue->numberOfPersons * $orderSet->orderSetPrice;
+                    $rewardDiscount = $customerQueue->numberOfPersons * $customerQueue->orderSetPrice;
                     break;
                 default: 
                     $finalReward = "None";
             }
         }
 
-        $seniorDiscount = $orderSet->orderSetPrice * ($customerQueue->numberOfPwd * 0.2);
-        $childrenDiscount = $orderSet->orderSetPrice * $customerQueue->numberOfChildren;
+        $seniorDiscount = $customerQueue->orderSetPrice * ($customerQueue->numberOfPwd * 0.2);
+        $childrenDiscount = $customerQueue->orderSetPrice * $customerQueue->numberOfChildren;
 
         return view('restaurant.transactionHistory.noshow.noshowViewQ', [
             'customerQueue' => $customerQueue,
@@ -1341,7 +1434,6 @@ class RestaurantController extends Controller
             'cancelledDate' => $month3." ".$day3.", ".$year3,
             'cancelledTime' => $cancelledTime,
             'finalReward' => $finalReward,
-            'orderSet' => $orderSet,
             'rewardDiscount' => $rewardDiscount,
             'seniorDiscount' => $seniorDiscount,
             'childrenDiscount' => $childrenDiscount,
@@ -1352,7 +1444,6 @@ class RestaurantController extends Controller
         $restAcc_id = Session::get('loginId');
         $customerReserve = CustomerReserve::where('id', $book_id)->where('restAcc_id', $restAcc_id)->where('status', 'declined')->first();
         $customerInfo = CustomerAccount::where('id', $customerReserve->customer_id)->first();
-        $orderSet = OrderSet::where('id', $customerReserve->orderSet_id)->first();
 
         $countBook1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('customer_id', $customerReserve->customer_id)->count();
         $countBook2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('customer_id', $customerReserve->customer_id)->count();
@@ -1400,27 +1491,27 @@ class RestaurantController extends Controller
             switch($customerReserve->rewardType){
                 case "DSCN": 
                     $finalReward = "Discount $customerReserve->rewardInput% in a Total Bill";
-                    $rewardDiscount = ($customerReserve->numberOfPersons * $orderSet->orderSetPrice) * ($customerReserve->rewardInput / 100);
+                    $rewardDiscount = ($customerReserve->numberOfPersons * $customerReserve->orderSetPrice) * ($customerReserve->rewardInput / 100);
                     break;
                 case "FRPE": 
                     $finalReward = "Free $customerReserve->rewardInput person in a group";
-                    $rewardDiscount = $orderSet->orderSetPrice * $customerReserve->rewardInput;
+                    $rewardDiscount = $customerReserve->orderSetPrice * $customerReserve->rewardInput;
                     break;
                 case "HLF": 
                     $finalReward = "Half in the group will be free";
-                    $rewardDiscount = ($customerReserve->numberOfPersons * $orderSet->orderSetPrice) / 2;
+                    $rewardDiscount = ($customerReserve->numberOfPersons * $customerReserve->orderSetPrice) / 2;
                     break;
                 case "ALL": 
                     $finalReward = "All people in the group will be free";
-                    $rewardDiscount = $customerReserve->numberOfPersons * $orderSet->orderSetPrice;
+                    $rewardDiscount = $customerReserve->numberOfPersons * $customerReserve->orderSetPrice;
                     break;
                 default: 
                     $finalReward = "None";
             }
         }
 
-        $seniorDiscount = $orderSet->orderSetPrice * ($customerReserve->numberOfPwd * 0.2);
-        $childrenDiscount = $orderSet->orderSetPrice * $customerReserve->numberOfChildren;
+        $seniorDiscount = $customerReserve->orderSetPrice * ($customerReserve->numberOfPwd * 0.2);
+        $childrenDiscount = $customerReserve->orderSetPrice * $customerReserve->numberOfChildren;
 
 
 
@@ -1438,7 +1529,6 @@ class RestaurantController extends Controller
             'cancelledTime' => $cancelledTime,
             'reserveDate' => $month4." ".$day4.", ".$year4,
             'finalReward' => $finalReward,
-            'orderSet' => $orderSet,
             'rewardDiscount' => $rewardDiscount,
             'seniorDiscount' => $seniorDiscount,
             'childrenDiscount' => $childrenDiscount,
@@ -1448,7 +1538,6 @@ class RestaurantController extends Controller
         $restAcc_id = Session::get('loginId');
         $customerQueue = CustomerQueue::where('id', $book_id)->where('restAcc_id', $restAcc_id)->where('status', 'declined')->first();
         $customerInfo = CustomerAccount::where('id', $customerQueue->customer_id)->first();
-        $orderSet = OrderSet::where('id', $customerQueue->orderSet_id)->first();
 
         $countBook1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('customer_id', $customerQueue->customer_id)->count();
         $countBook2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('customer_id', $customerQueue->customer_id)->count();
@@ -1491,27 +1580,27 @@ class RestaurantController extends Controller
             switch($customerQueue->rewardType){
                 case "DSCN": 
                     $finalReward = "Discount $customerQueue->rewardInput% in a Total Bill";
-                    $rewardDiscount = ($customerQueue->numberOfPersons * $orderSet->orderSetPrice) * ($customerQueue->rewardInput / 100);
+                    $rewardDiscount = ($customerQueue->numberOfPersons * $customerQueue->orderSetPrice) * ($customerQueue->rewardInput / 100);
                     break;
                 case "FRPE": 
                     $finalReward = "Free $customerQueue->rewardInput person in a group";
-                    $rewardDiscount = $orderSet->orderSetPrice * $customerQueue->rewardInput;
+                    $rewardDiscount = $customerQueue->orderSetPrice * $customerQueue->rewardInput;
                     break;
                 case "HLF": 
                     $finalReward = "Half in the group will be free";
-                    $rewardDiscount = ($customerQueue->numberOfPersons * $orderSet->orderSetPrice) / 2;
+                    $rewardDiscount = ($customerQueue->numberOfPersons * $customerQueue->orderSetPrice) / 2;
                     break;
                 case "ALL": 
                     $finalReward = "All people in the group will be free";
-                    $rewardDiscount = $customerQueue->numberOfPersons * $orderSet->orderSetPrice;
+                    $rewardDiscount = $customerQueue->numberOfPersons * $customerQueue->orderSetPrice;
                     break;
                 default: 
                     $finalReward = "None";
             }
         }
 
-        $seniorDiscount = $orderSet->orderSetPrice * ($customerQueue->numberOfPwd * 0.2);
-        $childrenDiscount = $orderSet->orderSetPrice * $customerQueue->numberOfChildren;
+        $seniorDiscount = $customerQueue->orderSetPrice * ($customerQueue->numberOfPwd * 0.2);
+        $childrenDiscount = $customerQueue->orderSetPrice * $customerQueue->numberOfChildren;
 
 
         return view('restaurant.transactionHistory.declined.declinedViewQ', [
@@ -1527,7 +1616,6 @@ class RestaurantController extends Controller
             'cancelledDate' => $month3." ".$day3.", ".$year3,
             'cancelledTime' => $cancelledTime,
             'finalReward' => $finalReward,
-            'orderSet' => $orderSet,
             'rewardDiscount' => $rewardDiscount,
             'seniorDiscount' => $seniorDiscount,
             'childrenDiscount' => $childrenDiscount,
@@ -1538,7 +1626,6 @@ class RestaurantController extends Controller
         $restAcc_id = Session::get('loginId');
         $customerReserve = CustomerReserve::where('id', $book_id)->where('restAcc_id', $restAcc_id)->where('status', 'cancelled')->first();
         $customerInfo = CustomerAccount::where('id', $customerReserve->customer_id)->first();
-        $orderSet = OrderSet::where('id', $customerReserve->orderSet_id)->first();
 
         $countBook1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('customer_id', $customerReserve->customer_id)->count();
         $countBook2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('customer_id', $customerReserve->customer_id)->count();
@@ -1586,27 +1673,27 @@ class RestaurantController extends Controller
             switch($customerReserve->rewardType){
                 case "DSCN": 
                     $finalReward = "Discount $customerReserve->rewardInput% in a Total Bill";
-                    $rewardDiscount = ($customerReserve->numberOfPersons * $orderSet->orderSetPrice) * ($customerReserve->rewardInput / 100);
+                    $rewardDiscount = ($customerReserve->numberOfPersons * $customerReserve->orderSetPrice) * ($customerReserve->rewardInput / 100);
                     break;
                 case "FRPE": 
                     $finalReward = "Free $customerReserve->rewardInput person in a group";
-                    $rewardDiscount = $orderSet->orderSetPrice * $customerReserve->rewardInput;
+                    $rewardDiscount = $customerReserve->orderSetPrice * $customerReserve->rewardInput;
                     break;
                 case "HLF": 
                     $finalReward = "Half in the group will be free";
-                    $rewardDiscount = ($customerReserve->numberOfPersons * $orderSet->orderSetPrice) / 2;
+                    $rewardDiscount = ($customerReserve->numberOfPersons * $customerReserve->orderSetPrice) / 2;
                     break;
                 case "ALL": 
                     $finalReward = "All people in the group will be free";
-                    $rewardDiscount = $customerReserve->numberOfPersons * $orderSet->orderSetPrice;
+                    $rewardDiscount = $customerReserve->numberOfPersons * $customerReserve->orderSetPrice;
                     break;
                 default: 
                     $finalReward = "None";
             }
         }
 
-        $seniorDiscount = $orderSet->orderSetPrice * ($customerReserve->numberOfPwd * 0.2);
-        $childrenDiscount = $orderSet->orderSetPrice * $customerReserve->numberOfChildren;
+        $seniorDiscount = $customerReserve->orderSetPrice * ($customerReserve->numberOfPwd * 0.2);
+        $childrenDiscount = $customerReserve->orderSetPrice * $customerReserve->numberOfChildren;
 
 
 
@@ -1624,7 +1711,6 @@ class RestaurantController extends Controller
             'cancelledTime' => $cancelledTime,
             'reserveDate' => $month4." ".$day4.", ".$year4,
             'finalReward' => $finalReward,
-            'orderSet' => $orderSet,
             'rewardDiscount' => $rewardDiscount,
             'seniorDiscount' => $seniorDiscount,
             'childrenDiscount' => $childrenDiscount,
@@ -1634,7 +1720,6 @@ class RestaurantController extends Controller
         $restAcc_id = Session::get('loginId');
         $customerQueue = CustomerQueue::where('id', $book_id)->where('restAcc_id', $restAcc_id)->where('status', 'cancelled')->first();
         $customerInfo = CustomerAccount::where('id', $customerQueue->customer_id)->first();
-        $orderSet = OrderSet::where('id', $customerQueue->orderSet_id)->first();
 
         $countBook1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('customer_id', $customerQueue->customer_id)->count();
         $countBook2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('customer_id', $customerQueue->customer_id)->count();
@@ -1677,27 +1762,27 @@ class RestaurantController extends Controller
             switch($customerQueue->rewardType){
                 case "DSCN": 
                     $finalReward = "Discount $customerQueue->rewardInput% in a Total Bill";
-                    $rewardDiscount = ($customerQueue->numberOfPersons * $orderSet->orderSetPrice) * ($customerQueue->rewardInput / 100);
+                    $rewardDiscount = ($customerQueue->numberOfPersons * $customerQueue->orderSetPrice) * ($customerQueue->rewardInput / 100);
                     break;
                 case "FRPE": 
                     $finalReward = "Free $customerQueue->rewardInput person in a group";
-                    $rewardDiscount = $orderSet->orderSetPrice * $customerQueue->rewardInput;
+                    $rewardDiscount = $customerQueue->orderSetPrice * $customerQueue->rewardInput;
                     break;
                 case "HLF": 
                     $finalReward = "Half in the group will be free";
-                    $rewardDiscount = ($customerQueue->numberOfPersons * $orderSet->orderSetPrice) / 2;
+                    $rewardDiscount = ($customerQueue->numberOfPersons * $customerQueue->orderSetPrice) / 2;
                     break;
                 case "ALL": 
                     $finalReward = "All people in the group will be free";
-                    $rewardDiscount = $customerQueue->numberOfPersons * $orderSet->orderSetPrice;
+                    $rewardDiscount = $customerQueue->numberOfPersons * $customerQueue->orderSetPrice;
                     break;
                 default: 
                     $finalReward = "None";
             }
         }
 
-        $seniorDiscount = $orderSet->orderSetPrice * ($customerQueue->numberOfPwd * 0.2);
-        $childrenDiscount = $orderSet->orderSetPrice * $customerQueue->numberOfChildren;
+        $seniorDiscount = $customerQueue->orderSetPrice * ($customerQueue->numberOfPwd * 0.2);
+        $childrenDiscount = $customerQueue->orderSetPrice * $customerQueue->numberOfChildren;
 
 
 
@@ -1714,7 +1799,6 @@ class RestaurantController extends Controller
             'cancelledDate' => $month3." ".$day3.", ".$year3,
             'cancelledTime' => $cancelledTime,
             'finalReward' => $finalReward,
-            'orderSet' => $orderSet,
             'rewardDiscount' => $rewardDiscount,
             'seniorDiscount' => $seniorDiscount,
             'childrenDiscount' => $childrenDiscount,
@@ -2115,13 +2199,8 @@ class RestaurantController extends Controller
             $customerQueue = CustomerQueue::where('id', $customerOrdering->custBook_id)
             ->where('restAcc_id', $restAcc_id)
             ->first();
-
-            $orderSet = OrderSet::where('id', $customerQueue->orderSet_id)
-            ->where('restAcc_id', $restAcc_id)
-            ->first();
-
             
-            $orderSetName = $orderSet->orderSetName;
+            $orderSetName = $customerQueue->orderSetName;
             $customerBook = $customerQueue;
 
             $customer = CustomerAccount::select('profileImage', 'id')->where('id', $customerQueue->customer_id)->first();
@@ -2131,11 +2210,7 @@ class RestaurantController extends Controller
             ->where('restAcc_id', $restAcc_id)
             ->first();
 
-            $orderSet = OrderSet::where('id', $customerReserve->orderSet_id)
-            ->where('restAcc_id', $restAcc_id)
-            ->first();
-
-            $orderSetName = $orderSet->orderSetName;
+            $orderSetName = $customerReserve->orderSetName;
             $customerBook = $customerReserve;
 
             $customer = CustomerAccount::select('profileImage', 'id')->where('id', $customerReserve->customer_id)->first();
@@ -2212,7 +2287,7 @@ class RestaurantController extends Controller
         $mainTable = explode(',', $customerOrdering->tableNumbers);
 
         $addOns = CustomerLOrder::where('custOrdering_id', $id)->where('orderDone', 'Yes')->sum('price');
-        $subTotal = ($orderSet->orderSetPrice * $customerBook->numberOfPersons) + $addOns;
+        $subTotal = ($customerBook->orderSetPrice * $customerBook->numberOfPersons) + $addOns;
 
         $finalReward = "None";
         $rewardDiscount = 0.00;
@@ -2220,27 +2295,27 @@ class RestaurantController extends Controller
             switch($customerBook->rewardType){
                 case "DSCN": 
                     $finalReward = "Discount $customerBook->rewardInput% in a Total Bill";
-                    $rewardDiscount = ($customerBook->numberOfPersons * $orderSet->orderSetPrice) * ($customerBook->rewardInput / 100);
+                    $rewardDiscount = ($customerBook->numberOfPersons * $customerBook->orderSetPrice) * ($customerBook->rewardInput / 100);
                     break;
                 case "FRPE": 
                     $finalReward = "Free $customerBook->rewardInput person in a group";
-                    $rewardDiscount = $orderSet->orderSetPrice * $customerBook->rewardInput;
+                    $rewardDiscount = $customerBook->orderSetPrice * $customerBook->rewardInput;
                     break;
                 case "HLF": 
                     $finalReward = "Half in the group will be free";
-                    $rewardDiscount = ($customerBook->numberOfPersons * $orderSet->orderSetPrice) / 2;
+                    $rewardDiscount = ($customerBook->numberOfPersons * $customerBook->orderSetPrice) / 2;
                     break;
                 case "ALL": 
                     $finalReward = "All people in the group will be free";
-                    $rewardDiscount = $customerBook->numberOfPersons * $orderSet->orderSetPrice;
+                    $rewardDiscount = $customerBook->numberOfPersons * $customerBook->orderSetPrice;
                     break;
                 default: 
                     $finalReward = "None";
             }
         }
 
-        $seniorDiscount = $orderSet->orderSetPrice * ($customerBook->numberOfPwd * 0.2);
-        $childrenDiscount = $orderSet->orderSetPrice * ($customerBook->numberOfChildren * ($customerBook->childrenDiscount / 100));
+        $seniorDiscount = $customerBook->orderSetPrice * ($customerBook->numberOfPwd * 0.2);
+        $childrenDiscount = $customerBook->orderSetPrice * ($customerBook->numberOfChildren * ($customerBook->childrenDiscount / 100));
         $totalPrice = $subTotal - (
             $rewardDiscount + 
             $seniorDiscount + 
@@ -2255,7 +2330,6 @@ class RestaurantController extends Controller
             'customerOrders' => $customerOrders,
             'customerRequests' => $customerRequests,
             'order' => $orderSetName,
-            'orderSet' => $orderSet,
             'rAppDiffTime' => $rAppDiffTime,
             'rAppDiffTime2' => $rAppDiffTime2,
             'customerImage' => $customer,
@@ -2312,13 +2386,8 @@ class RestaurantController extends Controller
             ->where('id', $customerOrdering->custBook_id)
             ->where('restAcc_id', $restAcc_id)
             ->first();
-
-            $orderSet = OrderSet::select('orderSetName')
-            ->where('id', $customerQueue->orderSet_id)
-            ->where('restAcc_id', $restAcc_id)
-            ->first();
             
-            $orderSetName = $orderSet->orderSetName;
+            $orderSetName = $customerQueue->orderSetName;
 
             $customer = CustomerAccount::select('profileImage', 'id')->where('id', $customerQueue->customer_id)->first();
             
@@ -2328,12 +2397,7 @@ class RestaurantController extends Controller
             ->where('restAcc_id', $restAcc_id)
             ->first();
 
-            $orderSet = OrderSet::select('orderSetName')
-            ->where('id', $customerReserve->orderSet_id
-            )->where('restAcc_id', $restAcc_id)
-            ->first();
-
-            $orderSetName = $orderSet->orderSetName;
+            $orderSetName = $customerReserve->orderSetName;
 
             $customer = CustomerAccount::select('profileImage', 'id')->where('id', $customerReserve->customer_id)->first();
         }
@@ -2599,8 +2663,7 @@ class RestaurantController extends Controller
     public function ltAppCustQAddWalkInView(){
         $restAcc_id = Session::get('loginId');
         $restaurant = RestaurantAccount::select('rTimeLimit', 'rCapacityPerTable')->where('id', $restAcc_id)->first();
-        $orderSets = OrderSet::where('restAcc_id', $restAcc_id)->get();
-
+        $orderSets = OrderSet::where('restAcc_id', $restAcc_id)->where('status', "Visible")->where('available', "Yes")->get();
 
         return view('restaurant.liveTransactions.approvedCustomer.addWalkin', [
             'rTimeLimit' => $restaurant->rTimeLimit,
@@ -2633,7 +2696,6 @@ class RestaurantController extends Controller
         }
 
         $customerInfo = CustomerAccount::where('id', $customerReserve->customer_id)->first();
-        $orderSet = OrderSet::where('id', $customerReserve->orderSet_id)->first();
     
         $countBook1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('customer_id', $customerReserve->customer_id)->count();
         $countBook2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('customer_id', $customerReserve->customer_id)->count();
@@ -2670,26 +2732,26 @@ class RestaurantController extends Controller
             switch($customerReserve->rewardType){
                 case "DSCN": 
                     $finalReward = "Discount $customerReserve->rewardInput% in a Total Bill";
-                    $rewardDiscount = ($customerReserve->numberOfPersons * $orderSet->orderSetPrice) * ($customerReserve->rewardInput / 100);
+                    $rewardDiscount = ($customerReserve->numberOfPersons * $customerReserve->orderSetPrice) * ($customerReserve->rewardInput / 100);
                     break;
                 case "FRPE": 
                     $finalReward = "Free $customerReserve->rewardInput person in a group";
-                    $rewardDiscount = $orderSet->orderSetPrice * $customerReserve->rewardInput;
+                    $rewardDiscount = $customerReserve->orderSetPrice * $customerReserve->rewardInput;
                     break;
                 case "HLF": 
                     $finalReward = "Half in the group will be free";
-                    $rewardDiscount = ($customerReserve->numberOfPersons * $orderSet->orderSetPrice) / 2;
+                    $rewardDiscount = ($customerReserve->numberOfPersons * $customerReserve->orderSetPrice) / 2;
                     break;
                 case "ALL": 
                     $finalReward = "All people in the group will be free";
-                    $rewardDiscount = $customerReserve->numberOfPersons * $orderSet->orderSetPrice;
+                    $rewardDiscount = $customerReserve->numberOfPersons * $customerReserve->orderSetPrice;
                     break;
                 default: 
                     $finalReward = "None";
             }
         }
 
-        $seniorDiscount = $orderSet->orderSetPrice * ($customerReserve->numberOfPwd * 0.2);
+        $seniorDiscount = $customerReserve->orderSetPrice * ($customerReserve->numberOfPwd * 0.2);
         $childrenDiscount = 0.0;
 
         $dateTime = date("Y-m-d H:i:s", strtotime("$customerReserve->reserveDate $customerReserve->reserveTime"));
@@ -2788,7 +2850,6 @@ class RestaurantController extends Controller
             'bookDate' => $month1." ".$day1.", ".$year1,
             'userSinceDate' => $month2." ".$day2.", ".$year2,
             'finalReward' => $finalReward,
-            'orderSet' => $orderSet,
             'rewardDiscount' => $rewardDiscount,
             'seniorDiscount' => $seniorDiscount,
             'childrenDiscount' => $childrenDiscount,
@@ -2897,7 +2958,6 @@ class RestaurantController extends Controller
 
         if($customerQueue->customer_id != 0){
             $customerInfo = CustomerAccount::where('id', $customerQueue->customer_id)->first();
-            $orderSet = OrderSet::where('id', $customerQueue->orderSet_id)->first();
     
             $countBook1 = CustomerQueue::where('restAcc_id', $restAcc_id)->where('customer_id', $customerQueue->customer_id)->count();
             $countBook2 = CustomerReserve::where('restAcc_id', $restAcc_id)->where('customer_id', $customerQueue->customer_id)->count();
@@ -2934,19 +2994,19 @@ class RestaurantController extends Controller
                 switch($customerQueue->rewardType){
                     case "DSCN": 
                         $finalReward = "Discount $customerQueue->rewardInput% in a Total Bill";
-                        $rewardDiscount = ($customerQueue->numberOfPersons * $orderSet->orderSetPrice) * ($customerQueue->rewardInput / 100);
+                        $rewardDiscount = ($customerQueue->numberOfPersons * $customerQueue->orderSetPrice) * ($customerQueue->rewardInput / 100);
                         break;
                     case "FRPE": 
                         $finalReward = "Free $customerQueue->rewardInput person in a group";
-                        $rewardDiscount = $orderSet->orderSetPrice * $customerQueue->rewardInput;
+                        $rewardDiscount = $customerQueue->orderSetPrice * $customerQueue->rewardInput;
                         break;
                     case "HLF": 
                         $finalReward = "Half in the group will be free";
-                        $rewardDiscount = ($customerQueue->numberOfPersons * $orderSet->orderSetPrice) / 2;
+                        $rewardDiscount = ($customerQueue->numberOfPersons * $customerQueue->orderSetPrice) / 2;
                         break;
                     case "ALL": 
                         $finalReward = "All people in the group will be free";
-                        $rewardDiscount = $customerQueue->numberOfPersons * $orderSet->orderSetPrice;
+                        $rewardDiscount = $customerQueue->numberOfPersons * $customerQueue->orderSetPrice;
                         break;
                     default: 
                         $finalReward = "None";
@@ -2954,8 +3014,8 @@ class RestaurantController extends Controller
             }
     
     
-            $seniorDiscount = $orderSet->orderSetPrice * ($customerQueue->numberOfPwd * 0.2);
-            $childrenDiscount = $orderSet->orderSetPrice * $customerQueue->numberOfChildren;
+            $seniorDiscount = $customerQueue->orderSetPrice * ($customerQueue->numberOfPwd * 0.2);
+            $childrenDiscount = $customerQueue->orderSetPrice * $customerQueue->numberOfChildren;
 
             $getDateToday = date("Y-m-d");
             $checkPriorities = CustomerQueue::where('restAcc_id', $restAcc_id)
@@ -3030,7 +3090,6 @@ class RestaurantController extends Controller
                 'bookDate' => $month1." ".$day1.", ".$year1,
                 'userSinceDate' => $month2." ".$day2.", ".$year2,
                 'finalReward' => $finalReward,
-                'orderSet' => $orderSet,
                 'rewardDiscount' => $rewardDiscount,
                 'seniorDiscount' => $seniorDiscount,
                 'childrenDiscount' => $childrenDiscount,
@@ -3171,7 +3230,6 @@ class RestaurantController extends Controller
         $restAcc_id = Session::get('loginId');
         $customerReserve = CustomerReserve::where('id', $id)->where('restAcc_id', $restAcc_id)->where('status', 'pending')->first();
         $customerInfo = CustomerAccount::where('id', $customerReserve->customer_id)->first();
-        $orderSet = OrderSet::where('id', $customerReserve->orderSet_id)->first();
 
         $currentTime = Carbon::now();
         $rAppstartTime = Carbon::parse($customerReserve->created_at);
@@ -3233,26 +3291,26 @@ class RestaurantController extends Controller
             switch($customerReserve->rewardType){
                 case "DSCN": 
                     $finalReward = "Discount $customerReserve->rewardInput% in a Total Bill";
-                    $rewardDiscount = ($customerReserve->numberOfPersons * $orderSet->orderSetPrice) * ($customerReserve->rewardInput / 100);
+                    $rewardDiscount = ($customerReserve->numberOfPersons * $customerReserve->orderSetPrice) * ($customerReserve->rewardInput / 100);
                     break;
                 case "FRPE": 
                     $finalReward = "Free $customerReserve->rewardInput person in a group";
-                    $rewardDiscount = $orderSet->orderSetPrice * $customerReserve->rewardInput;
+                    $rewardDiscount = $customerReserve->orderSetPrice * $customerReserve->rewardInput;
                     break;
                 case "HLF": 
                     $finalReward = "Half in the group will be free";
-                    $rewardDiscount = ($customerReserve->numberOfPersons * $orderSet->orderSetPrice) / 2;
+                    $rewardDiscount = ($customerReserve->numberOfPersons * $customerReserve->orderSetPrice) / 2;
                     break;
                 case "ALL": 
                     $finalReward = "All people in the group will be free";
-                    $rewardDiscount = $customerReserve->numberOfPersons * $orderSet->orderSetPrice;
+                    $rewardDiscount = $customerReserve->numberOfPersons * $customerReserve->orderSetPrice;
                     break;
                 default: 
                     $finalReward = "None";
             }
         }
 
-        $seniorDiscount = $orderSet->orderSetPrice * ($customerReserve->numberOfPwd * 0.2);
+        $seniorDiscount = $customerReserve->orderSetPrice * ($customerReserve->numberOfPwd * 0.2);
         $childrenDiscount = 0.0;
 
         return view('restaurant.liveTransactions.customerBooking.reserveView',[
@@ -3268,7 +3326,6 @@ class RestaurantController extends Controller
             'reserveDate' => $month3." ".$day3.", ".$year3,
             'rAppDiffTime' => $rAppDiffTime,
             'finalReward' => $finalReward,
-            'orderSet' => $orderSet,
             'rewardDiscount' => $rewardDiscount,
             'seniorDiscount' => $seniorDiscount,
             'childrenDiscount' => $childrenDiscount,
@@ -3332,7 +3389,6 @@ class RestaurantController extends Controller
         $restAcc_id = Session::get('loginId');
         $customerQueue = CustomerQueue::where('id', $id)->where('restAcc_id', $restAcc_id)->where('status', 'pending')->first();
         $customerInfo = CustomerAccount::where('id', $customerQueue->customer_id)->first();
-        $orderSet = OrderSet::where('id', $customerQueue->orderSet_id)->first();
 
         $currentTime = Carbon::now();
         $rAppstartTime = Carbon::parse($customerQueue->created_at);
@@ -3391,19 +3447,19 @@ class RestaurantController extends Controller
             switch($customerQueue->rewardType){
                 case "DSCN": 
                     $finalReward = "Discount $customerQueue->rewardInput% in a Total Bill";
-                    $rewardDiscount = ($customerQueue->numberOfPersons * $orderSet->orderSetPrice) * ($customerQueue->rewardInput / 100);
+                    $rewardDiscount = ($customerQueue->numberOfPersons * $customerQueue->orderSetPrice) * ($customerQueue->rewardInput / 100);
                     break;
                 case "FRPE": 
                     $finalReward = "Free $customerQueue->rewardInput person in a group";
-                    $rewardDiscount = $orderSet->orderSetPrice * $customerQueue->rewardInput;
+                    $rewardDiscount = $customerQueue->orderSetPrice * $customerQueue->rewardInput;
                     break;
                 case "HLF": 
                     $finalReward = "Half in the group will be free";
-                    $rewardDiscount = ($customerQueue->numberOfPersons * $orderSet->orderSetPrice) / 2;
+                    $rewardDiscount = ($customerQueue->numberOfPersons * $customerQueue->orderSetPrice) / 2;
                     break;
                 case "ALL": 
                     $finalReward = "All people in the group will be free";
-                    $rewardDiscount = $customerQueue->numberOfPersons * $orderSet->orderSetPrice;
+                    $rewardDiscount = $customerQueue->numberOfPersons * $customerQueue->orderSetPrice;
                     break;
                 default: 
                     $finalReward = "None";
@@ -3411,8 +3467,8 @@ class RestaurantController extends Controller
         }
 
 
-        $seniorDiscount = $orderSet->orderSetPrice * ($customerQueue->numberOfPwd * 0.2);
-        $childrenDiscount = $orderSet->orderSetPrice * $customerQueue->numberOfChildren;
+        $seniorDiscount = $customerQueue->orderSetPrice * ($customerQueue->numberOfPwd * 0.2);
+        $childrenDiscount = $customerQueue->orderSetPrice * $customerQueue->numberOfChildren;
 
         
         $getDateToday = date("Y-m-d");
@@ -3441,7 +3497,6 @@ class RestaurantController extends Controller
             'userSinceDate' => $month2." ".$day2.", ".$year2,
             'rAppDiffTime' => $rAppDiffTime,
             'finalReward' => $finalReward,
-            'orderSet' => $orderSet,
             'rewardDiscount' => $rewardDiscount,
             'seniorDiscount' => $seniorDiscount,
             'childrenDiscount' => $childrenDiscount,
@@ -3673,13 +3728,11 @@ class RestaurantController extends Controller
     }
     public function orderSetDetailView($id){
         $resAccid = Session::get('loginId');
-        $orderSet = OrderSet::where('restAcc_Id', '=', $resAccid)
-                            ->where('id', '=', $id)
-                            ->first();
-        $foodItems = FoodItem::where('restAcc_id', '=', $resAccid)->get();
+        $orderSet = OrderSet::where('restAcc_Id', $resAccid)->where('id', $id)->first();
+        $foodItems = FoodItem::where('restAcc_id', $resAccid)->get();
         $foodSets = FoodSet::where('restAcc_id', $resAccid)->get();
-        $orderSetFoodItems = OrderSetFoodItem::where('orderSet_id', '=', $id)->get();
-        $orderSetFoodSets = OrderSetFoodSet::where('orderSet_id', '=', $id)->get();
+        $orderSetFoodItems = OrderSetFoodItem::where('orderSet_id', $id)->get();
+        $orderSetFoodSets = OrderSetFoodSet::where('orderSet_id', $id)->get();
         return view('restaurant.manageRestaurant.foodMenu.orderSetDetail',[
             'orderSet' => $orderSet,
             'title' => 'Manage Food Menu',
@@ -3692,9 +3745,7 @@ class RestaurantController extends Controller
     }
     public function foodSetEditView($id){
         $resAccid = Session::get('loginId');
-        $foodSet = FoodSet::where('restAcc_id', '=', $resAccid)
-                            ->where('id', '=', $id)
-                            ->first();
+        $foodSet = FoodSet::where('restAcc_id', $resAccid)->where('id', $id)->first();
         return view('restaurant.manageRestaurant.foodMenu.foodSetEdit',[
             'foodSet' => $foodSet,
             'title' => 'Manage Food Menu',
@@ -3703,9 +3754,7 @@ class RestaurantController extends Controller
     }
     public function editFoodItemView($id){
         $resAccid = Session::get('loginId');
-        $foodItem = FoodItem::where('restAcc_id', '=', $resAccid)
-                            ->where('id', '=', $id)
-                            ->first();
+        $foodItem = FoodItem::where('restAcc_id', $resAccid)->where('id', $id)->first();
         return view('restaurant.manageRestaurant.foodMenu.foodItemEdit',[
             'foodItem' => $foodItem,
             'title' => 'Manage Food Menu',
@@ -3714,17 +3763,17 @@ class RestaurantController extends Controller
     }
     public function foodSetDetailView($id){
         $resAccid = Session::get('loginId');
-        $foodSet = FoodSet::where('restAcc_Id', '=', $resAccid)
-                            ->where('id', '=', $id)
-                            ->first();
-        $foodItems = FoodItem::where('restAcc_id', '=', $resAccid)->get();
-        $foodSetItems = FoodSetItem::where('foodSet_id', '=', $id)->get();
+        $restaurant = RestaurantAccount::select('status')->where('id', $resAccid)->first();
+        $foodSet = FoodSet::where('restAcc_Id', $resAccid)->where('id', $id)->first();
+        $foodItems = FoodItem::where('restAcc_id', $resAccid)->get();
+        $foodSetItems = FoodSetItem::where('foodSet_id', $id)->get();
         return view('restaurant.manageRestaurant.foodMenu.foodSetDetail',[
             'foodSet' => $foodSet,
             'title' => 'Manage Food Menu',
             'id' => $resAccid,
             'foodItems' => $foodItems,
-            'foodSetItems' => $foodSetItems
+            'foodSetItems' => $foodSetItems,
+            'restaurant' => $restaurant
         ]);
     }
     public function manageRestaurantChecklistView(){
@@ -3774,11 +3823,13 @@ class RestaurantController extends Controller
             $orderSets = OrderSet::where('restAcc_Id', '=', $id)
                         ->where(function ($query) use ($searchText) {
                             $query->where('orderSetName', 'LIKE', $searchText)
-                                  ->orWhere('orderSetTagline', 'LIKE', $searchText)
-                                  ->orWhere('orderSetDescription', 'LIKE', $searchText)
-                                  ->orWhere('orderSetPrice', 'LIKE', $searchText);
+                                ->orWhere('status', 'LIKE', $searchText)
+                                ->orWhere('available', 'LIKE', $searchText)
+                                ->orWhere('orderSetTagline', 'LIKE', $searchText)
+                                ->orWhere('orderSetDescription', 'LIKE', $searchText)
+                                ->orWhere('orderSetPrice', 'LIKE', $searchText);
                         })
-                        ->paginate(4);
+                        ->paginate(10);
             $orderSets->appends($request->all());
             return view('restaurant.manageRestaurant.foodMenu.orderSet',[
                 'orderSets' => $orderSets,
@@ -3786,7 +3837,7 @@ class RestaurantController extends Controller
                 'id' => $id
             ]);
         } else {
-            $orderSets = OrderSet::where('restAcc_Id', '=', $id)->paginate(2);
+            $orderSets = OrderSet::where('restAcc_Id', '=', $id)->paginate(10);
             return view('restaurant.manageRestaurant.foodMenu.orderSet',[
                 'orderSets' => $orderSets,
                 'title' => 'Manage Food Menu',
@@ -3801,10 +3852,12 @@ class RestaurantController extends Controller
             $foodSets = FoodSet::where('restAcc_Id', '=', $id)
                         ->where(function ($query) use ($searchText) {
                             $query->where('foodSetName', 'LIKE', $searchText)
-                                  ->orWhere('foodSetDescription', 'LIKE', $searchText)
-                                  ->orWhere('foodSetPrice', 'LIKE', $searchText);
+                                ->orWhere('status', 'LIKE', $searchText)
+                                ->orWhere('available', 'LIKE', $searchText)
+                                ->orWhere('foodSetDescription', 'LIKE', $searchText)
+                                ->orWhere('foodSetPrice', 'LIKE', $searchText);
                         })
-                        ->paginate(4);
+                        ->paginate(10);
             $foodSets->appends($request->all());
             return view('restaurant.manageRestaurant.foodMenu.foodSet',[
                 'foodSets' => $foodSets,
@@ -3812,7 +3865,7 @@ class RestaurantController extends Controller
                 'id' => $id
             ]);
         } else {
-            $foodSets = FoodSet::where('restAcc_Id', '=', $id)->paginate(2);
+            $foodSets = FoodSet::where('restAcc_Id', '=', $id)->paginate(10);
             return view('restaurant.manageRestaurant.foodMenu.foodSet',[
                 'foodSets' => $foodSets,
                 'title' => 'Manage Food Menu',
@@ -3822,13 +3875,16 @@ class RestaurantController extends Controller
     }
     public function manageRestaurantFoodItemView(Request $request){
         $id = Session::get('loginId');
+        $restaurant = RestaurantAccount::select('status')->where('id', $id)->first();
         if(isset($_GET['q']) && !empty($_GET['q'])){
             $searchText = '%'.$_GET['q'].'%';
             $foodItems = FoodItem::where('restAcc_Id', $id)
                         ->where(function ($query) use ($searchText) {
                             $query->where('foodItemName', 'LIKE', $searchText)
-                                  ->orWhere('foodItemDescription', 'LIKE', $searchText)
-                                  ->orWhere('foodItemPrice', 'LIKE', $searchText);
+                                ->orWhere('status', 'LIKE', $searchText)
+                                ->orWhere('available', 'LIKE', $searchText)
+                                ->orWhere('foodItemDescription', 'LIKE', $searchText)
+                                ->orWhere('foodItemPrice', 'LIKE', $searchText);
                         })
                         ->orderBy('id', 'DESC')
                         ->paginate(10);
@@ -3836,14 +3892,16 @@ class RestaurantController extends Controller
             return view('restaurant.manageRestaurant.foodMenu.foodItem',[
                 'foodItems' => $foodItems,
                 'title' => 'Manage Food Menu',
-                'id' => $id
+                'id' => $id,
+                'status' => $restaurant->status
             ]);
         } else {
             $foodItems = FoodItem::where('restAcc_Id', $id)->orderBy('id', 'DESC')->paginate(10);
             return view('restaurant.manageRestaurant.foodMenu.foodItem',[
                 'foodItems' => $foodItems,
                 'title' => 'Manage Food Menu',
-                'id' => $id
+                'id' => $id,
+                'status' => $restaurant->status
             ]);
         }
     }
@@ -4027,6 +4085,274 @@ class RestaurantController extends Controller
 
 
     // RENDER LOGICS
+    public function mHiddenOS($id){
+        $restAcc_id = Session::get('loginId');
+        $restaurant = RestaurantAccount::where('id', $restAcc_id)->first();
+
+        if($restaurant->status == "Published"){
+
+            if($this->checkTodaySched() == "Closed Now"){
+
+                $customerReserves = CustomerReserve::where('restAcc_id', $restAcc_id)
+                ->where('orderSet_id', $id)
+                ->where(function ($query) {
+                    $query->where('status', "pending")
+                    ->orWhere('status', "approved");
+                })
+                ->get();
+
+                if(!$customerReserves->isEmpty()){
+                    foreach($customerReserves as $customerReserve){
+                        $customerAccount = CustomerAccount::where('id', $customerReserve->customer_id)->first();
+
+                        $finalImageUrl = "";
+                        if ($restaurant->rLogo == ""){
+                            $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+                        } else {
+                            $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
+                        }
+
+                        if($customerAccount != null){
+                            $to = $customerAccount->deviceToken;
+                            $notification = array(
+                                'title' => "$restaurant->rAddress, $restaurant->rCity",
+                                'body' => "Your reservation has been void due to some changes on your order. Were sorry for the inconvenience.",
+                            );
+                            $data = array(
+                                'notificationType' => "Order Set Change",
+                                'notificationId' => 0,
+                                'notificationRLogo' => $finalImageUrl,
+                            );
+                            $this->sendFirebaseNotification($to, $notification, $data);
+                        }
+
+                        CustomerNotification::where('restAcc_id', $restAcc_id)
+                        ->where('notificationType', "Pending")
+                        ->where('created_at', $customerReserve->created_at)
+                        ->delete();
+
+                        if($customerReserve->approvedDateTime != null){
+                            CustomerNotification::where('restAcc_id', $restAcc_id)
+                            ->where('notificationType', "Approved")
+                            ->where('created_at', $customerReserve->approvedDateTime)
+                            ->delete();
+                        }
+
+                        CustomerReserve::where('id', $customerReserve->id)->delete();
+                    }
+                }
+
+                OrderSet::where('id', $id)
+                ->update([
+                    'status' => "Hidden"
+                ]);
+                
+                Session::flash('fiHidden');
+                return redirect('/restaurant/manage-restaurant/food-menu/order-set/detail/'.$id);
+            } else {
+                Session::flash('stillOpenHours');
+                return redirect('/restaurant/manage-restaurant/food-menu/order-set/detail/'.$id);
+            }
+        } else {
+            OrderSet::where('id', $id)
+            ->update([
+                'status' => "Hidden"
+            ]);
+            
+            Session::flash('fiHidden');
+            return redirect('/restaurant/manage-restaurant/food-menu/order-set/detail/'.$id);
+        }
+    }
+    public function mVisibleOS($id){
+        $restAcc_id = Session::get('loginId');
+        $restaurant = RestaurantAccount::where('id', $restAcc_id)->first();
+
+        if($restaurant->status == "Published"){
+            if($this->checkTodaySched() == "Closed Now"){
+
+                OrderSet::where('id', $id)
+                ->update([
+                    'status' => "Visible"
+                ]);
+                
+                Session::flash('fiVisible');
+                return redirect('/restaurant/manage-restaurant/food-menu/order-set/detail/'.$id);
+            } else {
+                Session::flash('stillOpenHours');
+                return redirect('/restaurant/manage-restaurant/food-menu/order-set/detail/'.$id);
+            }
+        } else {
+            OrderSet::where('id', $id)
+            ->update([
+                'status' => "Visible"
+            ]);
+            
+            Session::flash('fiVisible');
+            return redirect('/restaurant/manage-restaurant/food-menu/order-set/detail/'.$id);
+        }
+    }
+    public function mUnavailableOS($id){
+        OrderSet::where('id', $id)
+        ->update([
+            'available' => "No"
+        ]);
+        
+        Session::flash('fiUnavailable');
+        return redirect('/restaurant/manage-restaurant/food-menu/order-set/detail/'.$id);
+    }
+    public function mAvailableOS($id){
+        OrderSet::where('id', $id)
+        ->update([
+            'available' => "Yes"
+        ]);
+        
+        Session::flash('fiAvailable');
+        return redirect('/restaurant/manage-restaurant/food-menu/order-set/detail/'.$id);
+    }
+    public function mHiddenFS($id){
+        $restAcc_id = Session::get('loginId');
+        $restaurant = RestaurantAccount::select('status')->where('id', $restAcc_id)->first();
+
+        if($restaurant->status == "Published"){
+            if($this->checkTodaySched() == "Closed Now"){
+                FoodSet::where('id', $id)
+                ->update([
+                    'status' => "Hidden"
+                ]);
+                
+                Session::flash('fiHidden');
+                return redirect('/restaurant/manage-restaurant/food-menu/food-set/detail/'.$id);
+            } else {
+                Session::flash('stillOpenHours');
+                return redirect('/restaurant/manage-restaurant/food-menu/food-set/detail/'.$id);
+            }
+        } else {
+            FoodSet::where('id', $id)
+            ->update([
+                'status' => "Hidden"
+            ]);
+            
+            Session::flash('fiHidden');
+            return redirect('/restaurant/manage-restaurant/food-menu/food-set/detail/'.$id);
+        }
+    }
+    public function mVisibleFS($id){
+        $restAcc_id = Session::get('loginId');
+        $restaurant = RestaurantAccount::select('status')->where('id', $restAcc_id)->first();
+
+        if($restaurant->status == "Published"){
+            if($this->checkTodaySched() == "Closed Now"){
+                FoodSet::where('id', $id)
+                ->update([
+                    'status' => "Visible"
+                ]);
+                
+                Session::flash('fiVisible');
+                return redirect('/restaurant/manage-restaurant/food-menu/food-set/detail/'.$id);
+            } else {
+                Session::flash('stillOpenHours');
+                return redirect('/restaurant/manage-restaurant/food-menu/food-set/detail/'.$id);
+            }
+        } else {
+            FoodSet::where('id', $id)
+            ->update([
+                'status' => "Visible"
+            ]);
+            
+            Session::flash('fiVisible');
+            return redirect('/restaurant/manage-restaurant/food-menu/food-set/detail/'.$id);
+        }
+    }
+    public function mUnavailableFS($id){
+        FoodSet::where('id', $id)
+        ->update([
+            'available' => "No"
+        ]);
+        
+        Session::flash('fiUnavailable');
+        return redirect('/restaurant/manage-restaurant/food-menu/food-set/detail/'.$id);
+    }
+    public function mAvailableFS($id){
+        FoodSet::where('id', $id)
+        ->update([
+            'available' => "Yes"
+        ]);
+        
+        Session::flash('fiAvailable');
+        return redirect('/restaurant/manage-restaurant/food-menu/food-set/detail/'.$id);
+    }
+    public function mHiddenFI($id){
+        $restAcc_id = Session::get('loginId');
+        $restaurant = RestaurantAccount::select('status')->where('id', $restAcc_id)->first();
+
+        if($restaurant->status == "Published"){
+            if($this->checkTodaySched() == "Closed Now"){
+                FoodItem::where('id', $id)
+                ->update([
+                    'status' => "Hidden"
+                ]);
+                
+                Session::flash('fiHidden');
+                return redirect('/restaurant/manage-restaurant/food-menu/food-item');
+            } else {
+                Session::flash('stillOpenHours');
+                return redirect('/restaurant/manage-restaurant/food-menu/food-item');
+            }
+        } else {
+            FoodItem::where('id', $id)
+            ->update([
+                'status' => "Hidden"
+            ]);
+            
+            Session::flash('fiHidden');
+            return redirect('/restaurant/manage-restaurant/food-menu/food-item');
+        }
+    }
+    public function mVisibleFI($id){
+        $restAcc_id = Session::get('loginId');
+        $restaurant = RestaurantAccount::select('status')->where('id', $restAcc_id)->first();
+
+        if($restaurant->status == "Published"){
+            if($this->checkTodaySched() == "Closed Now"){
+                FoodItem::where('id', $id)
+                ->update([
+                    'status' => "Visible"
+                ]);
+                
+                Session::flash('fiVisible');
+                return redirect('/restaurant/manage-restaurant/food-menu/food-item');
+            } else {
+                Session::flash('stillOpenHours');
+                return redirect('/restaurant/manage-restaurant/food-menu/food-item');
+            }
+        } else {
+            FoodItem::where('id', $id)
+            ->update([
+                'status' => "Visible"
+            ]);
+            
+            Session::flash('fiVisible');
+            return redirect('/restaurant/manage-restaurant/food-menu/food-item');
+        }
+    }
+    public function mUnavailableFI($id){
+        FoodItem::where('id', $id)
+        ->update([
+            'available' => "No"
+        ]);
+        
+        Session::flash('fiUnavailable');
+        return redirect('/restaurant/manage-restaurant/food-menu/food-item');
+    }
+    public function mAvailableFI($id){
+        FoodItem::where('id', $id)
+        ->update([
+            'available' => "Yes"
+        ]);
+        
+        Session::flash('fiAvailable');
+        return redirect('/restaurant/manage-restaurant/food-menu/food-item');
+    }
     public function manageRestaurantPublish(){
         $restAcc_id = Session::get('loginId');
         //publish restaurant
@@ -5261,56 +5587,71 @@ class RestaurantController extends Controller
     }
     public function ltAppCustQAddWalkIn(Request $request){
         $restAcc_id = Session::get('loginId');
+        $restaurant = RestaurantAccount::select('status')->where('id', $restAcc_id)->first();
 
-        $request->validate([
-            'walkInName' => 'required',
-            'walkInPersons' => 'required',
-        ],
-        [
-            'walkInName.required' => 'Name is required',
-            'walkInPersons.required' => 'No. of Persons is required',
-        ]);
-
-
-        $orderSet = OrderSet::where('id', $request->walkInOrder)->first();
+        if($restaurant->status == "Published"){
+            if($this->checkTodaySched() != "Closed Now"){
+                $request->validate([
+                    'walkInName' => 'required',
+                    'walkInPersons' => 'required',
+                    'walkInOrder' => 'required',
+                ],
+                [
+                    'walkInName.required' => 'Name is required',
+                    'walkInPersons.required' => 'No. of Persons is required',
+                    'walkInOrder.required' => 'Order is required',
+                ]);
         
-        $totalBill = $orderSet->orderSetPrice * $request->walkInPersons;
-        $seniorDiscount = $orderSet->orderSetPrice * ($request->walkInPwd * 0.2);
-        $childrenDiscount = $orderSet->orderSetPrice * $request->walkInChildren;
         
-        $totalBill = $totalBill - ($seniorDiscount + $childrenDiscount);
-
-        $finalNoOfTables = "";
-        if($request->walkInPersons <= $request->capacityPerTable){
-            $finalNoOfTables = 1;
-        } else {
-            $x = intval($request->walkInPersons / $request->capacityPerTable);
-            $remainder = intval($request->walkInPersons % $request->capacityPerTable);
-            if($remainder > 0){
-                $x += 1;
+                $orderSet = OrderSet::where('id', $request->walkInOrder)->first();
+                
+                $totalBill = $orderSet->orderSetPrice * $request->walkInPersons;
+                $seniorDiscount = $orderSet->orderSetPrice * ($request->walkInPwd * 0.2);
+                $childrenDiscount = $orderSet->orderSetPrice * $request->walkInChildren;
+                
+                $totalBill = $totalBill - ($seniorDiscount + $childrenDiscount);
+        
+                $finalNoOfTables = "";
+                if($request->walkInPersons <= $request->capacityPerTable){
+                    $finalNoOfTables = 1;
+                } else {
+                    $x = intval($request->walkInPersons / $request->capacityPerTable);
+                    $remainder = intval($request->walkInPersons % $request->capacityPerTable);
+                    if($remainder > 0){
+                        $x += 1;
+                    }
+                    $finalNoOfTables = $x;
+                }
+        
+                CustomerQueue::create([
+                    'customer_id' => 0,
+                    'restAcc_id' => $restAcc_id,
+                    'orderSet_id' => $request->walkInOrder,
+                    'status' => "approved",
+                    'name' => $request->walkInName,
+                    'numberOfPersons' => $request->walkInPersons,
+                    'numberOfTables' => $finalNoOfTables,
+                    'hoursOfStay' => $request->walkInHoursOfStay,
+                    'numberOfChildren' => $request->walkInChildren,
+                    'numberOfPwd' => $request->walkInPwd,
+                    'totalPwdChild' => ($request->walkInChildren + $request->walkInPwd),
+                    'notes' => $request->walkInNotes,
+                    'totalPrice' => $totalBill,
+                    'queueDate' => date("Y-m-d"),
+                ]);
+        
+                $request->session()->flash('walkInAdded');
+                return redirect('/restaurant/live-transaction/approved-customer/queue');
+            } else {
+                $request->session()->flash('currentlyClosed');
+                return redirect('/restaurant/live-transaction/approved-customer/queue/add-walk-in');
             }
-            $finalNoOfTables = $x;
+        } else {
+            $request->session()->flash('currentlyUnpublished');
+            return redirect('/restaurant/live-transaction/approved-customer/queue/add-walk-in');
         }
 
-        CustomerQueue::create([
-            'customer_id' => 0,
-            'restAcc_id' => $restAcc_id,
-            'orderSet_id' => $request->walkInOrder,
-            'status' => "approved",
-            'name' => $request->walkInName,
-            'numberOfPersons' => $request->walkInPersons,
-            'numberOfTables' => $finalNoOfTables,
-            'hoursOfStay' => $request->walkInHoursOfStay,
-            'numberOfChildren' => $request->walkInChildren,
-            'numberOfPwd' => $request->walkInPwd,
-            'totalPwdChild' => ($request->walkInChildren + $request->walkInPwd),
-            'notes' => $request->walkInNotes,
-            'totalPrice' => $totalBill,
-            'queueDate' => date("Y-m-d"),
-        ]);
-
-        $request->session()->flash('walkInAdded');
-        return redirect('/restaurant/live-transaction/approved-customer/queue');
+        
     }
     public function ltAppCustRAdmit(Request $request, $id){
         $restAcc_id = Session::get('loginId');
@@ -6733,6 +7074,23 @@ class RestaurantController extends Controller
         $restAccId = Session::get('loginId');
         $unavailableDates = UnavailableDate::select('unavailableDatesDate')->where('restAcc_id', $restAccId)->get();
 
+        $request->validate([
+            'promoTitle' => 'required',
+            'promoDescription' => 'required',
+            'promoMechanics.*' => 'required',
+            'promoStartDate' => 'required|date',
+            'promoEndDate' => 'required|date',
+        ],
+        [
+            'promoTitle.required' => "Title is required",
+            'promoDescription.required' => "Description is required",
+            'promoMechanics.*.required' => "Mechanics is required",
+            'promoStartDate.required' => "Start Date is required",
+            'promoStartDate.date' => "Start Date must be date",
+            'promoEndDate.required' => "End Date is required",
+            'promoEndDate.date' => "End Date must be date",
+        ]);
+
         $checkIfExisting = 0;
         foreach ($unavailableDates as $unavailableDate){
             if($unavailableDate->unavailableDatesDate == $request->date){
@@ -7111,11 +7469,67 @@ class RestaurantController extends Controller
             'rCapacityPerTable.min' => 'Capacity per Table must be greater than 2',
         ]);
 
-        $restaurant = RestaurantAccount::select('status')->where('id', $restAccId)->first();
+        $restaurant = RestaurantAccount::where('id', $restAccId)->first();
 
         if($restaurant->status == "Published"){
-            //check first kung hindi sakop ng  opening hours ngayon
-            //tanggalin lahat ng mga nakareserve onwards its either delete or declined then notify customer
+
+            if($this->checkTodaySched() == "Closed Now"){
+                
+                RestaurantAccount::where('id', $restAccId)
+                ->update([
+                    'rNumberOfTables' => $request->rNumberOfTables,
+                    'rCapacityPerTable' => $request->rCapacityPerTable,
+                ]);
+
+                $customerReserves = CustomerReserve::where('restAcc_id', $restAccId)
+                ->where('status', '!=', 'cancelled')
+                ->where('status', '!=', 'declined')
+                ->where('status', '!=', 'noShow')
+                ->where('status', '!=', 'runaway')
+                ->where('status', '!=', 'completed')
+                ->get();
+
+                if(!$customerReserves->isEmpty()){
+                    foreach($customerReserves as $customerReserve){
+                        $customerAccount = CustomerAccount::where('id', $customerReserve->customer_id)->first();
+
+                        $finalImageUrl = "";
+                        if ($restaurant->rLogo == ""){
+                            $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+                        } else {
+                            $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
+                        }
+                
+                        if($customerAccount != null){
+                            $to = $customerAccount->deviceToken;
+                            $notification = array(
+                                'title' => "$restaurant->rAddress, $restaurant->rCity",
+                                'body' => "Your reservation has been void due to changes of tables. You can reserve again anytime sorry for the inconvenience",
+                            );
+                            $data = array(
+                                'notificationType' => "Tables Updated",
+                                'notificationId' => 0,
+                                'notificationRLogo' => $finalImageUrl,
+                            );
+                            $this->sendFirebaseNotification($to, $notification, $data);
+                        }
+                    }
+                }
+
+                CustomerReserve::where('restAcc_id', $restAccId)
+                ->where('status', '!=', 'cancelled')
+                ->where('status', '!=', 'declined')
+                ->where('status', '!=', 'noShow')
+                ->where('status', '!=', 'runaway')
+                ->where('status', '!=', 'completed')
+                ->delete();
+                
+                $request->session()->flash('tablesUpdated');
+                return redirect('/restaurant/manage-restaurant/about/restaurant-information');
+            } else {
+                $request->session()->flash('storeStillopen');
+                return redirect('/restaurant/manage-restaurant/about/restaurant-information');
+            }
 
         } else {
             RestaurantAccount::where('id', $restAccId)
@@ -7345,148 +7759,444 @@ class RestaurantController extends Controller
     }
     public function deleteOrderSet($id){
         $restAccId = Session::get('loginId');
-        $orderSet = OrderSet::where('id', '=', $id)
-                            ->where('restAcc_Id', '=', $restAccId)
-                            ->first();
-        File::delete(public_path('uploads/restaurantAccounts/orderSet/'.$restAccId.'/'.$orderSet->orderSetImage));
-        OrderSet::where('id', $id)->delete();
-        Session::flash('deleted');
-        return redirect('/restaurant/manage-restaurant/food-menu/order-set');
+        $restaurant = RestaurantAccount::where('id', $restAccId)->first();
+        $orderSet = OrderSet::where('id', $id)->first();
+
+        if($restaurant->status == "Unpublished" || $orderSet->status == "Hidden"){
+            File::delete(public_path('uploads/restaurantAccounts/orderSet/'.$restAccId.'/'.$orderSet->orderSetImage));
+            OrderSet::where('id', $id)->delete();
+            Session::flash('deleted');
+            return redirect('/restaurant/manage-restaurant/food-menu/order-set');
+        } else {
+            if($this->checkTodaySched() == "Closed Now"){
+                $customerReserves = CustomerReserve::where('restAcc_id', $restAccId)
+                ->where('orderSet_id', $id)
+                ->where(function ($query) {
+                    $query->where('status', "pending")
+                    ->orWhere('status', "approved");
+                })
+                ->get();
+
+                if(!$customerReserves->isEmpty()){
+                    foreach($customerReserves as $customerReserve){
+                        $customerAccount = CustomerAccount::where('id', $customerReserve->customer_id)->first();
+                
+                        $finalImageUrl = "";
+                        if ($restaurant->rLogo == ""){
+                            $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+                        } else {
+                            $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
+                        }
+                
+                        if($customerAccount != null){
+                            $to = $customerAccount->deviceToken;
+                            $notification = array(
+                                'title' => "$restaurant->rAddress, $restaurant->rCity",
+                                'body' => "Your reservation has been void due to some changes on your order. Were sorry for the inconvenience.",
+                            );
+                            $data = array(
+                                'notificationType' => "Order Set Change",
+                                'notificationId' => 0,
+                                'notificationRLogo' => $finalImageUrl,
+                            );
+                            $this->sendFirebaseNotification($to, $notification, $data);
+                        }
+
+                        CustomerNotification::where('restAcc_id', $restAccId)
+                        ->where('notificationType', "Pending")
+                        ->where('created_at', $customerReserve->created_at)
+                        ->delete();
+
+                        if($customerReserve->approvedDateTime != null){
+                            CustomerNotification::where('restAcc_id', $restAccId)
+                            ->where('notificationType', "Approved")
+                            ->where('created_at', $customerReserve->approvedDateTime)
+                            ->delete();
+                        }
+
+                        CustomerReserve::where('id', $customerReserve->id)->delete();
+                    }
+                }
+
+                File::delete(public_path('uploads/restaurantAccounts/orderSet/'.$restAccId.'/'.$orderSet->orderSetImage));
+                OrderSet::where('id', $id)->delete();
+                Session::flash('deleted');
+                return redirect('/restaurant/manage-restaurant/food-menu/order-set');
+            } else {
+                Session::flash('stillOpenHours');
+                return redirect('/restaurant/manage-restaurant/food-menu/order-set/detail/'.$id);
+            }
+        }
     }
     public function editOrderSet(Request $request, $id){
         $restAccId = Session::get('loginId');
-        $orderSetData = OrderSet::where('id', $id)
-                                ->where('restAcc_id', $restAccId)
-                                ->first();
-        $request->validate([
-            'foodName' => 'required',
-            'foodTagline' => 'required',
-            'foodDesc' => 'required',
-            'foodPrice' => 'required',
-        ]);
-        if($request->foodImage == null){
-            OrderSet::where('id', $id)
-            ->where('restAcc_id', $restAccId)
-            ->update([
-                'orderSetName' => $request->foodName,
-                'orderSetTagline' => $request->foodTagline,
-                'orderSetDescription' => $request->foodDesc,
-                'orderSetPrice' => $request->foodPrice,
-            ]);
-        } else {
-            File::delete(public_path('uploads/restaurantAccounts/orderSet/'.$restAccId.'/'.$orderSetData->orderSetImage));
-            $foodImageName = time().'.'.$request->foodImage->extension();
-            $request->foodImage->move(public_path('uploads/restaurantAccounts/orderSet/'.$restAccId), $foodImageName);
-            OrderSet::where('id', $id)
-            ->where('restAcc_id', $restAccId)
-            ->update([
-                'orderSetName' => $request->foodName,
-                'orderSetTagline' => $request->foodTagline,
-                'orderSetDescription' => $request->foodDesc,
-                'orderSetPrice' => $request->foodPrice,
-                'orderSetImage' => $foodImageName,
-            ]);
-        }
-        $request->session()->flash('edited');
-        return redirect('/restaurant/manage-restaurant/food-menu/order-set/detail/edit/'.$id);
-    }
-    public function orderSetFoodItemDelete($orderSetid, $orderSetFoodItemId){
-        OrderSetFoodItem::where('id', $orderSetFoodItemId)->delete();
-        Session::flash('deletedFoodItem');
-        return redirect('/restaurant/manage-restaurant/food-menu/order-set/detail/'.$orderSetid);
-    }
-    public function orderSetFoodSetDelete($orderSetid, $orderSetFoodSetId){
-        OrderSetFoodSet::where('id', $orderSetFoodSetId)->delete();
-        Session::flash('deletedFoodSet');
-        return redirect('/restaurant/manage-restaurant/food-menu/order-set/detail/'.$orderSetid);
-    }
-    public function orderSetAddFoodItem(Request $request, $id){
-        $checkIfExisting = 0;
-        $checkIfExisting2 = 0;
-        $checkLive = 0;
-        $orderSetDatas = OrderSetFoodSet::where('orderSet_id', $id)->get();
+        $orderSetData = OrderSet::where('id', $id)->where('restAcc_id', $restAccId)->first();
+        $restaurant = RestaurantAccount::select('status')->where('id', $restAccId)->first();
 
-        if(empty($request->foodItem)){
-            $request->session()->flash('emptyFoodItem');
-            return redirect('/restaurant/manage-restaurant/food-menu/order-set/detail/'.$id);
-        } else {
-            foreach ($request->foodItem as $foodItemId) {
-                $data = OrderSetFoodItem::where('orderSet_id', '=', $id)
-                                    ->where('foodItem_id', '=', $foodItemId)
-                                    ->get();
-                
-                foreach ($orderSetDatas as $orderSetData){
-                    $foodSetDatas = FoodSetItem::where('foodSet_id', $orderSetData->foodSet_id)->get();
-                    foreach ($foodSetDatas as $foodSetData){
-                        if ($foodItemId == $foodSetData->foodItem_id){
-                            $checkLive++;
-                        }
-                    }
-                }
 
-                if(!$data->isEmpty()){
-                    $checkIfExisting++;
-                } else {
-                    if($checkLive == 0){
-                        OrderSetFoodItem::create([
-                            'orderSet_id' => $id,
-                            'foodItem_id' => $foodItemId
-                        ]);
-                    } else {
-                        $checkIfExisting2++;
-                    }
-                }
-                $checkLive = 0;
-            }
-            // Exapmle 5 items
-            if($checkIfExisting == 0 && $checkIfExisting2 == 0){ // 0, 0 
-                $request->session()->flash('addedFoodItem');
-            } else if ($checkIfExisting == sizeOf($request->foodItem) && $checkIfExisting2 == 0) { // 5, 0 
-                $request->session()->flash('allExistingFoodItem');
-            } else if ($checkIfExisting == 0 && $checkIfExisting2 == sizeOf($request->foodItem)) { // 0, 5
-                $request->session()->flash('allExistingFoodSets');
-            } else if ($checkIfExisting > 0 && $checkIfExisting < sizeOf($request->foodItem) && $checkIfExisting2 == 0) { // 1-4, 0
-                $request->session()->flash('someExistInFoodItem');
-            } else if ($checkIfExisting == 0 && $checkIfExisting2 > 0 && $checkIfExisting2 < sizeOf($request->foodItem)) { // 0, 1-4
-                $request->session()->flash('someExistInFoodSet');
-            } else if ($checkIfExisting > 0 && $checkIfExisting < sizeOf($request->foodItem) && 
-                       $checkIfExisting2 > 0 && $checkIfExisting2 < sizeOf($request->foodItem) &&
-                       ($checkIfExisting + $checkIfExisting2) == sizeOf($request->foodItem)) { // 1-4, 1-4 == 5
-                $request->session()->flash('allExistInFoodSetAndFoodItem');
+        if($restaurant->status == "Unpublished" || $orderSetData->status == "Hidden"){
+            $request->validate([
+                'foodName' => 'required',
+                'foodTagline' => 'required',
+                'foodDesc' => 'required',
+                'foodPrice' => 'required',
+            ]);
+            if($request->foodImage == null){
+                OrderSet::where('id', $id)
+                ->where('restAcc_id', $restAccId)
+                ->update([
+                    'orderSetName' => $request->foodName,
+                    'orderSetTagline' => $request->foodTagline,
+                    'orderSetDescription' => $request->foodDesc,
+                    'orderSetPrice' => $request->foodPrice,
+                ]);
             } else {
-                $request->session()->flash('someExistInFoodSetAndFoodItem');
+                File::delete(public_path('uploads/restaurantAccounts/orderSet/'.$restAccId.'/'.$orderSetData->orderSetImage));
+                $foodImageName = time().'.'.$request->foodImage->extension();
+                $request->foodImage->move(public_path('uploads/restaurantAccounts/orderSet/'.$restAccId), $foodImageName);
+                OrderSet::where('id', $id)
+                ->where('restAcc_id', $restAccId)
+                ->update([
+                    'orderSetName' => $request->foodName,
+                    'orderSetTagline' => $request->foodTagline,
+                    'orderSetDescription' => $request->foodDesc,
+                    'orderSetPrice' => $request->foodPrice,
+                    'orderSetImage' => $foodImageName,
+                ]);
             }
-            return redirect('/restaurant/manage-restaurant/food-menu/order-set/detail/'.$id);
-        }
-    }
-    public function orderSetAddFoodSet(Request $request, $id){
-        $checkIfExisting = 0;
-        if(empty($request->foodSet)){
-            $request->session()->flash('emptyFoodSet');
-            return redirect('/restaurant/manage-restaurant/food-menu/order-set/detail/'.$id);
+            $request->session()->flash('edited');
+            return redirect('/restaurant/manage-restaurant/food-menu/order-set/detail/edit/'.$id);
         } else {
-            foreach ($request->foodSet as $foodSetId) {
-                $data = OrderSetFoodSet::where('orderSet_id', '=', $id)
-                                    ->where('foodSet_id', '=', $foodSetId)
-                                    ->get();
-                if(!$data->isEmpty()){
-                    $checkIfExisting++;
+            if($this->checkTodaySched() == "Closed Now"){
+                
+                $request->validate([
+                    'foodName' => 'required',
+                    'foodTagline' => 'required',
+                    'foodDesc' => 'required',
+                    'foodPrice' => 'required',
+                ]);
+                if($request->foodImage == null){
+                    OrderSet::where('id', $id)
+                    ->where('restAcc_id', $restAccId)
+                    ->update([
+                        'orderSetName' => $request->foodName,
+                        'orderSetTagline' => $request->foodTagline,
+                        'orderSetDescription' => $request->foodDesc,
+                        'orderSetPrice' => $request->foodPrice,
+                    ]);
                 } else {
-                    OrderSetFoodSet::create([
-                        'orderSet_id' => $id,
-                        'foodSet_id' => $foodSetId
+                    File::delete(public_path('uploads/restaurantAccounts/orderSet/'.$restAccId.'/'.$orderSetData->orderSetImage));
+                    $foodImageName = time().'.'.$request->foodImage->extension();
+                    $request->foodImage->move(public_path('uploads/restaurantAccounts/orderSet/'.$restAccId), $foodImageName);
+                    OrderSet::where('id', $id)
+                    ->where('restAcc_id', $restAccId)
+                    ->update([
+                        'orderSetName' => $request->foodName,
+                        'orderSetTagline' => $request->foodTagline,
+                        'orderSetDescription' => $request->foodDesc,
+                        'orderSetPrice' => $request->foodPrice,
+                        'orderSetImage' => $foodImageName,
                     ]);
                 }
-            }
-            if($checkIfExisting == 0){
-                $request->session()->flash('addedFoodSet');
-            } else if ($checkIfExisting > 0 && $checkIfExisting < sizeOf($request->foodSet)) {
-                $request->session()->flash('someAreExistingFoodSet');
+
+                $customerReserves = CustomerReserve::where('restAcc_id', $restAccId)
+                ->where('orderSet_id', $id)
+                ->where(function ($query) {
+                    $query->where('status', "pending")
+                    ->orWhere('status', "approved");
+                })
+                ->get();
+
+                if(!$customerReserves->isEmpty()){
+                    foreach($customerReserves as $customerReserve){
+                        $customerAccount = CustomerAccount::where('id', $customerReserve->customer_id)->first();
+                
+                        $finalImageUrl = "";
+                        if ($restaurant->rLogo == ""){
+                            $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+                        } else {
+                            $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
+                        }
+                
+                        if($customerAccount != null){
+                            $to = $customerAccount->deviceToken;
+                            $notification = array(
+                                'title' => "$restaurant->rAddress, $restaurant->rCity",
+                                'body' => "Your reservation has been void due to some changes on your order. Were sorry for the inconvenience.",
+                            );
+                            $data = array(
+                                'notificationType' => "Order Set Change",
+                                'notificationId' => 0,
+                                'notificationRLogo' => $finalImageUrl,
+                            );
+                            $this->sendFirebaseNotification($to, $notification, $data);
+                        }
+
+                        CustomerNotification::where('restAcc_id', $restAccId)
+                        ->where('notificationType', "Pending")
+                        ->where('created_at', $customerReserve->created_at)
+                        ->delete();
+
+                        if($customerReserve->approvedDateTime != null){
+                            CustomerNotification::where('restAcc_id', $restAccId)
+                            ->where('notificationType', "Approved")
+                            ->where('created_at', $customerReserve->approvedDateTime)
+                            ->delete();
+                        }
+
+                        CustomerReserve::where('id', $customerReserve->id)->delete();
+                    }
+                }
+
+                $request->session()->flash('edited');
+                return redirect('/restaurant/manage-restaurant/food-menu/order-set/detail/edit/'.$id);
             } else {
-                $request->session()->flash('allExistingFoodSet');
+                $request->session()->flash('stillOpenHours');
+                return redirect('/restaurant/manage-restaurant/food-menu/order-set/detail/edit/'.$id);
             }
-            return redirect('/restaurant/manage-restaurant/food-menu/order-set/detail/'.$id);
         }
+
+        
+    }
+    public function orderSetFoodItemDelete($orderSetid, $orderSetFoodItemId){
+        $restAccId = Session::get('loginId');
+        $restaurant = RestaurantAccount::select('status')->where('id', $restAccId)->first();
+        $orderSet = OrderSet::where('id', $orderSetid)->first();
+
+        if($restaurant->status == "Unpublished" || $orderSet->status == "Hidden"){
+            OrderSetFoodItem::where('id', $orderSetFoodItemId)->delete();
+            Session::flash('deletedFoodItem');
+            return redirect('/restaurant/manage-restaurant/food-menu/order-set/detail/'.$orderSetid);
+        } else {
+            if($this->checkTodaySched() == "Closed Now"){
+                OrderSetFoodItem::where('id', $orderSetFoodItemId)->delete();
+                Session::flash('deletedFoodItem');
+                return redirect('/restaurant/manage-restaurant/food-menu/order-set/detail/'.$orderSetid);
+            } else {
+                Session::flash('stillOpenHours');
+                return redirect('/restaurant/manage-restaurant/food-menu/order-set/detail/'.$orderSetid);
+            }
+        }
+    }
+    public function orderSetFoodSetDelete($orderSetid, $orderSetFoodSetId){
+        $restAccId = Session::get('loginId');
+        $restaurant = RestaurantAccount::select('status')->where('id', $restAccId)->first();
+        $orderSet = OrderSet::where('id', $orderSetid)->first();
+
+        if($restaurant->status == "Unpublished" || $orderSet->status == "Hidden"){
+            OrderSetFoodSet::where('id', $orderSetFoodSetId)->delete();
+            Session::flash('deletedFoodSet');
+            return redirect('/restaurant/manage-restaurant/food-menu/order-set/detail/'.$orderSetid);
+        } else {
+            if($this->checkTodaySched() == "Closed Now"){
+                OrderSetFoodSet::where('id', $orderSetFoodSetId)->delete();
+                Session::flash('deletedFoodSet');
+                return redirect('/restaurant/manage-restaurant/food-menu/order-set/detail/'.$orderSetid);
+            } else {
+                Session::flash('stillOpenHours');
+                return redirect('/restaurant/manage-restaurant/food-menu/order-set/detail/'.$orderSetid);
+            }
+        }
+    }
+    public function orderSetAddFoodItem(Request $request, $id){
+        $restAccId = Session::get('loginId');
+        $restaurant = RestaurantAccount::select('status')->where('id', $restAccId)->first();
+        $orderSet = OrderSet::where('id', $id)->first();
+
+        if($restaurant->status == "Unpublished" || $orderSet->status == "Hidden"){
+            $checkIfExisting = 0;
+            $checkIfExisting2 = 0;
+            $checkLive = 0;
+            $orderSetDatas = OrderSetFoodSet::where('orderSet_id', $id)->get();
+
+            if(empty($request->foodItem)){
+                $request->session()->flash('emptyFoodItem');
+                return redirect('/restaurant/manage-restaurant/food-menu/order-set/detail/'.$id);
+            } else {
+                foreach ($request->foodItem as $foodItemId) {
+                    $data = OrderSetFoodItem::where('orderSet_id', '=', $id)
+                                        ->where('foodItem_id', '=', $foodItemId)
+                                        ->get();
+                    
+                    foreach ($orderSetDatas as $orderSetData){
+                        $foodSetDatas = FoodSetItem::where('foodSet_id', $orderSetData->foodSet_id)->get();
+                        foreach ($foodSetDatas as $foodSetData){
+                            if ($foodItemId == $foodSetData->foodItem_id){
+                                $checkLive++;
+                            }
+                        }
+                    }
+
+                    if(!$data->isEmpty()){
+                        $checkIfExisting++;
+                    } else {
+                        if($checkLive == 0){
+                            OrderSetFoodItem::create([
+                                'orderSet_id' => $id,
+                                'foodItem_id' => $foodItemId
+                            ]);
+                        } else {
+                            $checkIfExisting2++;
+                        }
+                    }
+                    $checkLive = 0;
+                }
+                // Exapmle 5 items
+                if($checkIfExisting == 0 && $checkIfExisting2 == 0){ // 0, 0 
+                    $request->session()->flash('addedFoodItem');
+                } else if ($checkIfExisting == sizeOf($request->foodItem) && $checkIfExisting2 == 0) { // 5, 0 
+                    $request->session()->flash('allExistingFoodItem');
+                } else if ($checkIfExisting == 0 && $checkIfExisting2 == sizeOf($request->foodItem)) { // 0, 5
+                    $request->session()->flash('allExistingFoodSets');
+                } else if ($checkIfExisting > 0 && $checkIfExisting < sizeOf($request->foodItem) && $checkIfExisting2 == 0) { // 1-4, 0
+                    $request->session()->flash('someExistInFoodItem');
+                } else if ($checkIfExisting == 0 && $checkIfExisting2 > 0 && $checkIfExisting2 < sizeOf($request->foodItem)) { // 0, 1-4
+                    $request->session()->flash('someExistInFoodSet');
+                } else if ($checkIfExisting > 0 && $checkIfExisting < sizeOf($request->foodItem) && 
+                        $checkIfExisting2 > 0 && $checkIfExisting2 < sizeOf($request->foodItem) &&
+                        ($checkIfExisting + $checkIfExisting2) == sizeOf($request->foodItem)) { // 1-4, 1-4 == 5
+                    $request->session()->flash('allExistInFoodSetAndFoodItem');
+                } else {
+                    $request->session()->flash('someExistInFoodSetAndFoodItem');
+                }
+                return redirect('/restaurant/manage-restaurant/food-menu/order-set/detail/'.$id);
+            }
+        } else {
+            if($this->checkTodaySched() == "Closed Now"){
+                $checkIfExisting = 0;
+                $checkIfExisting2 = 0;
+                $checkLive = 0;
+                $orderSetDatas = OrderSetFoodSet::where('orderSet_id', $id)->get();
+
+                if(empty($request->foodItem)){
+                    $request->session()->flash('emptyFoodItem');
+                    return redirect('/restaurant/manage-restaurant/food-menu/order-set/detail/'.$id);
+                } else {
+                    foreach ($request->foodItem as $foodItemId) {
+                        $data = OrderSetFoodItem::where('orderSet_id', '=', $id)
+                                            ->where('foodItem_id', '=', $foodItemId)
+                                            ->get();
+                        
+                        foreach ($orderSetDatas as $orderSetData){
+                            $foodSetDatas = FoodSetItem::where('foodSet_id', $orderSetData->foodSet_id)->get();
+                            foreach ($foodSetDatas as $foodSetData){
+                                if ($foodItemId == $foodSetData->foodItem_id){
+                                    $checkLive++;
+                                }
+                            }
+                        }
+
+                        if(!$data->isEmpty()){
+                            $checkIfExisting++;
+                        } else {
+                            if($checkLive == 0){
+                                OrderSetFoodItem::create([
+                                    'orderSet_id' => $id,
+                                    'foodItem_id' => $foodItemId
+                                ]);
+                            } else {
+                                $checkIfExisting2++;
+                            }
+                        }
+                        $checkLive = 0;
+                    }
+                    // Exapmle 5 items
+                    if($checkIfExisting == 0 && $checkIfExisting2 == 0){ // 0, 0 
+                        $request->session()->flash('addedFoodItem');
+                    } else if ($checkIfExisting == sizeOf($request->foodItem) && $checkIfExisting2 == 0) { // 5, 0 
+                        $request->session()->flash('allExistingFoodItem');
+                    } else if ($checkIfExisting == 0 && $checkIfExisting2 == sizeOf($request->foodItem)) { // 0, 5
+                        $request->session()->flash('allExistingFoodSets');
+                    } else if ($checkIfExisting > 0 && $checkIfExisting < sizeOf($request->foodItem) && $checkIfExisting2 == 0) { // 1-4, 0
+                        $request->session()->flash('someExistInFoodItem');
+                    } else if ($checkIfExisting == 0 && $checkIfExisting2 > 0 && $checkIfExisting2 < sizeOf($request->foodItem)) { // 0, 1-4
+                        $request->session()->flash('someExistInFoodSet');
+                    } else if ($checkIfExisting > 0 && $checkIfExisting < sizeOf($request->foodItem) && 
+                            $checkIfExisting2 > 0 && $checkIfExisting2 < sizeOf($request->foodItem) &&
+                            ($checkIfExisting + $checkIfExisting2) == sizeOf($request->foodItem)) { // 1-4, 1-4 == 5
+                        $request->session()->flash('allExistInFoodSetAndFoodItem');
+                    } else {
+                        $request->session()->flash('someExistInFoodSetAndFoodItem');
+                    }
+                    return redirect('/restaurant/manage-restaurant/food-menu/order-set/detail/'.$id);
+                }
+            } else {
+                $request->session()->flash('stillOpenHours');
+                return redirect('/restaurant/manage-restaurant/food-menu/order-set/detail/'.$id);
+            }
+        }
+
+
+        
+    }
+    public function orderSetAddFoodSet(Request $request, $id){
+        $restAccId = Session::get('loginId');
+        $restaurant = RestaurantAccount::select('status')->where('id', $restAccId)->first();
+        $orderSet = OrderSet::where('id', $id)->first();
+
+        if($restaurant->status == "Unpublished" || $orderSet->status == "Hidden"){
+            $checkIfExisting = 0;
+            if(empty($request->foodSet)){
+                $request->session()->flash('emptyFoodSet');
+                return redirect('/restaurant/manage-restaurant/food-menu/order-set/detail/'.$id);
+            } else {
+                foreach ($request->foodSet as $foodSetId) {
+                    $data = OrderSetFoodSet::where('orderSet_id', '=', $id)
+                                        ->where('foodSet_id', '=', $foodSetId)
+                                        ->get();
+                    if(!$data->isEmpty()){
+                        $checkIfExisting++;
+                    } else {
+                        OrderSetFoodSet::create([
+                            'orderSet_id' => $id,
+                            'foodSet_id' => $foodSetId
+                        ]);
+                    }
+                }
+                if($checkIfExisting == 0){
+                    $request->session()->flash('addedFoodSet');
+                } else if ($checkIfExisting > 0 && $checkIfExisting < sizeOf($request->foodSet)) {
+                    $request->session()->flash('someAreExistingFoodSet');
+                } else {
+                    $request->session()->flash('allExistingFoodSet');
+                }
+                return redirect('/restaurant/manage-restaurant/food-menu/order-set/detail/'.$id);
+            }
+        } else {
+            if($this->checkTodaySched() == "Closed Now"){
+                $checkIfExisting = 0;
+                if(empty($request->foodSet)){
+                    $request->session()->flash('emptyFoodSet');
+                    return redirect('/restaurant/manage-restaurant/food-menu/order-set/detail/'.$id);
+                } else {
+                    foreach ($request->foodSet as $foodSetId) {
+                        $data = OrderSetFoodSet::where('orderSet_id', '=', $id)
+                                            ->where('foodSet_id', '=', $foodSetId)
+                                            ->get();
+                        if(!$data->isEmpty()){
+                            $checkIfExisting++;
+                        } else {
+                            OrderSetFoodSet::create([
+                                'orderSet_id' => $id,
+                                'foodSet_id' => $foodSetId
+                            ]);
+                        }
+                    }
+                    if($checkIfExisting == 0){
+                        $request->session()->flash('addedFoodSet');
+                    } else if ($checkIfExisting > 0 && $checkIfExisting < sizeOf($request->foodSet)) {
+                        $request->session()->flash('someAreExistingFoodSet');
+                    } else {
+                        $request->session()->flash('allExistingFoodSet');
+                    }
+                    return redirect('/restaurant/manage-restaurant/food-menu/order-set/detail/'.$id);
+                }
+            } else {
+                $request->session()->flash('stillOpenHours');
+                return redirect('/restaurant/manage-restaurant/food-menu/order-set/detail/'.$id);
+            }
+        }
+        
     }
     public function addOrderSet(Request $request){
         $id = Session::get('loginId');
@@ -7503,6 +8213,8 @@ class RestaurantController extends Controller
 
         OrderSet::create([
             'restAcc_id' => $id,
+            'status' => "Visible",
+            'available' => "Yes",
             'orderSetName' => $request->foodName,
             'orderSetTagline' => $request->foodTagline,
             'orderSetDescription' => $request->foodDesc,
@@ -7514,150 +8226,323 @@ class RestaurantController extends Controller
     }
     public function editFoodSet(Request $request, $id){
         $restAccId = Session::get('loginId');
-        $foodSetData = FoodSet::where('id', $id)
-                                ->where('restAcc_id', $restAccId)
-                                ->first();
-        $request->validate([
-            'foodName' => 'required',
-            'foodDesc' => 'required',
-            'foodPrice' => 'required',
-        ]);
-        if($request->foodImage == null){
-            FoodSet::where('id', $id)
-            ->where('restAcc_id', $restAccId)
-            ->update([
-                'foodSetName' => $request->foodName,
-                'foodSetDescription' => $request->foodDesc,
-                'foodSetPrice' => $request->foodPrice,
+        $restaurant = RestaurantAccount::select('status')->where('id', $restAccId)->first();
+        $foodSet = FoodSet::where('id', $id)->first();
+
+        if($restaurant->status == "Unpublished" || $foodSet->status == "Hidden"){
+            $foodSetData = FoodSet::where('id', $id)->where('restAcc_id', $restAccId)->first();
+            $request->validate([
+                'foodName' => 'required',
+                'foodDesc' => 'required',
+                'foodPrice' => 'required',
             ]);
+            if($request->foodImage == null){
+                FoodSet::where('id', $id)
+                ->where('restAcc_id', $restAccId)
+                ->update([
+                    'foodSetName' => $request->foodName,
+                    'foodSetDescription' => $request->foodDesc,
+                    'foodSetPrice' => $request->foodPrice,
+                ]);
+            } else {
+                File::delete(public_path('uploads/restaurantAccounts/foodSet/'.$restAccId.'/'.$foodSetData->foodSetImage));
+                $foodImageName = time().'.'.$request->foodImage->extension();
+                $request->foodImage->move(public_path('uploads/restaurantAccounts/foodSet/'.$restAccId), $foodImageName);
+                FoodSet::where('id', $id)
+                ->where('restAcc_id', $restAccId)
+                ->update([
+                    'foodSetName' => $request->foodName,
+                    'foodSetDescription' => $request->foodDesc,
+                    'foodSetPrice' => $request->foodPrice,
+                    'foodSetImage' => $foodImageName,
+                ]);
+            }
+            $request->session()->flash('edited');
+            return redirect('/restaurant/manage-restaurant/food-menu/food-set/detail/edit/'.$id);
         } else {
-            File::delete(public_path('uploads/restaurantAccounts/foodSet/'.$restAccId.'/'.$foodSetData->foodSetImage));
-            $foodImageName = time().'.'.$request->foodImage->extension();
-            $request->foodImage->move(public_path('uploads/restaurantAccounts/foodSet/'.$restAccId), $foodImageName);
-            FoodSet::where('id', $id)
-            ->where('restAcc_id', $restAccId)
-            ->update([
-                'foodSetName' => $request->foodName,
-                'foodSetDescription' => $request->foodDesc,
-                'foodSetPrice' => $request->foodPrice,
-                'foodSetImage' => $foodImageName,
-            ]);
+            if($this->checkTodaySched() == "Closed Now"){
+                $foodSetData = FoodSet::where('id', $id)->where('restAcc_id', $restAccId)->first();
+                $request->validate([
+                    'foodName' => 'required',
+                    'foodDesc' => 'required',
+                    'foodPrice' => 'required',
+                ]);
+                if($request->foodImage == null){
+                    FoodSet::where('id', $id)
+                    ->where('restAcc_id', $restAccId)
+                    ->update([
+                        'foodSetName' => $request->foodName,
+                        'foodSetDescription' => $request->foodDesc,
+                        'foodSetPrice' => $request->foodPrice,
+                    ]);
+                } else {
+                    File::delete(public_path('uploads/restaurantAccounts/foodSet/'.$restAccId.'/'.$foodSetData->foodSetImage));
+                    $foodImageName = time().'.'.$request->foodImage->extension();
+                    $request->foodImage->move(public_path('uploads/restaurantAccounts/foodSet/'.$restAccId), $foodImageName);
+                    FoodSet::where('id', $id)
+                    ->where('restAcc_id', $restAccId)
+                    ->update([
+                        'foodSetName' => $request->foodName,
+                        'foodSetDescription' => $request->foodDesc,
+                        'foodSetPrice' => $request->foodPrice,
+                        'foodSetImage' => $foodImageName,
+                    ]);
+                }
+                $request->session()->flash('edited');
+                return redirect('/restaurant/manage-restaurant/food-menu/food-set/detail/edit/'.$id);
+            } else {
+                $request->session()->flash('stillOpenHours');
+                return redirect('/restaurant/manage-restaurant/food-menu/food-set/detail/edit/'.$id);
+            }
         }
-        $request->session()->flash('edited');
-        return redirect('/restaurant/manage-restaurant/food-menu/food-set/detail/edit/'.$id);
+        
     }
     public function editFoodItem(Request $request, $id){
         $restAccId = Session::get('loginId');
-        $foodItemData = FoodItem::where('id', $id)->where('restAcc_id', $restAccId)->first();
-        if($request->foodItemImage == null){
-            $request->validate([
-                'foodName' => 'required',
-                'foodDesc' => 'required',
-                'foodPrice' => 'required|numeric|min:0',
-            ],
-            [
-                'foodName.required' => 'Name is required',
-                'foodDesc.required' => 'Description is required',
-                'foodPrice.required' => 'Price is required',
-                'foodPrice.numeric' => 'Price must be number only',
-                'foodPrice.min' => 'Price must not be less than 0',
-            ]);
-            FoodItem::where('id', $id)
-            ->where('restAcc_id', $restAccId)
-            ->update([
-                'foodItemName' => $request->foodName,
-                'foodItemDescription' => $request->foodDesc,
-                'foodItemPrice' => $request->foodPrice,
-            ]);
-            $request->session()->flash('edited');
-            return redirect('/restaurant/manage-restaurant/food-menu/food-item/edit/'.$id);
+        $restaurant = RestaurantAccount::select('status')->where('id', $restAccId)->first();
+        $foodItem = FoodItem::where('id', $id)->first();
+        
+        if($restaurant->status == "Unpublished" || $foodItem->status == "Hidden"){
+            $foodItemData = FoodItem::where('id', $id)->where('restAcc_id', $restAccId)->first();
+            if($request->foodItemImage == null){
+                $request->validate([
+                    'foodName' => 'required',
+                    'foodDesc' => 'required',
+                    'foodPrice' => 'required|numeric|min:0',
+                ],
+                [
+                    'foodName.required' => 'Name is required',
+                    'foodDesc.required' => 'Description is required',
+                    'foodPrice.required' => 'Price is required',
+                    'foodPrice.numeric' => 'Price must be number only',
+                    'foodPrice.min' => 'Price must not be less than 0',
+                ]);
+                FoodItem::where('id', $id)
+                ->where('restAcc_id', $restAccId)
+                ->update([
+                    'foodItemName' => $request->foodName,
+                    'foodItemDescription' => $request->foodDesc,
+                    'foodItemPrice' => $request->foodPrice,
+                ]);
+                $request->session()->flash('edited');
+                return redirect('/restaurant/manage-restaurant/food-menu/food-item/edit/'.$id);
+            } else {
+                $request->validate([
+                    'foodName' => 'required',
+                    'foodDesc' => 'required',
+                    'foodPrice' => 'required|numeric|min:0',
+                    'foodItemImage' => 'required|mimes:jpeg,png,jpg|max:2048',
+                ],
+                [
+                    'foodName.required' => 'Name is required',
+                    'foodDesc.required' => 'Description is required',
+                    'foodPrice.required' => 'Price is required',
+                    'foodPrice.numeric' => 'Price must be number only',
+                    'foodPrice.min' => 'Price must not be less than 0',
+                    'foodItemImage.required' => 'Image is required',
+                    'foodItemImage.mimes' => 'Image must be in jpeg, png and jpg format',
+                    'foodItemImage.max' => 'Image must not be greater than 2mb',
+                ]);
+                File::delete(public_path('uploads/restaurantAccounts/foodItem/'.$restAccId.'/'.$foodItemData->foodItemImage));
+                $foodImageName = time().'.'.$request->foodItemImage->extension();
+                $request->foodItemImage->move(public_path('uploads/restaurantAccounts/foodItem/'.$restAccId), $foodImageName);
+                FoodItem::where('id', $id)
+                ->where('restAcc_id', $restAccId)
+                ->update([
+                    'foodItemName' => $request->foodName,
+                    'foodItemDescription' => $request->foodDesc,
+                    'foodItemPrice' => $request->foodPrice,
+                    'foodItemImage' => $foodImageName,
+                ]);
+                $request->session()->flash('edited');
+                return redirect('/restaurant/manage-restaurant/food-menu/food-item/edit/'.$id);
+            }
         } else {
-            $request->validate([
-                'foodName' => 'required',
-                'foodDesc' => 'required',
-                'foodPrice' => 'required|numeric|min:0',
-                'foodItemImage' => 'required|mimes:jpeg,png,jpg|max:2048',
-            ],
-            [
-                'foodName.required' => 'Name is required',
-                'foodDesc.required' => 'Description is required',
-                'foodPrice.required' => 'Price is required',
-                'foodPrice.numeric' => 'Price must be number only',
-                'foodPrice.min' => 'Price must not be less than 0',
-                'foodItemImage.required' => 'Image is required',
-                'foodItemImage.mimes' => 'Image must be in jpeg, png and jpg format',
-                'foodItemImage.max' => 'Image must not be greater than 2mb',
-            ]);
-            File::delete(public_path('uploads/restaurantAccounts/foodItem/'.$restAccId.'/'.$foodItemData->foodItemImage));
-            $foodImageName = time().'.'.$request->foodItemImage->extension();
-            $request->foodItemImage->move(public_path('uploads/restaurantAccounts/foodItem/'.$restAccId), $foodImageName);
-            FoodItem::where('id', $id)
-            ->where('restAcc_id', $restAccId)
-            ->update([
-                'foodItemName' => $request->foodName,
-                'foodItemDescription' => $request->foodDesc,
-                'foodItemPrice' => $request->foodPrice,
-                'foodItemImage' => $foodImageName,
-            ]);
-            $request->session()->flash('edited');
-            return redirect('/restaurant/manage-restaurant/food-menu/food-item/edit/'.$id);
+            if($this->checkTodaySched() == "Closed Now"){
+                $foodItemData = FoodItem::where('id', $id)->where('restAcc_id', $restAccId)->first();
+                if($request->foodItemImage == null){
+                    $request->validate([
+                        'foodName' => 'required',
+                        'foodDesc' => 'required',
+                        'foodPrice' => 'required|numeric|min:0',
+                    ],
+                    [
+                        'foodName.required' => 'Name is required',
+                        'foodDesc.required' => 'Description is required',
+                        'foodPrice.required' => 'Price is required',
+                        'foodPrice.numeric' => 'Price must be number only',
+                        'foodPrice.min' => 'Price must not be less than 0',
+                    ]);
+                    FoodItem::where('id', $id)
+                    ->where('restAcc_id', $restAccId)
+                    ->update([
+                        'foodItemName' => $request->foodName,
+                        'foodItemDescription' => $request->foodDesc,
+                        'foodItemPrice' => $request->foodPrice,
+                    ]);
+                    $request->session()->flash('edited');
+                    return redirect('/restaurant/manage-restaurant/food-menu/food-item/edit/'.$id);
+                } else {
+                    $request->validate([
+                        'foodName' => 'required',
+                        'foodDesc' => 'required',
+                        'foodPrice' => 'required|numeric|min:0',
+                        'foodItemImage' => 'required|mimes:jpeg,png,jpg|max:2048',
+                    ],
+                    [
+                        'foodName.required' => 'Name is required',
+                        'foodDesc.required' => 'Description is required',
+                        'foodPrice.required' => 'Price is required',
+                        'foodPrice.numeric' => 'Price must be number only',
+                        'foodPrice.min' => 'Price must not be less than 0',
+                        'foodItemImage.required' => 'Image is required',
+                        'foodItemImage.mimes' => 'Image must be in jpeg, png and jpg format',
+                        'foodItemImage.max' => 'Image must not be greater than 2mb',
+                    ]);
+                    File::delete(public_path('uploads/restaurantAccounts/foodItem/'.$restAccId.'/'.$foodItemData->foodItemImage));
+                    $foodImageName = time().'.'.$request->foodItemImage->extension();
+                    $request->foodItemImage->move(public_path('uploads/restaurantAccounts/foodItem/'.$restAccId), $foodImageName);
+                    FoodItem::where('id', $id)
+                    ->where('restAcc_id', $restAccId)
+                    ->update([
+                        'foodItemName' => $request->foodName,
+                        'foodItemDescription' => $request->foodDesc,
+                        'foodItemPrice' => $request->foodPrice,
+                        'foodItemImage' => $foodImageName,
+                    ]);
+                    $request->session()->flash('edited');
+                    return redirect('/restaurant/manage-restaurant/food-menu/food-item/edit/'.$id);
+                }
+            } else {
+                Session::flash('stillOpenHours');
+                return redirect('/restaurant/manage-restaurant/food-menu/food-item/edit/'.$id);
+            }
         }
+        
     }
     public function deleteFoodSet($id){
         $restAccId = Session::get('loginId');
-        $foodSet = FoodSet::where('id', '=', $id)
-                            ->where('restAcc_Id', '=', $restAccId)
-                            ->first();
-        File::delete(public_path('uploads/restaurantAccounts/foodSet/'.$restAccId.'/'.$foodSet->foodSetImage));
-        FoodSet::where('id', $id)->delete();
-        Session::flash('deleted');
-        return redirect('/restaurant/manage-restaurant/food-menu/food-set');
+        $restaurant = RestaurantAccount::select('status')->where('id', $restAccId)->first();
+        $foodSet = FoodSet::where('id', $id)->first();
+
+        if($restaurant->status == "Unpublished" || $foodSet->status == "Hidden"){
+            File::delete(public_path('uploads/restaurantAccounts/foodSet/'.$restAccId.'/'.$foodSet->foodSetImage));
+            FoodSet::where('id', $id)->delete();
+            Session::flash('deleted');
+            return redirect('/restaurant/manage-restaurant/food-menu/food-set');
+        } else {
+            if($this->checkTodaySched() == "Closed Now"){
+                File::delete(public_path('uploads/restaurantAccounts/foodSet/'.$restAccId.'/'.$foodSet->foodSetImage));
+                FoodSet::where('id', $id)->delete();
+                Session::flash('deleted');
+                return redirect('/restaurant/manage-restaurant/food-menu/food-set');
+            } else {
+                Session::flash('stillOpenHours');
+                return redirect('/restaurant/manage-restaurant/food-menu/food-set/detail/'.$id);
+            }
+        }
     }
     public function foodSetItemDelete($foodSetid, $foodSetItemId){
-        FoodSetItem::where('id', $foodSetItemId)->delete();
-        Session::flash('deleted');
-        return redirect('/restaurant/manage-restaurant/food-menu/food-set/detail/'.$foodSetid);
+        $restAccId = Session::get('loginId');
+        $restaurant = RestaurantAccount::select('status')->where('id', $restAccId)->first();
+        $foodSet = FoodSet::where('id', $foodSetid)->first();
+
+        if($restaurant->status == "Unpublished" || $foodSet->status == "Hidden"){
+            FoodSetItem::where('id', $foodSetItemId)->delete();
+            Session::flash('deleted');
+            return redirect('/restaurant/manage-restaurant/food-menu/food-set/detail/'.$foodSetid);
+        } else {
+            if($this->checkTodaySched() == "Closed Now"){ 
+                FoodSetItem::where('id', $foodSetItemId)->delete();
+                Session::flash('deleted');
+                return redirect('/restaurant/manage-restaurant/food-menu/food-set/detail/'.$foodSetid);
+            } else {
+                Session::flash('stillOpenHours');
+                return redirect('/restaurant/manage-restaurant/food-menu/food-set/detail/'.$foodSetid);
+            }
+        }
     }
     public function addItemToFoodSet(Request $request){
         $restAccId = Session::get('loginId');
+        $restaurant = RestaurantAccount::select('status')->where('id', $restAccId)->first();
         $checkIfExisting = 0;
-        $checkIfExsiting2 = 0;
-        if(empty($request->foodItem)){
-            $request->session()->flash('empty');
-            return redirect('/restaurant/manage-restaurant/food-menu/food-set/detail/'.$request->foodSetId);
-        } else {
-            $countFoodItem = sizeOf($request->foodItem);
-            foreach ($request->foodItem as $foodItemId) {
-                $data = FoodSetItem::where('foodSet_id', '=', $request->foodSetId)
-                                    ->where('foodItem_id', '=', $foodItemId)
-                                    ->get();
-                if(!$data->isEmpty()){
-                    $checkIfExisting++;
-                } else {
-                    $checkOrderSets = OrderSet::select('id')->where('restAcc_id', $restAccId)->get();
-                    foreach ($checkOrderSets as $checkOrderSet){
-                        $checkOrderSetItems = OrderSetFoodItem::where('orderSet_id', $checkOrderSet->id)->get();
-                        foreach ($checkOrderSetItems as $checkOrderSetItem){
-                            if($checkOrderSetItem->foodItem_id == $foodItemId){
-                                OrderSetFoodItem::where('id', $checkOrderSetItem->id)->delete();
+        $foodSet = FoodSet::where('id', $request->foodSetId)->first();
+
+        if($restaurant->status == "Unpublished" || $foodSet->status == "Hidden"){
+            if(empty($request->foodItem)){
+                $request->session()->flash('empty');
+                return redirect('/restaurant/manage-restaurant/food-menu/food-set/detail/'.$request->foodSetId);
+            } else {
+                foreach ($request->foodItem as $foodItemId) {
+                    $data = FoodSetItem::where('foodSet_id', $request->foodSetId)->where('foodItem_id', $foodItemId)->first();
+                    if($data != null){
+                        $checkIfExisting++;
+                    } else {
+                        $checkOrderSets = OrderSet::select('id')->where('restAcc_id', $restAccId)->get();
+                        foreach ($checkOrderSets as $checkOrderSet){
+                            $checkOrderSetItems = OrderSetFoodItem::where('orderSet_id', $checkOrderSet->id)->get();
+                            foreach ($checkOrderSetItems as $checkOrderSetItem){
+                                if($checkOrderSetItem->foodItem_id == $foodItemId){
+                                    OrderSetFoodItem::where('id', $checkOrderSetItem->id)->delete();
+                                }
                             }
                         }
+                        FoodSetItem::create([
+                            'foodSet_id' => $request->foodSetId,
+                            'foodItem_id' => $foodItemId
+                        ]);
                     }
-                    FoodSetItem::create([
-                        'foodSet_id' => $request->foodSetId,
-                        'foodItem_id' => $foodItemId
-                    ]);
                 }
+                if($checkIfExisting == sizeOf($request->foodItem)){
+                    $request->session()->flash('allExisting');
+                } else if ($checkIfExisting > 0 && $checkIfExisting < sizeOf($request->foodItem)) {
+                    $request->session()->flash('someExisting');
+                } else {
+                    $request->session()->flash('added');
+                }
+                return redirect('/restaurant/manage-restaurant/food-menu/food-set/detail/'.$request->foodSetId);
             }
-            if($checkIfExisting == sizeOf($request->foodItem)){
-                $request->session()->flash('allExisting');
-            } else if ($checkIfExisting > 0 && $checkIfExisting < sizeOf($request->foodItem)) {
-                $request->session()->flash('someExisting');
+        } else {
+            if($this->checkTodaySched() == "Closed Now"){
+                if(empty($request->foodItem)){
+                    $request->session()->flash('empty');
+                    return redirect('/restaurant/manage-restaurant/food-menu/food-set/detail/'.$request->foodSetId);
+                } else {
+                    foreach ($request->foodItem as $foodItemId) {
+                        $data = FoodSetItem::where('foodSet_id', $request->foodSetId)->where('foodItem_id', $foodItemId)->first();
+                        if($data != null){
+                            $checkIfExisting++;
+                        } else {
+                            $checkOrderSets = OrderSet::select('id')->where('restAcc_id', $restAccId)->get();
+                            foreach ($checkOrderSets as $checkOrderSet){
+                                $checkOrderSetItems = OrderSetFoodItem::where('orderSet_id', $checkOrderSet->id)->get();
+                                foreach ($checkOrderSetItems as $checkOrderSetItem){
+                                    if($checkOrderSetItem->foodItem_id == $foodItemId){
+                                        OrderSetFoodItem::where('id', $checkOrderSetItem->id)->delete();
+                                    }
+                                }
+                            }
+                            FoodSetItem::create([
+                                'foodSet_id' => $request->foodSetId,
+                                'foodItem_id' => $foodItemId
+                            ]);
+                        }
+                    }
+                    if($checkIfExisting == sizeOf($request->foodItem)){
+                        $request->session()->flash('allExisting');
+                    } else if ($checkIfExisting > 0 && $checkIfExisting < sizeOf($request->foodItem)) {
+                        $request->session()->flash('someExisting');
+                    } else {
+                        $request->session()->flash('added');
+                    }
+                    return redirect('/restaurant/manage-restaurant/food-menu/food-set/detail/'.$request->foodSetId);
+                }
             } else {
-                $request->session()->flash('added');
+                $request->session()->flash('stillOpenHours');
+                return redirect('/restaurant/manage-restaurant/food-menu/food-set/detail/'.$request->foodSetId);
             }
-            return redirect('/restaurant/manage-restaurant/food-menu/food-set/detail/'.$request->foodSetId);
         }
+        
     }
     public function addFoodSet(Request $request){
         $id = Session::get('loginId');
@@ -7673,6 +8558,8 @@ class RestaurantController extends Controller
 
         FoodSet::create([
             'restAcc_id' => $id,
+            'status' => "Visible",
+            'available' => "Yes",
             'foodSetName' => $request->foodName,
             'foodSetDescription' => $request->foodDesc,
             'foodSetPrice' => $request->foodPrice,
@@ -7683,13 +8570,27 @@ class RestaurantController extends Controller
     }
     public function deleteFoodItem($id){
         $restAccId = Session::get('loginId');
-        $foodItem = FoodItem::where('id', '=', $id)
-                            ->where('restAcc_Id', '=', $restAccId)
-                            ->first();
-        File::delete(public_path('uploads/restaurantAccounts/foodItem/'.$restAccId.'/'.$foodItem->foodItemImage));
-        FoodItem::where('id', $id)->delete();
-        Session::flash('deleted', "Food Item is Deleted");
-        return redirect('/restaurant/manage-restaurant/food-menu/food-item');
+        $restaurant = RestaurantAccount::select('status')->where('id', $restAccId)->first();
+        $foodItem = FoodItem::where('id', $id)->first();
+
+        if($restaurant->status == "Unpublished" || $foodItem->status == "Hidden"){
+            $foodItem = FoodItem::where('id', $id)->where('restAcc_Id', $restAccId)->first();
+            File::delete(public_path('uploads/restaurantAccounts/foodItem/'.$restAccId.'/'.$foodItem->foodItemImage));
+            FoodItem::where('id', $id)->delete();
+            Session::flash('deleted');
+            return redirect('/restaurant/manage-restaurant/food-menu/food-item');
+        } else {
+            if($this->checkTodaySched() == "Closed Now"){
+                $foodItem = FoodItem::where('id', $id)->where('restAcc_Id', $restAccId)->first();
+                File::delete(public_path('uploads/restaurantAccounts/foodItem/'.$restAccId.'/'.$foodItem->foodItemImage));
+                FoodItem::where('id', $id)->delete();
+                Session::flash('deleted');
+                return redirect('/restaurant/manage-restaurant/food-menu/food-item');
+            } else {
+                Session::flash('stillOpenHours');
+                return redirect('/restaurant/manage-restaurant/food-menu/food-item');
+            }
+        }
     }
     public function addFoodItem(Request $request){
         $id = Session::get('loginId');
@@ -7705,6 +8606,8 @@ class RestaurantController extends Controller
 
         FoodItem::create([
             'restAcc_id' => $id,
+            'status' => "Visible",
+            'available' => "Yes",
             'foodItemName' => $request->foodName,
             'foodItemDescription' => $request->foodDesc,
             'foodItemPrice' => $request->foodPrice,

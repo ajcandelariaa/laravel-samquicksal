@@ -2,6 +2,23 @@
 
 @section('content')
 <div class="container mx-auto">
+    @if (session()->has('currentlyUnpublished'))
+        <script>
+            Swal.fire(
+                'Publish first your restaurant',
+                '',
+                'error'
+            );
+        </script>
+    @elseif (session()->has('currentlyClosed'))
+        <script>
+            Swal.fire(
+                'You are currently Closed',
+                'Wait till your store is open',
+                'error'
+            );
+        </script>
+    @endif
     <div class="w-11/12 mx-auto mt-10 pb-2">
         <a href="/restaurant/live-transaction/approved-customer/queue" class="text-submitButton uppercase font-bold">
             <i class="fas fa-chevron-left mr-2"></i>Back

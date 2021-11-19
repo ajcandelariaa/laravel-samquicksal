@@ -39,6 +39,10 @@ Route::middleware(['restaurantLoggedIn'])->group(function(){
     Route::get('/restaurant/manage-restaurant/food-menu/food-item/delete/{id}', [RestaurantController::class, 'deleteFoodItem']);
     Route::post('/restaurant/manage-restaurant/food-menu/food-item/add', [RestaurantController::class, 'addFoodItem']);
     Route::post('/restaurant/manage-restaurant/food-menu/food-item/edit/{id}', [RestaurantController::class, 'editFoodItem']);
+    Route::get('/restaurant/manage-restaurant/food-menu/food-item/make-available/{id}', [RestaurantController::class, 'mAvailableFI']);
+    Route::get('/restaurant/manage-restaurant/food-menu/food-item/make-unavailable/{id}', [RestaurantController::class, 'mUnavailableFI']);
+    Route::get('/restaurant/manage-restaurant/food-menu/food-item/make-visible/{id}', [RestaurantController::class, 'mVisibleFI']);
+    Route::get('/restaurant/manage-restaurant/food-menu/food-item/make-hidden/{id}', [RestaurantController::class, 'mHiddenFI']);
     // -------FOOD SET------------ //
     Route::get('/restaurant/manage-restaurant/food-menu/food-set', [RestaurantController::class, 'manageRestaurantFoodSetView']);
     Route::get('/restaurant/manage-restaurant/food-menu/food-set/detail/{id}', [RestaurantController::class, 'foodSetDetailView']);
@@ -48,6 +52,11 @@ Route::middleware(['restaurantLoggedIn'])->group(function(){
     Route::post('/restaurant/manage-restaurant/food-menu/food-set/add', [RestaurantController::class, 'addFoodSet']);
     Route::post('/restaurant/manage-restaurant/food-menu/food-set/detail', [RestaurantController::class, 'addItemToFoodSet']);
     Route::post('/restaurant/manage-restaurant/food-menu/food-set/edit/{id}', [RestaurantController::class, 'editFoodSet']);
+
+    Route::get('/restaurant/manage-restaurant/food-menu/food-set/detail/make-available/{id}', [RestaurantController::class, 'mAvailableFS']);
+    Route::get('/restaurant/manage-restaurant/food-menu/food-set/detail/make-unavailable/{id}', [RestaurantController::class, 'mUnavailableFS']);
+    Route::get('/restaurant/manage-restaurant/food-menu/food-set/detail/make-visible/{id}', [RestaurantController::class, 'mVisibleFS']);
+    Route::get('/restaurant/manage-restaurant/food-menu/food-set/detail/make-hidden/{id}', [RestaurantController::class, 'mHiddenFS']);
     // -------ORDER SET------------ //
     Route::get('/restaurant/manage-restaurant/food-menu/order-set', [RestaurantController::class, 'manageRestaurantOrderSetView']);
     Route::get('/restaurant/manage-restaurant/food-menu/order-set/detail/{id}', [RestaurantController::class, 'orderSetDetailView']);
@@ -59,6 +68,11 @@ Route::middleware(['restaurantLoggedIn'])->group(function(){
     Route::post('/restaurant/manage-restaurant/food-menu/order-set/edit/{id}', [RestaurantController::class, 'editOrderSet']);
     Route::post('/restaurant/manage-restaurant/food-menu/order-set/detail/add-set/{id}', [RestaurantController::class, 'orderSetAddFoodSet']);
     Route::post('/restaurant/manage-restaurant/food-menu/order-set/detail/add-item/{id}', [RestaurantController::class, 'orderSetAddFoodItem']);
+    
+    Route::get('/restaurant/manage-restaurant/food-menu/order-set/detail/make-available/{id}', [RestaurantController::class, 'mAvailableOS']);
+    Route::get('/restaurant/manage-restaurant/food-menu/order-set/detail/make-unavailable/{id}', [RestaurantController::class, 'mUnavailableOS']);
+    Route::get('/restaurant/manage-restaurant/food-menu/order-set/detail/make-visible/{id}', [RestaurantController::class, 'mVisibleOS']);
+    Route::get('/restaurant/manage-restaurant/food-menu/order-set/detail/make-hidden/{id}', [RestaurantController::class, 'mHiddenOS']);
     // -------RESTAURANT INFORMATION------------ //
     Route::get('/restaurant/manage-restaurant/about/restaurant-information/resend-email-verification/{emailAddress}/{fname}/{lname}', [RestaurantController::class, 'resendEmailVerification']);
     Route::get('/restaurant/manage-restaurant/about/restaurant-information', [RestaurantController::class, 'manageRestaurantInformationView']);

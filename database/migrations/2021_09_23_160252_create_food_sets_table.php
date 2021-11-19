@@ -16,6 +16,8 @@ class CreateFoodSetsTable extends Migration
         Schema::create('food_sets', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('restAcc_id');
+            $table->string('status');
+            $table->string('available');
             $table->string('foodSetName');
             $table->mediumText('foodSetDescription');
             $table->decimal('foodSetPrice', 5, 2);

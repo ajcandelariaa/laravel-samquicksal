@@ -16,6 +16,8 @@ class CreateOrderSetsTable extends Migration
         Schema::create('order_sets', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('restAcc_id');
+            $table->string('status');
+            $table->string('available');
             $table->string('orderSetName');
             $table->mediumText('orderSetTagline');
             $table->mediumText('orderSetDescription');
