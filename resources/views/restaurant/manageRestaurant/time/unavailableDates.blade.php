@@ -34,6 +34,14 @@
                 'success'
             );
         </script>
+    @elseif (session()->has('notLessEqualToday'))
+        <script>
+            Swal.fire(
+                'Date must not be less than or equal today',
+                '',
+                'error'
+            );
+        </script>
     @endif
     <div class="w-11/12 mx-auto mt-10">
         <div class="mt-5 text-right">

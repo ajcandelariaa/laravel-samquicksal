@@ -26,8 +26,10 @@
         <div class="bg-manageRestaurantSidebarColorActive grid grid-cols-2 px-5 py-1 items-center">
             <div class="uppercase font-bold text-white text-xl py-2">ORDER SUMMARY</div>
             <div class="justify-self-end text-white py-3 ml-3">
-                <a href="/restaurant/live-transaction/customer-ordering/list/{{ $customerOrdering->id }}/order-summary/runaway" id="btn-runaway" class="px-8 py-2 bg-headerActiveTextColor mr-2">Runaway</a>
-                <a href="/restaurant/live-transaction/customer-ordering/list/{{ $customerOrdering->id }}/order-summary/complete" id="btn-complete" class="px-8 py-2 bg-postedStatus">Mark as Finished</a>
+                @if ($customerOrdering->grantedAccess == "Yes")
+                    <a href="/restaurant/live-transaction/customer-ordering/list/{{ $customerOrdering->id }}/order-summary/runaway" id="btn-runaway" class="px-8 py-2 bg-headerActiveTextColor mr-2">Runaway</a>
+                    <a href="/restaurant/live-transaction/customer-ordering/list/{{ $customerOrdering->id }}/order-summary/complete" id="btn-complete" class="px-8 py-2 bg-postedStatus">Mark as Finished</a>
+                @endif
             </div>
         </div>
         <div class="w-11/12 mx-auto py-10">

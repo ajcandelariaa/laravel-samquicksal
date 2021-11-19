@@ -7039,6 +7039,7 @@ class RestaurantController extends Controller
         $restAccId = Session::get('loginId');
         $unavailableDates = UnavailableDate::select('unavailableDatesDate')->where('restAcc_id', $restAccId)->get();
         $checkDate2 = UnavailableDate::select('unavailableDatesDate')->where('restAcc_id', $restAccId)->where('id', $request->updateUnavailableDateId)->first();
+        $restaurant = RestaurantAccount::where('id', $restAccId)->first();
 
         $checkIfExisting = 0;
         if($checkDate2->unavailableDatesDate != $request->updateDate){
@@ -7055,14 +7056,77 @@ class RestaurantController extends Controller
             $request->session()->flash('existing');
             return redirect('/restaurant/manage-restaurant/time/unavailable-dates');
         } else {
-            UnavailableDate::where('id', $request->updateUnavailableDateId)
-            ->update([
-                'unavailableDatesDate' => $request->updateDate,
-                'startTime' => $request->updateTime,
-                'unavailableDatesDesc' => $request->updateDescription,
-            ]);
-            $request->session()->flash('edited');
-            return redirect('/restaurant/manage-restaurant/time/unavailable-dates');
+            if(strtotime($request->updateDate) <= strtotime(date('Y-m-d'))){
+                $request->session()->flash('notLessEqualToday');
+                return redirect('/restaurant/manage-restaurant/time/unavailable-dates');
+            } else {
+                //cancel all reservation
+                if($restaurant->status == "Published"){
+                    $startDate = $request->updateDate;
+                    $startTime = $request->updateTime;
+                    $customerReserves = CustomerReserve::where('restAcc_id', $restAccId)
+                    ->where(function ($query) {
+                        $query->where('status', "pending")
+                        ->orWhere('status', "approved");
+                    })->get();
+
+                    if(!$customerReserves->isEmpty()){
+                        foreach($customerReserves as $customerReserve){
+                            $reservedDate = $customerReserve->reserveDate;
+                            $reservedTime = $customerReserve->reserveTime;
+                            $reservedTimeAdd2 = date('H:i', strtotime($reservedTime) + 60*60*2);
+
+                            if(strtotime($reservedDate) == strtotime($startDate)){
+                                if(strtotime($startTime) < strtotime($reservedTimeAdd2)){
+
+                                    $customerAccount = CustomerAccount::where('id', $customerReserve->customer_id)->first();
+                                    $finalImageUrl = "";
+                                    if ($restaurant->rLogo == ""){
+                                        $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+                                    } else {
+                                        $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
+                                    }
+                            
+                                    if($customerAccount != null){
+                                        $to = $customerAccount->deviceToken;
+                                        $notification = array(
+                                            'title' => "$restaurant->rAddress, $restaurant->rCity",
+                                            'body' => "Your reservation has been void due to some changes on the schedule. Were sorry for the inconvenience.",
+                                        );
+                                        $data = array(
+                                            'notificationType' => "Schedule Change",
+                                            'notificationId' => 0,
+                                            'notificationRLogo' => $finalImageUrl,
+                                        );
+                                        $this->sendFirebaseNotification($to, $notification, $data);
+                                    }
+
+                                    CustomerNotification::where('restAcc_id', $restAccId)
+                                    ->where('notificationType', "Pending")
+                                    ->where('created_at', $customerReserve->created_at)
+                                    ->delete();
+
+                                    if($customerReserve->approvedDateTime != null){
+                                        CustomerNotification::where('restAcc_id', $restAccId)
+                                        ->where('notificationType', "Approved")
+                                        ->where('created_at', $customerReserve->approvedDateTime)
+                                        ->delete();
+                                    }
+                                    CustomerReserve::where('id', $customerReserve->id)->delete();
+                                }
+                            }
+                        }
+                    }
+                }
+                UnavailableDate::where('id', $request->updateUnavailableDateId)
+                ->update([
+                    'unavailableDatesDate' => $request->updateDate,
+                    'startTime' => $request->updateTime,
+                    'unavailableDatesDesc' => $request->updateDescription,
+                ]);
+                $request->session()->flash('edited');
+                return redirect('/restaurant/manage-restaurant/time/unavailable-dates');
+            }
         }
     }
     public function deleteUnavailableDates($id){
@@ -7073,23 +7137,7 @@ class RestaurantController extends Controller
     public function addUnavailableDates(Request $request){
         $restAccId = Session::get('loginId');
         $unavailableDates = UnavailableDate::select('unavailableDatesDate')->where('restAcc_id', $restAccId)->get();
-
-        $request->validate([
-            'promoTitle' => 'required',
-            'promoDescription' => 'required',
-            'promoMechanics.*' => 'required',
-            'promoStartDate' => 'required|date',
-            'promoEndDate' => 'required|date',
-        ],
-        [
-            'promoTitle.required' => "Title is required",
-            'promoDescription.required' => "Description is required",
-            'promoMechanics.*.required' => "Mechanics is required",
-            'promoStartDate.required' => "Start Date is required",
-            'promoStartDate.date' => "Start Date must be date",
-            'promoEndDate.required' => "End Date is required",
-            'promoEndDate.date' => "End Date must be date",
-        ]);
+        $restaurant = RestaurantAccount::where('id', $restAccId)->first();
 
         $checkIfExisting = 0;
         foreach ($unavailableDates as $unavailableDate){
@@ -7102,14 +7150,79 @@ class RestaurantController extends Controller
             $request->session()->flash('existing');
             return redirect('/restaurant/manage-restaurant/time/unavailable-dates');
         } else {
-            UnavailableDate::create([
-                'restAcc_id' => $restAccId,
-                'unavailableDatesDate' => $request->date,
-                'startTime' => $request->time,
-                'unavailableDatesDesc' => $request->description,
-            ]);
-            $request->session()->flash('added');
-            return redirect('/restaurant/manage-restaurant/time/unavailable-dates');
+            if(strtotime($request->date) <= strtotime(date('Y-m-d'))){
+                $request->session()->flash('notLessEqualToday');
+                return redirect('/restaurant/manage-restaurant/time/unavailable-dates');
+            } else {
+                //cancel all reservation
+                if($restaurant->status == "Published"){
+                    $startDate = $request->date;
+                    $startTime = $request->time;
+                    // $prevDate = date("Y-m-d", strtotime($startDate. " -1 days"));
+                    $customerReserves = CustomerReserve::where('restAcc_id', $restAccId)
+                    ->where(function ($query) {
+                        $query->where('status', "pending")
+                        ->orWhere('status', "approved");
+                    })->get();
+
+                    if(!$customerReserves->isEmpty()){
+                        foreach($customerReserves as $customerReserve){
+                            $reservedDate = $customerReserve->reserveDate;
+                            $reservedTime = $customerReserve->reserveTime;
+                            $reservedTimeAdd2 = date('H:i', strtotime($reservedTime) + 60*60*2);
+
+                            if(strtotime($reservedDate) == strtotime($startDate)){
+                                if(strtotime($startTime) < strtotime($reservedTimeAdd2)){
+
+                                    $customerAccount = CustomerAccount::where('id', $customerReserve->customer_id)->first();
+                                    $finalImageUrl = "";
+                                    if ($restaurant->rLogo == ""){
+                                        $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+                                    } else {
+                                        $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
+                                    }
+                            
+                                    if($customerAccount != null){
+                                        $to = $customerAccount->deviceToken;
+                                        $notification = array(
+                                            'title' => "$restaurant->rAddress, $restaurant->rCity",
+                                            'body' => "Your reservation has been void due to some changes on the schedule. Were sorry for the inconvenience.",
+                                        );
+                                        $data = array(
+                                            'notificationType' => "Schedule Change",
+                                            'notificationId' => 0,
+                                            'notificationRLogo' => $finalImageUrl,
+                                        );
+                                        $this->sendFirebaseNotification($to, $notification, $data);
+                                    }
+
+                                    CustomerNotification::where('restAcc_id', $restAccId)
+                                    ->where('notificationType', "Pending")
+                                    ->where('created_at', $customerReserve->created_at)
+                                    ->delete();
+
+                                    if($customerReserve->approvedDateTime != null){
+                                        CustomerNotification::where('restAcc_id', $restAccId)
+                                        ->where('notificationType', "Approved")
+                                        ->where('created_at', $customerReserve->approvedDateTime)
+                                        ->delete();
+                                    }
+                                    CustomerReserve::where('id', $customerReserve->id)->delete();
+                                }
+                            }
+                        }
+                    }
+                }
+                UnavailableDate::create([
+                    'restAcc_id' => $restAccId,
+                    'unavailableDatesDate' => $request->date,
+                    'startTime' => $request->time,
+                    'unavailableDatesDesc' => $request->description,
+                ]);
+                $request->session()->flash('added');
+                return redirect('/restaurant/manage-restaurant/time/unavailable-dates');
+
+            }
         }
     }
     public function editStoreHours(Request $request){

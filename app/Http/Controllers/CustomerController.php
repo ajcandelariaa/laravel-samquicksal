@@ -156,6 +156,100 @@ class CustomerController extends Controller
                 break;
         }
     }
+    public function checkTodaySched($rest_param_id){
+        $restAcc_id = $rest_param_id;
+        $restaurant = RestaurantAccount::select('status', 'id')->where('id', $restAcc_id)->first();
+
+        $getAvailability = "Open";
+        $rSchedule = "";
+
+        $restaurantUnavailableDates = UnavailableDate::select('unavailableDatesDate')->where('restAcc_id', $restaurant->id)->get();
+        foreach ($restaurantUnavailableDates as $restaurantUnavailableDate) {
+            if($restaurantUnavailableDate->unavailableDatesDate == date("Y-m-d") && $restaurantUnavailableDate->startTime <= date('H:i')){
+                $getAvailability = "Closed Now";
+            }
+        }
+        
+        if($getAvailability == "Open"){
+            $storeDay = array();
+            $storeOpeningTime = array();
+            $storeClosingTime = array();
+
+            $currentDay = date('l');
+            $prevDay = date('l', strtotime(date('Y-m-d') . " -1 days"));
+
+            $isHasCurr = false;
+            $isHasCurrIndex = "";
+
+            $isHasPrev = false;
+            $isHasPrevIndex = "";
+
+            $currentTime = date("H:i");
+
+            $restaurantStoreHours = StoreHour::where('restAcc_id', $restaurant->id)->get();
+            foreach ($restaurantStoreHours as $restaurantStoreHour){
+                foreach (explode(",", $restaurantStoreHour->days) as $day){
+                    array_push($storeDay, $this->convertDays($day));
+                    array_push($storeOpeningTime, $restaurantStoreHour->openingTime);
+                    array_push($storeClosingTime, $restaurantStoreHour->closingTime);
+                }
+            }
+
+            for($i=0; $i<sizeOf($storeDay); $i++){
+                if($prevDay == $storeDay[$i]){
+                    if(strtotime($storeClosingTime[$i]) >= strtotime("00:00") && strtotime($storeClosingTime[$i]) <= strtotime("04:00")){
+                        $isHasPrev = true;
+                        $isHasPrevIndex = $i;
+                    }
+                }
+                if($currentDay == $storeDay[$i]){
+                    $isHasCurr = true;
+                    $isHasCurrIndex = $i;
+                }
+            }
+            
+            if(strtotime($currentTime) >= strtotime("00:00") && strtotime($currentTime) <= strtotime("04:00")){
+                if($isHasPrev){
+                    if(strtotime($currentTime) <= strtotime($storeClosingTime[$isHasPrevIndex])){
+                        $openingTime = date("g:i a", strtotime($storeOpeningTime[$isHasPrevIndex]));
+                        $closingTime = date("g:i a", strtotime($storeClosingTime[$isHasPrevIndex]));
+                        $rSchedule = "Open today at ".$openingTime." to ".$closingTime;
+                    } else {
+                        $rSchedule = "Closed Now";
+                    }
+                } else {
+                    $rSchedule = "Closed Now";
+                }
+            } else if(strtotime($currentTime) >= strtotime("05:00") && strtotime($currentTime) <= strtotime("23:59")){
+                if($isHasCurr){
+                    if(strtotime($currentTime) >= strtotime($storeOpeningTime[$isHasCurrIndex]) && strtotime($currentTime) <= strtotime($storeClosingTime[$isHasCurrIndex])){
+                        $openingTime = date("g:i a", strtotime($storeOpeningTime[$isHasCurrIndex]));
+                        $closingTime = date("g:i a", strtotime($storeClosingTime[$isHasCurrIndex]));
+                        $rSchedule = "Open today at ".$openingTime." to ".$closingTime;
+                    } else {
+                        $rSchedule = "Closed Now";
+                    }
+                } else {
+                    $rSchedule = "Closed Now";
+                }
+            } else {
+                $rSchedule = "Closed Now";
+            }
+        } else {
+            $rSchedule = "Closed Now";
+        }
+
+        return $rSchedule;
+    }
+
+
+
+
+
+
+
+
+
 
     public function customers(){
         $account = CustomerAccount::all();
@@ -175,84 +269,8 @@ class CustomerController extends Controller
         $finalData = array();
         $restaurants = RestaurantAccount::select('id', 'rName', 'rAddress', 'rLogo')->where('status', "Published")->get();
         foreach ($restaurants as $restaurant){
-            $getAvailability = "Open";
-            $rSchedule = "";
 
-            $restaurantUnavailableDates = UnavailableDate::select('unavailableDatesDate')->where('restAcc_id', $restaurant->id)->get();
-            foreach ($restaurantUnavailableDates as $restaurantUnavailableDate) {
-                if($restaurantUnavailableDate->unavailableDatesDate == date("Y-m-d") && $restaurantUnavailableDate->startTime <= date('H:i')){
-                    $getAvailability = "Closed Now";
-                }
-            }
-            
-            if($getAvailability == "Open"){
-                $storeDay = array();
-                $storeOpeningTime = array();
-                $storeClosingTime = array();
-
-                $currentDay = date('l');
-                $prevDay = date('l', strtotime(date('Y-m-d') . " -1 days"));
-
-                $isHasCurr = false;
-                $isHasCurrIndex = "";
-
-                $isHasPrev = false;
-                $isHasPrevIndex = "";
-
-                $currentTime = date("H:i");
-
-                $restaurantStoreHours = StoreHour::where('restAcc_id', $restaurant->id)->get();
-                foreach ($restaurantStoreHours as $restaurantStoreHour){
-                    foreach (explode(",", $restaurantStoreHour->days) as $day){
-                        array_push($storeDay, $this->convertDays($day));
-                        array_push($storeOpeningTime, $restaurantStoreHour->openingTime);
-                        array_push($storeClosingTime, $restaurantStoreHour->closingTime);
-                    }
-                }
-
-                for($i=0; $i<sizeOf($storeDay); $i++){
-                    if($prevDay == $storeDay[$i]){
-                        if(strtotime($storeClosingTime[$i]) >= strtotime("00:00") && strtotime($storeClosingTime[$i]) <= strtotime("04:00")){
-                            $isHasPrev = true;
-                            $isHasPrevIndex = $i;
-                        }
-                    }
-                    if($currentDay == $storeDay[$i]){
-                        $isHasCurr = true;
-                        $isHasCurrIndex = $i;
-                    }
-                }
-             
-                if(strtotime($currentTime) >= strtotime("00:00") && strtotime($currentTime) <= strtotime("04:00")){
-                    if($isHasPrev){
-                        if(strtotime($currentTime) <= strtotime($storeClosingTime[$isHasPrevIndex])){
-                            $openingTime = date("g:i a", strtotime($storeOpeningTime[$isHasPrevIndex]));
-                            $closingTime = date("g:i a", strtotime($storeClosingTime[$isHasPrevIndex]));
-                            $rSchedule = "Open today at ".$openingTime." to ".$closingTime;
-                        } else {
-                            $rSchedule = "Closed Now";
-                        }
-                    } else {
-                        $rSchedule = "Closed Now";
-                    }
-                } else if(strtotime($currentTime) >= strtotime("05:00") && strtotime($currentTime) <= strtotime("23:59")){
-                    if($isHasCurr){
-                        if(strtotime($currentTime) >= strtotime($storeOpeningTime[$isHasCurrIndex]) && strtotime($currentTime) <= strtotime($storeClosingTime[$isHasCurrIndex])){
-                            $openingTime = date("g:i a", strtotime($storeOpeningTime[$isHasCurrIndex]));
-                            $closingTime = date("g:i a", strtotime($storeClosingTime[$isHasCurrIndex]));
-                            $rSchedule = "Open today at ".$openingTime." to ".$closingTime;
-                        } else {
-                            $rSchedule = "Closed Now";
-                        }
-                    } else {
-                        $rSchedule = "Closed Now";
-                    }
-                } else {
-                    $rSchedule = "Closed Now";
-                }
-            } else {
-                $rSchedule = "Closed Now";
-            }
+            $rSchedule = $this->checkTodaySched($restaurant->id);
 
             $finalImageUrl = "";
             if ($restaurant->rLogo == ""){
@@ -583,6 +601,11 @@ class CustomerController extends Controller
 
         // CHECKING IF CAN QUEUE OR BOOK
         /*
+            1. check kung nakablock
+            2. check kung nakaqueue /  reserve
+            3. check kung may qr access
+            4. check schedule 
+
             1. check muna kung naka queue / reserve
             2. check kung may qr access
             3. check kung naka blocked
@@ -621,106 +644,35 @@ class CustomerController extends Controller
         ->orderBy('created_at', 'DESC')
         ->first();
 
+
         if ($customerQueue != null){
             $description = "You cannot book as of now because you are currently queue.";
             $status = "onGoing";
         } else if ($customerReserve != null){
             $description = "You cannot book as of now because you are currently reserve.";
             $status = "onGoing";
-        } else {
-            if($custMainOff != null){
+        } else if ($customerQrAccess != null) {
+            $customerOrdering = CustomerOrdering::where('id', $customerQrAccess->custOrdering_id)->where('status', "checkout")->first();
+            if($customerOrdering != null){
+                $description = "You cannot book as of now because you currently have an access to your friend that are currently booked.";
+                $status = "onGoing";
+            }
+        } else if ($custMainOff != null){
+            if($custMainOff->offenseDaysBlock == "Permanent" && $custMainOff->offenseValidity != null){
+                $description = "You cannot book to this restaurant because you are currently blocked";
+                $status = "onGoing";
+            } else {
                 if(strtotime($custMainOff->offenseValidity) >= strtotime($getDateTimeToday)){
                     $description = "You cannot book to this restaurant because you are currently blocked";
                     $status = "onGoing";
                 }
             }
-            if($customerQrAccess != null){
-                $customerOrdering = CustomerOrdering::where('id', $customerQrAccess->custOrdering_id)->where('status', "checkout")->first();
-                if($customerOrdering != null){
-                    $description = "You cannot book as of now because you currently have an access to your friend that are currently booked.";
-                    $status = "onGoing";
-                }
-            }
-        }
-
-        $getAvailability = "Open";
-        $rSchedule = "";
-
-        $restaurantUnavailableDates = UnavailableDate::select('unavailableDatesDate')->where('restAcc_id', $id)->get();
-        foreach ($restaurantUnavailableDates as $restaurantUnavailableDate) {
-            if($restaurantUnavailableDate->unavailableDatesDate == date("Y-m-d") && $restaurantUnavailableDate->startTime <= date('H:i')){
-                $getAvailability = "Closed Now";
-            }
-        }
-        
-        if($getAvailability == "Open"){
-            $storeDay = array();
-            $storeOpeningTime = array();
-            $storeClosingTime = array();
-
-            $currentDay = date('l');
-            $prevDay = date('l', strtotime(date('Y-m-d') . " -1 days"));
-
-            $isHasCurr = false;
-            $isHasCurrIndex = "";
-
-            $isHasPrev = false;
-            $isHasPrevIndex = "";
-
-            $currentTime = date("H:i");
-
-            $restaurantStoreHours = StoreHour::where('restAcc_id', $id)->get();
-            foreach ($restaurantStoreHours as $restaurantStoreHour){
-                foreach (explode(",", $restaurantStoreHour->days) as $day){
-                    array_push($storeDay, $this->convertDays($day));
-                    array_push($storeOpeningTime, $restaurantStoreHour->openingTime);
-                    array_push($storeClosingTime, $restaurantStoreHour->closingTime);
-                }
-            }
-
-            for($i=0; $i<sizeOf($storeDay); $i++){
-                if($prevDay == $storeDay[$i]){
-                    if(strtotime($storeClosingTime[$i]) >= strtotime("00:00") && strtotime($storeClosingTime[$i]) <= strtotime("04:00")){
-                        $isHasPrev = true;
-                        $isHasPrevIndex = $i;
-                    }
-                }
-                if($currentDay == $storeDay[$i]){
-                    $isHasCurr = true;
-                    $isHasCurrIndex = $i;
-                }
-            }
-            
-            if(strtotime($currentTime) >= strtotime("00:00") && strtotime($currentTime) <= strtotime("04:00")){
-                if($isHasPrev){
-                    if(strtotime($currentTime) <= strtotime($storeClosingTime[$isHasPrevIndex])){
-                        $rSchedule = "Open today";
-                    } else {
-                        $rSchedule = "Closed Now";
-                    }
-                } else {
-                    $rSchedule = "Closed Now";
-                }
-            } else if(strtotime($currentTime) >= strtotime("05:00") && strtotime($currentTime) <= strtotime("23:59")){
-                if($isHasCurr){
-                    if(strtotime($currentTime) >= strtotime($storeOpeningTime[$isHasCurrIndex]) && strtotime($currentTime) <= strtotime($storeClosingTime[$isHasCurrIndex])){
-                        $rSchedule = "Open today";
-                    } else {
-                        $rSchedule = "Closed Now";
-                    }
-                } else {
-                    $rSchedule = "Closed Now";
-                }
-            } else {
-                $rSchedule = "Closed Now";
-            }
         } else {
-            $rSchedule = "Closed Now";
-        }
-
-        if($rSchedule == "Closed Now"){
-            $description = "You cannot queue as of now wait til the restaurant is open.";
-            $status = "closed";
+            $rSchedule = $this->checkTodaySched($id);
+            if($rSchedule == "Closed Now"){
+                $description = "You cannot queue as of now wait til the restaurant is open.";
+                $status = "closed";
+            }
         }
 
         return response()->json([
@@ -822,12 +774,10 @@ class CustomerController extends Controller
         ]);
     }
     public function getReservationDateAndTimeForm($rest_id){
-        $unavailableDates = UnavailableDate::where('restAcc_id', $rest_id)->get();
         $currentDate = date('Y-m-d');
 
-        $storeSevenDates = array();
-
         // GET 7 days starting tomorrow
+        $storeSevenDates = array();
         for($i=0; $i<7; $i++){
             $currentDateTime2 = date('Y-m-d', strtotime($currentDate. ' + 1 days'));
             array_push($storeSevenDates, $currentDateTime2);
@@ -838,6 +788,7 @@ class CustomerController extends Controller
         $storeUDDStartTime = array();
 
         // IF MAY Sinet na unavailable date tas babanga sa 7 days then do this
+        $unavailableDates = UnavailableDate::where('restAcc_id', $rest_id)->get();
         if(!$unavailableDates->isEmpty()){
             foreach ($unavailableDates as $unavailableDate){
                 if (($key = array_search($unavailableDate->unavailableDatesDate, $storeSevenDates)) !== false) {
@@ -851,168 +802,186 @@ class CustomerController extends Controller
             }
         }
 
+
+
         $modUDFStoreSevenDates = array_values($storeSevenDates);
         $storeDaysBFModUD = array();
         foreach ($modUDFStoreSevenDates as $modUDFStoreSevenDate){
             array_push($storeDaysBFModUD, date('l', strtotime($modUDFStoreSevenDate)));
         }
 
-        $checker = "";
 
-        $restAvailableDaysBFSH = array();
-        $restOPCLTime = array();
-        $restStoreHours = StoreHour::where('restAcc_id', $rest_id)->get();
-        foreach($restStoreHours as $restStoreHour){
-            foreach (explode(",", $restStoreHour->days) as $day){
-                
-                $storeTempTime = array();
-                
-                $currentTime = $restStoreHour->openingTime;
-                $endTime = $restStoreHour->closingTime;
-
-                $time1 = strtotime($currentTime);
-                $time2 = strtotime($endTime);
-
-                $getStartTime = "";
-                for($i=0; $i<sizeof($storeUDDStartDate); $i++){
-                    if($this->convertDays($day) == date('l', strtotime($storeUDDStartDate[$i]))){
-                        $getStartTime = $storeUDDStartTime[$i];
-                    }
+        $storeHoursTemp = array();
+        $restaurantStoreHours = StoreHour::where('restAcc_id', $rest_id)->get();
+        foreach ($restaurantStoreHours as $restaurantStoreHour){
+            foreach (explode(",", $restaurantStoreHour->days) as $day){
+                switch ($this->convertDays($day)){
+                    case "Monday":
+                        $num = 1;
+                        break;
+                    case "Tuesday":
+                        $num = 2;
+                        break;
+                    case "Wednesday":
+                        $num = 3;
+                        break;
+                    case "Thursday":
+                        $num = 4;
+                        break;
+                    case "Friday":
+                        $num = 5;
+                        break;
+                    case "Saturday":
+                        $num = 6;
+                        break;
+                    case "Sunday":
+                        $num = 7;
+                        break;
                 }
-                $checker = "";
-                if(strtotime($getStartTime) <= strtotime($currentTime) && $getStartTime != ""){
+                
+                array_push($storeHoursTemp, [
+                    'num' => $num,
+                    'storeDay' => $this->convertDays($day),
+                    'storeOpeningTime' => $restaurantStoreHour->openingTime,
+                    'storeClosingTime' => $restaurantStoreHour->closingTime,
+                ]);
+            }
+        }
 
-                } else {
-                    if($time2 >= strtotime("00:00") && $time2 <= strtotime("04:00")){
-                        // ABNORMAL COUNTING
-                        $getStartTime = "";
-                        for($i=0; $i<sizeof($storeUDDStartDate); $i++){
-                            if($this->convertDays($day) == date('l', strtotime($storeUDDStartDate[$i]. ' -1 days'))){
-                                $getStartTime = $storeUDDStartTime[$i];
+        usort($storeHoursTemp, function($a, $b) {
+            return $a['num'] - $b['num'];
+        });
+
+
+
+        // 21 22 23 24 26
+        // MO TU WE TH SA
+        $storeTempDates = array();
+        $storeNextHours = array();
+        for($i=0; $i<sizeOf($modUDFStoreSevenDates); $i++){
+            //loop for seven dates
+            $tempHours = array();
+            for($j=0; $j<sizeOf($storeHoursTemp); $j++){
+                //loop for schedule
+                if(date('l', strtotime($modUDFStoreSevenDates[$i])) == $storeHoursTemp[$j]['storeDay']){
+                    //meronng sched so pasok tong date na to
+
+                    //check muna kung may store next hours, kung meron then store sa temp hours then flush
+                    if($storeNextHours != null){
+                        foreach($storeNextHours as $storeNextHour){
+                            if($storeUDDStartDate != null){
+                                for($x=0; $x<sizeOf($storeUDDStartDate); $x++){
+                                    if($storeUDDStartDate[$x] == $modUDFStoreSevenDates[$i]){
+                                        $add2hours = date('H:i', strtotime($storeNextHour) + 60*60*2);
+                                        if(strtotime($storeUDDStartTime[$x]) <= strtotime($storeNextHour) || strtotime($storeUDDStartTime[$x]) < strtotime($add2hours)){
+                                            //do nothing
+                                        } else {
+                                            array_push($tempHours, date("g:i A", strtotime($storeNextHour)));
+                                        }
+                                    }
+                                }
+                            } else {
+                                array_push($tempHours, date("g:i A", strtotime($storeNextHour)));
                             }
                         }
-    
-                        $time2 = strtotime("22:00");
-                        $difference = round(abs($time2 - $time1) / 3600,2);
-                        $count = 0;
-                        while($count <= $difference){
-                            array_push($storeTempTime, date("g:i A", strtotime($currentTime)));
-                            $currentTime = date('H:i', strtotime($currentTime) + 60*60);
-                            $count++;
+                        $storeNextHours = array();
+                    }
+
+                    //then store na naten yung mga time
+                    //pero check muna if babangga sa sinet ng unavailable date
+                    $startTime = $storeHoursTemp[$j]['storeOpeningTime'];
+                    $endTime = $storeHoursTemp[$j]['storeClosingTime'];
+                    $status = "Open";
+                    if($storeUDDStartDate != null){
+                        for($x=0; $x<sizeOf($storeUDDStartDate); $x++){
+                            if($storeUDDStartDate[$x] == $modUDFStoreSevenDates[$i]){
+                                $add2hours = date('H:i', strtotime($startTime) + 60*60*2);
+                                if(strtotime($storeUDDStartTime[$x]) <= strtotime($startTime) || strtotime($storeUDDStartTime[$x]) < strtotime($add2hours)){
+                                    $status = "Closed";
+                                } else {
+                                    $endTime = $storeUDDStartTime[$x];
+                                }
+                            }
                         }
-                        // 2am <= 4am
-                        if(strtotime($getStartTime) <= strtotime("04:00") && $getStartTime != ""){
-                            if(strtotime($endTime) > strtotime("00:00") && strtotime($endTime) <= strtotime("04:00")){
-                                if(strtotime($getStartTime) > strtotime("00:00")){
-                                    array_push($storeTempTime, date("g:i A", strtotime("23:00")));
-                                }
-                            } 
-                            
-                            if(strtotime($endTime) > strtotime("01:00") && strtotime($endTime) <= strtotime("04:00")){
-                                if(strtotime($getStartTime) > strtotime("01:00")){
-                                    array_push($storeTempTime, date("g:i A", strtotime("00:00")));
-                                }
-                            } 
-                            
-                            if(strtotime($endTime) > strtotime("02:00") && strtotime($endTime) <= strtotime("04:00")){
-                                if(strtotime($getStartTime) > strtotime("02:00")){
-                                    array_push($storeTempTime, date("g:i A", strtotime("01:00")));
-                                }
-                            } 
-                            
-                            if(strtotime($endTime) > strtotime("03:00") && strtotime($endTime) <= strtotime("04:00")){
-                                if(strtotime($getStartTime) > strtotime("03:00")){
-                                    array_push($storeTempTime, date("g:i A", strtotime("02:00")));
-                                }
+                    }
+
+                    if($status == "Open"){
+                        $time1 = strtotime($startTime);
+                        $time2 = strtotime($endTime);
+                        if(strtotime($endTime) >= strtotime("00:00") && strtotime($endTime) <= strtotime("04:00")){
+                            $time2 = strtotime("22:00");
+                            $difference = round(abs($time2 - $time1) / 3600,2);
+                            $count = 0;
+                            while($count <= $difference){
+                                array_push($tempHours, date("g:i A", strtotime($startTime)));
+                                $startTime = date('H:i', strtotime($startTime) + 60*60);
+                                $count++;
                             }
                         } else {
-                            if(strtotime($endTime) > strtotime("00:00") && strtotime($endTime) <= strtotime("04:00")){
-                                array_push($storeTempTime, date("g:i A", strtotime("23:00")));
-                            } 
-                            
-                            if(strtotime($endTime) > strtotime("01:00") && strtotime($endTime) <= strtotime("04:00")){
-                                array_push($storeTempTime, date("g:i A", strtotime("00:00")));
-                            } 
-                            
-                            if(strtotime($endTime) > strtotime("02:00") && strtotime($endTime) <= strtotime("04:00")){
-                                array_push($storeTempTime, date("g:i A", strtotime("01:00")));
-                            } 
-                            
-                            if(strtotime($endTime) > strtotime("03:00") && strtotime($endTime) <= strtotime("04:00")){
-                                array_push($storeTempTime, date("g:i A", strtotime("02:00")));
-                            }
-                        }
-    
-                        
-                    } else {
-                        // NORMAL COUNTING
-    
-                        $getStartTime = "";
-                        for($i=0; $i<sizeof($storeUDDStartDate); $i++){
-                            if($this->convertDays($day) == date('l', strtotime($storeUDDStartDate[$i]))){
-                                $getStartTime = $storeUDDStartTime[$i];
-                            }
-                        }
-                        
-                        $checker = strtotime($getStartTime) < $time1 && $getStartTime != "";
-                        if(strtotime($getStartTime) < $time1 && $getStartTime != ""){
-                        } else {
-                            if(strtotime($getStartTime) <= $time2 && strtotime($getStartTime) > $time1){
-                                $time2 = strtotime($getStartTime);
-                            }
                             $difference = round(abs($time2 - $time1) / 3600,2);
                             $count = 0;
                             while($count <= $difference-2){
-                                array_push($storeTempTime, date("g:i A", strtotime($currentTime)));
-                                $currentTime = date('H:i', strtotime($currentTime) + 60*60);
+                                array_push($tempHours, date("g:i A", strtotime($startTime)));
+                                $startTime = date('H:i', strtotime($startTime) + 60*60);
                                 $count++;
                             }
                         }
                     }
+                    
+                    
+
+                    //then store yung next hours
+                    $endTime2 = $storeHoursTemp[$j]['storeClosingTime'];
+                    if(strtotime($endTime2) >= strtotime("00:00") && strtotime($endTime2) <= strtotime("04:00")){
+                        if(strtotime($endTime2) > strtotime("00:00") && strtotime($endTime2) <= strtotime("04:00")){
+                            array_push($tempHours, date("g:i A", strtotime("23:00")));
+                        } 
+                        
+                        if(strtotime($endTime2) > strtotime("01:00") && strtotime($endTime2) <= strtotime("04:00")){
+                            array_push($storeNextHours, "00:00");
+                        } 
+                        
+                        if(strtotime($endTime2) > strtotime("02:00") && strtotime($endTime2) <= strtotime("04:00")){
+                            array_push($storeNextHours, "01:00");
+                        } 
+                        
+                        if(strtotime($endTime2) > strtotime("03:00") && strtotime($endTime2) <= strtotime("04:00")){
+                            array_push($storeNextHours, "02:00");
+                        }
+                    }
+
                 }
-
-                array_push($restAvailableDaysBFSH, $this->convertDays($day));
-                array_push($restOPCLTime, $storeTempTime);
             }
-        }
+            
+            if($tempHours != null){
+                
+                $trueDate = explode('-', $modUDFStoreSevenDates[$i]);
+                $year = $trueDate[0];
+                $month = $this->convertMonths($trueDate[1]);
+                $day = $trueDate[2];
 
-        $modDaysBFRAD = array();
-        $modDatesBFRAD = array();
-        $modTimeBFRAT = array();
-        for($i=0; $i<sizeOf($storeDaysBFModUD); $i++){
-            for($j=0; $j<sizeOf($restAvailableDaysBFSH); $j++){
-                if($restAvailableDaysBFSH[$j] == $storeDaysBFModUD[$i]){
-                    array_push($modDaysBFRAD, $restAvailableDaysBFSH[$j]);
-                    array_push($modDatesBFRAD, $modUDFStoreSevenDates[$i]);
-                    array_push($modTimeBFRAT, $restOPCLTime[$j]);
-                }
+                array_push($storeTempDates, [
+                    'modDaysBFRAD' => date('l', strtotime($modUDFStoreSevenDates[$i])),
+                    'modDatesBFRAD' => $modUDFStoreSevenDates[$i],
+                    'storeTrueDates' => "$month $day, $year (" . date('l', strtotime($modUDFStoreSevenDates[$i])).")",
+                    'modTimeBFRAT' => $tempHours,
+
+                ]);
             }
-        }
-
-        $storeTrueDates = array();
-        for($i=0; $i<sizeOf($modDatesBFRAD); $i++){
-            $trueDate = explode('-', $modDatesBFRAD[$i]);
-            $year = $trueDate[0];
-            $month = $this->convertMonths($trueDate[1]);
-            $day  = $trueDate[2];
-            array_push($storeTrueDates, "$month $day, $year ($modDaysBFRAD[$i])");
         }
 
         $modDaysBFRAD2 = array();
         $modDatesBFRAD2 = array();
         $storeTrueDates2 = array();
         $modTimeBFRAT2 = array();
-        for($i=0; $i<sizeOf($modDatesBFRAD); $i++){
-            if($modTimeBFRAT[$i] != null){
-                array_push($modDaysBFRAD2, $modDatesBFRAD[$i]);
-                array_push($modDatesBFRAD2, $modDatesBFRAD[$i]);
-                array_push($storeTrueDates2, $storeTrueDates[$i]);
-                array_push($modTimeBFRAT2, $modTimeBFRAT[$i]);
-            }
+        foreach ($storeTempDates as $storeTempDate){
+            array_push($modDaysBFRAD2, $storeTempDate['modDaysBFRAD']);
+            array_push($modDatesBFRAD2, $storeTempDate['modDatesBFRAD']);
+            array_push($storeTrueDates2, $storeTempDate['storeTrueDates']);
+            array_push($modTimeBFRAT2, $storeTempDate['modTimeBFRAT']);
         }
 
         return response()->json([
-            'checker' => $checker,
             'modDaysBFRAD' => $modDaysBFRAD2,
             'modDatesBFRAD' => $modDatesBFRAD2,
             'storeTrueDates' => $storeTrueDates2,
@@ -4676,84 +4645,7 @@ class CustomerController extends Controller
                             $finalDistance = (number_format($DistanceMeter, 1, '.'))." m away";
                         }
 
-                        $getAvailability = "Open";
-                        $rSchedule = "";
-
-                        $restaurantUnavailableDates = UnavailableDate::select('unavailableDatesDate')->where('restAcc_id', $restaurant->id)->get();
-                        foreach ($restaurantUnavailableDates as $restaurantUnavailableDate) {
-                            if($restaurantUnavailableDate->unavailableDatesDate == date("Y-m-d") && $restaurantUnavailableDate->startTime <= date('H:i')){
-                                $getAvailability = "Closed Now";
-                            }
-                        }
-                        
-                        if($getAvailability == "Open"){
-                            $storeDay = array();
-                            $storeOpeningTime = array();
-                            $storeClosingTime = array();
-
-                            $currentDay = date('l');
-                            $prevDay = date('l', strtotime(date('Y-m-d') . " -1 days"));
-
-                            $isHasCurr = false;
-                            $isHasCurrIndex = "";
-
-                            $isHasPrev = false;
-                            $isHasPrevIndex = "";
-
-                            $currentTime = date("H:i");
-
-                            $restaurantStoreHours = StoreHour::where('restAcc_id', $restaurant->id)->get();
-                            foreach ($restaurantStoreHours as $restaurantStoreHour){
-                                foreach (explode(",", $restaurantStoreHour->days) as $day){
-                                    array_push($storeDay, $this->convertDays($day));
-                                    array_push($storeOpeningTime, $restaurantStoreHour->openingTime);
-                                    array_push($storeClosingTime, $restaurantStoreHour->closingTime);
-                                }
-                            }
-
-                            for($i=0; $i<sizeOf($storeDay); $i++){
-                                if($prevDay == $storeDay[$i]){
-                                    if(strtotime($storeClosingTime[$i]) >= strtotime("00:00") && strtotime($storeClosingTime[$i]) <= strtotime("04:00")){
-                                        $isHasPrev = true;
-                                        $isHasPrevIndex = $i;
-                                    }
-                                }
-                                if($currentDay == $storeDay[$i]){
-                                    $isHasCurr = true;
-                                    $isHasCurrIndex = $i;
-                                }
-                            }
-                        
-                            if(strtotime($currentTime) >= strtotime("00:00") && strtotime($currentTime) <= strtotime("04:00")){
-                                if($isHasPrev){
-                                    if(strtotime($currentTime) <= strtotime($storeClosingTime[$isHasPrevIndex])){
-                                        $openingTime = date("g:i a", strtotime($storeOpeningTime[$isHasPrevIndex]));
-                                        $closingTime = date("g:i a", strtotime($storeClosingTime[$isHasPrevIndex]));
-                                        $rSchedule = "Open today at ".$openingTime." to ".$closingTime;
-                                    } else {
-                                        $rSchedule = "Closed Now";
-                                    }
-                                } else {
-                                    $rSchedule = "Closed Now";
-                                }
-                            } else if(strtotime($currentTime) >= strtotime("05:00") && strtotime($currentTime) <= strtotime("23:59")){
-                                if($isHasCurr){
-                                    if(strtotime($currentTime) >= strtotime($storeOpeningTime[$isHasCurrIndex]) && strtotime($currentTime) <= strtotime($storeClosingTime[$isHasCurrIndex])){
-                                        $openingTime = date("g:i a", strtotime($storeOpeningTime[$isHasCurrIndex]));
-                                        $closingTime = date("g:i a", strtotime($storeClosingTime[$isHasCurrIndex]));
-                                        $rSchedule = "Open today at ".$openingTime." to ".$closingTime;
-                                    } else {
-                                        $rSchedule = "Closed Now";
-                                    }
-                                } else {
-                                    $rSchedule = "Closed Now";
-                                }
-                            } else {
-                                $rSchedule = "Closed Now";
-                            }
-                        } else {
-                            $rSchedule = "Closed Now";
-                        }
+                        $rSchedule = $this->checkTodaySched($restaurant->id);
 
                         array_push($storeGeo , [
                             'rest_id' => $restaurant->id,
