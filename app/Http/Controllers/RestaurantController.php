@@ -745,9 +745,8 @@ class RestaurantController extends Controller
             $seniorDiscount + 
             $childrenDiscount + 
             $customerReserve->additionalDiscount + 
-            $customerReserve->promoDiscount +
-            $customerReserve->offenseCharges 
-        );
+            $customerReserve->promoDiscount 
+        ) + $customerReserve->offenseCharges;
 
 
         $customerQrAccess = CustomerQrAccess::where('custOrdering_id', $customerOrdering->id)
@@ -894,9 +893,8 @@ class RestaurantController extends Controller
             $seniorDiscount + 
             $childrenDiscount + 
             $customerQueue->additionalDiscount + 
-            $customerQueue->promoDiscount +
-            $customerQueue->offenseCharges 
-        );
+            $customerQueue->promoDiscount 
+        ) + $customerQueue->offenseCharges;
 
 
         $customerQrAccess = CustomerQrAccess::where('custOrdering_id', $customerOrdering->id)
@@ -1047,9 +1045,8 @@ class RestaurantController extends Controller
             $seniorDiscount + 
             $childrenDiscount + 
             $customerReserve->additionalDiscount + 
-            $customerReserve->promoDiscount +
-            $customerReserve->offenseCharges 
-        );
+            $customerReserve->promoDiscount 
+        ) + $customerReserve->offenseCharges;
 
 
         $customerQrAccess = CustomerQrAccess::where('custOrdering_id', $customerOrdering->id)
@@ -1196,9 +1193,8 @@ class RestaurantController extends Controller
             $seniorDiscount + 
             $childrenDiscount + 
             $customerQueue->additionalDiscount + 
-            $customerQueue->promoDiscount +
-            $customerQueue->offenseCharges 
-        );
+            $customerQueue->promoDiscount 
+        ) + $customerQueue->offenseCharges ;
 
 
         $customerQrAccess = CustomerQrAccess::where('custOrdering_id', $customerOrdering->id)
@@ -2321,9 +2317,8 @@ class RestaurantController extends Controller
             $seniorDiscount + 
             $childrenDiscount + 
             $customerBook->additionalDiscount + 
-            $customerBook->promoDiscount +
-            $customerBook->offenseCharges 
-        );
+            $customerBook->promoDiscount 
+        ) + $customerBook->offenseCharges ;
         
         return view('restaurant.liveTransactions.customerOrdering.custOrderSum', [
             'customerOrdering' => $customerOrdering,
@@ -4056,7 +4051,7 @@ class RestaurantController extends Controller
 
         Mail::to($request->emailAddress)->send(new RestaurantFormAppreciation($details));
         Session::flash('registered');
-        return redirect('/restaurant/register2');
+        return redirect('/restaurant/register');
     }
     public function registerView2(){
         return view('restaurant.register2');
@@ -7788,7 +7783,7 @@ class RestaurantController extends Controller
         $restAccId = Session::get('loginId');
         $request->validate([
             'contactNumber' => 'required|digits:11',
-            'landlineNumber' => 'digits:8',
+            'landlineNumber' => 'nullable|digits:8',
         ], 
         [
             'contactNumber.required' => 'Contact Number is required',

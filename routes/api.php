@@ -52,7 +52,6 @@ Route::get('/customer/get-booking-history/{cust_id}', [CustomerController::class
 Route::post('/customer/get-booking-history/cancelled', [CustomerController::class, 'getBookingHistoryCancelled']);
 Route::post('/customer/get-booking-history/complete', [CustomerController::class, 'getBookingHistoryComplete']);
 
-
 Route::get('/customer/scan-qr/{cust_id}/{request_cust_id}', [CustomerController::class, 'customerScanQr']);
 Route::get('/customer/ordering/request-access/{cust_id}/{request_cust_id}', [CustomerController::class, 'orderingRequestAccess']);
 Route::post('/customer/ordering/request-access/approved-declined', [CustomerController::class, 'orderingRequestAppDec']);
@@ -81,7 +80,7 @@ Route::get('/customer/get-stamp-cards/details/{stamp_id}', [CustomerController::
 
 Route::post('/customer/geofencing/notification', [CustomerController::class, 'geofenceNotifyCustomer']);
 
-
+Route::get('/customer/verify-email-link/{cust_id}', [CustomerController::class, 'custVerEmailLink']);
 
 Route::post('/customer/register-customer', [CustomerController::class, 'registerCustomer']);
 Route::post('/customer/login-customer', [CustomerController::class, 'loginCustomer']);

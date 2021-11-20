@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\CustomerEmailVerified;
 use App\Models\Post;
 use App\Models\Promo;
 use App\Models\Policy;
@@ -29,6 +30,7 @@ use App\Models\CustomerLRequest;
 use App\Models\CustomerOrdering;
 use App\Models\CustomerQrAccess;
 use App\Models\OrderSetFoodItem;
+use App\Mail\CustomerEVerifyLink;
 use App\Models\CustomerStampCard;
 use App\Models\CustomerTasksDone;
 use App\Models\RestaurantAccount;
@@ -42,6 +44,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\CustomerPasswordChanged;
 use App\Models\CustomerResetPassword;
+use Illuminate\Support\Facades\Session;
 
 class CustomerController extends Controller
 {
@@ -2716,6 +2719,8 @@ class CustomerController extends Controller
                 }
             }
 
+            
+
             return response()->json([
                 'bookDate' => "$month $day, $year",
                 'bookTime' => $bookTime,
@@ -3497,9 +3502,8 @@ class CustomerController extends Controller
                 $seniorDiscount + 
                 $childrenDiscount + 
                 $customerQueue->additionalDiscount + 
-                $customerQueue->promoDiscount +
-                $customerQueue->offenseCharges 
-            );
+                $customerQueue->promoDiscount
+            ) + $customerQueue->offenseCharges;
 
             // return response()->json($customerOrdering);
             return response()->json([
@@ -3570,9 +3574,8 @@ class CustomerController extends Controller
                 $seniorDiscount + 
                 $childrenDiscount + 
                 $customerReserve->additionalDiscount + 
-                $customerReserve->promoDiscount +
-                $customerReserve->offenseCharges 
-            );
+                $customerReserve->promoDiscount
+            ) + $customerReserve->offenseCharges;
 
             return response()->json([
                 'orderSetName' => $orderSet->orderSetName,
@@ -3780,18 +3783,95 @@ class CustomerController extends Controller
 
         if($customerQueue != null){
             $restaurant = RestaurantAccount::select('rGcashQrCodeImage', 'id')->where('id', $customerQueue->restAcc_id)->first();
-            $finalAmount = (number_format($customerQueue->totalPrice, 2, '.'));
             $finalRestGCQr = $this->RESTAURANT_GCASH_QR_IMAGE_PATH."/".$restaurant->id."/".$restaurant->rGcashQrCodeImage;
             $finalStatus = $customerQueue->checkoutStatus;
             $book_id = $customerQueue->id;
             $book_type = "queue";
+
+            $customerOrdering = CustomerOrdering::where('custBook_id', $customerQueue->id)
+            ->where('restAcc_id', $customerQueue->restAcc_id)
+            ->where('custBookType', 'queue')
+            ->first();
+
+            $customerOrders = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)->where('orderDone', 'Yes')->get();
+            $addOns = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)->where('orderDone', 'Yes')->sum('price');
+            $subTotal = ($customerQueue->orderSetPrice * $customerQueue->numberOfPersons) + $addOns;
+
+            $rewardDiscount = null;
+            if($customerQueue->rewardStatus == "Complete" && $customerQueue->rewardClaimed == "Yes"){
+                switch($customerQueue->rewardType){
+                    case "DSCN": 
+                        $rewardDiscount = ($customerQueue->numberOfPersons * $customerQueue->orderSetPrice) * ($customerQueue->rewardInput / 100);
+                        break;
+                    case "FRPE": 
+                        $rewardDiscount = $customerQueue->orderSetPrice * $customerQueue->rewardInput;
+                        break;
+                    case "HLF": 
+                        $rewardDiscount = ($customerQueue->numberOfPersons * $customerQueue->orderSetPrice) / 2;
+                        break;
+                    case "ALL": 
+                        $rewardDiscount = $customerQueue->numberOfPersons * $customerQueue->orderSetPrice;
+                        break;
+                }
+            }
+
+            $seniorDiscount = $customerQueue->orderSetPrice * ($customerQueue->numberOfPwd * 0.2);
+            $childrenDiscount = $customerQueue->orderSetPrice * ($customerQueue->numberOfChildren * ($customerQueue->childrenDiscount / 100));
+            $totalPrice = $subTotal - (
+                $rewardDiscount + 
+                $seniorDiscount + 
+                $childrenDiscount + 
+                $customerQueue->additionalDiscount + 
+                $customerQueue->promoDiscount 
+            ) + $customerQueue->offenseCharges;
+
+            $finalAmount = (number_format($totalPrice, 2, '.'));
+
         } else if($customerReserve != null){
             $restaurant = RestaurantAccount::select('rGcashQrCodeImage', 'id')->where('id', $customerReserve->restAcc_id)->first();
-            $finalAmount = (number_format($customerReserve->totalPrice, 2, '.'));
             $finalRestGCQr = $this->RESTAURANT_GCASH_QR_IMAGE_PATH."/".$restaurant->id."/".$restaurant->rGcashQrCodeImage;
             $finalStatus = $customerReserve->checkoutStatus;
             $book_id = $customerReserve->id;
             $book_type = "reserve";
+
+            $customerOrdering = CustomerOrdering::where('custBook_id', $customerReserve->id)
+            ->where('restAcc_id', $customerReserve->restAcc_id)
+            ->where('custBookType', 'queue')
+            ->first();
+
+            $customerOrders = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)->where('orderDone', 'Yes')->get();
+            $addOns = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)->where('orderDone', 'Yes')->sum('price');
+            $subTotal = ($customerReserve->orderSetPrice * $customerReserve->numberOfPersons) + $addOns;
+
+            $rewardDiscount = null;
+            if($customerReserve->rewardStatus == "Complete" && $customerReserve->rewardClaimed == "Yes"){
+                switch($customerReserve->rewardType){
+                    case "DSCN": 
+                        $rewardDiscount = ($customerReserve->numberOfPersons * $customerReserve->orderSetPrice) * ($customerReserve->rewardInput / 100);
+                        break;
+                    case "FRPE": 
+                        $rewardDiscount = $customerReserve->orderSetPrice * $customerReserve->rewardInput;
+                        break;
+                    case "HLF": 
+                        $rewardDiscount = ($customerReserve->numberOfPersons * $customerReserve->orderSetPrice) / 2;
+                        break;
+                    case "ALL": 
+                        $rewardDiscount = $customerReserve->numberOfPersons * $customerReserve->orderSetPrice;
+                        break;
+                }
+            }
+
+            $seniorDiscount = $customerReserve->orderSetPrice * ($customerReserve->numberOfPwd * 0.2);
+            $childrenDiscount = $customerReserve->orderSetPrice * ($customerReserve->numberOfChildren * ($customerReserve->childrenDiscount / 100));
+            $totalPrice = $subTotal - (
+                $rewardDiscount + 
+                $seniorDiscount + 
+                $childrenDiscount + 
+                $customerReserve->additionalDiscount + 
+                $customerReserve->promoDiscount 
+            ) + $customerReserve->offenseCharges;
+
+            $finalAmount = (number_format($totalPrice, 2, '.'));
         } else {}
 
         return response()->json([
@@ -4246,9 +4326,8 @@ class CustomerController extends Controller
                 $seniorDiscount + 
                 $childrenDiscount + 
                 $customerQueue->additionalDiscount + 
-                $customerQueue->promoDiscount +
-                $customerQueue->offenseCharges 
-            );
+                $customerQueue->promoDiscount
+            ) + $customerQueue->offenseCharges;
 
             return response()->json([
                 'bookDate' => "$month $day, $year",
@@ -4479,7 +4558,7 @@ class CustomerController extends Controller
 
         $finalResult = array();
         if($cust_lat != $cust_long){
-            $restaurants = RestaurantAccount::select('id', 'rName', 'rAddress', 'rBranch', 'rLogo', 'rLatitudeLoc', 'rLongitudeLoc', 'rRadius')->get();
+            $restaurants = RestaurantAccount::select('id', 'rName', 'rAddress', 'rBranch', 'rLogo', 'rLatitudeLoc', 'rLongitudeLoc', 'rRadius')->where('status', "Published")->get();
             $storeGeo = array();
             foreach ($restaurants as $restaurant){
                 $rest_lat = $restaurant->rLatitudeLoc;
@@ -4738,6 +4817,7 @@ class CustomerController extends Controller
         ->where('status', '!=', 'declined')
         ->where('status', '!=', 'noShow')
         ->where('status', '!=', 'runaway')
+        ->where('status', '!=', 'completed')
         ->orderBy('created_at', 'DESC')
         ->first();
 
@@ -4746,6 +4826,7 @@ class CustomerController extends Controller
         ->where('status', '!=', 'declined')
         ->where('status', '!=', 'noShow')
         ->where('status', '!=', 'runaway')
+        ->where('status', '!=', 'completed')
         ->orderBy('created_at', 'DESC')
         ->first();
 
@@ -4796,50 +4877,35 @@ class CustomerController extends Controller
             $customer = CustomerAccount::where('id', $request_cust_id)->first();
             $customerQueue = CustomerQueue::where('customer_id', $request_cust_id)->where('status', "eating")->first();
             $customerReserve = CustomerReserve::where('customer_id', $request_cust_id)->where('status', "eating")->first();
-            $userSinceDate = explode('-', date('Y-m-d', strtotime($customer->created_at)));
-            $month2 = $this->convertMonths($userSinceDate[1]);
-            $year2 = $userSinceDate[0];
-            $day2  = $userSinceDate[2];
-            $finalImageUrl = "";
-            if($customer->profileImage == null){
-                $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/user-default.png';
-            } else {
-                $finalImageUrl = $this->CUSTOMER_IMAGE_PATH.'/'.$request_cust_id.'/'. $customer->profileImage;
-            }
 
+            if($customer != null){
+                $userSinceDate = explode('-', date('Y-m-d', strtotime($customer->created_at)));
+                $month2 = $this->convertMonths($userSinceDate[1]);
+                $year2 = $userSinceDate[0];
+                $day2  = $userSinceDate[2];
+                $finalImageUrl = "";
+                if($customer->profileImage == null){
+                    $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/user-default.png';
+                } else {
+                    $finalImageUrl = $this->CUSTOMER_IMAGE_PATH.'/'.$request_cust_id.'/'. $customer->profileImage;
+                }
 
-            if($customerQueue != null){
-                $restaurant = RestaurantAccount::select('id', 'rName', 'rAddress', 'rCity')->where('id', $customerQueue->restAcc_id)->first();
-                $orderSet = OrderSet::where('id', $customerQueue->orderSet_id)->where('restAcc_id', $restaurant->id)->first();
-                $customerOrdering = CustomerOrdering::where('custBook_id', $customerQueue->id
-                )->where('custBookType', "queue")
-                ->where('status', "eating")
-                ->first();
-
-                if($customerOrdering->availableQrAccess >= 1){
-                    $checkAccess = CustomerQrAccess::where('mainCust_id', $request_cust_id)
-                    ->where('subCust_id', $cust_id)
-                    ->where('custOrdering_id', $customerOrdering->id)
-                    ->latest()
+                if($customerQueue != null){
+                    $restaurant = RestaurantAccount::select('id', 'rName', 'rAddress', 'rCity')->where('id', $customerQueue->restAcc_id)->first();
+                    $orderSet = OrderSet::where('id', $customerQueue->orderSet_id)->where('restAcc_id', $restaurant->id)->first();
+                    $customerOrdering = CustomerOrdering::where('custBook_id', $customerQueue->id)
+                    ->where('custBookType', "queue")
+                    ->where('status', "eating")
                     ->first();
-
-                    if($checkAccess == null){
-                        return response()->json([
-                            'custId' => $request_cust_id,
-                            'custImage' => $finalImageUrl,
-                            'custName' => $customer->name,
-                            'custEAddress' => $customer->emailAddress,
-                            'custCNumber' => $customer->contactNumber,
-                            'custJDate' => "User since: $month2 $day2, $year2",
-                            'bdRName' => $restaurant->rName,
-                            'bdRAddres' => "$restaurant->rAddress, $restaurant->rCity",
-                            'bdOrderName' => $orderSet->orderSetName,
-                            'bdBookType' => "Queue",
-                            'bdAccessSlot' => $customerOrdering->availableQrAccess,
-                            'reqStatus' => "Success",
-                        ]);
-                    } else {
-                        if($checkAccess->status == "declined") {
+    
+                    if($customerOrdering->availableQrAccess >= 1){
+                        $checkAccess = CustomerQrAccess::where('mainCust_id', $request_cust_id)
+                        ->where('subCust_id', $cust_id)
+                        ->where('custOrdering_id', $customerOrdering->id)
+                        ->latest()
+                        ->first();
+    
+                        if($checkAccess == null){
                             return response()->json([
                                 'custId' => $request_cust_id,
                                 'custImage' => $finalImageUrl,
@@ -4854,7 +4920,85 @@ class CustomerController extends Controller
                                 'bdAccessSlot' => $customerOrdering->availableQrAccess,
                                 'reqStatus' => "Success",
                             ]);
-                        } else if($checkAccess->status == "approved") {
+                        } else {
+                            if($checkAccess->status == "declined") {
+                                return response()->json([
+                                    'custId' => $request_cust_id,
+                                    'custImage' => $finalImageUrl,
+                                    'custName' => $customer->name,
+                                    'custEAddress' => $customer->emailAddress,
+                                    'custCNumber' => $customer->contactNumber,
+                                    'custJDate' => "User since: $month2 $day2, $year2",
+                                    'bdRName' => $restaurant->rName,
+                                    'bdRAddres' => "$restaurant->rAddress, $restaurant->rCity",
+                                    'bdOrderName' => $orderSet->orderSetName,
+                                    'bdBookType' => "Queue",
+                                    'bdAccessSlot' => $customerOrdering->availableQrAccess,
+                                    'reqStatus' => "Success",
+                                ]);
+                            } else if($checkAccess->status == "approved") {
+                                return response()->json([
+                                    'custId' => $request_cust_id,
+                                    'custImage' => $finalImageUrl,
+                                    'custName' => $customer->name,
+                                    'custEAddress' => $customer->emailAddress,
+                                    'custCNumber' => $customer->contactNumber,
+                                    'custJDate' => "User since: $month2 $day2, $year2",
+                                    'bdRName' => $restaurant->rName,
+                                    'bdRAddres' => "$restaurant->rAddress, $restaurant->rCity",
+                                    'bdOrderName' => $orderSet->orderSetName,
+                                    'bdBookType' => "Queue",
+                                    'bdAccessSlot' => $customerOrdering->availableQrAccess,
+                                    'reqStatus' => "Approved",
+                                ]);
+                            } else {
+                                return response()->json([
+                                    'custId' => $request_cust_id,
+                                    'custImage' => $finalImageUrl,
+                                    'custName' => $customer->name,
+                                    'custEAddress' => $customer->emailAddress,
+                                    'custCNumber' => $customer->contactNumber,
+                                    'custJDate' => "User since: $month2 $day2, $year2",
+                                    'bdRName' => $restaurant->rName,
+                                    'bdRAddres' => "$restaurant->rAddress, $restaurant->rCity",
+                                    'bdOrderName' => $orderSet->orderSetName,
+                                    'bdBookType' => "Queue",
+                                    'bdAccessSlot' => $customerOrdering->availableQrAccess,
+                                    'reqStatus' => "Pending",
+                                ]);
+                            }
+                        }
+                    } else {
+                        return response()->json([
+                            'custId' => $request_cust_id,
+                            'custImage' => $finalImageUrl,
+                            'custName' => $customer->name,
+                            'custEAddress' => $customer->emailAddress,
+                            'custCNumber' => $customer->contactNumber,
+                            'custJDate' => "User since: $month2 $day2, $year2",
+                            'bdRName' => $restaurant->rName,
+                            'bdRAddres' => "$restaurant->rAddress, $restaurant->rCity",
+                            'bdOrderName' => $orderSet->orderSetName,
+                            'bdBookType' => "Queue",
+                            'bdAccessSlot' => 0,
+                            'reqStatus' => "Full Slot",
+                        ]);
+                    }
+                } else if($customerReserve != null){
+                    $restaurant = RestaurantAccount::select('id', 'rName', 'rAddress', 'rCity')->where('id', $customerReserve->restAcc_id)->first();
+                    $orderSet = OrderSet::where('id', $customerReserve->orderSet_id)->where('restAcc_id', $restaurant->id)->first();
+                    $customerOrdering = CustomerOrdering::where('custBook_id', $customerReserve->id
+                    )->where('custBookType', "queue")
+                    ->where('status', "eating")
+                    ->first();
+    
+                    if($customerOrdering->availableQrAccess >= 1){
+                        $checkAccess = CustomerQrAccess::where('mainCust_id', $request_cust_id)
+                        ->where('subCust_id', $cust_id)
+                        ->where('custOrdering_id', $customerOrdering->id)
+                        ->first();
+    
+                        if($checkAccess == null){
                             return response()->json([
                                 'custId' => $request_cust_id,
                                 'custImage' => $finalImageUrl,
@@ -4865,9 +5009,9 @@ class CustomerController extends Controller
                                 'bdRName' => $restaurant->rName,
                                 'bdRAddres' => "$restaurant->rAddress, $restaurant->rCity",
                                 'bdOrderName' => $orderSet->orderSetName,
-                                'bdBookType' => "Queue",
+                                'bdBookType' => "Reserve",
                                 'bdAccessSlot' => $customerOrdering->availableQrAccess,
-                                'reqStatus' => "Approved",
+                                'reqStatus' => "Success",
                             ]);
                         } else {
                             return response()->json([
@@ -4880,57 +5024,12 @@ class CustomerController extends Controller
                                 'bdRName' => $restaurant->rName,
                                 'bdRAddres' => "$restaurant->rAddress, $restaurant->rCity",
                                 'bdOrderName' => $orderSet->orderSetName,
-                                'bdBookType' => "Queue",
+                                'bdBookType' => "Reserve",
                                 'bdAccessSlot' => $customerOrdering->availableQrAccess,
                                 'reqStatus' => "Pending",
                             ]);
                         }
-                    }
-                } else {
-                    return response()->json([
-                        'custId' => $request_cust_id,
-                        'custImage' => $finalImageUrl,
-                        'custName' => $customer->name,
-                        'custEAddress' => $customer->emailAddress,
-                        'custCNumber' => $customer->contactNumber,
-                        'custJDate' => "User since: $month2 $day2, $year2",
-                        'bdRName' => $restaurant->rName,
-                        'bdRAddres' => "$restaurant->rAddress, $restaurant->rCity",
-                        'bdOrderName' => $orderSet->orderSetName,
-                        'bdBookType' => "Queue",
-                        'bdAccessSlot' => 0,
-                        'reqStatus' => "Full Slot",
-                    ]);
-                }
-            } else if($customerReserve != null){
-                $restaurant = RestaurantAccount::select('id', 'rName', 'rAddress', 'rCity')->where('id', $customerReserve->restAcc_id)->first();
-                $orderSet = OrderSet::where('id', $customerReserve->orderSet_id)->where('restAcc_id', $restaurant->id)->first();
-                $customerOrdering = CustomerOrdering::where('custBook_id', $customerReserve->id
-                )->where('custBookType', "queue")
-                ->where('status', "eating")
-                ->first();
-
-                if($customerOrdering->availableQrAccess >= 1){
-                    $checkAccess = CustomerQrAccess::where('mainCust_id', $request_cust_id)
-                    ->where('subCust_id', $cust_id)
-                    ->where('custOrdering_id', $customerOrdering->id)
-                    ->first();
-
-                    if($checkAccess == null){
-                        return response()->json([
-                            'custId' => $request_cust_id,
-                            'custImage' => $finalImageUrl,
-                            'custName' => $customer->name,
-                            'custEAddress' => $customer->emailAddress,
-                            'custCNumber' => $customer->contactNumber,
-                            'custJDate' => "User since: $month2 $day2, $year2",
-                            'bdRName' => $restaurant->rName,
-                            'bdRAddres' => "$restaurant->rAddress, $restaurant->rCity",
-                            'bdOrderName' => $orderSet->orderSetName,
-                            'bdBookType' => "Reserve",
-                            'bdAccessSlot' => $customerOrdering->availableQrAccess,
-                            'reqStatus' => "Success",
-                        ]);
+    
                     } else {
                         return response()->json([
                             'custId' => $request_cust_id,
@@ -4943,42 +5042,26 @@ class CustomerController extends Controller
                             'bdRAddres' => "$restaurant->rAddress, $restaurant->rCity",
                             'bdOrderName' => $orderSet->orderSetName,
                             'bdBookType' => "Reserve",
-                            'bdAccessSlot' => $customerOrdering->availableQrAccess,
-                            'reqStatus' => "Pending",
+                            'bdAccessSlot' => 0,
+                            'reqStatus' => "Full Slot",
                         ]);
                     }
-
                 } else {
                     return response()->json([
-                        'custId' => $request_cust_id,
-                        'custImage' => $finalImageUrl,
-                        'custName' => $customer->name,
-                        'custEAddress' => $customer->emailAddress,
-                        'custCNumber' => $customer->contactNumber,
-                        'custJDate' => "User since: $month2 $day2, $year2",
-                        'bdRName' => $restaurant->rName,
-                        'bdRAddres' => "$restaurant->rAddress, $restaurant->rCity",
-                        'bdOrderName' => $orderSet->orderSetName,
-                        'bdBookType' => "Reserve",
-                        'bdAccessSlot' => 0,
-                        'reqStatus' => "Full Slot",
+                        'custId' => null,
+                        'custImage' => null,
+                        'custName' => null,
+                        'custEAddress' => null,
+                        'custCNumber' => null,
+                        'custJDate' => null,
+                        'bdRName' => null,
+                        'bdRAddres' => null,
+                        'bdOrderName' => null,
+                        'bdBookType' => null,
+                        'bdAccessSlot' => null,
+                        'reqStatus' => "Invalid Access",
                     ]);
                 }
-            } else {
-                return response()->json([
-                    'custId' => null,
-                    'custImage' => null,
-                    'custName' => null,
-                    'custEAddress' => null,
-                    'custCNumber' => null,
-                    'custJDate' => null,
-                    'bdRName' => null,
-                    'bdRAddres' => null,
-                    'bdOrderName' => null,
-                    'bdBookType' => null,
-                    'bdAccessSlot' => null,
-                    'reqStatus' => "Invalid Access",
-                ]);
             }
         }
     }
@@ -5496,5 +5579,41 @@ class CustomerController extends Controller
         return response()->json([
             'status' => "success"
         ]);
+    }
+    public function custVerEmailLink($cust_id){
+        $customer = CustomerAccount::where('id', $cust_id)->first();
+
+        if($customer != null){
+            $details = [
+                'link' => env('APP_URL') . '/customer/verify-email/'.$cust_id,
+                'applicantName' => $customer->name,
+            ];
+    
+            Mail::to($customer->emailAddress)->send(new CustomerEVerifyLink($details));
+    
+            return response()->json([
+                'status' => "success"
+            ]);
+        }
+    }
+    public function custVerifyEmail($cust_id){
+        $customer = CustomerAccount::where('id', $cust_id)->first();
+
+        if($customer != null){
+            if($customer->emailAddressVerified == "Yes"){
+                Session::flash('alreadyVerified');
+                return redirect('/');
+            } else {
+                CustomerAccount::where('id', $cust_id)->update(['emailAddressVerified' => "Yes"]);
+                
+                $details = [
+                    'applicantName' => $customer->name,
+                ];
+
+                Mail::to($customer->emailAddress)->send(new CustomerEmailVerified($details));
+                Session::flash('emailVerified');
+                return redirect('/');
+            }
+        }
     }
 }

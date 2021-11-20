@@ -32,6 +32,22 @@
                 'success'
             );  
         </script>
+    @elseif (session()->has('alreadyVerified'))
+        <script>
+            Swal.fire(
+                'Your email is already verified',
+                '',
+                'error'
+            );  
+        </script>
+    @elseif (session()->has('emailVerified'))
+        <script>
+            Swal.fire(
+                'Your email is verified',
+                'Thank you and have a good day!',
+                'success'
+            );  
+        </script>
     @endif
     <div class="fullpage ">
       <header class="top-0 z-50 w-full flex flex-wrap items-center justify-between px-2 header_1">

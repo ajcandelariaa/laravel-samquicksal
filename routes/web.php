@@ -244,4 +244,5 @@ Route::middleware(['adminLoggedOut'])->group(function(){
 // CUSTOMER MOBILE APP ROUTES
 Route::get('/customer/forgot-password/{token}/{emailAddress}', [CustomerController::class, 'resetPasswordView']);
 Route::post('/customer/forgot-password/{token}/{emailAddress}', [CustomerController::class, 'resetPassword']);
+Route::get('/customer/verify-email/{cust_id}', [CustomerController::class, 'custVerifyEmail']);
 
