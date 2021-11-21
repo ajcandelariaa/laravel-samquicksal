@@ -5189,7 +5189,7 @@ class CustomerController extends Controller
         // }
         
         return response()->json([
-            'status' => "success",
+            'status' => $request_cust_id,
         ]);
     }
     public function getNotificationQrValidate($cust_id, $notif_id){
