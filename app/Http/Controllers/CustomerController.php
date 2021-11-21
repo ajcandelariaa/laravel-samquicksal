@@ -5075,6 +5075,7 @@ class CustomerController extends Controller
         
         // if($customerQueue != null){
         //     $customer = CustomerAccount::where('id', $request_cust_id)->first();
+
         //     $customerOrdering = CustomerOrdering::where('custBook_id', $customerQueue->id)
         //     ->where('custBookType', "queue")
         //     ->where('status', "eating")
@@ -5128,6 +5129,7 @@ class CustomerController extends Controller
         //         );
         //         $this->sendFirebaseNotification($to2, $notification2, $data2);
         //     }
+
         //     $finalStatus = "success";
         // } else if($customerReserve != null){
         //     $customer = CustomerAccount::where('id', $request_cust_id)->first();
@@ -5189,7 +5191,7 @@ class CustomerController extends Controller
         // }
         
         return response()->json([
-            'status' => $request_cust_id,
+            'status' => $customerQueue->status,
         ]);
     }
     public function getNotificationQrValidate($cust_id, $notif_id){
