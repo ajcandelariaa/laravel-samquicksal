@@ -5073,125 +5073,125 @@ class CustomerController extends Controller
         $customerQueue = CustomerQueue::where('customer_id', $request_cust_id)->where('status', "eating")->first();
         $customerReserve = CustomerReserve::where('customer_id', $request_cust_id)->where('status', "eating")->first();
         
-        // if($customerQueue != null){
-        //     $customer = CustomerAccount::where('id', $request_cust_id)->first();
+        if($customerQueue != null){
+            $customer = CustomerAccount::where('id', $request_cust_id)->first();
 
-        //     $customerOrdering = CustomerOrdering::where('custBook_id', $customerQueue->id)
-        //     ->where('custBookType', "queue")
-        //     ->where('status', "eating")
-        //     ->first();
+            $customerOrdering = CustomerOrdering::where('custBook_id', $customerQueue->id)
+            ->where('custBookType', "queue")
+            ->where('status', "eating")
+            ->first();
 
-        //     CustomerQrAccess::create([
-        //         'custOrdering_id' =>  $customerOrdering->id,
-        //         'mainCust_id' => $request_cust_id,
-        //         'subCust_id' => $cust_id,
-        //         'tableNumber' => "0",
-        //         'status' => "pending",
-        //     ]);
+            CustomerQrAccess::create([
+                'custOrdering_id' =>  $customerOrdering->id,
+                'mainCust_id' => $request_cust_id,
+                'subCust_id' => $cust_id,
+                'tableNumber' => "0",
+                'status' => "pending",
+            ]);
 
-        //     $notif = CustomerNotification::create([
-        //         'customer_id' => $customer->id,
-        //         'restAcc_id' => 0,
-        //         'notificationType' => "QR Request",
-        //         'notificationTitle' => "Someone has scanned your QR Code. Please review it now.",
-        //         'notificationDescription' => "Samquicksal",
-        //         'notificationStatus' => "Unread",
-        //     ]);
+            $notif = CustomerNotification::create([
+                'customer_id' => $customer->id,
+                'restAcc_id' => 0,
+                'notificationType' => "QR Request",
+                'notificationTitle' => "Someone has scanned your QR Code. Please review it now.",
+                'notificationDescription' => "Samquicksal",
+                'notificationStatus' => "Unread",
+            ]);
 
-        //     $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/samquicksalLogo.png';
-        //     if($customer != null){
-        //         $to = $customer->deviceToken;
-        //         $notification = array(
-        //             'title' => "Hi $customer->name, Someone has scanned your QR Code!",
-        //             'body' => "Please review it now.",
-        //         );
-        //         $data = array(
-        //             'notificationType' => "QR Request",
-        //             'notificationId' => $notif->id,
-        //             'notificationRLogo' => $finalImageUrl,
-        //         );
-        //         $this->sendFirebaseNotification($to, $notification, $data);
-        //     }
+            $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/samquicksalLogo.png';
+            if($customer != null){
+                $to = $customer->deviceToken;
+                $notification = array(
+                    'title' => "Hi $customer->name, Someone has scanned your QR Code!",
+                    'body' => "Please review it now.",
+                );
+                $data = array(
+                    'notificationType' => "QR Request",
+                    'notificationId' => $notif->id,
+                    'notificationRLogo' => $finalImageUrl,
+                );
+                $this->sendFirebaseNotification($to, $notification, $data);
+            }
 
 
-        //     $customerSub = CustomerAccount::where('id', $cust_id)->first();
-        //     $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/samquicksalLogo.png';
-        //     if($customerSub != null){
-        //         $to2 = $customerSub->deviceToken;
-        //         $notification2 = array(
-        //             'title' => "Hi $customerSub->name, Your request has been sent",
-        //             'body' => "Please wait for your friend to validate your request. Thank you for your patience.",
-        //         );
-        //         $data2 = array(
-        //             'notificationType' => "QR Request Sub",
-        //             'notificationId' => 0,
-        //             'notificationRLogo' => $finalImageUrl,
-        //         );
-        //         $this->sendFirebaseNotification($to2, $notification2, $data2);
-        //     }
+            $customerSub = CustomerAccount::where('id', $cust_id)->first();
+            $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/samquicksalLogo.png';
+            if($customerSub != null){
+                $to2 = $customerSub->deviceToken;
+                $notification2 = array(
+                    'title' => "Hi $customerSub->name, Your request has been sent",
+                    'body' => "Please wait for your friend to validate your request. Thank you for your patience.",
+                );
+                $data2 = array(
+                    'notificationType' => "QR Request Sub",
+                    'notificationId' => 0,
+                    'notificationRLogo' => $finalImageUrl,
+                );
+                $this->sendFirebaseNotification($to2, $notification2, $data2);
+            }
 
-        //     $finalStatus = "success";
-        // } else if($customerReserve != null){
-        //     $customer = CustomerAccount::where('id', $request_cust_id)->first();
-        //     $customerOrdering = CustomerOrdering::where('custBook_id', $customerReserve->id)
-        //     ->where('custBookType', "queue")
-        //     ->where('status', "eating")
-        //     ->first();
+            $finalStatus = "success";
+        } else if($customerReserve != null){
+            $customer = CustomerAccount::where('id', $request_cust_id)->first();
+            $customerOrdering = CustomerOrdering::where('custBook_id', $customerReserve->id)
+            ->where('custBookType', "queue")
+            ->where('status', "eating")
+            ->first();
 
-        //     CustomerQrAccess::create([
-        //         'custOrdering_id' =>  $customerOrdering->id,
-        //         'mainCust_id' => $request_cust_id,
-        //         'subCust_id' => $cust_id,
-        //         'tableNumber' => "0",
-        //         'status' => "pending",
-        //     ]);
+            CustomerQrAccess::create([
+                'custOrdering_id' =>  $customerOrdering->id,
+                'mainCust_id' => $request_cust_id,
+                'subCust_id' => $cust_id,
+                'tableNumber' => "0",
+                'status' => "pending",
+            ]);
 
-        //     $notif = CustomerNotification::create([
-        //         'customer_id' => $customer->id,
-        //         'restAcc_id' => 0,
-        //         'notificationType' => "QR Request",
-        //         'notificationTitle' => "Someone has scanned your QR Code. Please review it now.",
-        //         'notificationDescription' => "Samquicksal",
-        //         'notificationStatus' => "Unread",
-        //     ]);
+            $notif = CustomerNotification::create([
+                'customer_id' => $customer->id,
+                'restAcc_id' => 0,
+                'notificationType' => "QR Request",
+                'notificationTitle' => "Someone has scanned your QR Code. Please review it now.",
+                'notificationDescription' => "Samquicksal",
+                'notificationStatus' => "Unread",
+            ]);
 
-        //     $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/samquicksalLogo.png';
-        //     if($customer != null){
-        //         $to = $customer->deviceToken;
-        //         $notification = array(
-        //             'title' => "Hi $customer->name, Someone has scanned your QR Code!",
-        //             'body' => "Please review it now.",
-        //         );
-        //         $data = array(
-        //             'notificationType' => "QR Request",
-        //             'notificationId' => $notif->id,
-        //             'notificationRLogo' => $finalImageUrl,
-        //         );
-        //         $this->sendFirebaseNotification($to, $notification, $data);
-        //     }
+            $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/samquicksalLogo.png';
+            if($customer != null){
+                $to = $customer->deviceToken;
+                $notification = array(
+                    'title' => "Hi $customer->name, Someone has scanned your QR Code!",
+                    'body' => "Please review it now.",
+                );
+                $data = array(
+                    'notificationType' => "QR Request",
+                    'notificationId' => $notif->id,
+                    'notificationRLogo' => $finalImageUrl,
+                );
+                $this->sendFirebaseNotification($to, $notification, $data);
+            }
 
-        //     $customerSub = CustomerAccount::where('id', $cust_id)->first();
-        //     $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/samquicksalLogo.png';
-        //     if($customerSub != null){
-        //         $to2 = $customerSub->deviceToken;
-        //         $notification2 = array(
-        //             'title' => "Hi $customerSub->name, Your request has been sent",
-        //             'body' => "Please wait for your friend to validate your request. Thank you for your patience.",
-        //         );
-        //         $data2 = array(
-        //             'notificationType' => "QR Request Sub",
-        //             'notificationId' => 0,
-        //             'notificationRLogo' => $finalImageUrl,
-        //         );
-        //         $this->sendFirebaseNotification($to2, $notification2, $data2);
-        //     }
-        //     $finalStatus = "success";
-        // } else {
-        //     $finalStatus = "error";
-        // }
+            $customerSub = CustomerAccount::where('id', $cust_id)->first();
+            $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/samquicksalLogo.png';
+            if($customerSub != null){
+                $to2 = $customerSub->deviceToken;
+                $notification2 = array(
+                    'title' => "Hi $customerSub->name, Your request has been sent",
+                    'body' => "Please wait for your friend to validate your request. Thank you for your patience.",
+                );
+                $data2 = array(
+                    'notificationType' => "QR Request Sub",
+                    'notificationId' => 0,
+                    'notificationRLogo' => $finalImageUrl,
+                );
+                $this->sendFirebaseNotification($to2, $notification2, $data2);
+            }
+            $finalStatus = "success";
+        } else {
+            $finalStatus = "error";
+        }
         
         return response()->json([
-            'status' => $customerQueue->status,
+            'status' => $finalStatus,
         ]);
     }
     public function getNotificationQrValidate($cust_id, $notif_id){

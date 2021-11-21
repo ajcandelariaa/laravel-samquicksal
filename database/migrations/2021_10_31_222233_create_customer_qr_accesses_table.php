@@ -20,7 +20,7 @@ class CreateCustomerQrAccessesTable extends Migration
             $table->unsignedBigInteger('subCust_id');
             $table->string('tableNumber')->nullable();
             $table->string('status');
-            $table->dateTime('approvedDateTime');
+            $table->dateTime('approvedDateTime')->nullable();
             $table->timestamps();
         });
     }
