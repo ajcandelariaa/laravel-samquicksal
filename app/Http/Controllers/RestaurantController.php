@@ -5626,6 +5626,8 @@ class RestaurantController extends Controller
                     'customer_id' => 0,
                     'restAcc_id' => $restAcc_id,
                     'orderSet_id' => $request->walkInOrder,
+                    'orderSetName' => $orderSet->orderSetName,
+                    'orderSetPrice' => $orderSet->orderSetPrice,
                     'status' => "approved",
                     'name' => $request->walkInName,
                     'numberOfPersons' => $request->walkInPersons,
