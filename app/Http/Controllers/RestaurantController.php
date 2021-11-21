@@ -53,8 +53,11 @@ use App\Models\RestStampTasksHis;
 
 class RestaurantController extends Controller
 {
-    public $RESTAURANT_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/logo";
-    public $ACCOUNT_NO_IMAGE_PATH = "http://192.168.1.53:8000/images";
+    // public $RESTAURANT_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/logo";
+    // public $ACCOUNT_NO_IMAGE_PATH = "http://192.168.1.53:8000/images";
+    
+    public $RESTAURANT_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/logo";
+    public $ACCOUNT_NO_IMAGE_PATH = "https://www.samquicksal.com/images";
 
 
     // FOR CHECKING THE EXPIRATION DATES OF STAMPS
@@ -190,6 +193,7 @@ class RestaurantController extends Controller
 
             for($i=0; $i<sizeOf($storeDay); $i++){
                 if($prevDay == $storeDay[$i]){
+                    //check muna kung yung previous day ay may 4am na sched
                     if(strtotime($storeClosingTime[$i]) >= strtotime("00:00") && strtotime($storeClosingTime[$i]) <= strtotime("04:00")){
                         $isHasPrev = true;
                         $isHasPrevIndex = $i;
@@ -215,7 +219,7 @@ class RestaurantController extends Controller
                 }
             } else if(strtotime($currentTime) >= strtotime("05:00") && strtotime($currentTime) <= strtotime("23:59")){
                 if($isHasCurr){
-                    if(strtotime($currentTime) >= strtotime($storeOpeningTime[$isHasCurrIndex]) && strtotime($currentTime) <= strtotime($storeClosingTime[$isHasCurrIndex])){
+                    if(strtotime($currentTime) >= strtotime($storeOpeningTime[$isHasCurrIndex]) && strtotime($currentTime) <= strtotime("23:59")){
                         $openingTime = date("g:i a", strtotime($storeOpeningTime[$isHasCurrIndex]));
                         $closingTime = date("g:i a", strtotime($storeClosingTime[$isHasCurrIndex]));
                         $rSchedule = "Open today at ".$openingTime." to ".$closingTime;
@@ -8760,9 +8764,11 @@ class RestaurantController extends Controller
             ];
             Mail::to($data->emailAddress)->send(new RestaurantVerified($details));
             RestaurantAccount::where('id', $id)->update(['verified' => "Yes"]);
-            return redirect('/restaurant/login');
+            Session::flash('emailVerified');
+            return redirect('/');
         } else {
-            return redirect('/restaurant/login');
+            Session::flash('alreadyVerified');
+            return redirect('/');
         }
     }
 }

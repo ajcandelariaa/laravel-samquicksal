@@ -171,14 +171,14 @@
                         <div class="w-11/12 mx-auto">
                             <div class="grid grid-cols-2">
                                 <div>
-                                    <p class="mt-2">Runaway Date: <span class="font-bold">{{ $cancelledDate }}</span></p>
+                                    <p class="mt-2">Completed Date: <span class="font-bold">{{ $cancelledDate }}</span></p>
                                     <p class="mt-2">Order Set: <span class="font-bold">{{ $customerQueue->orderSetName }}</span></p>
                                     <p class="mt-2">No. of Persons: <span class="font-bold">{{ $customerQueue->numberOfPersons }}</span></p>
                                     <p class="mt-2">Senior Citizen/PWD: <span class="font-bold">{{ $customerQueue->numberOfPwd }}</span></p>
                                     <p class="mt-2">Reward: <span class="font-bold">{{ $finalReward }}</span></p>
                                 </div>
                                 <div>
-                                    <p class="mt-2">Runaway Time: <span class="font-bold">{{ $cancelledTime }}</span></p>
+                                    <p class="mt-2">Completed Time: <span class="font-bold">{{ $cancelledTime }}</span></p>
                                     <p class="mt-2">Hours of Stay: <span class="font-bold">{{ $customerQueue->hoursOfStay }} hours</span></p>
                                     <p class="mt-2">No. of Tables: <span class="font-bold">{{ $customerQueue->numberOfTables }}</span></p>
                                     <p class="mt-2">Children (7 below): <span class="font-bold">{{ $customerQueue->numberOfChildren }}</span></p>

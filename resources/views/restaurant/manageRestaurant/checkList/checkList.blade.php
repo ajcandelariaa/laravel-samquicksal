@@ -33,11 +33,10 @@
                         <p class="text-sm w-10/12 mx-auto mt-5">So let’s do quick review before showing it to the public! </p>
                     </div>
 
-                    
                     <div class="col-span-1 row-span-2 bg-manageFoodItemHeaderBgColor py-7">
                         <h2 class="text-xl text-center font-bold">Share your Restaurant to the Public!</h2>
-                        <img src="{{ asset('images/publishLogo.png') }}" alt="publishLogo" class="w-52 mx-auto mt-10">
-                        <p class="text-sm text-center font-bold mt-16">If changes has been made, you are Good to Go!</p>
+                        <img src="{{ asset('images/publishLogo2.png') }}" alt="publishLogo" class="w-72 mx-auto mt-10">
+                        <p class="text-sm text-center font-bold">If changes has been made, you are Good to Go!</p>
                         <p class="text-sm w-10/12 mx-auto font-bold  mt-16">Please note that after you publish your restaurant, changes in Manage Restaurant will be applied and may affect the following:</p>
                         <p class="text-xs w-10/12 mx-auto mt-5 ml-20">1. Upon updating the number of tables and table capacity will only apply after opening hours. Also, all the reservation onwards will be void and it will notify the customers.</p>
                         <p class="text-xs w-10/12 mx-auto mt-2 ml-20">2. In Food menu you can't edit and delete any item but you can add, hide and not available the status of that item.</p>

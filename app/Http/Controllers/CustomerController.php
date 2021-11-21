@@ -48,25 +48,25 @@ use Illuminate\Support\Facades\Session;
 
 class CustomerController extends Controller
 {
-    public $RESTAURANT_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/logo";
-    public $ACCOUNT_NO_IMAGE_PATH = "http://192.168.1.53:8000/images";
-    public $CUSTOMER_IMAGE_PATH = "http://192.168.1.53:8000/uploads/customerAccounts/logo";
-    public $POST_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/post";
-    public $PROMO_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/promo";
-    public $ORDER_SET_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/orderSet";
-    public $FOOD_SET_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/foodSet";
-    public $FOOD_ITEM_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/foodItem";
-    public $RESTAURANT_GCASH_QR_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/gcashQr";
+    // public $RESTAURANT_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/logo";
+    // public $ACCOUNT_NO_IMAGE_PATH = "http://192.168.1.53:8000/images";
+    // public $CUSTOMER_IMAGE_PATH = "http://192.168.1.53:8000/uploads/customerAccounts/logo";
+    // public $POST_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/post";
+    // public $PROMO_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/promo";
+    // public $ORDER_SET_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/orderSet";
+    // public $FOOD_SET_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/foodSet";
+    // public $FOOD_ITEM_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/foodItem";
+    // public $RESTAURANT_GCASH_QR_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/gcashQr";
     
-    // public $RESTAURANT_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/logo";
-    // public $ACCOUNT_NO_IMAGE_PATH = "https://www.samquicksal.com/images";
-    // public $CUSTOMER_IMAGE_PATH = "https://www.samquicksal.com/uploads/customerAccounts/logo";
-    // public $POST_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/post";
-    // public $PROMO_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/promo";
-    // public $ORDER_SET_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/orderSet";
-    // public $FOOD_SET_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/foodSet";
-    // public $FOOD_ITEM_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/foodItem";
-    // public $RESTAURANT_GCASH_QR_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/gcashQr";
+    public $RESTAURANT_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/logo";
+    public $ACCOUNT_NO_IMAGE_PATH = "https://www.samquicksal.com/images";
+    public $CUSTOMER_IMAGE_PATH = "https://www.samquicksal.com/uploads/customerAccounts/logo";
+    public $POST_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/post";
+    public $PROMO_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/promo";
+    public $ORDER_SET_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/orderSet";
+    public $FOOD_SET_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/foodSet";
+    public $FOOD_ITEM_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/foodItem";
+    public $RESTAURANT_GCASH_QR_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/gcashQr";
 
 
     public function sendFirebaseNotification($to, $notification, $data){
@@ -172,7 +172,7 @@ class CustomerController extends Controller
                 $getAvailability = "Closed Now";
             }
         }
-        
+
         if($getAvailability == "Open"){
             $storeDay = array();
             $storeOpeningTime = array();
@@ -225,7 +225,7 @@ class CustomerController extends Controller
                 }
             } else if(strtotime($currentTime) >= strtotime("05:00") && strtotime($currentTime) <= strtotime("23:59")){
                 if($isHasCurr){
-                    if(strtotime($currentTime) >= strtotime($storeOpeningTime[$isHasCurrIndex]) && strtotime($currentTime) <= strtotime($storeClosingTime[$isHasCurrIndex])){
+                    if(strtotime($currentTime) >= strtotime($storeOpeningTime[$isHasCurrIndex]) && strtotime($currentTime) <= strtotime("23:59")){
                         $openingTime = date("g:i a", strtotime($storeOpeningTime[$isHasCurrIndex]));
                         $closingTime = date("g:i a", strtotime($storeClosingTime[$isHasCurrIndex]));
                         $rSchedule = "Open today at ".$openingTime." to ".$closingTime;
@@ -241,7 +241,6 @@ class CustomerController extends Controller
         } else {
             $rSchedule = "Closed Now";
         }
-
         return $rSchedule;
     }
 
@@ -655,7 +654,7 @@ class CustomerController extends Controller
             $description = "You cannot book as of now because you are currently reserve.";
             $status = "onGoing";
         } else if ($customerQrAccess != null) {
-            $customerOrdering = CustomerOrdering::where('id', $customerQrAccess->custOrdering_id)->where('status', "checkout")->first();
+            $customerOrdering = CustomerOrdering::where('id', $customerQrAccess->custOrdering_id)->where('status', "eating")->first();
             if($customerOrdering != null){
                 $description = "You cannot book as of now because you currently have an access to your friend that are currently booked.";
                 $status = "onGoing";
@@ -725,7 +724,7 @@ class CustomerController extends Controller
         $finalData = array();
         $finalRewardStatus = "";
         $finalRewardType = "";
-        $finalRewardInput = "";
+        $finalRewardInput = 0;
 
         $restaurant = RestaurantAccount::select('rName', 'rTimeLimit', 'rCapacityPerTable')->where('id', $id)->first();
         $orderSets = OrderSet::where('restAcc_id', $id)->where('status', "Visible")->get();
@@ -2845,6 +2844,7 @@ class CustomerController extends Controller
                         'foodSetImage' => $this->ACCOUNT_NO_IMAGE_PATH."/add_ons_img.png",
                         'foodSetName' => "Add Ons",
                         'foodSetDescription' => "Includes extra charges on your total bill",
+                        'foodSetAvailable' => "Yes",
                     ]);
                 }
 
@@ -2885,6 +2885,7 @@ class CustomerController extends Controller
                         'foodSetImage' => $this->ACCOUNT_NO_IMAGE_PATH."/add_ons_img.png",
                         'foodSetName' => "Add Ons",
                         'foodSetDescription' => "Add ons contain price",
+                        'foodSetAvailable' => "Yes",
                     ]);
                 }
             }
@@ -4611,6 +4612,7 @@ class CustomerController extends Controller
                 $notifcations = CustomerNotification::where('customer_id', $cust_id)
                 ->where('restAcc_id', $existingNotif['rest_id'])
                 ->where('notificationType', 'Geofencing')
+                ->orderBy('created_at', 'DESC')
                 ->first();
 
                 if($notifcations != null){
@@ -5070,6 +5072,7 @@ class CustomerController extends Controller
         $finalStatus = "";
         $customerQueue = CustomerQueue::where('customer_id', $request_cust_id)->where('status', "eating")->first();
         $customerReserve = CustomerReserve::where('customer_id', $request_cust_id)->where('status', "eating")->first();
+        
         if($customerQueue != null){
             $customer = CustomerAccount::where('id', $request_cust_id)->first();
             $customerOrdering = CustomerOrdering::where('custBook_id', $customerQueue->id)
