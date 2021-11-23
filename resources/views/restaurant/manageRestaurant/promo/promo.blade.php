@@ -71,7 +71,17 @@
                 @foreach ($promos as $promo)  
                     @if ($count % 2 == 0)
                         <div class="tr bg-manageFoodItemHeaderBgColor grid grid-cols-10 justify-items-center items-center py-3 px-5 mb-3">
-                            <div class="td col-span-1">{{ $count }}</div>
+                            <div class="td col-span-1">
+                                @if (isset($_GET['page']))
+                                    @if ($_GET['page'] == 1)
+                                        {{ $count }}
+                                    @else
+                                        {{ ((($_GET['page'] - 1) * 10) + $count) }}
+                                    @endif
+                                @else
+                                    {{ $count }}
+                                @endif
+                            </div>
                             <div class="td col-span-3">
                                 <img src="{{ asset('uploads/restaurantAccounts/promo/'.$id.'/'.$promo->promoImage) }}" alt="promoImage" class="w-12 h-12">
                             </div>
@@ -92,7 +102,17 @@
                         </div>
                     @else
                         <div class="tr bg-white grid grid-cols-10 justify-items-center items-center py-3 px-5 mb-3">
-                            <div class="td col-span-1">{{ $count }}</div>
+                            <div class="td col-span-1">
+                                @if (isset($_GET['page']))
+                                    @if ($_GET['page'] == 1)
+                                        {{ $count }}
+                                    @else
+                                        {{ ((($_GET['page'] - 1) * 10) + $count) }}
+                                    @endif
+                                @else
+                                    {{ $count }}
+                                @endif
+                            </div>
                             <div class="td col-span-3">
                                 <img src="{{ asset('uploads/restaurantAccounts/promo/'.$id.'/'.$promo->promoImage) }}" alt="promoImage" class="w-12 h-12">
                             </div>

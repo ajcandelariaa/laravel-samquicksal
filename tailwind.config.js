@@ -90,6 +90,7 @@ module.exports = {
         Montserrat: ['Montserrat', 'sans-serif'],
         Roboto: ['Roboto', 'sans-serif'],
         Molle: ['Molle', 'sans-serif'],
+        Raleway: ['Raleway', 'sans-serif'],
       },
       keyframes: {
         blob: {

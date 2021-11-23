@@ -113,7 +113,7 @@
                 @csrf
                 <div class="flex flex-row w-5/12 gap-y-5 mx-auto mt-10">
                     <h1 class="mr-3 text-lg">Input:</h1>
-                    <input type="text" name="task1" value="{{ $tasks[0]->taskInput }}" class="border rounded-md focus:border-black w-full py-1 px-2 text-sm focus:outline-non text-gray-700" required>
+                    <input type="number" min="1" name="task1" value="{{ $tasks[0]->taskInput }}" class="border rounded-md focus:border-black w-full py-1 px-2 text-sm focus:outline-non text-gray-700" required>
                 </div>
                 <div class="text-center mt-10">
                     <button class="bg-submitButton text-white hover:bg-darkerSubmitButton hover:text-gray-300 rounded-full w-32 h-10 text-sm uppercase font-bold transition duration-200 ease-in-out  " type="submit">Update</button>
@@ -131,7 +131,7 @@
                 @csrf
                 <div class="flex flex-row w-5/12 gap-y-5 mx-auto mt-10">
                     <h1 class="mr-3 text-lg">Input:</h1>
-                    <input type="text" name="task2" value="{{ $tasks[1]->taskInput }}" class="border rounded-md focus:border-black w-full py-1 px-2 text-sm focus:outline-non text-gray-700" required>
+                    <input type="number" min="1" name="task2" value="{{ $tasks[1]->taskInput }}" class="border rounded-md focus:border-black w-full py-1 px-2 text-sm focus:outline-non text-gray-700" required>
                 </div>
                 <div class="text-center mt-10">
                     <button class="bg-submitButton text-white hover:bg-darkerSubmitButton hover:text-gray-300 rounded-full w-32 h-10 text-sm uppercase font-bold transition duration-200 ease-in-out  " type="submit">Update</button>
@@ -149,7 +149,7 @@
                 @csrf
                 <div class="flex flex-row w-5/12 gap-y-5 mx-auto mt-10">
                     <h1 class="mr-3 text-lg">Input:</h1>
-                    <input type="text" name="task3" value="{{ $tasks[2]->taskInput }}" class="border rounded-md focus:border-black w-full py-1 px-2 text-sm focus:outline-non text-gray-700" required>
+                    <input type="number" min="1" name="task3" value="{{ $tasks[2]->taskInput }}" class="border rounded-md focus:border-black w-full py-1 px-2 text-sm focus:outline-non text-gray-700" required>
                 </div>
                 <div class="text-center mt-10">
                     <button class="bg-submitButton text-white hover:bg-darkerSubmitButton hover:text-gray-300 rounded-full w-32 h-10 text-sm uppercase font-bold transition duration-200 ease-in-out  " type="submit">Update</button>

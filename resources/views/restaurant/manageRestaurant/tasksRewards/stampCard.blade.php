@@ -36,7 +36,7 @@
                             <div class="text-left text-submitButton font-bold">Stamp Capacity</div>
                             <div class="text-left text-submitButton">:</div>
                             <div class="">
-                                <input type="text" name="stampCapacity" class="w-full border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none  focus:border-black">
+                                <input type="number" min="1" name="stampCapacity" class="w-full border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none  focus:border-black">
                                 <span class="mt-2 text-red-600 italic text-sm">@error('stampCapacity'){{ $message }}@enderror</span>
                             </div>
     
@@ -50,7 +50,7 @@
                                     <option value="{{ $rewards[2]->id }}">Half in the group will be free</option>
                                     <option value="{{ $rewards[3]->id }}">All people in the group will be free</option>
                                 </select>
-                                <span class="mt-2 text-red-600 italic text-sm">@error('stampRewards'){{ $message }}@enderror</span>
+                                <span class="mt-2 text-red-600 italic text-sm">@error('stampReward'){{ $message }}@enderror</span>
                             </div>
     
                             <div class="text-left text-submitButton font-bold">Tasks</div>
@@ -77,7 +77,7 @@
                                 <div>
                                     <input type="checkbox" name="tasks[]" value="{{ $tasks[6]->id }}" class="mr-2 cursor-pointer"> Eat during lunch/dinner hours
                                 </div>
-                                <span class="mt-2 text-red-600 italic text-sm">@error('taks'){{ $message }}@enderror</span>
+                                <span class="mt-2 text-red-600 italic text-sm">@error('tasks'){{ $message }}@enderror</span>
                             </div>
     
                             <div class="text-left text-submitButton font-bold">Validity Period</div>

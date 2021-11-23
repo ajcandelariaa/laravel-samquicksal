@@ -167,7 +167,7 @@
                                         <div class="col-span-3">{{ $foodItem->foodItemName }}</div>
                                         <div class="col-span-2">₱ {{ $foodItem->foodItemPrice }}</div>
                                         <div class="col-span-1">
-                                            <a href="/restaurant/manage-restaurant/food-menu/food-item" target="_blank"><i class="fas fa-eye"></i></a>
+                                            <a href="/restaurant/manage-restaurant/food-menu/food-item/edit/{{ $foodItem->id  }}" target="_blank"><i class="fas fa-eye"></i></a>
                                         </div>
                                         <div class="col-span-1">
                                             <a href="/restaurant/manage-restaurant/food-menu/food-set/item/delete/{{ $foodSet->id }}/{{ $foodSetItem->id }}" class="btn-delete2  "><i class="fas fa-trash-alt"></i></a>

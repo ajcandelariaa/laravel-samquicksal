@@ -165,19 +165,22 @@ class CustomerController extends Controller
 
         $getAvailability = "Open";
         $rSchedule = "";
+        $getUDStartTimeasED = "none";
 
-        $restaurantUnavailableDates = UnavailableDate::select('unavailableDatesDate')->where('restAcc_id', $restaurant->id)->get();
-        foreach ($restaurantUnavailableDates as $restaurantUnavailableDate) {
-            if($restaurantUnavailableDate->unavailableDatesDate == date("Y-m-d") && $restaurantUnavailableDate->startTime <= date('H:i')){
-                $getAvailability = "Closed Now";
+        $restaurantUnavailableDates = UnavailableDate::select('unavailableDatesDate', 'startTime')->where('restAcc_id', $restaurant->id)->get();
+        if(!$restaurantUnavailableDates->isEmpty()){
+            foreach ($restaurantUnavailableDates as $restaurantUnavailableDate) {
+                if($restaurantUnavailableDate->unavailableDatesDate == date("Y-m-d")){
+                    if($restaurantUnavailableDate->startTime <= date('H:i')){
+                        $getAvailability = "Closed Now";
+                    } else {
+                        $getUDStartTimeasED = $restaurantUnavailableDate->startTime;
+                    }
+                }
             }
         }
 
         if($getAvailability == "Open"){
-            $storeDay = array();
-            $storeOpeningTime = array();
-            $storeClosingTime = array();
-
             $currentDay = date('l');
             $prevDay = date('l', strtotime(date('Y-m-d') . " -1 days"));
 
@@ -188,7 +191,10 @@ class CustomerController extends Controller
             $isHasPrevIndex = "";
 
             $currentTime = date("H:i");
-
+            
+            $storeDay = array();
+            $storeOpeningTime = array();
+            $storeClosingTime = array();
             $restaurantStoreHours = StoreHour::where('restAcc_id', $restaurant->id)->get();
             foreach ($restaurantStoreHours as $restaurantStoreHour){
                 foreach (explode(",", $restaurantStoreHour->days) as $day){
@@ -197,7 +203,6 @@ class CustomerController extends Controller
                     array_push($storeClosingTime, $restaurantStoreHour->closingTime);
                 }
             }
-
             for($i=0; $i<sizeOf($storeDay); $i++){
                 if($prevDay == $storeDay[$i]){
                     if(strtotime($storeClosingTime[$i]) >= strtotime("00:00") && strtotime($storeClosingTime[$i]) <= strtotime("04:00")){
@@ -216,6 +221,9 @@ class CustomerController extends Controller
                     if(strtotime($currentTime) <= strtotime($storeClosingTime[$isHasPrevIndex])){
                         $openingTime = date("g:i a", strtotime($storeOpeningTime[$isHasPrevIndex]));
                         $closingTime = date("g:i a", strtotime($storeClosingTime[$isHasPrevIndex]));
+                        if($getUDStartTimeasED != "none"){
+                            $closingTime = date("g:i a", strtotime($getUDStartTimeasED));
+                        }
                         $rSchedule = "Open today at ".$openingTime." to ".$closingTime;
                     } else {
                         $rSchedule = "Closed Now";
@@ -225,12 +233,24 @@ class CustomerController extends Controller
                 }
             } else if(strtotime($currentTime) >= strtotime("05:00") && strtotime($currentTime) <= strtotime("23:59")){
                 if($isHasCurr){
-                    if(strtotime($currentTime) >= strtotime($storeOpeningTime[$isHasCurrIndex]) && strtotime($currentTime) <= strtotime("23:59")){
+                    if(strtotime($storeClosingTime[$isHasCurrIndex]) >= strtotime("00:00") && strtotime($storeClosingTime[$isHasCurrIndex]) <= strtotime("04:00")){
                         $openingTime = date("g:i a", strtotime($storeOpeningTime[$isHasCurrIndex]));
                         $closingTime = date("g:i a", strtotime($storeClosingTime[$isHasCurrIndex]));
+                        if($getUDStartTimeasED != "none"){
+                            $closingTime = date("g:i a", strtotime($getUDStartTimeasED));
+                        }
                         $rSchedule = "Open today at ".$openingTime." to ".$closingTime;
                     } else {
-                        $rSchedule = "Closed Now";
+                        if(strtotime($currentTime) >= strtotime($storeOpeningTime[$isHasCurrIndex]) && strtotime($currentTime) <= strtotime($storeClosingTime[$isHasCurrIndex])){
+                            $openingTime = date("g:i a", strtotime($storeOpeningTime[$isHasCurrIndex]));
+                            $closingTime = date("g:i a", strtotime($storeClosingTime[$isHasCurrIndex]));
+                            if($getUDStartTimeasED != "none"){
+                                $closingTime = date("g:i a", strtotime($getUDStartTimeasED));
+                            }
+                            $rSchedule = "Open today at ".$openingTime." to ".$closingTime;
+                        } else {
+                            $rSchedule = "Closed Now";
+                        }
                     }
                 } else {
                     $rSchedule = "Closed Now";
@@ -242,6 +262,40 @@ class CustomerController extends Controller
             $rSchedule = "Closed Now";
         }
         return $rSchedule;
+    }
+
+    public function createBlockNotif(
+        $customerId, 
+        $restAccId, 
+        $notifTitle, 
+        $notifDesc, 
+        $custDeviceToken, 
+        $notif2Title, 
+        $notif2Desc, 
+        $finalImageUrl){
+        
+        $notif = CustomerNotification::create([
+            'customer_id' => $customerId,
+            'restAcc_id' => $restAccId,
+            'notificationType' => "Blocked",
+            'notificationTitle' => $notifTitle,
+            'notificationDescription' => $notifDesc,
+            'notificationStatus' => "Unread",
+        ]);
+
+        if($custDeviceToken != null){
+            $to = $custDeviceToken;
+            $notification = array(
+                'title' => $notif2Title,
+                'body' => $notif2Desc,
+            );
+            $data = array(
+                'notificationType' => "Blocked",
+                'notificationId' => $notif->id,
+                'notificationRLogo' => $finalImageUrl,
+            );
+            $this->sendFirebaseNotification($to, $notification, $data);
+        }
     }
 
 
@@ -267,27 +321,44 @@ class CustomerController extends Controller
 
     // RESTAURANT ROUTES
     // -------LIST OF RESTAURANTS------------ //
-    public function getListOfRestaurants(){
+    public function getListOfRestaurants($keyword){
         $finalData = array();
-        $restaurants = RestaurantAccount::select('id', 'rName', 'rAddress', 'rLogo')->where('status', "Published")->get();
-        foreach ($restaurants as $restaurant){
 
-            $rSchedule = $this->checkTodaySched($restaurant->id);
+        if($keyword == "" || $keyword == null || $keyword == " "){
+            $restaurants = RestaurantAccount::select('id', 'rName', 'rCity', 'rBranch', 'rLogo')->where('status', "Published")->get();
+        } else {
+            $searchText = '%'.$keyword.'%';
+            $restaurants = RestaurantAccount::select('id', 'rName', 'rCity', 'rBranch', 'rLogo')
+            ->where('status', "Published")
+            ->where(function ($query) use ($searchText) {
+                $query->where('rName', 'LIKE', $searchText)
+                    ->orWhere('rCity', 'LIKE', $searchText)
+                    ->orWhere('rBranch', 'LIKE', $searchText);
+            })->get();
+        }
+        
+        if(!$restaurants->isEmpty()){
+            foreach ($restaurants as $restaurant){
 
-            $finalImageUrl = "";
-            if ($restaurant->rLogo == ""){
-                $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
-            } else {
-                $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
+                $rSchedule = $this->checkTodaySched($restaurant->id);
+    
+                $finalImageUrl = "";
+                if ($restaurant->rLogo == ""){
+                    $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+                } else {
+                    $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
+                }
+    
+                array_push($finalData, [
+                    'id' => $restaurant->id,
+                    'rName' => $restaurant->rName,
+                    'rAddress' => "$restaurant->rBranch, $restaurant->rCity",
+                    'rLogo' => $finalImageUrl,
+                    'rSchedule' => $rSchedule,
+                ]);
             }
-
-            array_push($finalData, [
-                'id' => $restaurant->id,
-                'rName' => $restaurant->rName,
-                'rAddress' => $restaurant->rAddress,
-                'rLogo' => $finalImageUrl,
-                'rSchedule' => $rSchedule,
-            ]);
+        } else {
+            $finalData = null;
         }
         return response()->json($finalData);
     }
@@ -297,25 +368,47 @@ class CustomerController extends Controller
         $posts = Post::where('restAcc_id', $id)->get();
 
         $storePosts = array();
-        foreach($posts as $post){
-            array_push($storePosts, [
-                'image' => $this->POST_IMAGE_PATH."/".$id."/".$post->postImage,
-                'description' => $post->postDesc,
-            ]);
+        if(!$posts->isEmpty()){
+            foreach($posts as $post){
+                array_push($storePosts, [
+                    'image' => $this->POST_IMAGE_PATH."/".$id."/".$post->postImage,
+                    'description' => $post->postDesc,
+                ]);
+            }
+        } else {
+            $storePosts = null;
         }
+
 
         $storePolicy = array();
         $policies = Policy::where('restAcc_id', $id)->get();
-        if($policies->isEmpty()){
-            array_push($storePolicy,[
-                'policy' => "We do not have any policy as of now"
-            ]);
-        } else {
+        if(!$policies->isEmpty()){
             foreach ($policies as $policie){
                 array_push($storePolicy, [
                     'policy' => $policie->policyDesc,
                 ]);
             }
+        } else {
+            $storePolicy = null;
+        }
+
+        $storeUnavailableDate = array();
+        $unavailableDates = UnavailableDate::where('restAcc_id', $id)->orderBy('unavailableDatesDate', 'ASC')->get();
+        if(!$unavailableDates->isEmpty()){
+            foreach($unavailableDates as $unavailableDate){
+                $orderdate1 = explode('-', $unavailableDate->unavailableDatesDate);
+                $month1 = $this->convertMonths($orderdate1[1]);
+                $year1 = $orderdate1[0];
+                $day1  = $orderdate1[2];
+    
+                array_push($storeUnavailableDate, [
+                    'date' => "$month1 $day1, $year1",
+                    'description' => $unavailableDate->unavailableDatesDesc,
+                    'startTime' => date("g:i a", strtotime($unavailableDate->startTime)),
+                ]);
+            }
+        } else {
+            $storeUnavailableDate = null;
         }
 
         $finalScheduleTemp = array();
@@ -323,12 +416,6 @@ class CustomerController extends Controller
         foreach ($storeHours as $storeHour){
             $openingTime = date("g:i a", strtotime($storeHour->openingTime));
             $closingTime = date("g:i a", strtotime($storeHour->closingTime));
-            // if(strtotime($storeHour->closingTime) >= strtotime("00:00") && strtotime($storeHour->closingTime) <= strtotime("04:00")){
-            //     $closingTime = date("g:i a", strtotime($storeHour->closingTime));
-            //     $closingTime = "$closingTime Tom";
-            // } else {
-            //     $closingTime = date("g:i a", strtotime($storeHour->closingTime));
-            // }
             foreach (explode(",", $storeHour->days) as $day){
                 switch ($this->convertDays($day)){
                     case "Monday":
@@ -424,6 +511,7 @@ class CustomerController extends Controller
             'rNumberOfQueues' => $countQueueTables,
             'rPosts' => $storePosts,
             'rPolicy' => $storePolicy,
+            'rUnavailableD' => $storeUnavailableDate
         ]);
     }
     // -------RESTAURANT ABOUT BY ID------------ //
@@ -518,15 +606,16 @@ class CustomerController extends Controller
 
         $finalPromos = array();
         $promos = Promo::select('id', 'promoTitle', 'promoImage')->where('restAcc_id', $id)->where('promoPosted', "Posted")->get();
-        foreach ($promos as $promo){
-            array_push($finalPromos,[
-                'promoId' => $promo->id,
-                'promoName' => $promo->promoTitle,
-                'promoImage' => $this->PROMO_IMAGE_PATH."/".$id."/".$promo->promoImage,
-            ]);
-        }
         
-        if($promos->isEmpty()){
+        if(!$promos->isEmpty()){
+            foreach ($promos as $promo){
+                array_push($finalPromos,[
+                    'promoId' => $promo->id,
+                    'promoName' => $promo->promoTitle,
+                    'promoImage' => $this->PROMO_IMAGE_PATH."/".$id."/".$promo->promoImage,
+                ]);
+            }
+        } else {
             $finalPromos = null;
         }
 
@@ -542,6 +631,7 @@ class CustomerController extends Controller
         $orderSets = OrderSet::where('restAcc_id', $id)->where('status', "Visible")->get();
         $getDateToday = date('Y-m-d');
         $getDateTimeToday = date('Y-m-d H:i:s');
+
         
         $finalData = array();
         if(!$orderSets->isEmpty()){
@@ -603,15 +693,11 @@ class CustomerController extends Controller
 
         // CHECKING IF CAN QUEUE OR BOOK
         /*
+            0. check kung verified
             1. check kung nakablock
             2. check kung nakaqueue /  reserve
             3. check kung may qr access
             4. check schedule 
-
-            1. check muna kung naka queue / reserve
-            2. check kung may qr access
-            3. check kung naka blocked
-            4. check if the store is close for queue only 
         */
 
         $description = "";
@@ -642,12 +728,17 @@ class CustomerController extends Controller
         ->first();
 
         $customerQrAccess = CustomerQrAccess::where('subCust_id', $cust_id)
-        ->where('status', "approved")
         ->orderBy('created_at', 'DESC')
+        ->where('status', 'pending')
+        ->orWhere('status', 'approved')
         ->first();
 
+        $customer = CustomerAccount::where('id', $cust_id)->first();
 
-        if ($customerQueue != null){
+        if($customer->emailAddressVerified == "No"){
+            $description = "You need to verify your email address first.";
+            $status = "onGoing";
+        } else if ($customerQueue != null){
             $description = "You cannot book as of now because you are currently queue.";
             $status = "onGoing";
         } else if ($customerReserve != null){
@@ -655,9 +746,16 @@ class CustomerController extends Controller
             $status = "onGoing";
         } else if ($customerQrAccess != null) {
             $customerOrdering = CustomerOrdering::where('id', $customerQrAccess->custOrdering_id)->where('status', "eating")->first();
-            if($customerOrdering != null){
-                $description = "You cannot book as of now because you currently have an access to your friend that are currently booked.";
-                $status = "onGoing";
+            if($customerQrAccess->status == "pending"){
+                if($customerOrdering != null){
+                    $description = "You cannot book as of now because you currently requesting access to your friends Ordering QR.";
+                    $status = "onGoing";
+                }
+            } else {
+                if($customerOrdering != null){
+                    $description = "You cannot book as of now because you currently have an access to your friend that are currently booked.";
+                    $status = "onGoing";
+                }
             }
         } else if ($custMainOff != null){
             if($custMainOff->offenseDaysBlock == "Permanent" && $custMainOff->offenseValidity != null){
@@ -669,10 +767,12 @@ class CustomerController extends Controller
                     $status = "onGoing";
                 }
             }
-        } else {
+        } else {}
+
+        if($status == ""){
             $rSchedule = $this->checkTodaySched($id);
             if($rSchedule == "Closed Now"){
-                $description = "You cannot queue as of now wait til the restaurant is open.";
+                $description = "You cannot queue as of now wait till the restaurant is open.";
                 $status = "closed";
             }
         }
@@ -688,35 +788,39 @@ class CustomerController extends Controller
 
         $promos = Promo::orderBy('id', 'DESC')->where('promoPosted', "Posted")->get();
 
-        foreach ($promos as $promo){
-            $restaurantInfo = RestaurantAccount::select('id', 'rLogo', 'rAddress', 'rBranch', 'rCity')->where('id', $promo->restAcc_id)->where('status', "Published")->first();
-            $finalImageUrl = "";
-            if ($restaurantInfo->rLogo == ""){
-                $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
-            } else {
-                $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurantInfo->id.'/'. $restaurantInfo->rLogo;
-            }
+        if(!$promos->isEmpty()){
+            foreach ($promos as $promo){
+                $restaurantInfo = RestaurantAccount::select('id', 'rLogo', 'rAddress', 'rBranch', 'rCity')->where('id', $promo->restAcc_id)->where('status', "Published")->first();
+                $finalImageUrl = "";
+                if ($restaurantInfo->rLogo == ""){
+                    $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+                } else {
+                    $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurantInfo->id.'/'. $restaurantInfo->rLogo;
+                }
+                
+    
+                $orderdate1 = explode('-', $promo->promoStartDate);
+                $month1 = $this->convertMonths($orderdate1[1]);
+                $year1 = $orderdate1[0];
+                $day1  = $orderdate1[2];
+    
+                $orderdate2 = explode('-', $promo->promoEndDate);
+                $month2 = $this->convertMonths($orderdate2[1]);
+                $year2 = $orderdate2[0];
+                $day2  = $orderdate2[2];
             
-
-            $orderdate1 = explode('-', $promo->promoStartDate);
-            $month1 = $this->convertMonths($orderdate1[1]);
-            $year1 = $orderdate1[0];
-            $day1  = $orderdate1[2];
-
-            $orderdate2 = explode('-', $promo->promoEndDate);
-            $month2 = $this->convertMonths($orderdate2[1]);
-            $year2 = $orderdate2[0];
-            $day2  = $orderdate2[2];
-        
-            array_push($finalData, [
-                'restaurantImage' => $finalImageUrl,
-                'restaurantAddress' => "$restaurantInfo->rAddress, $restaurantInfo->rBranch, $restaurantInfo->rCity",
-                'restaurantId' => $restaurantInfo->id,
-                'promoId' => $promo->id,
-                'promoTitle' => $promo->promoTitle,
-                'promoStartDate' => $month1." ".$day1.", ".$year1,
-                'promoEndDate' => $month2." ".$day2.", ".$year2,
-            ]);
+                array_push($finalData, [
+                    'restaurantImage' => $finalImageUrl,
+                    'restaurantAddress' => "$restaurantInfo->rAddress, $restaurantInfo->rBranch, $restaurantInfo->rCity",
+                    'restaurantId' => $restaurantInfo->id,
+                    'promoId' => $promo->id,
+                    'promoTitle' => $promo->promoTitle,
+                    'promoStartDate' => $month1." ".$day1.", ".$year1,
+                    'promoEndDate' => $month2." ".$day2.", ".$year2,
+                ]);
+            }
+        } else {
+            $finalData = null;
         }
         return response()->json($finalData);
     }
@@ -732,6 +836,8 @@ class CustomerController extends Controller
 
         if($getStamp == null){
             $finalRewardStatus = "Incomplete";
+            $finalRewardType = "";
+            $finalRewardInput = 0;
         } else {
             $getReward = RestaurantRewardList::where('restAcc_id', $id)->where('id', $getStamp->stampReward_id)->first();
 
@@ -746,9 +852,9 @@ class CustomerController extends Controller
                 $finalRewardType = "";
                 $finalRewardInput = 0;
             } else {
+                $finalRewardStatus = "Complete";
                 $finalRewardType = $getReward->rewardCode;
                 $finalRewardInput = $getReward->rewardInput;
-                $finalRewardStatus = "Complete";
             }
         }
         
@@ -860,6 +966,7 @@ class CustomerController extends Controller
         // MO TU WE TH SA
         $storeTempDates = array();
         $storeNextHours = array();
+        $checkPrevDay = "";
         for($i=0; $i<sizeOf($modUDFStoreSevenDates); $i++){
             //loop for seven dates
             $tempHours = array();
@@ -878,7 +985,10 @@ class CustomerController extends Controller
                                         if(strtotime($storeUDDStartTime[$x]) <= strtotime($storeNextHour) || strtotime($storeUDDStartTime[$x]) < strtotime($add2hours)){
                                             //do nothing
                                         } else {
-                                            array_push($tempHours, date("g:i A", strtotime($storeNextHour)));
+                                            if($checkPrevDay == $storeHoursTemp[$j]['storeDay']){
+                                                //check kung yung previous day at current day ay magkasunod (e.g. Monday -> Tuesday)
+                                                array_push($tempHours, date("g:i A", strtotime($storeNextHour)));
+                                            }
                                         }
                                     }
                                 }
@@ -940,14 +1050,17 @@ class CustomerController extends Controller
                         } 
                         
                         if(strtotime($endTime2) > strtotime("01:00") && strtotime($endTime2) <= strtotime("04:00")){
+                            $checkPrevDay = $storeHoursTemp[$j]['storeDay'];
                             array_push($storeNextHours, "00:00");
                         } 
                         
                         if(strtotime($endTime2) > strtotime("02:00") && strtotime($endTime2) <= strtotime("04:00")){
+                            $checkPrevDay = $storeHoursTemp[$j]['storeDay'];
                             array_push($storeNextHours, "01:00");
                         } 
                         
                         if(strtotime($endTime2) > strtotime("03:00") && strtotime($endTime2) <= strtotime("04:00")){
+                            $checkPrevDay = $storeHoursTemp[$j]['storeDay'];
                             array_push($storeNextHours, "02:00");
                         }
                     }
@@ -1146,7 +1259,7 @@ class CustomerController extends Controller
         ->orderBy('created_at', 'DESC')
         ->first();
 
-        if($customerQueue != null){
+        if($customerQueue != null && $customerQueue->checkoutStatus != "completed"){
             if($customerQueue->checkoutStatus == null){
                 if($customerQueue->status == "eating"){
                     $status = "eating";
@@ -1171,7 +1284,7 @@ class CustomerController extends Controller
                 }
             }
             
-        } else if ($customerReserve != null) { 
+        } else if ($customerReserve != null && $customerReserve->checkoutStatus != "completed") { 
             if($customerReserve->checkoutStatus == null){
                 if($customerReserve->status == "eating"){
                     $status = "eating";
@@ -1418,6 +1531,85 @@ class CustomerController extends Controller
                 }
             }
 
+            $clickable = "Yes";
+
+            //Validation
+            //validationDateTime
+            //validation
+            if($notification->notificationType == "Validation"){
+                $customerQueue = CustomerQueue::select('status')->where('customer_id', $notification->customer_id)
+                ->where('restAcc_id', $notification->restAcc_id)
+                ->where('validationDateTime', $notification->created_at)
+                ->first();
+                
+                $customerReserve = CustomerReserve::select('status')->where('customer_id', $notification->customer_id)
+                ->where('restAcc_id', $notification->restAcc_id)
+                ->where('validationDateTime', $notification->created_at)
+                ->first();
+
+                if($customerQueue != null){
+                    if($customerQueue->status != "validation"){
+                        $clickable = "No";
+                    }
+                } else if ($customerReserve != null){
+                    if($customerReserve->status != "validation"){
+                        $clickable = "No";
+                    }
+                } else {}
+            }
+
+            //Table Setting Up
+            //tableSettingDateTime
+            //tableSettingUp
+            if($notification->notificationType == "Table Setting Up"){
+                $customerQueue = CustomerQueue::select('status')->where('customer_id', $notification->customer_id)
+                ->where('restAcc_id', $notification->restAcc_id)
+                ->where('tableSettingDateTime', $notification->created_at)
+                ->first();
+
+                $customerReserve = CustomerReserve::select('status')->where('customer_id', $notification->customer_id)
+                ->where('restAcc_id', $notification->restAcc_id)
+                ->where('tableSettingDateTime', $notification->created_at)
+                ->first();
+
+                if($customerQueue != null){
+                    if($customerQueue->status != "tableSettingUp"){
+                        $clickable = "No";
+                    }
+                } else if ($customerReserve != null){
+                    if($customerReserve->status != "tableSettingUp"){
+                        $clickable = "No";
+                    }
+                } else {}
+            }
+
+            
+            //Table is Ready
+            //eatingDateTime
+            //eating
+            if($notification->notificationType == "Table is Ready"){
+                $customerQueue = CustomerQueue::select('status')->where('customer_id', $notification->customer_id)
+                ->where('restAcc_id', $notification->restAcc_id)
+                ->where('eatingDateTime', $notification->created_at)
+                ->first();
+                
+                
+                $customerReserve = CustomerReserve::select('status')->where('customer_id', $notification->customer_id)
+                ->where('restAcc_id', $notification->restAcc_id)
+                ->where('eatingDateTime', $notification->created_at)
+                ->first();
+
+                if($customerQueue != null){
+                    if($customerQueue->status != "eating"){
+                        $clickable = "No";
+                    }
+                } else if ($customerReserve != null){
+                    if($customerReserve->status != "eating"){
+                        $clickable = "No";
+                    }
+                } else {}
+            }
+
             array_push($finalData,[
                 'id' => $notification->id,
                 'notificationType' => $notification->notificationType,
@@ -1426,6 +1618,7 @@ class CustomerController extends Controller
                 'notificationDescription' => $notification->notificationDescription,
                 'notificationStatus' => $notification->notificationStatus,
                 'notificationTime' => $rAppDiffTime,
+                'clickable' => $clickable,
             ]);
         }
 
@@ -1808,6 +2001,7 @@ class CustomerController extends Controller
                                             'offenseDaysBlock' => $restOffense->blockDays,
                                             'offenseValidity' => $finalOffenseValidity,
                                         ]);
+
                                         $custMainOffenseId = $createMainOffense->id;
                                     }
                                 } else {
@@ -1822,6 +2016,22 @@ class CustomerController extends Controller
                                     ]);
                                     $custMainOffenseId = $createMainOffense->id;
                                 }
+                                
+                                //FOR BLOCKED NOTIFICATION
+                                $customerId = $customerQueue->customer_id;
+                                $restAccId = $customerQueue->restAcc_id;
+                                $notifTitle = "You have been blocked due to number of cancellation";
+                                $notifDesc = "$restaurant->rAddress, $restaurant->rCity";
+                                $finalImageUrl = "";
+                                if ($restaurant->rLogo == ""){
+                                    $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+                                } else {
+                                    $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
+                                }
+                                $custDeviceToken  = $customer->deviceToken;
+                                $notif2Title = "$restaurant->rAddress, $restaurant->rCity";
+                                $notif2Desc = "You have been blocked due to number of cancellation";
+                                $this->createBlockNotif($customerId, $restAccId, $notifTitle, $notifDesc, $custDeviceToken, $notif2Title, $notif2Desc, $finalImageUrl);
                             } 
                         } 
                     } else {
@@ -1849,6 +2059,22 @@ class CustomerController extends Controller
                                 ]);
                                 $custMainOffenseId = $mainOffense->id;
                             }
+                            
+                            //FOR BLOCKED NOTIFICATION
+                            $customerId = $customerQueue->customer_id;
+                            $restAccId = $customerQueue->restAcc_id;
+                            $notifTitle = "You have been blocked due to number of cancellation";
+                            $notifDesc = "$restaurant->rAddress, $restaurant->rCity";
+                            $finalImageUrl = "";
+                            if ($restaurant->rLogo == ""){
+                                $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+                            } else {
+                                $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
+                            }
+                            $custDeviceToken  = $customer->deviceToken;
+                            $notif2Title = "$restaurant->rAddress, $restaurant->rCity";
+                            $notif2Desc = "You have been blocked due to number of cancellation";
+                            $this->createBlockNotif($customerId, $restAccId, $notifTitle, $notifDesc, $custDeviceToken, $notif2Title, $notif2Desc, $finalImageUrl);
                         } else {
                             //walang block na mangyayari, update lang
                             CustOffenseMain::where('id', $mainOffense->id)
@@ -1891,6 +2117,22 @@ class CustomerController extends Controller
                             ]);
                             $custMainOffenseId = $createMainOffense->id;
                         }
+                        
+                        //FOR BLOCKED NOTIFICATION
+                        $customerId = $customerQueue->customer_id;
+                        $restAccId = $customerQueue->restAcc_id;
+                        $notifTitle = "You have been blocked due to number of cancellation";
+                        $notifDesc = "$restaurant->rAddress, $restaurant->rCity";
+                        $finalImageUrl = "";
+                        if ($restaurant->rLogo == ""){
+                            $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+                        } else {
+                            $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
+                        }
+                        $custDeviceToken  = $customer->deviceToken;
+                        $notif2Title = "$restaurant->rAddress, $restaurant->rCity";
+                        $notif2Desc = "You have been blocked due to number of cancellation";
+                        $this->createBlockNotif($customerId, $restAccId, $notifTitle, $notifDesc, $custDeviceToken, $notif2Title, $notif2Desc, $finalImageUrl);
                     } else {
                         //kung yung noOfcanccellation ay lagpas sa isa then create na tayo tas di pa to block
                         $createMainOffense = CustOffenseMain::create([
@@ -1935,7 +2177,7 @@ class CustomerController extends Controller
             }
     
             
-            if($customer != null){
+            if($customer != null && $customer->deviceToken != null){
                 $to = $customer->deviceToken;
                 $notification = array(
                     'title' => "$restaurant->rName, $restaurant->rBranch",
@@ -2010,6 +2252,24 @@ class CustomerController extends Controller
                                         ]);
                                         $custMainOffenseId = $createMainOffense->id;
                                     }
+                                    
+
+                                    //FOR BLOCKED NOTIFICATION
+                                    $customerId = $customerReserve->customer_id;
+                                    $restAccId = $customerReserve->restAcc_id;
+                                    $notifTitle = "You have been blocked due to number of cancellation";
+                                    $notifDesc = "$restaurant->rAddress, $restaurant->rCity";
+                                    $finalImageUrl = "";
+                                    if ($restaurant->rLogo == ""){
+                                        $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+                                    } else {
+                                        $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
+                                    }
+                                    $custDeviceToken  = $customer->deviceToken;
+                                    $notif2Title = "$restaurant->rAddress, $restaurant->rCity";
+                                    $notif2Desc = "You have been blocked due to number of cancellation";
+                                    $this->createBlockNotif($customerId, $restAccId, $notifTitle, $notifDesc, $custDeviceToken, $notif2Title, $notif2Desc, $finalImageUrl);
+
                                 } else {
                                     //kung yung noOfcanccellation ay lagpas sa isa then create na tayo tas di pa to block
                                     $createMainOffense = CustOffenseMain::create([
@@ -2049,6 +2309,24 @@ class CustomerController extends Controller
                                 ]);
                                 $custMainOffenseId = $mainOffense->id;
                             }
+                            
+
+                            //FOR BLOCKED NOTIFICATION
+                            $customerId = $customerReserve->customer_id;
+                            $restAccId = $customerReserve->restAcc_id;
+                            $notifTitle = "You have been blocked due to number of cancellation";
+                            $notifDesc = "$restaurant->rAddress, $restaurant->rCity";
+                            $finalImageUrl = "";
+                            if ($restaurant->rLogo == ""){
+                                $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+                            } else {
+                                $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
+                            }
+                            $custDeviceToken  = $customer->deviceToken;
+                            $notif2Title = "$restaurant->rAddress, $restaurant->rCity";
+                            $notif2Desc = "You have been blocked due to number of cancellation";
+                            $this->createBlockNotif($customerId, $restAccId, $notifTitle, $notifDesc, $custDeviceToken, $notif2Title, $notif2Desc, $finalImageUrl);
+
                         } else {
                             //walang block na mangyayari, update lang
                             CustOffenseMain::where('id', $mainOffense->id)
@@ -2091,6 +2369,23 @@ class CustomerController extends Controller
                             ]);
                             $custMainOffenseId = $createMainOffense->id;
                         }
+                        
+                        //FOR BLOCKED NOTIFICATION
+                        $customerId = $customerReserve->customer_id;
+                        $restAccId = $customerReserve->restAcc_id;
+                        $notifTitle = "You have been blocked due to number of cancellation";
+                        $notifDesc = "$restaurant->rAddress, $restaurant->rCity";
+                        $finalImageUrl = "";
+                        if ($restaurant->rLogo == ""){
+                            $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+                        } else {
+                            $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
+                        }
+                        $custDeviceToken  = $customer->deviceToken;
+                        $notif2Title = "$restaurant->rAddress, $restaurant->rCity";
+                        $notif2Desc = "You have been blocked due to number of cancellation";
+                        $this->createBlockNotif($customerId, $restAccId, $notifTitle, $notifDesc, $custDeviceToken, $notif2Title, $notif2Desc, $finalImageUrl);
+
                     } else {
                         //kung yung noOfcanccellation ay lagpas sa isa then create na tayo tas di pa to block
                         $createMainOffense = CustOffenseMain::create([
@@ -2160,6 +2455,11 @@ class CustomerController extends Controller
     public function getNotificationPending($cust_id, $notif_id){
         $notification = CustomerNotification::where('id', $notif_id)->where('customer_id', $cust_id)->first();
         $restaurant = RestaurantAccount::select('rName', 'rBranch')->where('id', $notification->restAcc_id)->first();
+
+        CustomerNotification::where('id', $notif_id)->where('customer_id', $cust_id)
+        ->update([
+            'notificationStatus' => "Read"
+        ]);
         
         $customerQueue = CustomerQueue::where('customer_id', $cust_id)
         ->where('restAcc_id', $notification->restAcc_id)
@@ -2219,12 +2519,20 @@ class CustomerController extends Controller
                 'statusViewable' => $viewable,
             ]);
         }
-
-        
     }
     public function getNotificationCancelled($cust_id, $notif_id){
         $notification = CustomerNotification::where('id', $notif_id)->where('customer_id', $cust_id)->first();
         $restaurant = RestaurantAccount::select('rName', 'rBranch')->where('id', $notification->restAcc_id)->first();
+
+        CustomerNotification::where('id', $notif_id)->where('customer_id', $cust_id)
+        ->update([
+            'notificationStatus' => "Read"
+        ]);
+
+        CustomerNotification::where('id', $notif_id)->where('customer_id', $cust_id)
+        ->update([
+            'notificationStatus' => "Read"
+        ]);
         
         $customerQueue = CustomerQueue::where('customer_id', $cust_id)
         ->where('restAcc_id', $notification->restAcc_id)
@@ -2277,6 +2585,11 @@ class CustomerController extends Controller
     public function getNotificationApproved($cust_id, $notif_id){
         $notification = CustomerNotification::where('id', $notif_id)->where('customer_id', $cust_id)->first();
         $restaurant = RestaurantAccount::select('rName', 'rBranch')->where('id', $notification->restAcc_id)->first();
+
+        CustomerNotification::where('id', $notif_id)->where('customer_id', $cust_id)
+        ->update([
+            'notificationStatus' => "Read"
+        ]);
         
         $customerQueue = CustomerQueue::where('customer_id', $cust_id)
         ->where('restAcc_id', $notification->restAcc_id)
@@ -2312,6 +2625,16 @@ class CustomerController extends Controller
         $notification = CustomerNotification::where('id', $notif_id)->where('customer_id', $cust_id)->first();
         $restaurant = RestaurantAccount::select('rName', 'rBranch')->where('id', $notification->restAcc_id)->first();
 
+        CustomerNotification::where('id', $notif_id)->where('customer_id', $cust_id)
+        ->update([
+            'notificationStatus' => "Read"
+        ]);
+
+        CustomerNotification::where('id', $notif_id)->where('customer_id', $cust_id)
+        ->update([
+            'notificationStatus' => "Read"
+        ]);
+
         return response()->json([
             'restaurant' => "$restaurant->rName $restaurant->rBranch",
         ]);
@@ -2330,6 +2653,11 @@ class CustomerController extends Controller
         $orderSets = array();
         $notification = CustomerNotification::where('id', $notif_id)->where('customer_id', $cust_id)->first();
         $restaurant = RestaurantAccount::select('id', 'rName', 'rBranch', 'rAddress', 'rCity', 'rLogo')->where('id', $notification->restAcc_id)->first();
+
+        CustomerNotification::where('id', $notif_id)->where('customer_id', $cust_id)
+        ->update([
+            'notificationStatus' => "Read"
+        ]);
 
         $getPromos = Promo::where('restAcc_id', $restaurant->id)->where('promoPosted', 'Posted')->get();
         if($getPromos->isEmpty()){
@@ -2445,6 +2773,89 @@ class CustomerController extends Controller
             'stampCapacity' => $stampCapacity,
             'stampTasks' => $tasks,
             'orderSets' => $orderSets,
+        ]);
+    }
+    public function getNotificationBlocked($cust_id, $notif_id){
+        $notification = CustomerNotification::where('id', $notif_id)->where('notificationType', "Blocked")->where('customer_id', $cust_id)->first();
+
+
+        CustomerNotification::where('id', $notif_id)->where('customer_id', $cust_id)
+        ->update([
+            'notificationStatus' => "Read"
+        ]);
+
+        $restaurant = RestaurantAccount::select('rName', 'rBranch')->where('id', $notification->restAcc_id)->first();
+        $description = "";
+        $description2 = "";
+        $offenseHist = array();
+
+        $custOffenseMain = CustOffenseMain::where('updated_at', $notification->created_at)->first();
+
+        $custOffenseEaches = CustOffenseEach::where('custOffMain_id', $custOffenseMain->id)->get();
+        foreach($custOffenseEaches as $custOffenseEach){
+
+            $offenseEachdate = explode('-', date('Y-m-d', strtotime($custOffenseEach->created_at)));
+            $month = $this->convertMonths($offenseEachdate[1]);
+            $year = $offenseEachdate[0];
+            $day  = $offenseEachdate[2];
+
+            $offenseEachTime = date('g:i a', strtotime($custOffenseEach->created_at));
+
+            $dateTime = "$month $day, $year - $offenseEachTime";
+
+            $book_type = "Reserve";
+            if($custOffenseEach->book_type == "queue"){
+                $book_type = "Queue";
+            }
+            
+            array_push($offenseHist, [
+                'book_type' => $book_type,
+                'dateTime' => $dateTime,
+            ]);
+        }
+
+        $offenseMaindate = explode('-', date('Y-m-d', strtotime($custOffenseMain->offenseValidity)));
+        $month2 = $this->convertMonths($offenseMaindate[1]);
+        $year2 = $offenseMaindate[0];
+        $day2  = $offenseMaindate[2];
+
+        $offenseMainTime = date('g:i a', strtotime($custOffenseMain->offenseValidity));
+
+        $dateTime2 = "$month2 $day2, $year2 at $offenseMainTime";
+
+        switch($custOffenseMain->offenseType){
+            case "cancellation":
+                $description = "You have been blocked due to number of Cancellations.";
+                if($custOffenseMain->offenseDaysBlock == "Permanent"){
+                    $description2 = "You cannot queue or reserve anymore on our store due to permanent block.";
+                } else {
+                    $description2 = "You will be unblocked from booking after $custOffenseMain->offenseDaysBlock day/s. The exact date will be on $dateTime2.";
+                }
+                break;
+            case "runaway":
+                $description = "You have been blocked due to number of Runaways.";
+                if($custOffenseMain->offenseDaysBlock == "Permanent"){
+                    $description2 = "You cannot queue or reserve anymore on our store due to permanent block.";
+                } else {
+                    $description2 = "You will be unblocked from booking after $custOffenseMain->offenseDaysBlock day/s. The exact date will be on $dateTime2.";
+                }
+                break;
+            case "noshow":
+                $description = "You have been blocked due to number of No Shows.";
+                if($custOffenseMain->offenseDaysBlock == "Permanent"){
+                    $description2 = "You cannot queue or reserve anymore on our store due to permanent block.";
+                } else {
+                    $description2 = "You will be unblocked from booking after $custOffenseMain->offenseDaysBlock day/s. The exact date will be on $dateTime2.";
+                }
+                break;
+        }
+        
+        return response()->json([
+            'restaurant' => "$restaurant->rName $restaurant->rBranch",
+            'description' => $description,
+            'description2' => $description2,
+            'offenseHist' => $offenseHist,
+            'offenseType' => $custOffenseMain->offenseType,
         ]);
     }
 
@@ -2854,7 +3265,7 @@ class CustomerController extends Controller
             $orderSetId = $customerReserve->orderSet_id;
             $foodSets = OrderSetFoodSet::where('orderSet_id', $customerReserve->orderSet_id)->get();
             $foodItems = OrderSetFoodItem::where('orderSet_id', $customerReserve->orderSet_id)->get();
-            $countFoodItems = OrderSetFoodItem::where('orderSet_id', $customerQueue->orderSet_id)->count();
+            $countFoodItems = OrderSetFoodItem::where('orderSet_id', $customerReserve->orderSet_id)->count();
             
             foreach($foodSets as $foodSet){
                 $getFoodSet = FoodSet::where('id', $foodSet->foodSet_id)->where('status', "Visible")->first();
@@ -3837,7 +4248,7 @@ class CustomerController extends Controller
 
             $customerOrdering = CustomerOrdering::where('custBook_id', $customerReserve->id)
             ->where('restAcc_id', $customerReserve->restAcc_id)
-            ->where('custBookType', 'queue')
+            ->where('custBookType', 'reserve')
             ->first();
 
             $customerOrders = CustomerLOrder::where('custOrdering_id', $customerOrdering->id)->where('orderDone', 'Yes')->get();
@@ -3906,7 +4317,7 @@ class CustomerController extends Controller
         $getDateToday = date("Y-m-d");
         $customerQueue = CustomerQueue::where('customer_id', $request->cust_id)->where('status', 'completed')->where('checkoutStatus', "customerFeedback")->first();
         $customerReserve = CustomerReserve::where('customer_id', $request->cust_id)->where('status', 'completed')->where('checkoutStatus', "customerFeedback")->first();
-
+        
         if($request->type == "not now"){
             if($customerQueue != null){
                 CustomerQueue::where('customer_id', $request->cust_id)->where('status', 'completed')->where('checkoutStatus', "customerFeedback")
@@ -3930,110 +4341,118 @@ class CustomerController extends Controller
                         $custStampCard = CustomerStampCard::where('customer_id', $customerQueue->customer_id)
                         ->where('restAcc_id', $restaurant->id)
                         ->where('stampValidity', $stampCard->stampValidity)
-                        ->where('claimed', "No")
+                        ->latest()
                         ->first();
 
-                        $storeTasks = array();
-                        $storeDoneTasks = array();
-
-                        if($custStampCard != null){
-                            $stampCardTasks = StampCardTasks::where('stampCards_id', $stampCard->id)->get();
-                            
-                            foreach($stampCardTasks as $stampCardTask){
-                                $task = RestaurantTaskList::where('id', $stampCardTask->restaurantTaskLists_id)->first();
-                                if($task->taskCode == "FDBK"){
-                                    array_push($storeTasks, "Give a feedback/review per visit");
-                                    array_push($storeDoneTasks, "Give a feedback/review per visit");
-                                }
-                            }
-
-                            $currentStamp = $custStampCard->currentStamp + sizeof($storeDoneTasks);
-                            if($currentStamp >= $stampCard->stampCapacity){
-                                $stampStatus = "Complete";
-                                $currentStamp = $stampCard->stampCapacity;
-                            } else {
-                                $stampStatus = "Incomplete";
-                            }
-
+                        if($customerQueue->rewardClaimed == "Yes"){
                             CustomerStampCard::where('id', $custStampCard->id)
                             ->update([
-                                'status' => $stampStatus,
-                                'claimed' => "No",
-                                'currentStamp' => $currentStamp,
+                                'claimed' => "Yes",
                             ]);
-
-                            foreach($storeDoneTasks as $storeDoneTask){
-                                CustomerTasksDone::create([
-                                    'customer_id' => $customerQueue->customer_id,
-                                    'customerStampCard_id' => $custStampCard->id,
-                                    'taskName' => $storeDoneTask,
-                                    'taskAccomplishDate' => $getDateToday,
-                                    'booking_id' => $customerQueue->id,
-                                    'booking_type' => "reserve",
-                                ]);
-                            }
-
                         } else {
-                            $stampCardTasks = StampCardTasks::where('stampCards_id', $stampCard->id)->get();
-                            foreach($stampCardTasks as $stampCardTask){
-                                $task = RestaurantTaskList::where('id', $stampCardTask->restaurantTaskLists_id)->first();
-                                if($task->taskCode == "FDBK"){
-                                    array_push($storeTasks, "Give a feedback/review per visit");
-                                    array_push($storeDoneTasks, "Give a feedback/review per visit");
+                            $storeTasks = array();
+                            $storeDoneTasks = array();
+    
+                            if($custStampCard != null){
+                                $stampCardTasks = StampCardTasks::where('stampCards_id', $stampCard->id)->get();
+                                
+                                foreach($stampCardTasks as $stampCardTask){
+                                    $task = RestaurantTaskList::where('id', $stampCardTask->restaurantTaskLists_id)->first();
+                                    if($task->taskCode == "FDBK"){
+                                        array_push($storeDoneTasks, "Give a feedback/review per visit");
+                                    }
                                 }
-                            }
-                            
-                            $stampReward = RestaurantRewardList::where('restAcc_id', $customerQueue->restAcc_id)->where('id', $stampCard->stampReward_id)->first();
-
-                            switch($stampReward->rewardCode){
-                                case "DSCN": 
-                                    $finalReward = "Discount $stampReward->rewardInput% in a Total Bill";
-                                    break;
-                                case "FRPE": 
-                                    $finalReward = "Free $stampReward->rewardInput person in a group";
-                                    break;
-                                case "HLF": 
-                                    $finalReward = "Half in the group will be free";
-                                    break;
-                                case "ALL": 
-                                    $finalReward = "All people in the group will be free";
-                                    break;
-                                default: 
-                                    $finalReward = "None";
-                            }
-
-                            $finalStampCapac = sizeof($storeDoneTasks);
-                            if(sizeof($storeDoneTasks) >= $stampCard->stampCapacity){
-                                $finalStampCapac = $stampCard->stampCapacity;
-                            }
-
-                            $custStampCardNew = CustomerStampCard::create([
-                                'customer_id' => $customerQueue->customer_id,
-                                'restAcc_id' => $customerQueue->restAcc_id,
-                                'status' => "Incomplete",
-                                'claimed' => "No",
-                                'currentStamp' => $finalStampCapac,
-                                'stampReward' => $finalReward,
-                                'stampValidity' => $stampCard->stampValidity,
-                                'stampCapacity' => $stampCard->stampCapacity,
-                            ]);
-
-                            foreach($storeTasks as $storeTask){
-                                CustomerStampTasks::create([
-                                    'customerStampCard_id' => $custStampCardNew->id,
-                                    'taskName' => $storeTask,
+    
+                                $currentStamp = $custStampCard->currentStamp + sizeof($storeDoneTasks);
+                                if($currentStamp >= $stampCard->stampCapacity){
+                                    $stampStatus = "Complete";
+                                    $currentStamp = $stampCard->stampCapacity;
+                                } else {
+                                    $stampStatus = "Incomplete";
+                                }
+    
+                                CustomerStampCard::where('id', $custStampCard->id)
+                                ->update([
+                                    'status' => $stampStatus,
+                                    'claimed' => "No",
+                                    'currentStamp' => $currentStamp,
                                 ]);
-                            }
-
-                            foreach($storeDoneTasks as $storeDoneTask){
-                                CustomerTasksDone::create([
+    
+                                foreach($storeDoneTasks as $storeDoneTask){
+                                    CustomerTasksDone::create([
+                                        'customer_id' => $customerQueue->customer_id,
+                                        'customerStampCard_id' => $custStampCard->id,
+                                        'taskName' => $storeDoneTask,
+                                        'taskAccomplishDate' => $getDateToday,
+                                        'booking_id' => $customerQueue->id,
+                                        'booking_type' => "queue",
+                                    ]);
+                                }
+    
+                            } else {
+                                $stampCardTasks = StampCardTasks::where('stampCards_id', $stampCard->id)->get();
+                                foreach($stampCardTasks as $stampCardTask){
+                                    $task = RestaurantTaskList::where('id', $stampCardTask->restaurantTaskLists_id)->first();
+                                    if($task->taskCode == "FDBK"){
+                                        array_push($storeTasks, "Give a feedback/review per visit");
+                                        array_push($storeDoneTasks, "Give a feedback/review per visit");
+                                    }
+                                }
+                                
+                                $stampReward = RestaurantRewardList::where('restAcc_id', $customerQueue->restAcc_id)->where('id', $stampCard->stampReward_id)->first();
+    
+                                switch($stampReward->rewardCode){
+                                    case "DSCN": 
+                                        $finalReward = "Discount $stampReward->rewardInput% in a Total Bill";
+                                        break;
+                                    case "FRPE": 
+                                        $finalReward = "Free $stampReward->rewardInput person in a group";
+                                        break;
+                                    case "HLF": 
+                                        $finalReward = "Half in the group will be free";
+                                        break;
+                                    case "ALL": 
+                                        $finalReward = "All people in the group will be free";
+                                        break;
+                                    default: 
+                                        $finalReward = "None";
+                                }
+    
+                                $finalStampCapac = sizeof($storeDoneTasks);
+                                $status = "Incomplete";
+                                if(sizeof($storeDoneTasks) >= $stampCard->stampCapacity){
+                                    $finalStampCapac = $stampCard->stampCapacity;
+                                    $status = "Complete";
+                                }
+    
+                                $custStampCardNew = CustomerStampCard::create([
                                     'customer_id' => $customerQueue->customer_id,
-                                    'customerStampCard_id' => $custStampCardNew->id,
-                                    'taskName' => $storeDoneTask,
-                                    'taskAccomplishDate' => $getDateToday,
-                                    'booking_id' => $customerQueue->id,
-                                    'booking_type' => "reserve",
+                                    'restAcc_id' => $customerQueue->restAcc_id,
+                                    'status' => $status,
+                                    'claimed' => "No",
+                                    'currentStamp' => $finalStampCapac,
+                                    'stampReward' => $finalReward,
+                                    'stampValidity' => $stampCard->stampValidity,
+                                    'stampCapacity' => $stampCard->stampCapacity,
                                 ]);
+    
+                                foreach($storeTasks as $storeTask){
+                                    CustomerStampTasks::create([
+                                        'customerStampCard_id' => $custStampCardNew->id,
+                                        'taskName' => $storeTask,
+                                    ]);
+                                }
+    
+                                foreach($storeDoneTasks as $storeDoneTask){
+                                    CustomerTasksDone::create([
+                                        'customer_id' => $customerQueue->customer_id,
+                                        'customerStampCard_id' => $custStampCardNew->id,
+                                        'taskName' => $storeDoneTask,
+                                        'taskAccomplishDate' => $getDateToday,
+                                        'booking_id' => $customerQueue->id,
+                                        'booking_type' => "queue",
+                                    ]);
+                                }
                             }
                         }
                     }
@@ -4063,109 +4482,120 @@ class CustomerController extends Controller
                         ->where('restAcc_id', $restaurant->id)
                         ->where('stampValidity', $stampCard->stampValidity)
                         ->where('claimed', "No")
+                        ->latest()
                         ->first();
 
-                        $storeTasks = array();
-                        $storeDoneTasks = array();
-
-                        if($custStampCard != null){
-                            $stampCardTasks = StampCardTasks::where('stampCards_id', $stampCard->id)->get();
-                            
-                            foreach($stampCardTasks as $stampCardTask){
-                                $task = RestaurantTaskList::where('id', $stampCardTask->restaurantTaskLists_id)->first();
-                                if($task->taskCode == "FDBK"){
-                                    array_push($storeTasks, "Give a feedback/review per visit");
-                                    array_push($storeDoneTasks, "Give a feedback/review per visit");
-                                }
-                            }
-
-                            $currentStamp = $custStampCard->currentStamp + sizeof($storeDoneTasks);
-                            if($currentStamp >= $stampCard->stampCapacity){
-                                $stampStatus = "Complete";
-                                $currentStamp = $stampCard->stampCapacity;
+                        if(!$custStampCard != null){
+                            if($customerReserve->rewardClaimed == "Yes"){
+                                CustomerStampCard::where('id', $custStampCard->id)
+                                ->update([
+                                    'claimed' => "Yes",
+                                ]);
                             } else {
-                                $stampStatus = "Incomplete";
-                            }
-
-                            CustomerStampCard::where('id', $custStampCard->id)
-                            ->update([
-                                'status' => $stampStatus,
-                                'claimed' => "No",
-                                'currentStamp' => $currentStamp,
-                            ]);
-
-                            foreach($storeDoneTasks as $storeDoneTask){
-                                CustomerTasksDone::create([
-                                    'customer_id' => $customerReserve->customer_id,
-                                    'customerStampCard_id' => $custStampCard->id,
-                                    'taskName' => $storeDoneTask,
-                                    'taskAccomplishDate' => $getDateToday,
-                                    'booking_id' => $customerReserve->id,
-                                    'booking_type' => "reserve",
-                                ]);
-                            }
-
-                        } else {
-                            $stampCardTasks = StampCardTasks::where('stampCards_id', $stampCard->id)->get();
-                            foreach($stampCardTasks as $stampCardTask){
-                                $task = RestaurantTaskList::where('id', $stampCardTask->restaurantTaskLists_id)->first();
-                                if($task->taskCode == "FDBK"){
-                                    array_push($storeTasks, "Give a feedback/review per visit");
-                                    array_push($storeDoneTasks, "Give a feedback/review per visit");
+                                $storeTasks = array();
+                                $storeDoneTasks = array();
+    
+                                if($custStampCard != null){
+                                    $stampCardTasks = StampCardTasks::where('stampCards_id', $stampCard->id)->get();
+                                    
+                                    foreach($stampCardTasks as $stampCardTask){
+                                        $task = RestaurantTaskList::where('id', $stampCardTask->restaurantTaskLists_id)->first();
+                                        if($task->taskCode == "FDBK"){
+                                            array_push($storeDoneTasks, "Give a feedback/review per visit");
+                                        }
+                                    }
+    
+                                    $currentStamp = $custStampCard->currentStamp + sizeof($storeDoneTasks);
+                                    if($currentStamp >= $stampCard->stampCapacity){
+                                        $stampStatus = "Complete";
+                                        $currentStamp = $stampCard->stampCapacity;
+                                    } else {
+                                        $stampStatus = "Incomplete";
+                                    }
+    
+                                    CustomerStampCard::where('id', $custStampCard->id)
+                                    ->update([
+                                        'status' => $stampStatus,
+                                        'claimed' => "No",
+                                        'currentStamp' => $currentStamp,
+                                    ]);
+    
+                                    foreach($storeDoneTasks as $storeDoneTask){
+                                        CustomerTasksDone::create([
+                                            'customer_id' => $customerReserve->customer_id,
+                                            'customerStampCard_id' => $custStampCard->id,
+                                            'taskName' => $storeDoneTask,
+                                            'taskAccomplishDate' => $getDateToday,
+                                            'booking_id' => $customerReserve->id,
+                                            'booking_type' => "reserve",
+                                        ]);
+                                    }
+    
+                                } else {
+                                    $stampCardTasks = StampCardTasks::where('stampCards_id', $stampCard->id)->get();
+                                    foreach($stampCardTasks as $stampCardTask){
+                                        $task = RestaurantTaskList::where('id', $stampCardTask->restaurantTaskLists_id)->first();
+                                        if($task->taskCode == "FDBK"){
+                                            array_push($storeTasks, "Give a feedback/review per visit");
+                                            array_push($storeDoneTasks, "Give a feedback/review per visit");
+                                        }
+                                    }
+                                    
+                                    $stampReward = RestaurantRewardList::where('restAcc_id', $customerReserve->restAcc_id)->where('id', $stampCard->stampReward_id)->first();
+    
+                                    switch($stampReward->rewardCode){
+                                        case "DSCN": 
+                                            $finalReward = "Discount $stampReward->rewardInput% in a Total Bill";
+                                            break;
+                                        case "FRPE": 
+                                            $finalReward = "Free $stampReward->rewardInput person in a group";
+                                            break;
+                                        case "HLF": 
+                                            $finalReward = "Half in the group will be free";
+                                            break;
+                                        case "ALL": 
+                                            $finalReward = "All people in the group will be free";
+                                            break;
+                                        default: 
+                                            $finalReward = "None";
+                                    }
+    
+                                    $finalStampCapac = sizeof($storeDoneTasks);
+                                    $status = "Incomplete";
+                                    if(sizeof($storeDoneTasks) >= $stampCard->stampCapacity){
+                                        $finalStampCapac = $stampCard->stampCapacity;
+                                        $status = "Complete";
+                                    }
+    
+                                    $custStampCardNew = CustomerStampCard::create([
+                                        'customer_id' => $customerReserve->customer_id,
+                                        'restAcc_id' => $customerReserve->restAcc_id,
+                                        'status' => $status,
+                                        'claimed' => "No",
+                                        'currentStamp' => $finalStampCapac,
+                                        'stampReward' => $finalReward,
+                                        'stampValidity' => $stampCard->stampValidity,
+                                        'stampCapacity' => $stampCard->stampCapacity,
+                                    ]);
+    
+                                    foreach($storeTasks as $storeTask){
+                                        CustomerStampTasks::create([
+                                            'customerStampCard_id' => $custStampCardNew->id,
+                                            'taskName' => $storeTask,
+                                        ]);
+                                    }
+    
+                                    foreach($storeDoneTasks as $storeDoneTask){
+                                        CustomerTasksDone::create([
+                                            'customer_id' => $customerReserve->customer_id,
+                                            'customerStampCard_id' => $custStampCardNew->id,
+                                            'taskName' => $storeDoneTask,
+                                            'taskAccomplishDate' => $getDateToday,
+                                            'booking_id' => $customerReserve->id,
+                                            'booking_type' => "reserve",
+                                        ]);
+                                    }
                                 }
-                            }
-                            
-                            $stampReward = RestaurantRewardList::where('restAcc_id', $customerReserve->restAcc_id)->where('id', $stampCard->stampReward_id)->first();
-
-                            switch($stampReward->rewardCode){
-                                case "DSCN": 
-                                    $finalReward = "Discount $stampReward->rewardInput% in a Total Bill";
-                                    break;
-                                case "FRPE": 
-                                    $finalReward = "Free $stampReward->rewardInput person in a group";
-                                    break;
-                                case "HLF": 
-                                    $finalReward = "Half in the group will be free";
-                                    break;
-                                case "ALL": 
-                                    $finalReward = "All people in the group will be free";
-                                    break;
-                                default: 
-                                    $finalReward = "None";
-                            }
-
-                            $finalStampCapac = sizeof($storeDoneTasks);
-                            if(sizeof($storeDoneTasks) >= $stampCard->stampCapacity){
-                                $finalStampCapac = $stampCard->stampCapacity;
-                            }
-
-                            $custStampCardNew = CustomerStampCard::create([
-                                'customer_id' => $customerReserve->customer_id,
-                                'restAcc_id' => $customerReserve->restAcc_id,
-                                'status' => "Incomplete",
-                                'claimed' => "No",
-                                'currentStamp' => $finalStampCapac,
-                                'stampReward' => $finalReward,
-                                'stampValidity' => $stampCard->stampValidity,
-                                'stampCapacity' => $stampCard->stampCapacity,
-                            ]);
-
-                            foreach($storeTasks as $storeTask){
-                                CustomerStampTasks::create([
-                                    'customerStampCard_id' => $custStampCardNew->id,
-                                    'taskName' => $storeTask,
-                                ]);
-                            }
-
-                            foreach($storeDoneTasks as $storeDoneTask){
-                                CustomerTasksDone::create([
-                                    'customer_id' => $customerReserve->customer_id,
-                                    'customerStampCard_id' => $custStampCardNew->id,
-                                    'taskName' => $storeDoneTask,
-                                    'taskAccomplishDate' => $getDateToday,
-                                    'booking_id' => $customerReserve->id,
-                                    'booking_type' => "reserve",
-                                ]);
                             }
                         }
                     }
@@ -4494,7 +4924,6 @@ class CustomerController extends Controller
             $finalCustReviews = null;
         }
 
-
         return response()->json([
             'averageRating' => (number_format($averageRating, 1, '.')),
             'countReviews' => $countReviews,
@@ -4504,51 +4933,59 @@ class CustomerController extends Controller
     public function getListOfRatedRestaurants(){
         $finalRatedRestaurants = array();
 
-        $restaurants = RestaurantAccount::select('id', 'rName', 'rAddress', 'rBranch', 'rLogo')->where('status', "Published")->get();
+        $restaurants = RestaurantAccount::select('id', 'rName', 'rCity', 'rBranch', 'rLogo')
+        ->where('status', "Published")
+        ->get();
 
-        foreach($restaurants as $restaurant){
-            $finalImageUrl = "";
-            if ($restaurant->rLogo == ""){
-                $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
-            } else {
-                $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
-            }
-
-            $restoRatings = CustRestoRating::where('restAcc_id', $restaurant->id)->get();
-            if(!$restoRatings->isEmpty()){
-                $countReviews = 0;
-                $sumRating = 0.0;
-
-                foreach($restoRatings as $restoRating){
-                    $countReviews++;
-                    $sumRating += $restoRating->rating;
+        if(!$restaurants->isEmpty()){
+            $count = 1;
+            foreach($restaurants as $restaurant){
+                if($count <= 5){
+                    $finalImageUrl = "";
+                    if ($restaurant->rLogo == ""){
+                        $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
+                    } else {
+                        $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
+                    }
+        
+                    $restoRatings = CustRestoRating::where('restAcc_id', $restaurant->id)->get();
+                    if(!$restoRatings->isEmpty()){
+                        $countReviews = 0;
+                        $sumRating = 0.0;
+        
+                        foreach($restoRatings as $restoRating){
+                            $countReviews++;
+                            $sumRating += $restoRating->rating;
+                        }
+        
+                        $averageRating = $sumRating / $countReviews;
+                        array_push($finalRatedRestaurants, [
+                            'restId' => $restaurant->id, 
+                            'rName' => $restaurant->rName, 
+                            'rAddress' => "$restaurant->rBranch, $restaurant->rCity",
+                            'rLogo' => $finalImageUrl, 
+                            'rRating' => (number_format($averageRating, 1, '.')),
+                            'rCountReview' => "$countReviews",
+                        ]);
+                    } else {
+                        array_push($finalRatedRestaurants, [
+                            'restId' => $restaurant->id, 
+                            'rName' => $restaurant->rName, 
+                            'rAddress' => "$restaurant->rBranch, $restaurant->rCity",
+                            'rLogo' => $finalImageUrl, 
+                            'rRating' => "0.0", 
+                            'rCountReview' => "0",
+                        ]);
+                    }
+                    $count++;
                 }
-
-                $averageRating = $sumRating / $countReviews;
-                array_push($finalRatedRestaurants, [
-                    'restId' => $restaurant->id, 
-                    'rName' => $restaurant->rName, 
-                    'rAddress' => "$restaurant->rAddress, $restaurant->rBranch", 
-                    'rLogo' => $finalImageUrl, 
-                    'rRating' => (number_format($averageRating, 1, '.')),
-                    'rCountReview' => "$countReviews",
-                ]);
-            } else {
-                array_push($finalRatedRestaurants, [
-                    'restId' => $restaurant->id, 
-                    'rName' => $restaurant->rName, 
-                    'rAddress' => "$restaurant->rAddress, $restaurant->rBranch", 
-                    'rLogo' => $finalImageUrl, 
-                    'rRating' => "0.0", 
-                    'rCountReview' => "0",
-                ]);
             }
+    
+            usort($finalRatedRestaurants, function($a, $b) {
+                return strtotime($b['rRating']) - strtotime($a['rRating']);
+            });
         }
-
-        usort($finalRatedRestaurants, function($a, $b) {
-            return strtotime($b['rRating']) - strtotime($a['rRating']);
-        });
-
+        
         return response()->json($finalRatedRestaurants);
     }
     public function geofenceNotifyCustomer(Request $request){
@@ -4683,7 +5120,7 @@ class CustomerController extends Controller
 
 
         if($cust_lat != $cust_long){
-            $restaurants = RestaurantAccount::select('id', 'rName', 'rAddress', 'rCity', 'rLogo', 'rLatitudeLoc', 'rLongitudeLoc')->where('status', "Published")->get();
+            $restaurants = RestaurantAccount::select('id', 'rName', 'rBranch', 'rAddress', 'rCity', 'rLogo', 'rLatitudeLoc', 'rLongitudeLoc')->where('status', "Published")->get();
             $storeGeo = array();
 
             foreach ($restaurants as $restaurant){
@@ -4731,7 +5168,7 @@ class CustomerController extends Controller
                         array_push($storeGeo , [
                             'rest_id' => $restaurant->id,
                             'rName' => $restaurant->rName,
-                            'rAddress' => "$restaurant->rAddress, $restaurant->rCity",
+                            'rAddress' => "$restaurant->rBranch, $restaurant->rCity",
                             'rLogo' => $finalImageUrl,
                             'rSchedule' => $rSchedule,
                             'distance' => $finalDistance,
@@ -4765,6 +5202,11 @@ class CustomerController extends Controller
 
     public function getNotificationCompleted($cust_id, $notif_id){
         $notification = CustomerNotification::where('id', $notif_id)->where('customer_id', $cust_id)->where('notificationType', "Complete")->first();
+
+        CustomerNotification::where('id', $notif_id)->where('customer_id', $cust_id)
+        ->update([
+            'notificationStatus' => "Read"
+        ]);
         $restaurant = RestaurantAccount::select('rName', 'rBranch')->where('id', $notification->restAcc_id)->first();
         
         $customerQueue = CustomerQueue::where('status', 'completed')->where('completeDateTime', $notification->created_at)->first();
@@ -4810,120 +5252,108 @@ class CustomerController extends Controller
     }
 
     public function customerScanQr($cust_id, $request_cust_id){
-        $reqStatus = "error";
         $subCustStatus = "none";
 
-        // SUB CUST STATUS
-        $customerQueueSub = CustomerQueue::where('customer_id', $cust_id)
-        ->where('status', '!=', 'cancelled')
-        ->where('status', '!=', 'declined')
-        ->where('status', '!=', 'noShow')
-        ->where('status', '!=', 'runaway')
-        ->where('status', '!=', 'completed')
-        ->orderBy('created_at', 'DESC')
-        ->first();
+        $qrReport = explode(',', $request_cust_id);
 
-        $customerReserveSub = CustomerReserve::where('customer_id', $cust_id)
-        ->where('status', '!=', 'cancelled')
-        ->where('status', '!=', 'declined')
-        ->where('status', '!=', 'noShow')
-        ->where('status', '!=', 'runaway')
-        ->where('status', '!=', 'completed')
-        ->orderBy('created_at', 'DESC')
-        ->first();
+        if($qrReport[0] == "s@mquicks@l"){
+            $request_cust_id = $qrReport[1];
 
-        if($customerQueueSub != null){
-            if($customerQueueSub->status == "eating"){
-                $subCustStatus = "onGoing";
-            } else if ($customerQueueSub->status == "pending" 
-                        || $customerQueueSub->status == "approved" 
-                        || $customerQueueSub->status == "validation"
-                        || $customerQueueSub->status == "tableSettingUp") {
-                $subCustStatus = "onGoing";
-            } else {
-                $subCustStatus = "none";
-            }
-        } else if ($customerReserveSub != null) { 
-            if($customerReserveSub->status == "eating"){
-                $subCustStatus = "onGoing";
-            } else if ($customerReserveSub->status == "pending" 
-                        || $customerReserveSub->status == "approved" 
-                        || $customerReserveSub->status == "validation"
-                        || $customerReserveSub->status == "tableSettingUp") {
-                $subCustStatus = "onGoing";
-            } else {
-                $subCustStatus = "none";
-            }
-        } else {
-            $subCustStatus = "none";
-        }
-
-
-        if($subCustStatus == "onGoing"){
-            return response()->json([
-                'custId' => null,
-                'custImage' => null,
-                'custName' => null,
-                'custEAddress' => null,
-                'custCNumber' => null,
-                'custJDate' => null,
-                'bdRName' => null,
-                'bdRAddres' => null,
-                'bdOrderName' => null,
-                'bdBookType' => null,
-                'bdAccessSlot' => null,
-                'reqStatus' => "Ongoing Status",
-            ]);
-        } else {
-            // MAIN CUST STATUS
-            $customer = CustomerAccount::where('id', $request_cust_id)->first();
-            $customerQueue = CustomerQueue::where('customer_id', $request_cust_id)->where('status', "eating")->first();
-            $customerReserve = CustomerReserve::where('customer_id', $request_cust_id)->where('status', "eating")->first();
-
-            if($customer != null){
-                $userSinceDate = explode('-', date('Y-m-d', strtotime($customer->created_at)));
-                $month2 = $this->convertMonths($userSinceDate[1]);
-                $year2 = $userSinceDate[0];
-                $day2  = $userSinceDate[2];
-                $finalImageUrl = "";
-                if($customer->profileImage == null){
-                    $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/user-default.png';
+            // SUB CUST STATUS
+            $customerQueueSub = CustomerQueue::where('customer_id', $cust_id)
+            ->where('status', '!=', 'cancelled')
+            ->where('status', '!=', 'declined')
+            ->where('status', '!=', 'noShow')
+            ->where('status', '!=', 'runaway')
+            ->where('status', '!=', 'completed')
+            ->orderBy('created_at', 'DESC')
+            ->first();
+    
+            $customerReserveSub = CustomerReserve::where('customer_id', $cust_id)
+            ->where('status', '!=', 'cancelled')
+            ->where('status', '!=', 'declined')
+            ->where('status', '!=', 'noShow')
+            ->where('status', '!=', 'runaway')
+            ->where('status', '!=', 'completed')
+            ->orderBy('created_at', 'DESC')
+            ->first();
+    
+            if($customerQueueSub != null){
+                if($customerQueueSub->status == "eating"){
+                    $subCustStatus = "onGoing";
+                } else if ($customerQueueSub->status == "pending" 
+                            || $customerQueueSub->status == "approved" 
+                            || $customerQueueSub->status == "validation"
+                            || $customerQueueSub->status == "tableSettingUp") {
+                    $subCustStatus = "onGoing";
                 } else {
-                    $finalImageUrl = $this->CUSTOMER_IMAGE_PATH.'/'.$request_cust_id.'/'. $customer->profileImage;
+                    $subCustStatus = "none";
                 }
-
-                if($customerQueue != null){
-                    $restaurant = RestaurantAccount::select('id', 'rName', 'rAddress', 'rCity')->where('id', $customerQueue->restAcc_id)->first();
-                    $orderSet = OrderSet::where('id', $customerQueue->orderSet_id)->where('restAcc_id', $restaurant->id)->first();
-                    $customerOrdering = CustomerOrdering::where('custBook_id', $customerQueue->id)
-                    ->where('custBookType', "queue")
-                    ->where('status', "eating")
-                    ->first();
+            } else if ($customerReserveSub != null) { 
+                if($customerReserveSub->status == "eating"){
+                    $subCustStatus = "onGoing";
+                } else if ($customerReserveSub->status == "pending" 
+                            || $customerReserveSub->status == "approved" 
+                            || $customerReserveSub->status == "validation"
+                            || $customerReserveSub->status == "tableSettingUp") {
+                    $subCustStatus = "onGoing";
+                } else {
+                    $subCustStatus = "none";
+                }
+            } else {
+                $subCustStatus = "none";
+            }
     
-                    if($customerOrdering->availableQrAccess >= 1){
-                        $checkAccess = CustomerQrAccess::where('mainCust_id', $request_cust_id)
-                        ->where('subCust_id', $cust_id)
-                        ->where('custOrdering_id', $customerOrdering->id)
-                        ->latest()
+    
+            if($subCustStatus == "onGoing"){
+                return response()->json([
+                    'custId' => null,
+                    'custImage' => null,
+                    'custName' => null,
+                    'custEAddress' => null,
+                    'custCNumber' => null,
+                    'custJDate' => null,
+                    'bdRName' => null,
+                    'bdRAddres' => null,
+                    'bdOrderName' => null,
+                    'bdBookType' => null,
+                    'bdAccessSlot' => null,
+                    'reqStatus' => "Ongoing Status",
+                ]);
+            } else {
+                // MAIN CUST STATUS
+                $customer = CustomerAccount::where('id', $request_cust_id)->first();
+                $customerQueue = CustomerQueue::where('customer_id', $request_cust_id)->where('status', "eating")->first();
+                $customerReserve = CustomerReserve::where('customer_id', $request_cust_id)->where('status', "eating")->first();
+    
+                if($customer != null){
+                    $userSinceDate = explode('-', date('Y-m-d', strtotime($customer->created_at)));
+                    $month2 = $this->convertMonths($userSinceDate[1]);
+                    $year2 = $userSinceDate[0];
+                    $day2  = $userSinceDate[2];
+                    $finalImageUrl = "";
+                    if($customer->profileImage == null){
+                        $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/user-default.png';
+                    } else {
+                        $finalImageUrl = $this->CUSTOMER_IMAGE_PATH.'/'.$request_cust_id.'/'. $customer->profileImage;
+                    }
+    
+                    if($customerQueue != null){
+                        $restaurant = RestaurantAccount::select('id', 'rName', 'rAddress', 'rCity')->where('id', $customerQueue->restAcc_id)->first();
+                        $orderSet = OrderSet::where('id', $customerQueue->orderSet_id)->where('restAcc_id', $restaurant->id)->first();
+                        $customerOrdering = CustomerOrdering::where('custBook_id', $customerQueue->id)
+                        ->where('custBookType', "queue")
+                        ->where('status', "eating")
                         ->first();
-    
-                        if($checkAccess == null){
-                            return response()->json([
-                                'custId' => $request_cust_id,
-                                'custImage' => $finalImageUrl,
-                                'custName' => $customer->name,
-                                'custEAddress' => $customer->emailAddress,
-                                'custCNumber' => $customer->contactNumber,
-                                'custJDate' => "User since: $month2 $day2, $year2",
-                                'bdRName' => $restaurant->rName,
-                                'bdRAddres' => "$restaurant->rAddress, $restaurant->rCity",
-                                'bdOrderName' => $orderSet->orderSetName,
-                                'bdBookType' => "Queue",
-                                'bdAccessSlot' => $customerOrdering->availableQrAccess,
-                                'reqStatus' => "Success",
-                            ]);
-                        } else {
-                            if($checkAccess->status == "declined") {
+        
+                        if($customerOrdering->availableQrAccess >= 1){
+                            $checkAccess = CustomerQrAccess::where('mainCust_id', $request_cust_id)
+                            ->where('subCust_id', $cust_id)
+                            ->where('custOrdering_id', $customerOrdering->id)
+                            ->latest()
+                            ->first();
+        
+                            if($checkAccess == null){
                                 return response()->json([
                                     'custId' => $request_cust_id,
                                     'custImage' => $finalImageUrl,
@@ -4938,7 +5368,85 @@ class CustomerController extends Controller
                                     'bdAccessSlot' => $customerOrdering->availableQrAccess,
                                     'reqStatus' => "Success",
                                 ]);
-                            } else if($checkAccess->status == "approved") {
+                            } else {
+                                if($checkAccess->status == "declined") {
+                                    return response()->json([
+                                        'custId' => $request_cust_id,
+                                        'custImage' => $finalImageUrl,
+                                        'custName' => $customer->name,
+                                        'custEAddress' => $customer->emailAddress,
+                                        'custCNumber' => $customer->contactNumber,
+                                        'custJDate' => "User since: $month2 $day2, $year2",
+                                        'bdRName' => $restaurant->rName,
+                                        'bdRAddres' => "$restaurant->rAddress, $restaurant->rCity",
+                                        'bdOrderName' => $orderSet->orderSetName,
+                                        'bdBookType' => "Queue",
+                                        'bdAccessSlot' => $customerOrdering->availableQrAccess,
+                                        'reqStatus' => "Success",
+                                    ]);
+                                } else if($checkAccess->status == "approved") {
+                                    return response()->json([
+                                        'custId' => $request_cust_id,
+                                        'custImage' => $finalImageUrl,
+                                        'custName' => $customer->name,
+                                        'custEAddress' => $customer->emailAddress,
+                                        'custCNumber' => $customer->contactNumber,
+                                        'custJDate' => "User since: $month2 $day2, $year2",
+                                        'bdRName' => $restaurant->rName,
+                                        'bdRAddres' => "$restaurant->rAddress, $restaurant->rCity",
+                                        'bdOrderName' => $orderSet->orderSetName,
+                                        'bdBookType' => "Queue",
+                                        'bdAccessSlot' => $customerOrdering->availableQrAccess,
+                                        'reqStatus' => "Approved",
+                                    ]);
+                                } else {
+                                    return response()->json([
+                                        'custId' => $request_cust_id,
+                                        'custImage' => $finalImageUrl,
+                                        'custName' => $customer->name,
+                                        'custEAddress' => $customer->emailAddress,
+                                        'custCNumber' => $customer->contactNumber,
+                                        'custJDate' => "User since: $month2 $day2, $year2",
+                                        'bdRName' => $restaurant->rName,
+                                        'bdRAddres' => "$restaurant->rAddress, $restaurant->rCity",
+                                        'bdOrderName' => $orderSet->orderSetName,
+                                        'bdBookType' => "Queue",
+                                        'bdAccessSlot' => $customerOrdering->availableQrAccess,
+                                        'reqStatus' => "Pending",
+                                    ]);
+                                }
+                            }
+                        } else {
+                            return response()->json([
+                                'custId' => $request_cust_id,
+                                'custImage' => $finalImageUrl,
+                                'custName' => $customer->name,
+                                'custEAddress' => $customer->emailAddress,
+                                'custCNumber' => $customer->contactNumber,
+                                'custJDate' => "User since: $month2 $day2, $year2",
+                                'bdRName' => $restaurant->rName,
+                                'bdRAddres' => "$restaurant->rAddress, $restaurant->rCity",
+                                'bdOrderName' => $orderSet->orderSetName,
+                                'bdBookType' => "Queue",
+                                'bdAccessSlot' => 0,
+                                'reqStatus' => "Full Slot",
+                            ]);
+                        }
+                    } else if($customerReserve != null){
+                        $restaurant = RestaurantAccount::select('id', 'rName', 'rAddress', 'rCity')->where('id', $customerReserve->restAcc_id)->first();
+                        $orderSet = OrderSet::where('id', $customerReserve->orderSet_id)->where('restAcc_id', $restaurant->id)->first();
+                        $customerOrdering = CustomerOrdering::where('custBook_id', $customerReserve->id
+                        )->where('custBookType', "queue")
+                        ->where('status', "eating")
+                        ->first();
+        
+                        if($customerOrdering->availableQrAccess >= 1){
+                            $checkAccess = CustomerQrAccess::where('mainCust_id', $request_cust_id)
+                            ->where('subCust_id', $cust_id)
+                            ->where('custOrdering_id', $customerOrdering->id)
+                            ->first();
+        
+                            if($checkAccess == null){
                                 return response()->json([
                                     'custId' => $request_cust_id,
                                     'custImage' => $finalImageUrl,
@@ -4949,9 +5457,9 @@ class CustomerController extends Controller
                                     'bdRName' => $restaurant->rName,
                                     'bdRAddres' => "$restaurant->rAddress, $restaurant->rCity",
                                     'bdOrderName' => $orderSet->orderSetName,
-                                    'bdBookType' => "Queue",
+                                    'bdBookType' => "Reserve",
                                     'bdAccessSlot' => $customerOrdering->availableQrAccess,
-                                    'reqStatus' => "Approved",
+                                    'reqStatus' => "Success",
                                 ]);
                             } else {
                                 return response()->json([
@@ -4964,57 +5472,12 @@ class CustomerController extends Controller
                                     'bdRName' => $restaurant->rName,
                                     'bdRAddres' => "$restaurant->rAddress, $restaurant->rCity",
                                     'bdOrderName' => $orderSet->orderSetName,
-                                    'bdBookType' => "Queue",
+                                    'bdBookType' => "Reserve",
                                     'bdAccessSlot' => $customerOrdering->availableQrAccess,
                                     'reqStatus' => "Pending",
                                 ]);
                             }
-                        }
-                    } else {
-                        return response()->json([
-                            'custId' => $request_cust_id,
-                            'custImage' => $finalImageUrl,
-                            'custName' => $customer->name,
-                            'custEAddress' => $customer->emailAddress,
-                            'custCNumber' => $customer->contactNumber,
-                            'custJDate' => "User since: $month2 $day2, $year2",
-                            'bdRName' => $restaurant->rName,
-                            'bdRAddres' => "$restaurant->rAddress, $restaurant->rCity",
-                            'bdOrderName' => $orderSet->orderSetName,
-                            'bdBookType' => "Queue",
-                            'bdAccessSlot' => 0,
-                            'reqStatus' => "Full Slot",
-                        ]);
-                    }
-                } else if($customerReserve != null){
-                    $restaurant = RestaurantAccount::select('id', 'rName', 'rAddress', 'rCity')->where('id', $customerReserve->restAcc_id)->first();
-                    $orderSet = OrderSet::where('id', $customerReserve->orderSet_id)->where('restAcc_id', $restaurant->id)->first();
-                    $customerOrdering = CustomerOrdering::where('custBook_id', $customerReserve->id
-                    )->where('custBookType', "queue")
-                    ->where('status', "eating")
-                    ->first();
-    
-                    if($customerOrdering->availableQrAccess >= 1){
-                        $checkAccess = CustomerQrAccess::where('mainCust_id', $request_cust_id)
-                        ->where('subCust_id', $cust_id)
-                        ->where('custOrdering_id', $customerOrdering->id)
-                        ->first();
-    
-                        if($checkAccess == null){
-                            return response()->json([
-                                'custId' => $request_cust_id,
-                                'custImage' => $finalImageUrl,
-                                'custName' => $customer->name,
-                                'custEAddress' => $customer->emailAddress,
-                                'custCNumber' => $customer->contactNumber,
-                                'custJDate' => "User since: $month2 $day2, $year2",
-                                'bdRName' => $restaurant->rName,
-                                'bdRAddres' => "$restaurant->rAddress, $restaurant->rCity",
-                                'bdOrderName' => $orderSet->orderSetName,
-                                'bdBookType' => "Reserve",
-                                'bdAccessSlot' => $customerOrdering->availableQrAccess,
-                                'reqStatus' => "Success",
-                            ]);
+        
                         } else {
                             return response()->json([
                                 'custId' => $request_cust_id,
@@ -5027,45 +5490,45 @@ class CustomerController extends Controller
                                 'bdRAddres' => "$restaurant->rAddress, $restaurant->rCity",
                                 'bdOrderName' => $orderSet->orderSetName,
                                 'bdBookType' => "Reserve",
-                                'bdAccessSlot' => $customerOrdering->availableQrAccess,
-                                'reqStatus' => "Pending",
+                                'bdAccessSlot' => 0,
+                                'reqStatus' => "Full Slot",
                             ]);
                         }
-    
                     } else {
                         return response()->json([
-                            'custId' => $request_cust_id,
-                            'custImage' => $finalImageUrl,
-                            'custName' => $customer->name,
-                            'custEAddress' => $customer->emailAddress,
-                            'custCNumber' => $customer->contactNumber,
-                            'custJDate' => "User since: $month2 $day2, $year2",
-                            'bdRName' => $restaurant->rName,
-                            'bdRAddres' => "$restaurant->rAddress, $restaurant->rCity",
-                            'bdOrderName' => $orderSet->orderSetName,
-                            'bdBookType' => "Reserve",
-                            'bdAccessSlot' => 0,
-                            'reqStatus' => "Full Slot",
+                            'custId' => null,
+                            'custImage' => null,
+                            'custName' => null,
+                            'custEAddress' => null,
+                            'custCNumber' => null,
+                            'custJDate' => null,
+                            'bdRName' => null,
+                            'bdRAddres' => null,
+                            'bdOrderName' => null,
+                            'bdBookType' => null,
+                            'bdAccessSlot' => null,
+                            'reqStatus' => "Invalid Access",
                         ]);
                     }
-                } else {
-                    return response()->json([
-                        'custId' => null,
-                        'custImage' => null,
-                        'custName' => null,
-                        'custEAddress' => null,
-                        'custCNumber' => null,
-                        'custJDate' => null,
-                        'bdRName' => null,
-                        'bdRAddres' => null,
-                        'bdOrderName' => null,
-                        'bdBookType' => null,
-                        'bdAccessSlot' => null,
-                        'reqStatus' => "Invalid Access",
-                    ]);
                 }
             }
+        } else {
+            return response()->json([
+                'custId' => null,
+                'custImage' => null,
+                'custName' => null,
+                'custEAddress' => null,
+                'custCNumber' => null,
+                'custJDate' => null,
+                'bdRName' => null,
+                'bdRAddres' => null,
+                'bdOrderName' => null,
+                'bdBookType' => null,
+                'bdAccessSlot' => null,
+                'reqStatus' => "Invalid Access",
+            ]);
         }
+        
     }
 
     public function orderingRequestAccess($cust_id, $request_cust_id){
@@ -5199,6 +5662,11 @@ class CustomerController extends Controller
         ->where('customer_id', $cust_id)
         ->where('notificationType', "QR Request")
         ->first();
+
+        CustomerNotification::where('id', $notif_id)->where('customer_id', $cust_id)
+        ->update([
+            'notificationStatus' => "Read"
+        ]);
 
         $customerQrAccess = CustomerQrAccess::where('mainCust_id', $cust_id)
         ->where('created_at', $customerNotification->created_at)
@@ -5404,6 +5872,11 @@ class CustomerController extends Controller
         //check kung may access pa ba sa customer access
         $notification = CustomerNotification::where('id', $notif_id)->first();
         $customerQrAccess = CustomerQrAccess::where('subCust_id', $cust_id)->where('approvedDateTime', $notification->created_at)->first();
+
+        CustomerNotification::where('id', $notif_id)->where('customer_id', $cust_id)
+        ->update([
+            'notificationStatus' => "Read"
+        ]);
 
         if($customerQrAccess != null){
             $customer = CustomerAccount::where('id', $customerQrAccess->mainCust_id)->first();

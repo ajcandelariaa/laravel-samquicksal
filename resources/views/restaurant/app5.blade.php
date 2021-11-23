@@ -95,5 +95,8 @@
             </div>
         </div>
     </section>
+    @if (request()->is('restaurant/stamp-offenses/offenses/*'))
+        <script type="text/javascript" src="{{ asset('js/custOffense.js') }}"></script>
+    @endif
 </body>
 </html>

@@ -173,6 +173,22 @@
                 'error'
             );
         </script>
+    @elseif (session()->has('cannotBeDeleted'))
+        <script>
+            Swal.fire(
+                'You need at least one order set and visible',
+                '',
+                'error'
+            );
+        </script>
+    @elseif (session()->has('cannotBeDeletedFoodSet'))
+        <script>
+            Swal.fire(
+                'You must have at least one food set and visible',
+                '',
+                'error'
+            );
+        </script>
     @endif
     
     <div class="w-11/12 mx-auto mt-10">

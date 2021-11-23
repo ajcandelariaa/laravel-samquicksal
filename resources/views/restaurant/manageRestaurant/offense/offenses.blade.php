@@ -12,7 +12,7 @@
         </script>
     @endif
     <div class="w-11/12 mx-auto mt-10 font-Montserrat">
-        <div class="grid grid-cols-2 gap-x-5 ">
+        <div class="grid grid-cols-2 gap-x-5 items-start">
             <div class="col-span-1 bg-manageRestaurantSidebarColorActive pb-8 shadow-adminDownloadButton">
                 <form action="/restaurant/manage-restaurant/offense/cancel-reservation/edit/{{ $cancellation->id }}" method="POST">
                 @csrf
@@ -24,7 +24,7 @@
                             <div class="text-left text-submitButton font-bold">No. of Cancellation</div>
                             <div class="text-left text-submitButton">:</div>
                             <div class="">
-                                <input type="text" name="numberOfCancellation" class="w-full border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none  focus:border-black py-1">
+                                <input type="number" min="1" name="numberOfCancellation" class="w-full border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none  focus:border-black py-1">
                                 <span class="mt-2 text-red-600 italic text-sm">@error('numberOfCancellation'){{ $message }}@enderror</span>
                             </div>
 
@@ -39,7 +39,7 @@
                                 </select>
                                 <span class="mt-2 text-red-600 italic text-sm">@error('offenseTypeC'){{ $message }}@enderror</span>
                                 
-                                <input type="text" placeholder="Number of Days Of Block (e.g. 2)" id="showCancellationBlockDays" style="display: none" name="cancelBlockDays" class="mt-2 w-full border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none  focus:border-black py-1">
+                                <input type="number" min="1" placeholder="Number of Days Of Block (e.g. 2)" id="showCancellationBlockDays" style="display: none" name="cancelBlockDays" class="mt-2 w-full border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none  focus:border-black py-1">
                                 <span class="mt-2 text-red-600 italic text-sm">@error('cancelBlockDays'){{ $message }}@enderror</span>
                             </div>
 
@@ -81,7 +81,7 @@
 
 
 
-        <div class="grid grid-cols-2 gap-x-5 mt-16">
+        <div class="grid grid-cols-2 gap-x-5 mt-16 items-start">
             <div class="col-span-1 bg-manageRestaurantSidebarColorActive pb-8 shadow-adminDownloadButton">
                 <form action="/restaurant/manage-restaurant/offense/no-show/edit/{{ $noShow->id }}" method="POST">
                 @csrf
@@ -93,7 +93,7 @@
                             <div class="text-left text-submitButton font-bold">No. of No Show</div>
                             <div class="text-left text-submitButton">:</div>
                             <div class="">
-                                <input type="text" name="numberOfNoShow" class="w-full border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none  focus:border-black py-1">
+                                <input type="number" min="1" name="numberOfNoShow" class="w-full border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none  focus:border-black py-1">
                                 <span class="mt-2 text-red-600 italic text-sm">@error('numberOfNoShow'){{ $message }}@enderror</span>
                             </div>
 
@@ -108,7 +108,7 @@
                                 </select>
                                 <span class="mt-2 text-red-600 italic text-sm">@error('offenseTypeN'){{ $message }}@enderror</span>
                                 
-                                <input type="text" placeholder="Number of Days Of Block (e.g. 2)" id="showNoShowBlockDays" style="display: none" name="noshowBlockDays" class="py-1 mt-2 w-full border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none  focus:border-black">
+                                <input type="number" min="1" placeholder="Number of Days Of Block (e.g. 2)" id="showNoShowBlockDays" style="display: none" name="noshowBlockDays" class="py-1 mt-2 w-full border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none  focus:border-black">
                                 <span class="mt-2 text-red-600 italic text-sm">@error('noshowBlockDays'){{ $message }}@enderror</span>
                             </div>
 
@@ -122,7 +122,7 @@
             </div>
             <div class="col-span-1 bg-manageRestaurantSidebarColorActive pb-8 shadow-adminDownloadButton">
                 <div class="w-11/12 mx-auto">
-                    <div class="uppercase font-bold text-white text-xl py-3">Status</div>
+                    <div class="uppercase font-bold text-white text-xl py-3">No Show Status</div>
                 </div>
                 <div class="bg-adminViewAccountHeaderColor2 grid grid-cols-1 gap-y-2">
                     <div class="py-3"></div>
@@ -147,7 +147,7 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-x-5 mt-16">
+        <div class="grid grid-cols-2 gap-x-5 mt-16 items-start">
             <div class="col-span-1 bg-manageRestaurantSidebarColorActive pb-8 shadow-adminDownloadButton">
                 <form action="/restaurant/manage-restaurant/offense/runaway/edit/{{ $runaway->id }}" method="POST">
                 @csrf
@@ -159,7 +159,7 @@
                             <div class="text-left text-submitButton font-bold">No. of Runaway</div>
                             <div class="text-left text-submitButton">:</div>
                             <div class="">
-                                <input type="text" name="numberOfRunaway" class="py-1 w-full border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none  focus:border-black">
+                                <input type="number" min="1" name="numberOfRunaway" class="py-1 w-full border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none  focus:border-black">
                                 <span class="mt-2 text-red-600 italic text-sm">@error('numberOfRunaway'){{ $message }}@enderror</span>
                             </div>
 
@@ -175,7 +175,7 @@
                                 </select>
                                 <span class="mt-2 text-red-600 italic text-sm">@error('offenseTypeR'){{ $message }}@enderror</span>
                                 
-                                <input type="text" placeholder="Number of Days Of Block (e.g. 2)" id="showRunawayBlockDays" style="display: none" name="runawayBlockDays" class="mt-2 py-1 w-full border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none  focus:border-black">
+                                <input type="number" min="1" placeholder="Number of Days Of Block (e.g. 2)" id="showRunawayBlockDays" style="display: none" name="runawayBlockDays" class="mt-2 py-1 w-full border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none  focus:border-black">
                                 <span class="mt-2 text-red-600 italic text-sm">@error('runawayBlockDays'){{ $message }}@enderror</span>
                             </div>
 
@@ -189,7 +189,7 @@
             </div>
             <div class="col-span-1 bg-manageRestaurantSidebarColorActive pb-8 shadow-adminDownloadButton">
                 <div class="w-11/12 mx-auto">
-                    <div class="uppercase font-bold text-white text-xl py-3">Status</div>
+                    <div class="uppercase font-bold text-white text-xl py-3">Runaway Offense Status</div>
                 </div>
                 <div class="bg-adminViewAccountHeaderColor2 grid grid-cols-1 gap-y-2">
                     <div class="py-3"></div>

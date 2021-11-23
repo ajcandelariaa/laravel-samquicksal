@@ -201,19 +201,19 @@
                 <div class="flex flex-col w-9/12 gap-y-5 mx-auto mt-10 font-Montserrat">
                     <div class="flex flex-row -mb-1">
                         <h1 class="mr-2">Name:</h1>
-                        <input type="text" name="foodName" class="border focus:border-black rounded-md w-7/12 py-1 px-2 text-sm focus:outline-non text-gray-700 ">
+                        <input type="text" name="foodName" class="border focus:border-black rounded-md w-7/12 py-1 px-2 text-sm focus:outline-non text-gray-700" required>
 
                         <h1 class="ml-4 mr-2">Price:</h1>
-                        <input type="text" name="foodPrice" class="border focus:border-black rounded-md w-2/12 py-1 px-2 text-sm focus:outline-non text-gray-700">
+                        <input type="number" min="0" step=".01" name="foodPrice" class="border focus:border-black rounded-md w-2/12 py-1 px-2 text-sm focus:outline-non text-gray-700" required>
                     </div>
 
                     <div class="-mb-3">Description: </div>
-                    <textarea type="text" name="foodDesc" placeholder="Type description..." class="p-2 mb-1 bg-white border rounded-md border-gray-200 shadow-sm h-24 w-full"></textarea>
+                    <textarea type="text" name="foodDesc" placeholder="Type description..." class="p-2 mb-1 bg-white border rounded-md border-gray-200 shadow-sm h-24 w-full" required></textarea>
                     
                     <div class="justify-self-center flex flex-row">
                         <h1 class="mr-4">Image:</h1>
                         <div class="flex-row">
-                            <input type="file" name="foodImage" onchange="previewFile(this);" class="border focus:border-black rounded-md w-full h-full py-1 px-2 text-sm focus:outline-non text-gray-700 ">
+                            <input type="file" name="foodImage" onchange="previewFile(this);" class="border focus:border-black rounded-md w-full h-full px-2 text-sm focus:outline-non text-gray-700" required>
                             <br><span class="mt-2 text-red-600 italic text-sm">@error('foodImage'){{ $message }}@enderror</span>
                         </div>
                     </div>

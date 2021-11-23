@@ -38,9 +38,11 @@
                         <img src="{{ asset('images/publishLogo2.png') }}" alt="publishLogo" class="w-72 mx-auto mt-10">
                         <p class="text-sm text-center font-bold">If changes has been made, you are Good to Go!</p>
                         <p class="text-sm w-10/12 mx-auto font-bold  mt-16">Please note that after you publish your restaurant, changes in Manage Restaurant will be applied and may affect the following:</p>
-                        <p class="text-xs w-10/12 mx-auto mt-5 ml-20">1. Upon updating the number of tables and table capacity will only apply after opening hours. Also, all the reservation onwards will be void and it will notify the customers.</p>
-                        <p class="text-xs w-10/12 mx-auto mt-2 ml-20">2. In Food menu you can't edit and delete any item but you can add, hide and not available the status of that item.</p>
-                        <p class="text-xs w-10/12 mx-auto mt-2 ml-20">3. In Managing the store hours it will only apply after opening hours. Also, all the reservation onwards will be void and it will notify the customers.</p>
+                        <p class="text-xs w-10/12 mx-auto mt-5 ml-20">1. Upon updating the number of tables and table capacity will only apply within closing hours. Also, all the reservation onwards will be void and it will notify the customers.</p>
+                        <p class="text-xs w-10/12 mx-auto mt-2 ml-20">2. In Food Item, Food Set and Order Set you can't edit and delete unless your store is within closing hours or not Visible. Also, setting the status of food iten and food set can be changed within closing hours.</p>
+                        <p class="text-xs w-10/12 mx-auto mt-2 ml-20">3. Also, in Order Set if you change the status, delete, or edit. All reserved customers that ordered that Order Set will be void and it will notify the customers.</p>
+                        <p class="text-xs w-10/12 mx-auto mt-2 ml-20">4. In Managing the Store Hours you can't edit and delete unless your store is within closing hours. Also, all the reservation onwards will be void and it will notify the customers.</p>
+                        <p class="text-xs w-10/12 mx-auto mt-2 ml-20">5. Lastly, be careful when editing and adding unavailable dates because all the customer reservation that have been reserved on that particular time will be void.</p>
                         
                         <div class="text-center mt-16">
                             @if ($restaurant->status == "Unpublished" && $restaurant->verified == "Yes" && $restaurant->rLogo != null && $restaurant->rGcashQrCodeImage != null && $orderSet > 0)
@@ -89,7 +91,7 @@
                             @else
                                 <i class="fas fa-times-circle mr-2 text-adminDeleteFormColor"></i>
                             @endif
-                            4. Create at least one Order Set
+                            4. Create at least one Order Set (Visible and Available)
                         </p>
                     </div>
                 </div>

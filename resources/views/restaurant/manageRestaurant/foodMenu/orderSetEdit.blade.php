@@ -58,7 +58,7 @@
                         
                         <div class="bg-adminViewAccountHeaderColor2 uppercase pl-5 font-bold py-3">Price</div>
                         <div class="bg-white w-full p-4">
-                            <input type="text" name="foodPrice" class="w-full border border-gray-400 py-1 px-2 text-sm text-gray-700 focus:outline-none focus:border-black h-14" value="{{ $orderSet->orderSetPrice }}">
+                            <input type="number" min="0" step=".01" name="foodPrice" class="w-full border border-gray-400 py-1 px-2 text-sm text-gray-700 focus:outline-none focus:border-black h-14" value="{{ $orderSet->orderSetPrice }}">
                             <span class="mt-2 text-red-600 italic text-sm">@error('foodPrice'){{ "Order Set Price is required" }}@enderror</span>
                         </div>
                     </div>

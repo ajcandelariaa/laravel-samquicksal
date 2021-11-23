@@ -53,7 +53,7 @@
                         
                         <div class="bg-adminViewAccountHeaderColor2 uppercase pl-5 font-bold py-3">Price</div>
                         <div class="bg-white w-full p-4">
-                            <input type="text" name="foodPrice" class="w-full border border-gray-400 py-1 px-2 text-sm text-gray-700 focus:outline-none rounded-md focus:border-black h-14" value="{{ $foodItem->foodItemPrice }}">
+                            <input type="number" name="foodPrice" min="0" step=".01" class="w-full border border-gray-400 py-1 px-2 text-sm text-gray-700 focus:outline-none rounded-md focus:border-black h-14" value="{{ $foodItem->foodItemPrice }}">
                             <span class="mt-2 text-red-600 italic text-sm">@error('foodPrice'){{ $message }}@enderror</span>
                         </div>
                     </div>

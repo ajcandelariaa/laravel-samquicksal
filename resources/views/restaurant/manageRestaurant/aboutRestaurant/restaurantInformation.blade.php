@@ -253,7 +253,7 @@
                     <div class="text-left text-submitButton">Number of Tables</div>
                     <div class="text-left text-submitButton">:</div>
                     <div class="font-bold mb-4">
-                        <input type="text" name="rNumberOfTables" value="{{ $account->rNumberOfTables }}" class="w-full border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none {{ $errors->has('rNumberOfTables') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }}">
+                        <input type="number" name="rNumberOfTables" value="{{ $account->rNumberOfTables }}" class="w-full border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none {{ $errors->has('rNumberOfTables') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }}">
                         <span class="mt-2 text-red-600 italic text-sm">@error('rNumberOfTables'){{ $message }}@enderror</span>
                     </div>
 
@@ -261,7 +261,7 @@
                     <div class="text-left text-submitButton">Capacity per Table</div>
                     <div class="text-left text-submitButton">:</div>
                     <div class="font-bold mb-4">
-                        <input type="text" name="rCapacityPerTable" value="{{ $account->rCapacityPerTable }}" class="w-full border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none {{ $errors->has('rCapacityPerTable') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }}">
+                        <input type="number" name="rCapacityPerTable" value="{{ $account->rCapacityPerTable }}" class="w-full border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none {{ $errors->has('rCapacityPerTable') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }}">
                         <span class="mt-2 text-red-600 italic text-sm">@error('rCapacityPerTable'){{ $message }}@enderror</span>
                     </div>
                 </div>

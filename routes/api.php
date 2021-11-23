@@ -19,8 +19,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/customer/test-customers', [CustomerController::class, 'customers']);
 Route::get('/customer/test-restaurants', [CustomerController::class, 'restaurants']);
 
-
-Route::get('/customer/restaurants', [CustomerController::class, 'getListOfRestaurants']);
+Route::get('/customer/restaurants/{keyword}', [CustomerController::class, 'getListOfRestaurants']);
 Route::get('/customer/rated-restaurants', [CustomerController::class, 'getListOfRatedRestaurants']);
 Route::post('/customer/nearby-restaurants', [CustomerController::class, 'getListOfNearbyRestaurants']);
 Route::get('/customer/promos', [CustomerController::class, 'getListOfPromos']);
@@ -47,6 +46,7 @@ Route::get('/customer/get-notifications/completed/{cust_id}/{notif_id}', [Custom
 Route::get('/customer/get-notifications/qr-validate/{cust_id}/{notif_id}', [CustomerController::class, 'getNotificationQrValidate']);
 Route::get('/customer/get-notifications/qr-approved/{cust_id}/{notif_id}', [CustomerController::class, 'getNotificationQrApproved']);
 Route::get('/customer/get-notifications/geofencing/{cust_id}/{notif_id}', [CustomerController::class, 'getNotificationGeofencing']);
+Route::get('/customer/get-notifications/blocked/{cust_id}/{notif_id}', [CustomerController::class, 'getNotificationBlocked']);
 
 Route::get('/customer/get-booking-history/{cust_id}', [CustomerController::class, 'getBookingHistory']);
 Route::post('/customer/get-booking-history/cancelled', [CustomerController::class, 'getBookingHistoryCancelled']);

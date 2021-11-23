@@ -2,6 +2,15 @@
 
 @section('content')
 <div class="container mx-auto">
+    @if (session()->has('offenseDeleted'))
+        <script>
+            Swal.fire(
+                'Customer Offense Deleted',
+                '',
+                'success'
+            );
+        </script>
+    @endif
     <div class="w-11/12 mx-auto mt-10 font-Montserrat bg-adminViewAccountHeaderColor2 pb-2">
         <div class="bg-manageRestaurantSidebarColorActive">
             <div class="uppercase font-bold text-white text-center text-xl py-3">Runaway Customer Offenses</div>

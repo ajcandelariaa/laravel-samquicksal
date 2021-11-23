@@ -1,9 +1,10 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\RestaurantController;
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\CustomerWebController;
 
 /*
 |--------------------------------------------------------------------------
@@ -23,6 +24,16 @@ Route::get('/', function () {
 Route::get('/restaurant', function () {
     return view('homepage.restaurant-home');
 });
+
+
+//CUSTOMER WEB ROURTES
+Route::get('/customer/customer-home', [CustomerWebController::class, 'customerHome']);
+Route::get('/customer/login', [CustomerWebController::class, 'loginView']);
+Route::get('/customer/signup', [CustomerWebController::class, 'signupView']);
+Route::get('/customer/editprofile', [CustomerWebController::class, 'editProfileView']);
+Route::get('/customer/profile', [CustomerWebController::class, 'profileView']);
+Route::get('/customer/reservation/reserve', [CustomerWebController::class, 'reservationView']);
+
 
 // RESTAURANT ROUTES
 Route::get('/restaurant/register', [RestaurantController::class, 'registerView2']);
@@ -197,12 +208,16 @@ Route::middleware(['restaurantLoggedIn'])->group(function(){
     Route::get('/restaurant/stamp-offenses/stamp-history', [RestaurantController::class, 'soStampHistoryListView']);
     Route::get('/restaurant/stamp-offenses/customer-stamp-history', [RestaurantController::class, 'soCustStampHistListView']);
     Route::get('/restaurant/stamp-offenses/customer-stamp-history/{stamp_id}', [RestaurantController::class, 'soCustStampHistPartView']);
+    
     Route::get('/restaurant/stamp-offenses/offenses/cancellation', [RestaurantController::class, 'soCancellationListView']);
     Route::get('/restaurant/stamp-offenses/offenses/cancellation/{offense_id}', [RestaurantController::class, 'soCancellationPartView']);
+    Route::get('/restaurant/stamp-offenses/offenses/cancellation/delete/{offense_id}', [RestaurantController::class, 'soCancellationPartDelete']);
     Route::get('/restaurant/stamp-offenses/offenses/no-show', [RestaurantController::class, 'soNoshowListView']);
     Route::get('/restaurant/stamp-offenses/offenses/no-show/{offense_id}', [RestaurantController::class, 'soNoshowPartView']);
+    Route::get('/restaurant/stamp-offenses/offenses/no-show/delete/{offense_id}', [RestaurantController::class, 'soNoshowPartDelete']);
     Route::get('/restaurant/stamp-offenses/offenses/runaway', [RestaurantController::class, 'soRunawayListView']);
     Route::get('/restaurant/stamp-offenses/offenses/runaway/{offense_id}', [RestaurantController::class, 'soRunawayPartView']);
+    Route::get('/restaurant/stamp-offenses/offenses/runaway/delete/{offense_id}', [RestaurantController::class, 'soRunawayPartDelete']);
 
 });
 Route::middleware(['restaurantLoggedOut'])->group(function(){

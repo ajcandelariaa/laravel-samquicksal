@@ -8,8 +8,11 @@
         </a>
     </div>
     <div class="w-11/12 mx-auto mt-5 font-Montserrat bg-white mb-10">
-        <div class="bg-manageRestaurantSidebarColorActive">
+        <div class="bg-manageRestaurantSidebarColorActive grid grid-cols-2 px-5 py-1 items-center">
             <div class="uppercase font-bold text-white ml-8 text-xl py-3">BLOCKED ACCOUNT DETAILS</div>
+            <div class="justify-self-end text-white py-3 ml-3">
+                <a href="/restaurant/stamp-offenses/offenses/cancellation/delete/{{ $custMainOffenses->id }}" id="btn-delete-block" class="px-8 py-2 hover:bg-darkerSubmitButton bg-headerActiveTextColor">Delete Block</a>
+            </div>
         </div>
         <div class="w-11/12 mx-auto py-10">
             <div class="bg-adminViewAccountHeaderColor2">

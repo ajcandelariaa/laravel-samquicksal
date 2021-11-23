@@ -75,7 +75,7 @@
                 @csrf
                 <div class="flex flex-row w-5/12 gap-y-5 mx-auto mt-10">
                     <h1 class="mr-3">Input:</h1>
-                    <input type="text" name="discount" value="{{ $rewards[0]->rewardInput }}" class="border rounded-md focus:border-black w-full py-1 px-2 text-sm focus:outline-non text-gray-700" required>
+                    <input type="number" min="1" max="100" name="discount" value="{{ $rewards[0]->rewardInput }}" class="border rounded-md focus:border-black w-full py-1 px-2 text-sm focus:outline-non text-gray-700" required>
                 </div>
                 <div class="text-center mt-10">
                     <button class="bg-submitButton text-white rounded-full w-32 h-10 text-sm hover:bg-darkerSubmitButton hover:text-gray-300 transition duration-200 ease-in-out uppercase font-bold " type="submit">Update</button>
@@ -93,7 +93,7 @@
                 @csrf
                 <div class="flex flex-row w-5/12 gap-y-5 mx-auto mt-10">
                     <h1 class="mr-3">Input:</h1>
-                    <input type="text" name="free" value="{{ $rewards[1]->rewardInput }}" class="border rounded-md focus:border-black w-full py-1 px-2 text-sm focus:outline-non text-gray-700" required>
+                    <input type="number" min="1" max="20" name="free" value="{{ $rewards[1]->rewardInput }}" class="border rounded-md focus:border-black w-full py-1 px-2 text-sm focus:outline-non text-gray-700" required>
                 </div>
                 <div class="text-center mt-10">
                     <button class="bg-submitButton text-white hover:bg-darkerSubmitButton hover:text-gray-300 rounded-full w-32 h-10 text-sm uppercase font-bold transition duration-200 ease-in-out " type="submit">Update</button>
