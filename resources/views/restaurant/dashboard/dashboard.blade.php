@@ -23,14 +23,17 @@
                 <div class="text-center text-white font-medium text-xs mt-1">as of Today</div>
                 <div class="mt-4 grid grid-cols-adminDashboardThreeCols gap-y-1 w-full justify-center text-white">
                     {{-- <div>{{ $approvedCount }}</div> --}}
+                    <div>0</div>
                     <div><i class="fas fa-caret-up text-green-600"></i></div>
                     <div>Approved</div>
 
                     {{-- <div>{{ $declinedCount }}</div> --}}
+                    <div>0</div>
                     <div><i class="fas fa-caret-down text-red-600"></i></div>
                     <div>Declined</div>
 {{-- 
                     <div>{{ $pendingCount }}</div> --}}
+                    <div>0</div>
                     <div><i class="fas fa-circle text-circle text-yellow-300"></i></div>
                     <div>Ordering</div>
                 </div>
@@ -56,6 +59,7 @@
                                     @else
                                         {{ $rAppDiffHours }} hrs ago
                                     @endif --}}
+                                    0
                                 </p>
                             </div>
                         </div>
@@ -70,6 +74,7 @@
                                     @else
                                         {{ $cAccDiffHours }} hrs ago
                                     @endif --}}
+                                    0
                                 </p>
                             </div>
                         </div>
@@ -84,6 +89,7 @@
                                     @else
                                         {{ $rAccDiffHours }} hrs ago
                                     @endif --}}
+                                    0
                                 </p>
                             </div>
                         </div>
