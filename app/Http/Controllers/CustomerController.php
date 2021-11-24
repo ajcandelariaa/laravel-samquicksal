@@ -274,7 +274,7 @@ class CustomerController extends Controller
         $notif2Desc, 
         $finalImageUrl){
         
-        $notif = CustomerNotification::create([
+        CustomerNotification::create([
             'customer_id' => $customerId,
             'restAcc_id' => $restAccId,
             'notificationType' => "Blocked",
@@ -282,6 +282,8 @@ class CustomerController extends Controller
             'notificationDescription' => $notifDesc,
             'notificationStatus' => "Unread",
         ]);
+
+        $notif = CustomerNotification::select('id')->latest()->first();
 
         if($custDeviceToken != null){
             $to = $custDeviceToken;
@@ -729,9 +731,10 @@ class CustomerController extends Controller
 
         $customerQrAccess = CustomerQrAccess::where('subCust_id', $cust_id)
         ->orderBy('created_at', 'DESC')
-        ->where('status', 'pending')
-        ->orWhere('status', 'approved')
-        ->first();
+        ->where(function ($query) {
+            $query->where('status', 'pending')
+            ->orWhere('status', 'approved');
+        })->first();
 
         $customer = CustomerAccount::where('id', $cust_id)->first();
 
@@ -1170,15 +1173,7 @@ class CustomerController extends Controller
                 'status' => "Email Address is already existing",
             ]);
         } else {
-            
-            // $details = [
-            //     'applicantName' => $request->name,
-            // ];
-
-            // Mail::to($request->emailAddress)->send(new RestaurantFormAppreciation($details));
-            
-
-            $customer = CustomerAccount::create([
+            CustomerAccount::create([
                 'name' => $request->name,
                 'emailAddress' => $request->emailAddress,
                 'emailAddressVerified' => "No",
@@ -1187,6 +1182,8 @@ class CustomerController extends Controller
                 'password' => Hash::make($request->password),
                 'deviceToken' => $request->deviceToken,
             ]);
+
+            $customer = CustomerAccount::latest()->first();
             
             if(!is_dir('uploads')){
                 mkdir('uploads');
@@ -1206,7 +1203,7 @@ class CustomerController extends Controller
             mkdir('uploads/customerAccounts/logo/'.$customer->id);
             mkdir('uploads/customerAccounts/gcashQr/'.$customer->id);
             
-            $notif = CustomerNotification::create([
+            CustomerNotification::create([
                 'customer_id' => $customer->id,
                 'restAcc_id' => 0,
                 'notificationType' => "New Account",
@@ -1215,9 +1212,11 @@ class CustomerController extends Controller
                 'notificationStatus' => "Unread",
             ]);
 
+            $notif = CustomerNotification::select('id')->latest()->first();
+
             $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/samquicksalLogo.png';
             
-            if($customer != null){
+            if($customer != null && $customer->deviceToken != null){
                 $to = $customer->deviceToken;
                 $notification = array(
                     'title' => "Hi $customer->name, Welcome to Samquicksal!",
@@ -1378,7 +1377,7 @@ class CustomerController extends Controller
             'queueDate' => date("Y-m-d"),
         ]);
 
-        $notif = CustomerNotification::create([
+        CustomerNotification::create([
             'customer_id' => $request->customer_id,
             'restAcc_id' => $request->restAcc_id,
             'notificationType' => "Pending",
@@ -1387,6 +1386,8 @@ class CustomerController extends Controller
             'notificationStatus' => "Unread",
         ]);
 
+        $notif = CustomerNotification::select('id')->latest()->first();
+
         $finalImageUrl = "";
         if ($restaurant->rLogo == ""){
             $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
@@ -1394,7 +1395,7 @@ class CustomerController extends Controller
             $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
         }
         
-        if($customer != null){
+        if($customer != null && $customer->deviceToken != null){
             $to = $customer->deviceToken;
             $notification = array(
                 'title' => "$restaurant->rName, $restaurant->rBranch",
@@ -1444,7 +1445,7 @@ class CustomerController extends Controller
             'offenseCharges' => 0.00,
         ]);
 
-        $notif = CustomerNotification::create([
+        CustomerNotification::create([
             'customer_id' => $request->customer_id,
             'restAcc_id' => $request->restAcc_id,
             'notificationType' => "Pending",
@@ -1453,6 +1454,8 @@ class CustomerController extends Controller
             'notificationStatus' => "Unread",
         ]);
 
+        $notif = CustomerNotification::select('id')->latest()->first();
+
         $finalImageUrl = "";
         if ($restaurant->rLogo == ""){
             $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/resto-default.png';
@@ -1460,7 +1463,7 @@ class CustomerController extends Controller
             $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
         }
         
-        if($customer != null){
+        if($customer != null && $customer->deviceToken != null){
             $to = $customer->deviceToken;
             $notification = array(
                 'title' => "$restaurant->rName, $restaurant->rBranch",
@@ -1485,7 +1488,6 @@ class CustomerController extends Controller
         foreach($notifications as $notification){
             $finalImageUrl = "";
             $currentTime = Carbon::now();
-            
 
             if($notification->restAcc_id == 0){
                 $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/samquicksalLogo.png';
@@ -1931,14 +1933,18 @@ class CustomerController extends Controller
         $getDateTimeToday = date('Y-m-d H:i:s');
         $customerQueue = CustomerQueue::where('customer_id', $id)
         ->where('queueDate', $getDateToday)
-        ->where('status', 'pending')
-        ->orWhere('status', 'approved')
+        ->where(function ($query) {
+            $query->where('status', 'pending')
+            ->orWhere('status', 'approved');
+        })
         ->orderBy('created_at', 'DESC')
         ->first();
 
         $customerReserve = CustomerReserve::where('customer_id', $id)
-        ->where('status', 'pending')
-        ->orWhere('status', 'approved')
+        ->where(function ($query) {
+            $query->where('status', 'pending')
+            ->orWhere('status', 'approved');
+        })
         ->orderBy('created_at', 'DESC')
         ->first();
 
@@ -2160,7 +2166,7 @@ class CustomerController extends Controller
             }
             
     
-            $notif = CustomerNotification::create([
+            CustomerNotification::create([
                 'customer_id' => $customerQueue->customer_id,
                 'restAcc_id' => $customerQueue->restAcc_id,
                 'notificationType' => "Cancelled",
@@ -2168,6 +2174,8 @@ class CustomerController extends Controller
                 'notificationDescription' => "$restaurant->rAddress, $restaurant->rCity",
                 'notificationStatus' => "Unread",
             ]);
+            
+            $notif = CustomerNotification::select('id')->latest()->first();
     
             $finalImageUrl = "";
             if ($restaurant->rLogo == ""){
@@ -2414,7 +2422,7 @@ class CustomerController extends Controller
 
 
     
-            $notif = CustomerNotification::create([
+            CustomerNotification::create([
                 'customer_id' => $customerReserve->customer_id,
                 'restAcc_id' => $customerReserve->restAcc_id,
                 'notificationType' => "Cancelled",
@@ -2422,6 +2430,8 @@ class CustomerController extends Controller
                 'notificationDescription' => "$restaurant->rAddress, $restaurant->rCity",
                 'notificationStatus' => "Unread",
             ]);
+
+            $notif = CustomerNotification::select('id')->latest()->first();
     
             $finalImageUrl = "";
             if ($restaurant->rLogo == ""){
@@ -2431,7 +2441,7 @@ class CustomerController extends Controller
             }
     
             
-            if($customer != null){
+            if($customer != null && $customer->deviceToken != null){
                 $to = $customer->deviceToken;
                 $notification = array(
                     'title' => "$restaurant->rName, $restaurant->rBranch",
@@ -2897,7 +2907,7 @@ class CustomerController extends Controller
                 'resetStatus' => 'Pending',
             ]);
             
-            $notif = CustomerNotification::create([
+            CustomerNotification::create([
                 'customer_id' => $findEmailAddress->id,
                 'restAcc_id' => 0,
                 'notificationType' => "Forgot Password",
@@ -2905,6 +2915,8 @@ class CustomerController extends Controller
                 'notificationDescription' => "Samquicksal",
                 'notificationStatus' => "Unread",
             ]);
+
+            $notif = CustomerNotification::select('id')->latest()->first();
 
             $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/samquicksalLogo.png';
             
@@ -2963,7 +2975,7 @@ class CustomerController extends Controller
             'resetStatus' => "Changed"
         ]);
         
-        $notif = CustomerNotification::create([
+        CustomerNotification::create([
             'customer_id' => $findEmailAddress->id,
             'restAcc_id' => 0,
             'notificationType' => "Password Changed",
@@ -2971,6 +2983,8 @@ class CustomerController extends Controller
             'notificationDescription' => "Samquicksal",
             'notificationStatus' => "Unread",
         ]);
+
+        $notif = CustomerNotification::select('id')->latest()->first();
 
         $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/samquicksalLogo.png';
             
@@ -4056,7 +4070,7 @@ class CustomerController extends Controller
                     } else if ($customerQrA->status == "approved"){
                         $customer = CustomerAccount::where('id', $customerQrA->subCust_id)->first();
                         $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/samquicksalLogo.png';
-                        if($customer != null){
+                        if($customer != null && $customer->deviceToken != null){
                             $to = $customer->deviceToken;
                             $notification = array(
                                 'title' => "Hi $customer->name, thank you for ordering together with your friends!",
@@ -4116,7 +4130,7 @@ class CustomerController extends Controller
                     } else if ($customerQrA->status == "approved"){
                         $customer = CustomerAccount::where('id', $customerQrA->subCust_id)->first();
                         $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/samquicksalLogo.png';
-                        if($customer != null){
+                        if($customer != null && $customer->deviceToken != null){
                             $to = $customer->deviceToken;
                             $notification = array(
                                 'title' => "Hi $customer->name, thank you for ordering together with your friends!",
@@ -4345,10 +4359,12 @@ class CustomerController extends Controller
                         ->first();
 
                         if($customerQueue->rewardClaimed == "Yes"){
-                            CustomerStampCard::where('id', $custStampCard->id)
-                            ->update([
-                                'claimed' => "Yes",
-                            ]);
+                            if($custStampCard->claimed == "No"){
+                                CustomerStampCard::where('id', $custStampCard->id)
+                                ->update([
+                                    'claimed' => "Yes",
+                                ]);
+                            }
                         } else {
                             $storeTasks = array();
                             $storeDoneTasks = array();
@@ -4481,120 +4497,119 @@ class CustomerController extends Controller
                         $custStampCard = CustomerStampCard::where('customer_id', $customerReserve->customer_id)
                         ->where('restAcc_id', $restaurant->id)
                         ->where('stampValidity', $stampCard->stampValidity)
-                        ->where('claimed', "No")
                         ->latest()
                         ->first();
 
-                        if(!$custStampCard != null){
-                            if($customerReserve->rewardClaimed == "Yes"){
+                        if($customerReserve->rewardClaimed == "Yes"){
+                            if($custStampCard->claimed == "No"){
                                 CustomerStampCard::where('id', $custStampCard->id)
                                 ->update([
                                     'claimed' => "Yes",
                                 ]);
-                            } else {
-                                $storeTasks = array();
-                                $storeDoneTasks = array();
-    
-                                if($custStampCard != null){
-                                    $stampCardTasks = StampCardTasks::where('stampCards_id', $stampCard->id)->get();
-                                    
-                                    foreach($stampCardTasks as $stampCardTask){
-                                        $task = RestaurantTaskList::where('id', $stampCardTask->restaurantTaskLists_id)->first();
-                                        if($task->taskCode == "FDBK"){
-                                            array_push($storeDoneTasks, "Give a feedback/review per visit");
-                                        }
+                            }
+                        } else {
+                            $storeTasks = array();
+                            $storeDoneTasks = array();
+
+                            if($custStampCard != null){
+                                $stampCardTasks = StampCardTasks::where('stampCards_id', $stampCard->id)->get();
+                                
+                                foreach($stampCardTasks as $stampCardTask){
+                                    $task = RestaurantTaskList::where('id', $stampCardTask->restaurantTaskLists_id)->first();
+                                    if($task->taskCode == "FDBK"){
+                                        array_push($storeDoneTasks, "Give a feedback/review per visit");
                                     }
-    
-                                    $currentStamp = $custStampCard->currentStamp + sizeof($storeDoneTasks);
-                                    if($currentStamp >= $stampCard->stampCapacity){
-                                        $stampStatus = "Complete";
-                                        $currentStamp = $stampCard->stampCapacity;
-                                    } else {
-                                        $stampStatus = "Incomplete";
-                                    }
-    
-                                    CustomerStampCard::where('id', $custStampCard->id)
-                                    ->update([
-                                        'status' => $stampStatus,
-                                        'claimed' => "No",
-                                        'currentStamp' => $currentStamp,
-                                    ]);
-    
-                                    foreach($storeDoneTasks as $storeDoneTask){
-                                        CustomerTasksDone::create([
-                                            'customer_id' => $customerReserve->customer_id,
-                                            'customerStampCard_id' => $custStampCard->id,
-                                            'taskName' => $storeDoneTask,
-                                            'taskAccomplishDate' => $getDateToday,
-                                            'booking_id' => $customerReserve->id,
-                                            'booking_type' => "reserve",
-                                        ]);
-                                    }
-    
+                                }
+
+                                $currentStamp = $custStampCard->currentStamp + sizeof($storeDoneTasks);
+                                if($currentStamp >= $stampCard->stampCapacity){
+                                    $stampStatus = "Complete";
+                                    $currentStamp = $stampCard->stampCapacity;
                                 } else {
-                                    $stampCardTasks = StampCardTasks::where('stampCards_id', $stampCard->id)->get();
-                                    foreach($stampCardTasks as $stampCardTask){
-                                        $task = RestaurantTaskList::where('id', $stampCardTask->restaurantTaskLists_id)->first();
-                                        if($task->taskCode == "FDBK"){
-                                            array_push($storeTasks, "Give a feedback/review per visit");
-                                            array_push($storeDoneTasks, "Give a feedback/review per visit");
-                                        }
-                                    }
-                                    
-                                    $stampReward = RestaurantRewardList::where('restAcc_id', $customerReserve->restAcc_id)->where('id', $stampCard->stampReward_id)->first();
-    
-                                    switch($stampReward->rewardCode){
-                                        case "DSCN": 
-                                            $finalReward = "Discount $stampReward->rewardInput% in a Total Bill";
-                                            break;
-                                        case "FRPE": 
-                                            $finalReward = "Free $stampReward->rewardInput person in a group";
-                                            break;
-                                        case "HLF": 
-                                            $finalReward = "Half in the group will be free";
-                                            break;
-                                        case "ALL": 
-                                            $finalReward = "All people in the group will be free";
-                                            break;
-                                        default: 
-                                            $finalReward = "None";
-                                    }
-    
-                                    $finalStampCapac = sizeof($storeDoneTasks);
-                                    $status = "Incomplete";
-                                    if(sizeof($storeDoneTasks) >= $stampCard->stampCapacity){
-                                        $finalStampCapac = $stampCard->stampCapacity;
-                                        $status = "Complete";
-                                    }
-    
-                                    $custStampCardNew = CustomerStampCard::create([
+                                    $stampStatus = "Incomplete";
+                                }
+
+                                CustomerStampCard::where('id', $custStampCard->id)
+                                ->update([
+                                    'status' => $stampStatus,
+                                    'claimed' => "No",
+                                    'currentStamp' => $currentStamp,
+                                ]);
+
+                                foreach($storeDoneTasks as $storeDoneTask){
+                                    CustomerTasksDone::create([
                                         'customer_id' => $customerReserve->customer_id,
-                                        'restAcc_id' => $customerReserve->restAcc_id,
-                                        'status' => $status,
-                                        'claimed' => "No",
-                                        'currentStamp' => $finalStampCapac,
-                                        'stampReward' => $finalReward,
-                                        'stampValidity' => $stampCard->stampValidity,
-                                        'stampCapacity' => $stampCard->stampCapacity,
+                                        'customerStampCard_id' => $custStampCard->id,
+                                        'taskName' => $storeDoneTask,
+                                        'taskAccomplishDate' => $getDateToday,
+                                        'booking_id' => $customerReserve->id,
+                                        'booking_type' => "reserve",
                                     ]);
-    
-                                    foreach($storeTasks as $storeTask){
-                                        CustomerStampTasks::create([
-                                            'customerStampCard_id' => $custStampCardNew->id,
-                                            'taskName' => $storeTask,
-                                        ]);
+                                }
+
+                            } else {
+                                $stampCardTasks = StampCardTasks::where('stampCards_id', $stampCard->id)->get();
+                                foreach($stampCardTasks as $stampCardTask){
+                                    $task = RestaurantTaskList::where('id', $stampCardTask->restaurantTaskLists_id)->first();
+                                    if($task->taskCode == "FDBK"){
+                                        array_push($storeTasks, "Give a feedback/review per visit");
+                                        array_push($storeDoneTasks, "Give a feedback/review per visit");
                                     }
-    
-                                    foreach($storeDoneTasks as $storeDoneTask){
-                                        CustomerTasksDone::create([
-                                            'customer_id' => $customerReserve->customer_id,
-                                            'customerStampCard_id' => $custStampCardNew->id,
-                                            'taskName' => $storeDoneTask,
-                                            'taskAccomplishDate' => $getDateToday,
-                                            'booking_id' => $customerReserve->id,
-                                            'booking_type' => "reserve",
-                                        ]);
-                                    }
+                                }
+                                
+                                $stampReward = RestaurantRewardList::where('restAcc_id', $customerReserve->restAcc_id)->where('id', $stampCard->stampReward_id)->first();
+
+                                switch($stampReward->rewardCode){
+                                    case "DSCN": 
+                                        $finalReward = "Discount $stampReward->rewardInput% in a Total Bill";
+                                        break;
+                                    case "FRPE": 
+                                        $finalReward = "Free $stampReward->rewardInput person in a group";
+                                        break;
+                                    case "HLF": 
+                                        $finalReward = "Half in the group will be free";
+                                        break;
+                                    case "ALL": 
+                                        $finalReward = "All people in the group will be free";
+                                        break;
+                                    default: 
+                                        $finalReward = "None";
+                                }
+
+                                $finalStampCapac = sizeof($storeDoneTasks);
+                                $status = "Incomplete";
+                                if(sizeof($storeDoneTasks) >= $stampCard->stampCapacity){
+                                    $finalStampCapac = $stampCard->stampCapacity;
+                                    $status = "Complete";
+                                }
+
+                                $custStampCardNew = CustomerStampCard::create([
+                                    'customer_id' => $customerReserve->customer_id,
+                                    'restAcc_id' => $customerReserve->restAcc_id,
+                                    'status' => $status,
+                                    'claimed' => "No",
+                                    'currentStamp' => $finalStampCapac,
+                                    'stampReward' => $finalReward,
+                                    'stampValidity' => $stampCard->stampValidity,
+                                    'stampCapacity' => $stampCard->stampCapacity,
+                                ]);
+
+                                foreach($storeTasks as $storeTask){
+                                    CustomerStampTasks::create([
+                                        'customerStampCard_id' => $custStampCardNew->id,
+                                        'taskName' => $storeTask,
+                                    ]);
+                                }
+
+                                foreach($storeDoneTasks as $storeDoneTask){
+                                    CustomerTasksDone::create([
+                                        'customer_id' => $customerReserve->customer_id,
+                                        'customerStampCard_id' => $custStampCardNew->id,
+                                        'taskName' => $storeDoneTask,
+                                        'taskAccomplishDate' => $getDateToday,
+                                        'booking_id' => $customerReserve->id,
+                                        'booking_type' => "reserve",
+                                    ]);
                                 }
                             }
                         }
@@ -5079,7 +5094,7 @@ class CustomerController extends Controller
             }
 
             foreach($finalResult as $custNotif){
-                $notif = CustomerNotification::create([
+                CustomerNotification::create([
                     'customer_id' => $cust_id,
                     'restAcc_id' => $custNotif['rest_id'],
                     'notificationType' => "Geofencing",
@@ -5088,9 +5103,11 @@ class CustomerController extends Controller
                     'notificationStatus' => "Unread",
                 ]);
 
+                $notif = CustomerNotification::select('id')->latest()->first();
+
                 $customer = CustomerAccount::where('id', $cust_id)->first();
         
-                if($customer != null){
+                if($customer != null && $customer->deviceToken != null){
                     $to = $customer->deviceToken;
                     $notification = array(
                         'title' => $custNotif['rName'].', '.$custNotif['rBranch'],
@@ -5552,7 +5569,7 @@ class CustomerController extends Controller
                 'status' => "pending",
             ]);
 
-            $notif = CustomerNotification::create([
+            CustomerNotification::create([
                 'customer_id' => $customer->id,
                 'restAcc_id' => 0,
                 'notificationType' => "QR Request",
@@ -5561,8 +5578,10 @@ class CustomerController extends Controller
                 'notificationStatus' => "Unread",
             ]);
 
+            $notif = CustomerNotification::select('id')->latest()->first();
+
             $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/samquicksalLogo.png';
-            if($customer != null){
+            if($customer != null && $customer->deviceToken != null){
                 $to = $customer->deviceToken;
                 $notification = array(
                     'title' => "Hi $customer->name, Someone has scanned your QR Code!",
@@ -5609,7 +5628,7 @@ class CustomerController extends Controller
                 'status' => "pending",
             ]);
 
-            $notif = CustomerNotification::create([
+            CustomerNotification::create([
                 'customer_id' => $customer->id,
                 'restAcc_id' => 0,
                 'notificationType' => "QR Request",
@@ -5618,8 +5637,10 @@ class CustomerController extends Controller
                 'notificationStatus' => "Unread",
             ]);
 
+            $notif = CustomerNotification::select('id')->latest()->first();
+
             $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/samquicksalLogo.png';
-            if($customer != null){
+            if($customer != null && $customer->deviceToken != null){
                 $to = $customer->deviceToken;
                 $notification = array(
                     'title' => "Hi $customer->name, Someone has scanned your QR Code!",
@@ -5769,7 +5790,7 @@ class CustomerController extends Controller
             ]);
     
             $customerSub = CustomerAccount::where('id', $customerQrAccess->subCust_id)->first();
-            $notif = CustomerNotification::create([
+            CustomerNotification::create([
                 'customer_id' => $customerSub->id,
                 'restAcc_id' => 0,
                 'notificationType' => "QR Declined",
@@ -5777,6 +5798,9 @@ class CustomerController extends Controller
                 'notificationDescription' => "Samquicksal",
                 'notificationStatus' => "Unread",
             ]);
+
+            $notif = CustomerNotification::select('id')->latest()->first();
+
             if($customerSub != null){
                 $to = $customerSub->deviceToken;
                 $notification = array(
@@ -5824,7 +5848,7 @@ class CustomerController extends Controller
             ]);
     
             $customerSub = CustomerAccount::where('id', $customerQrAccess->subCust_id)->first();
-            $notif = CustomerNotification::create([
+            CustomerNotification::create([
                 'customer_id' => $customerSub->id,
                 'restAcc_id' => 0,
                 'notificationType' => "QR Approved",
@@ -5832,6 +5856,9 @@ class CustomerController extends Controller
                 'notificationDescription' => "Samquicksal",
                 'notificationStatus' => "Unread",
             ]);
+
+            $notif = CustomerNotification::select('id')->latest()->first();
+
             if($customerSub != null){
                 $to = $customerSub->deviceToken;
                 $notification = array(

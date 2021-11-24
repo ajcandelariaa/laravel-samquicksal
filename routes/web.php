@@ -26,21 +26,39 @@ Route::get('/restaurant', function () {
 });
 
 
+
+
 //CUSTOMER WEB ROURTES
-Route::get('/customer/customer-home', [CustomerWebController::class, 'customerHome']);
-Route::get('/customer/login', [CustomerWebController::class, 'loginView']);
 Route::get('/customer/signup', [CustomerWebController::class, 'signupView']);
-Route::get('/customer/editprofile', [CustomerWebController::class, 'editProfileView']);
-Route::get('/customer/profile', [CustomerWebController::class, 'profileView']);
-Route::get('/customer/reservation/reserve', [CustomerWebController::class, 'reservationView']);
+Route::post('/customer/signup', [CustomerWebController::class, 'signup']);
+
+Route::middleware(['customerLoggedIn'])->group(function(){
+    //logout at laman ng customer
+    Route::get('/customer/logout', [CustomerWebController::class, 'logout']);
+    Route::get('/customer/customer-home', [CustomerWebController::class, 'customerHome']);
+    Route::get('/customer/editprofile', [CustomerWebController::class, 'editProfileView']);
+    Route::get('/customer/profile', [CustomerWebController::class, 'profileView']);
+    Route::get('/customer/reservation/{restAcc_id}', [CustomerWebController::class, 'reservationView']);
+    Route::get('/customer/confirm-reservation', [CustomerWebController::class, 'confirmReservationView']);
+    Route::get('/customer/view-promo', [CustomerWebController::class, 'viewPromoView']);
+    Route::get('/customer/livestatus', [CustomerWebController::class, 'liveStatusView']);
+    Route::get('/customer/restaurant-promo', [CustomerWebController::class, 'restaurantPromoView']);
+    Route::get('/customer/view-restaurant', [CustomerWebController::class, 'viewReservationView']);
+
+});
+
+Route::middleware(['customerLoggedOut'])->group(function(){
+    //mga login
+    Route::get('/customer/login', [CustomerWebController::class, 'loginView']);
+    Route::post('/customer/login', [CustomerWebController::class, 'login']);
+});
+
 
 
 // RESTAURANT ROUTES
 Route::get('/restaurant/register', [RestaurantController::class, 'registerView2']);
 Route::post('/restaurant/register', [RestaurantController::class, 'register2']);
-
 Route::get('/restaurant/email-verification/{id}/{status}', [RestaurantController::class, 'verifyEmail']);
-
 Route::middleware(['restaurantLoggedIn'])->group(function(){
     Route::get('/restaurant/logout', [RestaurantController::class, 'logout']);
     Route::get('/restaurant/dashboard', [RestaurantController::class, 'dashboardView']);

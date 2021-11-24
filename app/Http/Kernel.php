@@ -58,6 +58,8 @@ class Kernel extends HttpKernel
         'adminLoggedOut' => \App\Http\Middleware\AdminLoggedOut::class,
         'restaurantLoggedIn' => \App\Http\Middleware\RestaurantLoggedIn::class,
         'restaurantLoggedOut' => \App\Http\Middleware\RestaurantLoggedOut::class,
+        'customerLoggedIn' => \App\Http\Middleware\CustomerLoggedIn::class,
+        'customerLoggedOut' => \App\Http\Middleware\CustomerLoggedOut::class,
         'auth' => \App\Http\Middleware\Authenticate::class,
         'auth.basic' => \Illuminate\Auth\Middleware\AuthenticateWithBasicAuth::class,
         'cache.headers' => \Illuminate\Http\Middleware\SetCacheHeaders::class,

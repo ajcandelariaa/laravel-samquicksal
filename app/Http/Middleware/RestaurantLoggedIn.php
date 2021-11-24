@@ -22,7 +22,7 @@ class RestaurantLoggedIn
             return redirect('restaurant/login');
         } else {
             if(Session::get('userType') == 'customer'){
-                // to be followed return redirect('customer/login');
+                redirect('customer/login');
             } else if (Session::get('userType') == 'admin'){
                 return redirect('admin/login');
             } else {

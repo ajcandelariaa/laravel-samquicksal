@@ -23,6 +23,7 @@
   </style>
 </head>
 
+
 <body class="antialiased">
     @if (session()->has('passwordUpdated'))
         <script>
@@ -63,8 +64,15 @@
           <ul class="flex flex-col lg:flex-row list-none lg:ml-auto font-Montserrat">
             <li class="flex items-center">
               <a class="nav__link cursor-pointer text-darkerSubmitButton  px-7 py-4 lg:py-2 flex items-center text-xs lg:text-base uppercase font-bold" href="/restaurant" target="_blank">
-              <p class="md:hidden sm:hidden hidden xl:contents">Be Our Partner</p>
-                  <span class="xl:hidden inline-block ml-2">Be Our Partner</span><a>
+                <p class="md:hidden sm:hidden hidden xl:contents">Be Our Partner</p>
+                <span class="xl:hidden inline-block ml-2">Be Our Partner</span><a>
+                {{-- <a class="nav__link cursor-pointer text-darkerSubmitButton  px-7 py-4 lg:py-2 flex items-center text-xs lg:text-base uppercase font-bold" href="/customer/login" target="_blank">
+                <p class="md:hidden sm:hidden hidden xl:contents">Login</p>
+                  <span class="xl:hidden inline-block ml-2">Login</span><a>
+                <a class="nav__link cursor-pointer text-darkerSubmitButton  px-7 py-4 lg:py-2 flex items-center text-xs lg:text-base uppercase font-bold" href="/customer/signup" target="_blank">
+                  <p class="md:hidden sm:hidden hidden xl:contents">Signup</p>
+                  <span class="xl:hidden inline-block ml-2">Signup</span>
+                <a> --}}
             </li>
           </ul>
         </nav>
@@ -224,7 +232,7 @@
             </div>
             </div>
             <div class="shadow-xl mx-auto mb-24 xl:-mt-20 xl:mr-28 xl:w-5/6 xl:max-w-lg md:w-5/12 md:ml-2 lg:ml-3 lg:-mt-10 lg:w-6/12 sm:w-7/12 w-9/12 col fade-in ">
-              <div class="bg-boxPeach text-submitButton rounded-xl relative pb-72 sm:pb-56 md:pb-60 lg:pb-72 xl:pb-96 shadow-xl">
+              <div class="bg-boxPeach text-submitButton rounded-xl relative pb-36 sm:pb-56 md:pb-60 lg:pb-72 xl:pb-96 shadow-xl">
                   <div class="flex flex-col py-5 px-5 xl:py-5 xl:px-7 xl:text-3xl lg:text-2xl md:text-2xl sm:text-2xl text-xl font-bold col fade-in">
                       <p>Earn Rewards for</p>
                       <p>Completing</p>
@@ -239,7 +247,7 @@
       </section>
     
           <div class="bg-gradient-to-b from-white to-headerBgColor">
-          <section class=" font-Montserrat mt-28 sm:mt-28 md:mt-16 lg:mt-20 xl:mt-60 mx-20 sm:mx-0">
+          <section class=" font-Montserrat sm:mt-28 md:mt-16 lg:mt-20 xl:mt-60 xs:mx-3 sm:mx-0">
               <div class="container flex flex-col items-center lg:px-5 xl:px-5 lg:py-7 xl:py-8 mx-auto">
                 <div class="flex flex-col xl:w-full text-left ">
                   <div class="w-full mx-auto xl:w-1/2">

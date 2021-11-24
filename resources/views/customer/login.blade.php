@@ -41,22 +41,28 @@
 </header>
 
 <section class="relative">
-    <div class="flex flex-col rounded-xl bg-white py-10 px-8 sm:px-16 md:px-24 sm:py-10 md:py-12 lg:px-24 lg:py-16 xl:px-32 xl:py-20 xl:mt-5 ">
-        <div class="mx-auto flex flex-col justify-center items-center">
-            <span class="mx-auto text-Montserrat font-medimu text-xl sm:text-2xl md:text-2xl lg:text-3xl xl:text-3xl text-submitButton mb-10 sm:mb-12 md:mb-12 lg:mb-16 xl:mb-16">Login</span>
-            <input class="w-56 sm:w-80 md:w-80 lg:w-96 xl:w-96 pl-3 pr-3 sm:py-1 md:py-1 lg:py-2 xl:py-2 py-1 rounded-md border-multiStepBoxBorder" type="text" name="" id="" placeholder="Username/Email Address">
-            <input class="w-56 sm:w-80 md:w-80 lg:w-96 mt-4 sm:mt-4 md:mt-4 lg:mt-5 xl:mt-7 xl:w-96 pl-3 pr-3  py-1 sm:py-1 md:py-1 lg:py-2 xl:py-2 rounded-md border-multiStepBoxBorder" type="password" name="" id="" placeholder="Password">
-        </div>
-        <div class=" flex justify-end lg:mt-2">
-            <a href="/restaurant/login/forgot-password" class=" md:mt-2 xl:text-sm lg:text-xs md:text-xs sm:text-xs text-xs text-loginLandingPage underline hover:text-gray-700 transition duration-200 ease-in-out">Forgot Password?</a>
-        </div>
+    <form action="/customer/login" method="POST">
+      @csrf
+      <div class="flex flex-col rounded-xl bg-white py-10 px-8 sm:px-16 md:px-24 sm:py-10 md:py-12 lg:px-24 lg:py-16 xl:px-32 xl:py-20 xl:mt-5 ">
+          <div class="mx-auto flex flex-col justify-center items-center">
+              <span class="mx-auto text-Montserrat font-medimu text-xl sm:text-2xl md:text-2xl lg:text-3xl xl:text-3xl text-submitButton mb-10 sm:mb-12 md:mb-12 lg:mb-16 xl:mb-16">Login</span>
+              <input class="w-56 sm:w-80 md:w-80 lg:w-96 xl:w-96 pl-3 pr-3 sm:py-1 md:py-1 lg:py-2 xl:py-2 py-1 rounded-md border-multiStepBoxBorder" type="text" name="emailAddress" placeholder="Email Address">
+              @error('emailAddress')<span class="text-red-600 h-4 mt-1 text-left">{{ $message }}</span>@enderror
 
-        <div class="flex flex-col justify-center items-center">
-          <a href="/customer/customer-home" class="text-center mx-auto font-Roboto text-xs md:text-xs lg:text-sm rounded-full text-white bg-submitButton border-white border-2 py-1 md:py-1 lg:py-1 xl:py-2 xl:w-8/12 lg:w-6/12 md:w-6/12 sm:w-6/12 w-7/12 xl:mt-5 xl:mb-3 lg:mt-6 lg:mb-3 md:mt-5 sm:mt-5 md:mb-3 sm:mb-3 mt-3 mb-3 hover:bg-adminLoginTextColor hover:text-white transition duration-200 ease-in-out">Login</a>
+              <input class="w-56 sm:w-80 md:w-80 lg:w-96 mt-4 sm:mt-4 md:mt-4 lg:mt-5 xl:mt-7 xl:w-96 pl-3 pr-3  py-1 sm:py-1 md:py-1 lg:py-2 xl:py-2 rounded-md border-multiStepBoxBorder" type="password" name="password" placeholder="Password">
+              @error('password')<span class="text-red-600 h-4 mt-1 text-left">{{ $message }}</span>@enderror
+          </div>
+          <div class=" flex justify-end lg:mt-2">
+              <a href="#" class=" md:mt-2 xl:text-sm lg:text-xs md:text-xs sm:text-xs text-xs text-loginLandingPage underline hover:text-gray-700 transition duration-200 ease-in-out">Forgot Password?</a>
+          </div>
 
-          <a class="text-center mx-auto font-Roboto text-xs md:text-xs lg:text-sm rounded-full text-submitButton bg-white border-submitButton border-2 py-1 md:py-1 lg:py-1 xl:py-2 xl:w-8/12 lg:w-6/12 md:w-6/12 sm:w-6/12 w-7/12 xl:mb-3 sm:mb-4 hover:bg-adminLoginTextColor hover:text-white transition duration-200 ease-in-out"" href="/customer/signup">Sign up</a>
-        </div>
-    </div>
+          <div class="flex flex-col justify-center items-center">
+            <button type="submit"class="text-center mx-auto font-Roboto text-xs md:text-xs lg:text-sm rounded-full text-white bg-submitButton border-white border-2 py-1 md:py-1 lg:py-1 xl:py-2 xl:w-8/12 lg:w-6/12 md:w-6/12 sm:w-6/12 w-7/12 xl:mt-5 xl:mb-3 lg:mt-6 lg:mb-3 md:mt-5 sm:mt-5 md:mb-3 sm:mb-3 mt-3 mb-3 hover:bg-adminLoginTextColor hover:text-white transition duration-200 ease-in-out">Login</button>
+
+            <a class="text-center mx-auto font-Roboto text-xs md:text-xs lg:text-sm rounded-full text-submitButton bg-white border-submitButton border-2 py-1 md:py-1 lg:py-1 xl:py-2 xl:w-8/12 lg:w-6/12 md:w-6/12 sm:w-6/12 w-7/12 xl:mb-3 sm:mb-4 hover:bg-adminLoginTextColor hover:text-white transition duration-200 ease-in-out"" href="/customer/signup">Sign up</a>
+          </div>
+      </div>
+    </form>
 </section>
 
 <script>

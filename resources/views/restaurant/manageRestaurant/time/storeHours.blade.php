@@ -74,6 +74,14 @@
                 'error'
             );
         </script>
+    @elseif (session()->has('stillOpenHours'))
+        <script>
+            Swal.fire(
+                'You are currently Open',
+                'Wait till your store is closed',
+                'error'
+            );
+        </script>
     @endif
     
     <div class="w-11/12 mx-auto mt-10 font-Montserrat">

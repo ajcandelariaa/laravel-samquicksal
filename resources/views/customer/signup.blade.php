@@ -46,22 +46,32 @@
             <span class="text-submitButton ">an Account</span> </h1> 
         </div>
       <div class="rounded-xl bg-white px-5 py-7 xl:py-7 lg:py-8 md:py-8 sm:py-6 xl:px-20 lg:px-12 md:px-10 sm:px-12 xl:ml-52 lg:ml-24 ">
-        
+          <form action="" method="POST">
+            @csrf
           <div class="flex flex-col justify-center items-center">
               <h1 class="mx-auto font-Montserrat text-lg sm:text-lg md:text-xl lg:text-xl xl:text-2xl font-bold pb-10 sm:pb-10 md:pb-10 lg:pb-10 xl:pb-10 text-submitButton">Sign Up</h1>
-              <input class="mb-2 sm:mb-2 md:mb-2 lg:mb-2 xl:mb-3 w-56 sm:w-72 md:w-68 lg:w-80 xl:w-96 pl-3 pr-3 sm:py-1 md:py-1 lg:py-2 xl:py-2 py-1 rounded-md border-multiStepBoxBorder" type="text" placeholder="Name">
-              <input class="mb-2 sm:mb-2 md:mb-2 lg:mb-2 xl:mb-3 w-56 sm:w-72 md:w-68 lg:w-80 xl:w-96 pl-3 pr-3 sm:py-1 md:py-1 lg:py-2 xl:py-2 py-1 rounded-md border-multiStepBoxBorder" type="text" name="" id="" placeholder="Username/Email Address">
-              <input  class="mb-2 sm:mb-2 md:mb-2 lg:mb-2 xl:mb-3 w-56 sm:w-72 md:w-68 lg:w-80 xl:w-96 pl-3 pr-3 sm:py-1 md:py-1 lg:py-2 xl:py-2 py-1 rounded-md border-multiStepBoxBorder"type="number" placeholder="Contact Number">
-              <input class="mb-2 sm:mb-2 md:mb-2 lg:mb-2 xl:mb-3 w-56 sm:w-72 md:w-68 lg:w-80 xl:w-96 pl-3 pr-3 sm:py-1 md:py-1 lg:py-2 xl:py-2 py-1 rounded-md border-multiStepBoxBorder" type="password" placeholder="Password">
-              <input class="mb-2 sm:mb-2 md:mb-2 lg:mb-2 xl:mb-3 w-56 sm:w-72 md:w-68 lg:w-80 xl:w-96 pl-3 pr-3 sm:py-1 md:py-1 lg:py-2 xl:py-2 py-1 rounded-md border-multiStepBoxBorder" type="word" placeholder="Confirm Password">
+              <input class="mb-2 sm:mb-2 md:mb-2 lg:mb-2 xl:mb-3 w-56 sm:w-72 md:w-68 lg:w-80 xl:w-96 pl-3 pr-3 sm:py-1 md:py-1 lg:py-2 xl:py-2 py-1 rounded-md border-multiStepBoxBorder" type="text" name="name" value="{{ old('name') }}" placeholder="Name">
+              @error('name')<span class="text-red-600 text-left">{{ $message }}</span>@enderror
+
+              <input class="mb-2 sm:mb-2 md:mb-2 lg:mb-2 xl:mb-3 w-56 sm:w-72 md:w-68 lg:w-80 xl:w-96 pl-3 pr-3 sm:py-1 md:py-1 lg:py-2 xl:py-2 py-1 rounded-md border-multiStepBoxBorder" type="text" name="emailAddress" id="" value="{{ old('emailAddress') }}" placeholder="Email Address">
+              @error('emailAddress')<span class="text-red-600 text-left">{{ $message }}</span>@enderror
+
+              <input  class="mb-2 sm:mb-2 md:mb-2 lg:mb-2 xl:mb-3 w-56 sm:w-72 md:w-68 lg:w-80 xl:w-96 pl-3 pr-3 sm:py-1 md:py-1 lg:py-2 xl:py-2 py-1 rounded-md border-multiStepBoxBorder"type="number" name="contactNumber" value="{{ old('contactNumber') }}" placeholder="Contact Number">
+              @error('contactNumber')<span class="text-red-600 text-left">{{ $message }}</span>@enderror
+
+              <input class="mb-2 sm:mb-2 md:mb-2 lg:mb-2 xl:mb-3 w-56 sm:w-72 md:w-68 lg:w-80 xl:w-96 pl-3 pr-3 sm:py-1 md:py-1 lg:py-2 xl:py-2 py-1 rounded-md border-multiStepBoxBorder" type="password" name="password" placeholder="Password">
+              @error('password')<span class="text-red-600 text-left">{{ $message }}</span>@enderror
+
+              <input class="mb-2 sm:mb-2 md:mb-2 lg:mb-2 xl:mb-3 w-56 sm:w-72 md:w-68 lg:w-80 xl:w-96 pl-3 pr-3 sm:py-1 md:py-1 lg:py-2 xl:py-2 py-1 rounded-md border-multiStepBoxBorder" type="password" name="confirmPassword" placeholder="Confirm Password">
+              @error('confirmPassword')<span class="text-red-600 text-left">{{ $message }}</span>@enderror
+
           </div>
           <div class="flex flex-col justify-center items-center">
-              <button class="mx-autofont-Roboto text-xs md:text-xs lg:text-sm rounded-full text-white bg-submitButton border-white border-2 py-1 md:py-1 lg:py-1 xl:py-2 xl:w-8/12 lg:w-6/12 md:w-6/12 sm:w-6/12 w-7/12 xl:mt-5 lg:mt-6 md:mt-5 sm:mt-5 mt-3 mb-3 hover:bg-adminLoginTextColor hover:text-white transition duration-200 ease-in-out">
-                  <a href="">Sign Up</a>
-              </button>
+              <button type="submit" class="mx-autofont-Roboto text-xs md:text-xs lg:text-sm rounded-full text-white bg-submitButton border-white border-2 py-1 md:py-1 lg:py-1 xl:py-2 xl:w-8/12 lg:w-6/12 md:w-6/12 sm:w-6/12 w-7/12 xl:mt-5 lg:mt-6 md:mt-5 sm:mt-5 mt-3 mb-3 hover:bg-adminLoginTextColor hover:text-white transition duration-200 ease-in-out">Sign Up</button>
               <a class="text-headerBgColor text-sm font-Roboto xl:mb-3 underline" href="/customer/login">Already have an account?</a>
-              
           </div>
+          
+        </form>
       </div>
       <div class="flex flex-col mx-auto justify-center items-center">
           <div class="hidden lg:contents">

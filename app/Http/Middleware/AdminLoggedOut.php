@@ -20,7 +20,7 @@ class AdminLoggedOut
         // kapag papuntang login pero may session na admin then redirect sa dashboard
         if(Session::has('userType')){
             if(Session::get('userType') == 'customer'){
-                // to be followed return redirect('customer/dashboard');
+                redirect('customer/customer-home');
             } else if (Session::get('userType') == 'restaurant'){
                 return redirect('restaurant/dashboard');
             } else {

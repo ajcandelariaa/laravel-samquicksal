@@ -6,7 +6,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 
-class AdminLoggedIn
+class CustomerLoggedIn
 {
     /**
      * Handle an incoming request.
@@ -17,14 +17,14 @@ class AdminLoggedIn
      */
     public function handle(Request $request, Closure $next)
     {
-       // kapag papuntang dashboard or logout pero wala namang session then redirect to login
+        // kapag papuntang dashboard or logout pero wala namang session then redirect to login
         if(!Session::has('userType')){
-            return redirect('admin/login');
+            return redirect('customer/login');
         } else {
-            if(Session::get('userType') == 'customer'){
-                redirect('customer/login');
-            } else if (Session::get('userType') == 'restaurant'){
+            if(Session::get('userType') == 'restaurant'){
                 return redirect('restaurant/login');
+            } else if (Session::get('userType') == 'admin'){
+                return redirect('admin/login');
             } else {
                 return $next($request);
             }

@@ -6,7 +6,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 
-class RestaurantLoggedOut
+class CustomerLoggedOut
 {
     /**
      * Handle an incoming request.
@@ -19,12 +19,12 @@ class RestaurantLoggedOut
     {
         // kapag papuntang login pero may session na admin then redirect sa dashboard
         if(Session::has('userType')){
-            if(Session::get('userType') == 'customer'){
-                redirect('customer/customer-home');
+            if(Session::get('userType') == 'restaurant'){
+                return redirect('restaurant/dashboard');
             } else if (Session::get('userType') == 'admin'){
                 return redirect('admin/dashboard');
             } else {
-                return redirect('restaurant/dashboard');
+                return redirect('customer/customer-home');
             }
         } else {
             return $next($request);
