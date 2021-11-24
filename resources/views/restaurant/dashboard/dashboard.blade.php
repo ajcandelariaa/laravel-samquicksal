@@ -11,11 +11,11 @@
 
             {{-- ROW 2 --}}
             <div class="bg-white w-full h-48 shadow-xl col-span-4 relative">
-                <div class="grid text-black text-center items-center w-full h-36 text-8xl font-bold"></div>
+                <div class="grid text-black text-center items-center w-full h-36 text-8xl font-bold">0</div>
                 <div class="bg-black w-full absolute bottom-0 h-12 grid text-white text-center items-center">Tables Currently Queue</div>
             </div>
             <div class="bg-white w-full h-48 shadow-xl col-span-4 relative">
-                <div class="grid text-black text-center items-center w-full h-36 text-8xl font-bold"></div>
+                <div class="grid text-black text-center items-center w-full h-36 text-8xl font-bold">0</div>
                 <div class="bg-black w-full absolute bottom-0 h-12 grid text-white text-center items-center">Tables Available</div>
             </div>
             <div class="bg-black w-full h-44 shadow-xl col-span-4 rounded-3xl">
@@ -41,7 +41,7 @@
             
             {{-- ROW 3 --}}
             <div class="bg-white w-full h-48 shadow-xl col-span-8 relative">
-                <div class="grid text-black text-center items-center w-full h-36 text-8xl font-bold"></div>
+                <div class="grid text-black text-center items-center w-full h-36 text-8xl font-bold">0</div>
                 <div class="bg-black w-full absolute bottom-0 h-12 grid text-white text-center items-center">Tables Reserved for Tomorrow</div>
             </div>
             <div class="bg-black w-full h-50 shadow-xl col-span-4 rounded-3xl -mt-3">
