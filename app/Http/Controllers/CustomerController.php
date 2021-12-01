@@ -833,7 +833,7 @@ class CustomerController extends Controller
         $finalRewardType = "";
         $finalRewardInput = 0;
 
-        $restaurant = RestaurantAccount::select('rName', 'rTimeLimit', 'rCapacityPerTable')->where('id', $id)->first();
+        $restaurant = RestaurantAccount::select('rName', 'rTimeLimit')->where('id', $id)->first();
         $orderSets = OrderSet::where('restAcc_id', $id)->where('status', "Visible")->get();
         $getStamp = StampCard::select('stampValidity', 'stampReward_id')->where('restAcc_id', $id)->first();
 
@@ -877,7 +877,7 @@ class CustomerController extends Controller
         return response()->json([
             'restaurantName' => $restaurant->rName,
             'rTimeLimit' => $restaurant->rTimeLimit,
-            'rCapacityPerTable' => $restaurant->rCapacityPerTable,
+            'rCapacityPerTable' => 0,
             'rewardStatus' => $finalRewardStatus,
             'rewardType' => $finalRewardType,
             'rewardInput' => $finalRewardInput,
@@ -5132,7 +5132,7 @@ class CustomerController extends Controller
     public function getListOfNearbyRestaurants(Request $request){
         $cust_lat = $request->cust_lat;
         $cust_long = $request->cust_long;
-        $CONST_RADIUS = 10000000000;
+        $CONST_RADIUS = 2000;
         $finalResult = array();
 
 

@@ -22,6 +22,7 @@ class CustomerReserve extends Model
         'reserveTime',
         'numberOfPersons',
         'numberOfTables',
+        'tableType',
         'hoursOfStay',
         'numberOfChildren',
         'numberOfPwd',

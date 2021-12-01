@@ -25,11 +25,10 @@
         </div>
         
         <div class="grid grid-rows-1 gap-y-2">
-            <div class="grid grid-cols-9 pt-4 pb-2 text-center">
+            <div class="grid grid-cols-8 pt-4 pb-2 text-center">
                 <div class="col-span-1">No.</div>
                 <div class="col-span-2">Name</div>
                 <div class="col-span-1">Persons</div>
-                <div class="col-span-1">Tables</div>
                 <div class="col-span-1">Priority Persons</div>
                 <div class="col-span-2">Cancellation Time Left</div>
                 <div class="col-span-1">View</div>
@@ -42,7 +41,7 @@
                 @endphp
                 @for ($i=0; $i<sizeOf($customerQueues); $i++)
                     @if ($count % 2 == 0)
-                        <div class="grid grid-cols-9 py-2 text-center bg-manageFoodItemHeaderBgColor">
+                        <div class="grid grid-cols-8 py-2 text-center bg-manageFoodItemHeaderBgColor">
                             <div class="col-span-1">
                                 @if (isset($_GET['page']))
                                     @if ($_GET['page'] == 1)
@@ -56,7 +55,6 @@
                             </div>
                             <div class="col-span-2">{{ $customerNames[$i] }}</div>
                             <div class="col-span-1">{{ $customerQueues[$i]->numberOfPersons }}</div>
-                            <div class="col-span-1">{{ $customerQueues[$i]->numberOfTables }}</div>
                             <div class="col-span-1">{{ $customerQueues[$i]->totalPwdChild }}</div>
                             <div class="col-span-2">{{ $customerTimeLimits[$i] }}</div>
                             <div class="col-span-1">
@@ -66,7 +64,7 @@
                             </div>
                         </div>
                     @else
-                        <div class="grid grid-cols-9 py-2 text-center bg-white">
+                        <div class="grid grid-cols-8 py-2 text-center bg-white">
                             @if (isset($_GET['page']))
                                 @if ($_GET['page'] == 1)
                                     {{ $count }}
@@ -78,7 +76,6 @@
                             @endif
                             <div class="col-span-2">{{ $customerNames[$i] }}</div>
                             <div class="col-span-1">{{ $customerQueues[$i]->numberOfPersons }}</div>
-                            <div class="col-span-1">{{ $customerQueues[$i]->numberOfTables }}</div>
                             <div class="col-span-1">{{ $customerQueues[$i]->totalPwdChild }}</div>
                             <div class="col-span-2">{{ $customerTimeLimits[$i] }}</div>
                             <div class="col-span-1">

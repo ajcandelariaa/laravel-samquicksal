@@ -250,7 +250,8 @@
 }
 
 /* DECLINE QUEUE FORM */
-.booking .declined-form{
+.booking .declined-form,
+.booking .approved-form{
     position:fixed;
     top:-150%;
     left:50%;
@@ -272,14 +273,16 @@
     background:rgba(0,0,0,0.8);
     z-index:1;
 }
-.booking .declined-form.active{
+.booking .declined-form.active,
+.booking .approved-form.active{
     top:50%;
     opacity:1;
     transform:translate(-50%,-50%) scale(1);
     transition:top 0ms ease-in-out 0ms, opacity 200ms ease-in-out 0ms, transform 200ms ease-in-out 0ms;
     z-index:2;
 }
-.booking .declined-form .close-btn{
+.booking .declined-form .close-btn
+.booking .approved-form .close-btn{
     position:absolute;
     top:20px;
     right:20px;

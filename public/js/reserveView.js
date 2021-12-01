@@ -32,12 +32,25 @@ $('#declinedForm').submit(function(e) {
     });
 });
 
+// APPROVED CUSTOMER
+$( "#btn-approved" ).click(function() {
+    document.querySelector(".approved-form").classList.add("active");
+    document.querySelector(".overlay").classList.add("active");
+});
+
+$(".overlay").click(function(){
+    document.querySelector(".approved-form").classList.remove("active");
+    document.querySelector(".overlay").classList.remove("active");
+});
+
+$(".approved-form .close-btn").click(function(){
+    document.querySelector(".approved-form").classList.remove("active");
+    document.querySelector(".overlay").classList.remove("active");
+});
 
 // APPROVED CONFIRMATION
-$('.btn-approve').on('click', function(e){
+$('#approvedForm').submit(function(e) {
     e.preventDefault();
-    const href = $(this).attr('href')
-
     Swal.fire({
         title: 'Approve Customer?',
         text: 'Are you sure you want to approve this customer?',
@@ -48,7 +61,29 @@ $('.btn-approve').on('click', function(e){
         confirmButtonText: 'Yes'
     }).then((result) =>{
         if(result.value){
-            document.location.href = href;
+          e.currentTarget.submit();
         }
-    })
-})
+    });
+});
+
+
+//  CHANGE NUMBER OF TABLE 2
+$( "#tableType" ).on('change', function() {
+    noOfPersons = $('#noOfPersons').val();
+    tableType = $('#tableType').val();
+    noOfPersons = noOfPersons.replace(/^0+/, '');
+    $('#noOfPersons').val(noOfPersons)
+
+    if(noOfPersons == 0){
+        $('#noOfTables').val(0)
+    } else if(parseInt(noOfPersons) <= parseInt(tableType)){
+        $('#noOfTables').val(1)
+    } else {
+        var x = parseInt(noOfPersons / tableType)
+        var remainder = noOfPersons % tableType
+        if(remainder > 0){
+            x += 1
+        }
+        $('#noOfTables').val(x)
+    }
+});

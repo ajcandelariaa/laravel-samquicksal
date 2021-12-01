@@ -29,29 +29,29 @@ Route::get('/restaurant', function () {
 
 
 //CUSTOMER WEB ROURTES
-Route::get('/customer/signup', [CustomerWebController::class, 'signupView']);
-Route::post('/customer/signup', [CustomerWebController::class, 'signup']);
+// Route::get('/customer/signup', [CustomerWebController::class, 'signupView']);
+// Route::post('/customer/signup', [CustomerWebController::class, 'signup']);
 
-Route::middleware(['customerLoggedIn'])->group(function(){
-    //logout at laman ng customer
-    Route::get('/customer/logout', [CustomerWebController::class, 'logout']);
-    Route::get('/customer/customer-home', [CustomerWebController::class, 'customerHome']);
-    Route::get('/customer/editprofile', [CustomerWebController::class, 'editProfileView']);
-    Route::get('/customer/profile', [CustomerWebController::class, 'profileView']);
-    Route::get('/customer/reservation/{restAcc_id}', [CustomerWebController::class, 'reservationView']);
-    Route::get('/customer/confirm-reservation', [CustomerWebController::class, 'confirmReservationView']);
-    Route::get('/customer/view-promo', [CustomerWebController::class, 'viewPromoView']);
-    Route::get('/customer/livestatus', [CustomerWebController::class, 'liveStatusView']);
-    Route::get('/customer/restaurant-promo', [CustomerWebController::class, 'restaurantPromoView']);
-    Route::get('/customer/view-restaurant', [CustomerWebController::class, 'viewReservationView']);
+// Route::middleware(['customerLoggedIn'])->group(function(){
+//     //logout at laman ng customer
+//     Route::get('/customer/logout', [CustomerWebController::class, 'logout']);
+//     Route::get('/customer/customer-home', [CustomerWebController::class, 'customerHome']);
+//     Route::get('/customer/editprofile', [CustomerWebController::class, 'editProfileView']);
+//     Route::get('/customer/profile', [CustomerWebController::class, 'profileView']);
+//     Route::get('/customer/reservation/{restAcc_id}', [CustomerWebController::class, 'reservationView']);
+//     Route::get('/customer/confirm-reservation', [CustomerWebController::class, 'confirmReservationView']);
+//     Route::get('/customer/view-promo', [CustomerWebController::class, 'viewPromoView']);
+//     Route::get('/customer/livestatus', [CustomerWebController::class, 'liveStatusView']);
+//     Route::get('/customer/restaurant-promo', [CustomerWebController::class, 'restaurantPromoView']);
+//     Route::get('/customer/view-restaurant', [CustomerWebController::class, 'viewReservationView']);
 
-});
+// });
 
-Route::middleware(['customerLoggedOut'])->group(function(){
-    //mga login
-    Route::get('/customer/login', [CustomerWebController::class, 'loginView']);
-    Route::post('/customer/login', [CustomerWebController::class, 'login']);
-});
+// Route::middleware(['customerLoggedOut'])->group(function(){
+//     //mga login
+//     Route::get('/customer/login', [CustomerWebController::class, 'loginView']);
+//     Route::post('/customer/login', [CustomerWebController::class, 'login']);
+// });
 
 
 
@@ -113,6 +113,8 @@ Route::middleware(['restaurantLoggedIn'])->group(function(){
     Route::post('/restaurant/manage-restaurant/about/restaurant-information/updateRadius', [RestaurantController::class, 'updateRestaurantRadius']);
     Route::post('/restaurant/manage-restaurant/about/restaurant-information/updateLogo', [RestaurantController::class, 'updateRestaurantLogo']);
     Route::post('/restaurant/manage-restaurant/about/restaurant-information/updateGcashQr', [RestaurantController::class, 'updateRestaurantGcashQr']);
+    Route::post('/restaurant/manage-restaurant/about/restaurant-information/updateLocation', [RestaurantController::class, 'updateRestaurantLocation']);
+    Route::get('/restaurant/manage-restaurant/about/restaurant-information/updateLocation', [RestaurantController::class, 'updateRestaurantLocationView']);
     Route::get('/restaurant/manage-restaurant/about/restaurant-post', [RestaurantController::class, 'manageRestaurantPostView']);
     Route::post('/restaurant/manage-restaurant/about/restaurant-post/add', [RestaurantController::class, 'addPost']);
     Route::get('/restaurant/manage-restaurant/about/restaurant-post/delete/{id}', [RestaurantController::class, 'deletePost']);
@@ -170,11 +172,11 @@ Route::middleware(['restaurantLoggedIn'])->group(function(){
     // -------CUSTOMER BOOKING------------ //
     Route::get('/restaurant/live-transaction/customer-booking/queue', [RestaurantController::class, 'ltCustBookQListView']);
     Route::get('/restaurant/live-transaction/customer-booking/queue/{id}', [RestaurantController::class, 'ltCustBookQParticularView']);
-    Route::get('/restaurant/live-transaction/customer-booking/queue/approve/{id}', [RestaurantController::class, 'ltCustBookQApprove']);
+    Route::post('/restaurant/live-transaction/customer-booking/queue/approve/{id}', [RestaurantController::class, 'ltCustBookQApprove']);
     Route::post('/restaurant/live-transaction/customer-booking/queue/decline/{id}', [RestaurantController::class, 'ltCustBookQDecline']);
     Route::get('/restaurant/live-transaction/customer-booking/reserve', [RestaurantController::class, 'ltCustBookRListView']);
     Route::get('/restaurant/live-transaction/customer-booking/reserve/{id}', [RestaurantController::class, 'ltCustBookRParticularView']);
-    Route::get('/restaurant/live-transaction/customer-booking/reserve/approve/{id}', [RestaurantController::class, 'ltCustBookRApprove']);
+    Route::post('/restaurant/live-transaction/customer-booking/reserve/approve/{id}', [RestaurantController::class, 'ltCustBookRApprove']);
     Route::post('/restaurant/live-transaction/customer-booking/reserve/decline/{id}', [RestaurantController::class, 'ltCustBookRDecline']);
     // -------APPROVED CUSTOMER------------ //
     Route::get('/restaurant/live-transaction/approved-customer/queue/add-walk-in', [RestaurantController::class, 'ltAppCustQAddWalkInView']);
@@ -257,7 +259,7 @@ Route::middleware(['adminLoggedIn'])->group(function(){
     Route::get('/admin/restaurant-applicant/viewFile/{id}/{filename}', [AdminController::class, 'restaurantApplicantViewFile']);
     Route::get('/admin/restaurant-account/viewFile/{id}/{filename}', [AdminController::class, 'restaurantAccountViewFile']);
     Route::get('/admin/restaurant-applicants/{id}', [AdminController::class, 'restaurantApplicantView']);
-    Route::get('/admin/restaurant-applicants/{id}/approved', [AdminController::class, 'restaurantApplicantApprovedView']);
+    // Route::get('/admin/restaurant-applicants/{id}/approved', [AdminController::class, 'restaurantApplicantApprovedView']);
     Route::get('/admin/restaurant-applicants/delete/{id}', [AdminController::class, 'deleteRestaurantApplicant']);
     Route::get('/admin/restaurant-accounts', [AdminController::class, 'restaurantAccountsView']);
     Route::get('/admin/restaurant-accounts/{id}', [AdminController::class, 'restaurantAccountView']);

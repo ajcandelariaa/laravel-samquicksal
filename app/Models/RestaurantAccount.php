@@ -44,7 +44,15 @@ class RestaurantAccount extends Model
         'rRadius',
 
         'rNumberOfTables',
-        'rCapacityPerTable',
+        'r2seater',
+        'r3seater',
+        'r4seater',
+        'r5seater',
+        'r6seater',
+        'r7seater',
+        'r8seater',
+        'r9seater',
+        'r10seater',
         'rGcashQrCodeImage',
         'rLogo',
 

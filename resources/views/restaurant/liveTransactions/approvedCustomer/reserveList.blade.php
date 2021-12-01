@@ -27,11 +27,12 @@
         <div class="grid grid-rows-1 gap-y-2">
             <div class="grid grid-cols-12 pt-4 pb-2 text-center">
                 <div class="col-span-1">No.</div>
-                <div class="col-span-3">Name</div>
+                <div class="col-span-2">Name</div>
                 <div class="col-span-2">Date</div>
                 <div class="col-span-1">Time</div>
                 <div class="col-span-1">Persons</div>
                 <div class="col-span-1">Tables</div>
+                <div class="col-span-1">Table Type</div>
                 <div class="col-span-2">Reservation Day</div>
                 <div class="col-span-1">View</div>
             </div>
@@ -54,11 +55,12 @@
                                     {{ $count }}
                                 @endif
                             </div>
-                            <div class="col-span-3">{{ $customerNames[$i] }}</div>
+                            <div class="col-span-2">{{ $customerNames[$i] }}</div>
                             <div class="col-span-2">{{ $storeDate[$i] }}</div>
                             <div class="col-span-1">{{ $customerReserves[$i]->reserveTime }}</div>
                             <div class="col-span-1">{{ $customerReserves[$i]->numberOfPersons }}</div>
                             <div class="col-span-1">{{ $customerReserves[$i]->numberOfTables }}</div>
+                            <div class="col-span-1">{{ $customerReserves[$i]->tableType }} Seater</div>
                             <div class="col-span-2">{{ $storeDateTimeLeft[$i] }}</div>
                             <div class="col-span-1">
                                 <a href="/restaurant/live-transaction/approved-customer/reserve/{{ $customerReserves[$i]->id }}">
@@ -77,11 +79,12 @@
                             @else
                                 {{ $count }}
                             @endif
-                            <div class="col-span-3">{{ $customerNames[$i] }}</div>
+                            <div class="col-span-2">{{ $customerNames[$i] }}</div>
                             <div class="col-span-2">{{ $storeDate[$i] }}</div>
                             <div class="col-span-1">{{ $customerReserves[$i]->reserveTime }}</div>
                             <div class="col-span-1">{{ $customerReserves[$i]->numberOfPersons }}</div>
                             <div class="col-span-1">{{ $customerReserves[$i]->numberOfTables }}</div>
+                            <div class="col-span-1">{{ $customerReserves[$i]->tableType }} Seater</div>
                             <div class="col-span-2">{{ $storeDateTimeLeft[$i] }}</div>
                             <div class="col-span-1">
                                 <a href="/restaurant/live-transaction/approved-customer/reserve/{{ $customerReserves[$i]->id }}">

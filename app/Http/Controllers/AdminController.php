@@ -349,15 +349,6 @@ class AdminController extends Controller
         return redirect('/admin/login');
     }
     public function approveRestaurantApplicant(Request $request){
-        $request->validate([
-            'applicantLocLat' => 'required',
-            'applicantLocLong' => 'required',
-        ],
-        [
-            'applicantLocLat.required' => 'Latitude is required',
-            'applicantLocLong.required' => 'Longitude is required',
-        ]);
-
         $applicant = RestaurantApplicant::where('id', $request->applicantId)->first();
         $account = RestaurantAccount::select('emailAddress')->where('emailAddress', $applicant->emailAddress)->first();
 
@@ -400,12 +391,18 @@ class AdminController extends Controller
             'rState' => $applicant->rState,
             'rCountry' => $applicant->rCountry,
             
-            'rLatitudeLoc' => $request->applicantLocLat,
-            'rLongitudeLoc' => $request->applicantLocLong,
             'rRadius' => 500,
 
             'rNumberOfTables' => 10,
-            'rCapacityPerTable' => 4,
+            'r2seater' => 0,
+            'r3seater' => 0,
+            'r4seater' => 10,
+            'r5seater' => 0,
+            'r6seater' => 0,
+            'r7seater' => 0,
+            'r8seater' => 0,
+            'r9seater' => 0,
+            'r10seater' => 0,
 
             'rTimeLimit' => 0,
 

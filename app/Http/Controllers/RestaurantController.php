@@ -291,12 +291,94 @@ class RestaurantController extends Controller
             $this->sendFirebaseNotification($to, $notification, $data);
         }
     }
+    public function getTableTypes(){
+        $restAcc_id = Session::get('loginId');
+        $restaurant = RestaurantAccount::where('id', $restAcc_id)->first();
+
+        $tableTypes = array();
+        if($restaurant->r2seater != 0){
+            array_push($tableTypes, [
+                'tableValue' => 2,
+                'tableLable' => "2 Seater",
+            ]);
+        }
+        
+        if($restaurant->r3seater != 0){
+            array_push($tableTypes, [
+                'tableValue' => 3,
+                'tableLable' => "3 Seater",
+            ]);
+        }
+        
+        if($restaurant->r4seater != 0){
+            array_push($tableTypes, [
+                'tableValue' => 4,
+                'tableLable' => "4 Seater",
+            ]);
+        }
+        
+        if($restaurant->r5seater != 0){
+            array_push($tableTypes, [
+                'tableValue' => 5,
+                'tableLable' => "5 Seater",
+            ]);
+        }
+        
+        if($restaurant->r6seater != 0){
+            array_push($tableTypes, [
+                'tableValue' => 6,
+                'tableLable' => "6 Seater",
+            ]);
+        }
+        
+        if($restaurant->r7seater != 0){
+            array_push($tableTypes, [
+                'tableValue' => 7,
+                'tableLable' => "7 Seater",
+            ]);
+        }
+        
+        if($restaurant->r8seater != 0){
+            array_push($tableTypes, [
+                'tableValue' => 8,
+                'tableLable' => "8 Seater",
+            ]);
+        }
+        
+        if($restaurant->r9seater != 0){
+            array_push($tableTypes, [
+                'tableValue' => 9,
+                'tableLable' => "9 Seater",
+            ]);
+        }
+        
+        if($restaurant->r10seater != 0){
+            array_push($tableTypes, [
+                'tableValue' => 10,
+                'tableLable' => "10 Seater",
+            ]);
+        }
+        return $tableTypes;
+    }
 
 
 
 
 
     // RENDER VIEWS
+    public function updateRestaurantLocationView(){
+        $restAcc_id = Session::get('loginId');
+        $account = RestaurantAccount::where('id', $restAcc_id)->first();
+
+        if($account->rLatitudeLoc != null && $account->rLongitudeLoc != null){
+            abort(404);
+        } else {
+            return view('restaurant.manageRestaurant.aboutRestaurant.locateRestaurant', [
+                'account' => $account,
+            ]);
+        }
+
+    }
     public function soCustStampHistPartView($stamp_id){
         $restAcc_id = Session::get('loginId');
         $custStampCards = CustomerStampCard::where('id', $stamp_id)->where('restAcc_id', $restAcc_id)->first();
@@ -2728,12 +2810,14 @@ class RestaurantController extends Controller
     }
     public function ltAppCustQAddWalkInView(){
         $restAcc_id = Session::get('loginId');
-        $restaurant = RestaurantAccount::select('rTimeLimit', 'rCapacityPerTable')->where('id', $restAcc_id)->first();
+        $restaurant = RestaurantAccount::select('rTimeLimit')->where('id', $restAcc_id)->first();
         $orderSets = OrderSet::where('restAcc_id', $restAcc_id)->where('status', "Visible")->where('available', "Yes")->get();
 
+        $tableTypes = $this->getTableTypes();
+        
         return view('restaurant.liveTransactions.approvedCustomer.addWalkin', [
-            'rTimeLimit' => $restaurant->rTimeLimit,
-            'rCapacityPerTable' => $restaurant->rCapacityPerTable,
+            'restaurant' => $restaurant,
+            'tableTypes' => $tableTypes,
             'orderSets' => $orderSets,
         ]);
     }
@@ -3094,8 +3178,10 @@ class RestaurantController extends Controller
                                 ->orWhere('status', "validation");
                             })
                             ->where('queueDate', $getDateToday)
+                            ->where('tableType', $customerQueue->tableType)
                             ->orderBy('totalPwdChild', 'DESC')
-                            ->orderBy('approvedDateTime', 'ASC')->first();
+                            ->orderBy('approvedDateTime', 'ASC')
+                            ->first();
 
             $isPriority = false;
             if($checkPriorities->id == $id){
@@ -3104,16 +3190,27 @@ class RestaurantController extends Controller
                 $isPriority = false;
             }
 
+            // $customerQueues = CustomerQueue::where('restAcc_id', $restAcc_id)
+            //             ->where(function ($query) {
+            //                 $query->where('status', "approved")
+            //                 ->orWhere('status', "validation");
+            //             })
+            //             ->where('queueDate', $getDateToday)
+            //             ->orderBy('tableType', 'ASC')
+            //             ->orderBy('totalPwdChild', 'DESC')
+            //             ->orderBy('approvedDateTime', 'ASC')
+            //             ->paginate(10);
+
             $countCustomersApproved = CustomerQueue::where('queueDate', $getDateToday)
                 ->where(function ($query) {
                     $query->where('status', "approved")
                     ->orWhere('status', "validation");
                 })
+                ->orderBy('tableType', 'ASC')
                 ->orderBy('totalPwdChild', 'DESC')
                 ->orderBy('validationDateTime', 'ASC')
                 ->orderBy('approvedDateTime', 'ASC')
                 ->get();
-
             $finalQueueNumber = 0;
             $queueNumber = 0;
             foreach ($countCustomersApproved as $countCustomerApproved){
@@ -3188,6 +3285,7 @@ class RestaurantController extends Controller
                                 ->orWhere('status', "validation");
                             })
                             ->where('queueDate', $getDateToday)
+                            ->where('tableType', $customerQueue->tableType)
                             ->orderBy('totalPwdChild', 'DESC')
                             ->orderBy('approvedDateTime', 'ASC')->first();
 
@@ -3203,6 +3301,7 @@ class RestaurantController extends Controller
                     $query->where('status', "approved")
                     ->orWhere('status', "validation");
                 })
+                ->orderBy('tableType', 'ASC')
                 ->orderBy('totalPwdChild', 'DESC')
                 ->orderBy('validationDateTime', 'ASC')
                 ->orderBy('approvedDateTime', 'ASC')
@@ -3274,6 +3373,7 @@ class RestaurantController extends Controller
                             ->orWhere('status', "validation");
                         })
                         ->where('queueDate', $getDateToday)
+                        ->orderBy('tableType', 'ASC')
                         ->orderBy('totalPwdChild', 'DESC')
                         ->orderBy('approvedDateTime', 'ASC')
                         ->paginate(10);
@@ -3383,6 +3483,21 @@ class RestaurantController extends Controller
         $seniorDiscount = $customerReserve->orderSetPrice * ($customerReserve->numberOfPwd * 0.2);
         $childrenDiscount = 0.0;
 
+        $tableTypes = $this->getTableTypes();
+        $firstTableType = $tableTypes[0]['tableValue'];
+
+        $firstNoOfTable = "";
+        if($customerReserve->numberOfPersons <= $firstTableType){
+            $firstNoOfTable = 1;
+        } else {
+            $x = intval($customerReserve->numberOfPersons / $firstTableType);
+            $remainder = intval($customerReserve->numberOfPersons % $firstTableType);
+            if($remainder > 0){
+                $x += 1;
+            }
+            $firstNoOfTable = $x;
+        }
+
         return view('restaurant.liveTransactions.customerBooking.reserveView',[
             'customerReserve' => $customerReserve,
             'customerInfo' => $customerInfo,
@@ -3399,6 +3514,8 @@ class RestaurantController extends Controller
             'rewardDiscount' => $rewardDiscount,
             'seniorDiscount' => $seniorDiscount,
             'childrenDiscount' => $childrenDiscount,
+            'tableTypes' => $tableTypes,
+            'firstNoOfTable' => $firstNoOfTable,
         ]);
     }
     public function ltCustBookRListView(){
@@ -3448,6 +3565,9 @@ class RestaurantController extends Controller
                 array_push($customerTimeLimits, $rAppDiffTime);
             }
         }
+
+        
+
         return view('restaurant.liveTransactions.customerBooking.reserveList',[
             'customerReserves' => $customerReserves,
             'customerNames' => $customerNames,
@@ -3539,21 +3659,23 @@ class RestaurantController extends Controller
 
         $seniorDiscount = $customerQueue->orderSetPrice * ($customerQueue->numberOfPwd * 0.2);
         $childrenDiscount = 0.0;
+        
+        $tableTypes = $this->getTableTypes();
+        $firstTableType = $tableTypes[0]['tableValue'];
+
+        $firstNoOfTable = "";
+        if($customerQueue->numberOfPersons <= $firstTableType){
+            $firstNoOfTable = 1;
+        } else {
+            $x = intval($customerQueue->numberOfPersons / $firstTableType);
+            $remainder = intval($customerQueue->numberOfPersons % $firstTableType);
+            if($remainder > 0){
+                $x += 1;
+            }
+            $firstNoOfTable = $x;
+        }
 
         
-        $getDateToday = date("Y-m-d");
-        $checkPriorities = CustomerQueue::where('restAcc_id', $restAcc_id)
-                        ->where('status', 'pending')
-                        ->where('queueDate', $getDateToday)
-                        ->orderBy('totalPwdChild', 'DESC')
-                        ->orderBy('created_at', 'ASC')->first();
-
-        $isPriority = false;
-        if($checkPriorities->id == $id){
-            $isPriority = true;
-        } else {
-            $isPriority = false;
-        }
 
         return view('restaurant.liveTransactions.customerBooking.queueView',[
             'customerQueue' => $customerQueue,
@@ -3570,7 +3692,8 @@ class RestaurantController extends Controller
             'rewardDiscount' => $rewardDiscount,
             'seniorDiscount' => $seniorDiscount,
             'childrenDiscount' => $childrenDiscount,
-            'isPriority' => $isPriority,
+            'tableTypes' => $tableTypes,
+            'firstNoOfTable' => $firstNoOfTable,
         ]);
     }
     public function ltCustBookQListView(){
@@ -3846,7 +3969,7 @@ class RestaurantController extends Controller
     }
     public function manageRestaurantChecklistView(){
         $restAcc_id = Session::get('loginId');
-        $restaurant = RestaurantAccount::select('emailAddress', 'status', 'verified', 'rLogo', 'rGcashQrCodeImage')->where('id', $restAcc_id)->first();
+        $restaurant = RestaurantAccount::select('emailAddress', 'status', 'verified', 'rLogo', 'rGcashQrCodeImage', 'rLatitudeLoc', 'rLongitudeLoc')->where('id', $restAcc_id)->first();
 
         $count = 0;
         $orderSets = OrderSet::where('restAcc_id', $restAcc_id)->get();
@@ -4196,6 +4319,26 @@ class RestaurantController extends Controller
 
 
     // RENDER LOGICS
+    public function updateRestaurantLocation(Request $request){
+        $restAcc_id = Session::get('loginId');
+        $request->validate([
+            'applicantLocLat' => 'required',
+            'applicantLocLong' => 'required',
+        ],
+        [
+            'applicantLocLat.required' => 'Latitude is required',
+            'applicantLocLong.required' => 'Longitude is required',
+        ]);
+
+        RestaurantAccount::where('id', $restAcc_id)
+        ->update([
+            'rLatitudeLoc' => $request->applicantLocLat,
+            'rLongitudeLoc' => $request->applicantLocLong,
+        ]);
+
+        $request->session()->flash('locationUpdated');
+        return redirect('/restaurant/manage-restaurant/about/restaurant-information');
+    }
     public function soRunawayPartDelete($offense_id){
         $restAcc_id = Session::get('loginId');
         $custOffMain = CustOffenseMain::where('id', $offense_id)->where('offenseType', "runaway")->first();
@@ -4544,7 +4687,7 @@ class RestaurantController extends Controller
         $restAcc_id = Session::get('loginId');
         //publish restaurant
         
-        $restaurant = RestaurantAccount::select('emailAddress', 'status', 'verified', 'rLogo', 'rGcashQrCodeImage')->where('id', $restAcc_id)->first();
+        $restaurant = RestaurantAccount::select('emailAddress', 'status', 'verified', 'rLogo', 'rGcashQrCodeImage', 'rLatitudeLoc', 'rLongitudeLoc')->where('id', $restAcc_id)->first();
 
         $count = 0;
         $orderSets = OrderSet::where('restAcc_id', $restAcc_id)->get();
@@ -4575,7 +4718,9 @@ class RestaurantController extends Controller
         if($restaurant->status == "Unpublished" 
             && $restaurant->verified == "Yes"
             && $restaurant->rLogo != null 
-            && $restaurant->rGcashQrCodeImage != null 
+            && $restaurant->rGcashQrCodeImage != null
+            && $restaurant->rLatitudeLoc != null 
+            && $restaurant->rLongitudeLoc != null
             && $count > 0){
             
             RestaurantAccount::where('id', $restAcc_id)
@@ -6116,7 +6261,7 @@ class RestaurantController extends Controller
                 
                 $totalBill = $orderSet->orderSetPrice * $request->walkInPersons;
                 $seniorDiscount = $orderSet->orderSetPrice * ($request->walkInPwd * 0.2);
-                $childrenDiscount = $orderSet->orderSetPrice * $request->walkInChildren;
+                $childrenDiscount = 0;
                 
                 $totalBill = $totalBill - ($seniorDiscount + $childrenDiscount);
         
@@ -6142,6 +6287,7 @@ class RestaurantController extends Controller
                     'name' => $request->walkInName,
                     'numberOfPersons' => $request->walkInPersons,
                     'numberOfTables' => $finalNoOfTables,
+                    'tableType' => $request->capacityPerTable,
                     'hoursOfStay' => $request->walkInHoursOfStay,
                     'numberOfChildren' => $request->walkInChildren,
                     'numberOfPwd' => $request->walkInPwd,
@@ -7115,15 +7261,30 @@ class RestaurantController extends Controller
         return redirect('/restaurant/live-transaction/customer-booking/reserve');
 
     }
-    public function ltCustBookRApprove($id){
+    public function ltCustBookRApprove(Request $request, $id){
         $customerReserve = CustomerReserve::where('id', $id)->first();
         $restaurant = RestaurantAccount::select('rName', 'rBranch', 'rAddress', 'rCity', 'id', 'rLogo')->where('id', $customerReserve->restAcc_id)->first();
         $customer = CustomerAccount::select('deviceToken')->where('id', $customerReserve->customer_id)->first();
+
+        $finalNoOfTables = "";
+        if($request->noOfPersons <= $request->tableType){
+            $finalNoOfTables = 1;
+        } else {
+            $x = intval($request->noOfPersons / $request->tableType);
+            $remainder = intval($request->noOfPersons % $request->tableType);
+            if($remainder > 0){
+                $x += 1;
+            }
+            $finalNoOfTables = $x;
+        }
+
 
         CustomerReserve::where('id', $id)
         ->update([
             'status' => 'approved',
             'approvedDateTime' => date('Y-m-d H:i:s'),
+            'numberOfTables' => $finalNoOfTables,
+            'tableType' => $request->tableType,
         ]);
 
         CustomerNotification::create([
@@ -7209,15 +7370,29 @@ class RestaurantController extends Controller
         Session::flash('declined');
         return redirect('/restaurant/live-transaction/customer-booking/queue');
     }
-    public function ltCustBookQApprove($id){
+    public function ltCustBookQApprove(Request $request, $id){
         $customerQueue = CustomerQueue::where('id', $id)->first();
         $restaurant = RestaurantAccount::select('rName', 'rBranch', 'rAddress', 'rCity', 'id', 'rLogo')->where('id', $customerQueue->restAcc_id)->first();
         $customer = CustomerAccount::select('deviceToken')->where('id', $customerQueue->customer_id)->first();
+
+        $finalNoOfTables = "";
+        if($request->noOfPersons <= $request->tableType){
+            $finalNoOfTables = 1;
+        } else {
+            $x = intval($request->noOfPersons / $request->tableType);
+            $remainder = intval($request->noOfPersons % $request->tableType);
+            if($remainder > 0){
+                $x += 1;
+            }
+            $finalNoOfTables = $x;
+        }
 
         CustomerQueue::where('id', $id)
         ->update([
             'status' => 'approved',
             'approvedDateTime' => date('Y-m-d H:i:s'),
+            'numberOfTables' => $finalNoOfTables,
+            'tableType' => $request->tableType,
         ]);
 
         CustomerNotification::create([
@@ -8400,16 +8575,43 @@ class RestaurantController extends Controller
         $restAccId = Session::get('loginId');
 
         $request->validate([
-            'rNumberOfTables' => 'required|numeric|min:1',
-            'rCapacityPerTable' => 'required|numeric|min:2',
+            'r2seater' => 'required|numeric',
+            'r3seater' => 'required|numeric',
+            'r4seater' => 'required|numeric',
+            'r5seater' => 'required|numeric',
+            'r6seater' => 'required|numeric',
+            'r7seater' => 'required|numeric',
+            'r8seater' => 'required|numeric',
+            'r9seater' => 'required|numeric',
+            'r10seater' => 'required|numeric',
         ],
         [
-            'rNumberOfTables.required' => 'Number of Tables is required',
-            'rNumberOfTables.numeric' => 'Number of Tables must be number only',
-            'rNumberOfTables.min' => 'Number of Tables must be greater than 1',
-            'rCapacityPerTable.required' => 'Capacity per Table is required',
-            'rCapacityPerTable.numeric' => 'Capacity per Table must be number only',
-            'rCapacityPerTable.min' => 'Capacity per Table must be greater than 2',
+            'r2seater.required' => '2 Seater is required',
+            'r2seater.numeric' => '2 Seater must be number only',
+            
+            'r3seater.required' => '3 Seater is required',
+            'r3seater.numeric' => '3 Seater must be number only',
+            
+            'r4seater.required' => '4 Seater is required',
+            'r4seater.numeric' => '4 Seater must be number only',
+            
+            'r5seater.required' => '5 Seater is required',
+            'r5seater.numeric' => '5 Seater must be number only',
+            
+            'r6seater.required' => '6 Seater is required',
+            'r6seater.numeric' => '6 Seater must be number only',
+            
+            'r7seater.required' => '7 Seater is required',
+            'r7seater.numeric' => '7 Seater must be number only',
+            
+            'r8seater.required' => '8 Seater is required',
+            'r8seater.numeric' => '8 Seater must be number only',
+            
+            'r9seater.required' => '9 Seater is required',
+            'r9seater.numeric' => '9 Seater must be number only',
+            
+            'r10seater.required' => '10 Seater is required',
+            'r10seater.numeric' => '10 Seater must be number only',
         ]);
 
         $restaurant = RestaurantAccount::where('id', $restAccId)->first();
@@ -8417,11 +8619,22 @@ class RestaurantController extends Controller
         if($restaurant->status == "Published"){
 
             if($this->checkTodaySched() == "Closed Now"){
+
+                $totalTables = $request->r2seater + $request->r3seater + $request->r4seater + $request->r5seater + $request->r6seater +
+                $request->r7seater + $request->r8seater + $request->r9seater + $request->r10seater;
                 
                 RestaurantAccount::where('id', $restAccId)
                 ->update([
-                    'rNumberOfTables' => $request->rNumberOfTables,
-                    'rCapacityPerTable' => $request->rCapacityPerTable,
+                    'rNumberOfTables' => $totalTables,
+                    'r2seater' => $request->r2seater,
+                    'r3seater' => $request->r3seater,
+                    'r4seater' => $request->r4seater,
+                    'r5seater' => $request->r5seater,
+                    'r6seater' => $request->r6seater,
+                    'r7seater' => $request->r7seater,
+                    'r8seater' => $request->r8seater,
+                    'r9seater' => $request->r9seater,
+                    'r10seater' => $request->r10seater,
                 ]);
 
                 $customerReserves = CustomerReserve::where('restAcc_id', $restAccId)
@@ -8490,10 +8703,22 @@ class RestaurantController extends Controller
             }
 
         } else {
+            
+            $totalTables = $request->r2seater + $request->r3seater + $request->r4seater + $request->r5seater + $request->r6seater +
+            $request->r7seater + $request->r8seater + $request->r9seater + $request->r10seater;
+            
             RestaurantAccount::where('id', $restAccId)
             ->update([
-                'rNumberOfTables' => $request->rNumberOfTables,
-                'rCapacityPerTable' => $request->rCapacityPerTable,
+                'rNumberOfTables' => $totalTables,
+                'r2seater' => $request->r2seater,
+                'r3seater' => $request->r3seater,
+                'r4seater' => $request->r4seater,
+                'r5seater' => $request->r5seater,
+                'r6seater' => $request->r6seater,
+                'r7seater' => $request->r7seater,
+                'r8seater' => $request->r8seater,
+                'r9seater' => $request->r9seater,
+                'r10seater' => $request->r10seater,
             ]);
     
             $request->session()->flash('tablesUpdated');

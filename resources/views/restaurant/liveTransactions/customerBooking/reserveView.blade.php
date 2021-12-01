@@ -10,7 +10,7 @@
             <div class="uppercase font-bold text-white text-xl py-3">BOOKING DETAILS</div>
             <div class="justify-self-end text-white py-3 ml-3">
                 <button id="btn-decline" class="px-8 py-2 bg-adminDeleteFormColor">Decline</button>
-                <a href="/restaurant/live-transaction/customer-booking/reserve/approve/{{ $customerReserve->id }}" class="btn-approve px-8 py-2 bg-postedStatus ml-2">Approve</a>
+                <button id="btn-approved" class="px-8 py-2 bg-postedStatus">Approve</button>
             </div>
         </div>
         <div class="w-11/12 mx-auto py-10">
@@ -125,7 +125,7 @@
         </div>
         <div class="bg-manageRestaurantSidebarColorActive h-8"></div>
         
-        {{-- POP UP FORMS --}}
+        {{-- POP UP FORMS DECLINED --}}
         <div class="declined-form">
             <div class="modal-header flex justify-end px-4 py-2">
                 <button id="btn-close" class="close-btn text-xl font-bold">&times;</button>
@@ -135,6 +135,35 @@
                 @csrf
                 <div class="w-11/12 mx-auto mt-10 text-center">
                     <textarea type="text" name="reason" placeholder="Please type your reason here" class="border rounded-md focus:border-black w-full py-3 px-2 text-sm focus:outline-non text-gray-700" rows="5" required></textarea>
+                </div>
+                <div class="text-center mt-10">
+                    <button class="bg-submitButton text-white hover:bg-darkerSubmitButton hover:text-gray-300 rounded-md w-32 h-10 text-sm uppercase font-bold transition duration-200 ease-in-out" type="submit">Submit</button>
+                </div>
+            </form>
+        </div>
+
+        
+        
+        {{-- POP UP FORMS APPROVED --}}
+        <div class="approved-form">
+            <div class="modal-header flex justify-end px-4 py-2">
+                <button id="btn-close" class="close-btn text-xl font-bold">&times;</button>
+            </div>
+            <h1 class="text-center text-submitButton font-bold text-2xl font-Montserrat">Approved Customer Reserve</h1>
+            <form action="/restaurant/live-transaction/customer-booking/reserve/approve/{{ $customerReserve->id }}" method="POST" id="approvedForm">
+                @csrf
+                <div class="w-11/12 mx-auto mt-10 text-center">
+                    <input type="text" name="noOfPersons" id="noOfPersons" value="{{ $customerReserve->numberOfPersons }}" hidden>
+                    <label>Select Table Type: </label>
+                    <select name="tableType" id="tableType" class="ml-5 py-2 px-3 border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none focus:border-black">
+                        @foreach ($tableTypes as $tableType)
+                            <option value="{{ $tableType['tableValue'] }}">{{ $tableType['tableLable'] }}</option>
+                        @endforeach
+                    </select>
+                    
+                    <br>
+                    <label>No. of Tables: </label>
+                    <input type="text" name="walkInNoOfTables" class="mt-2 ml-5 py-1 px-3 w-16 bg-gray-200 border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none focus:border-black" value="{{ $firstNoOfTable }}" id="noOfTables" disabled>
                 </div>
                 <div class="text-center mt-10">
                     <button class="bg-submitButton text-white hover:bg-darkerSubmitButton hover:text-gray-300 rounded-md w-32 h-10 text-sm uppercase font-bold transition duration-200 ease-in-out" type="submit">Submit</button>

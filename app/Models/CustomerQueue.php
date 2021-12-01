@@ -21,6 +21,7 @@ class CustomerQueue extends Model
         'name',
         'numberOfPersons',
         'numberOfTables',
+        'tableType',
         'hoursOfStay',
         'numberOfChildren',
         'numberOfPwd',

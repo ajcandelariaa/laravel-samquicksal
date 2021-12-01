@@ -12,6 +12,11 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/jquery.validation/1.16.0/jquery.validate.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" integrity="sha512-1ycn6IcaQQ40/MKBW2W4Rhis/DbILU74C1vSrLJxCq57o941Ym01SwNsOMqvEBFlcgUa6xLiPY/NS5R+E6ztJQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    @if (request()->is('restaurant/manage-restaurant/about/restaurant-information/updateLocation'))
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
+        <link rel="stylesheet" href="{{ asset('css/getLatLong.css') }}">
+        <script type="text/javascript" src="{{ asset('js/getLatLong.js') }}"></script>
+    @endif
 </head>
 <body class="font-Roboto">
     <header class="bg-adminLoginTextColor">
@@ -141,6 +146,9 @@
         <script type="text/javascript" src="{{ asset('js/foodSetDetail.js') }}"></script>
     @elseif (request()->is('restaurant/manage-restaurant/food-menu/order-set/*'))
         <script type="text/javascript" src="{{ asset('js/orderSet.js') }}"></script>
+    @elseif (request()->is('restaurant/manage-restaurant/about/restaurant-information/updateLocation'))
+        <script type="text/javascript" src="{{ asset('js/restaurantInformation.js') }}"></script>
+        <script src="https://maps.googleapis.com/maps/api/js?key={{ env('MAPS_API_KEY') }}&callback=initMap&libraries=places&v=weekly" async></script>
     @elseif (request()->is('restaurant/manage-restaurant/about/restaurant-information*'))
         <script type="text/javascript" src="{{ asset('js/restaurantInformation.js') }}"></script>
     @elseif (request()->is('restaurant/manage-restaurant/about/restaurant-post*'))

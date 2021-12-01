@@ -44,12 +44,20 @@ class CreateRestaurantAccountsTable extends Migration
             $table->string('rState');
             $table->string('rCountry');
            
-            $table->string('rLatitudeLoc');
-            $table->string('rLongitudeLoc');
+            $table->string('rLatitudeLoc')->nullable();
+            $table->string('rLongitudeLoc')->nullable();
             $table->integer('rRadius');
 
             $table->integer('rNumberOfTables');
-            $table->integer('rCapacityPerTable');
+            $table->integer('r2seater');
+            $table->integer('r3seater');
+            $table->integer('r4seater');
+            $table->integer('r5seater');
+            $table->integer('r6seater');
+            $table->integer('r7seater');
+            $table->integer('r8seater');
+            $table->integer('r9seater');
+            $table->integer('r10seater');
             $table->string('rGcashQrCodeImage')->nullable();
             $table->string('rLogo')->nullable();
             

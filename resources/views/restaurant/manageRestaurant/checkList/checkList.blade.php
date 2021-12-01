@@ -58,13 +58,23 @@
                         <h2 class="text-xl w-10/12 mx-auto font-bold">Review Your Details Here</h2>
                         <p class="w-10/12 mx-auto mt-7 font-bold">Steps to do:</p>
 
+                        
                         <p class="text-sm w-10/12 mx-auto mt-5 ml-20">
+                            @if ($restaurant->rLatitudeLoc != null && $restaurant->rLongitudeLoc != null)
+                                <i class="fas fa-check-circle mr-2 text-postedStatus"></i>
+                            @else
+                                <i class="fas fa-times-circle mr-2 text-adminDeleteFormColor"></i>
+                            @endif
+                            1. Locate your Restaurant
+                        </p>
+
+                        <p class="text-sm w-10/12 mx-auto mt-2 ml-20">
                             @if ($restaurant->verified == "Yes")
                                 <i class="fas fa-check-circle mr-2 text-postedStatus"></i>
                             @else
                                 <i class="fas fa-times-circle mr-2 text-adminDeleteFormColor"></i>
                             @endif
-                            1. Verify your E-mail Address
+                            2. Verify your E-mail Address
                         </p>
 
                         <p class="text-sm w-10/12 mx-auto mt-2 ml-20">
@@ -73,7 +83,7 @@
                             @else
                                 <i class="fas fa-times-circle mr-2 text-adminDeleteFormColor"></i>
                             @endif
-                            2. Change Restaurant Logo
+                            3. Change Restaurant Logo
                         </p>
 
                         <p class="text-sm w-10/12 mx-auto mt-2 ml-20">
@@ -82,7 +92,7 @@
                             @else
                                 <i class="fas fa-times-circle mr-2 text-adminDeleteFormColor"></i>
                             @endif
-                            3. Upload GCash QR Code Image
+                            4. Upload GCash QR Code Image
                         </p>
 
                         <p class="text-sm w-10/12 mx-auto mt-2 ml-20">
@@ -91,7 +101,7 @@
                             @else
                                 <i class="fas fa-times-circle mr-2 text-adminDeleteFormColor"></i>
                             @endif
-                            4. Create at least one Order Set (Visible and Available)
+                            5. Create at least one Order Set (Visible and Available)
                         </p>
                     </div>
                 </div>

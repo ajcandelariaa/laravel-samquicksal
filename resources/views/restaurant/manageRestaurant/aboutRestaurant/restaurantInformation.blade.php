@@ -90,6 +90,14 @@
                 'success'
             );
         </script>      
+     @elseif (session()->has('locationUpdated'))
+        <script>
+            Swal.fire(
+                'Location Submitted',
+                '',
+                'success'
+            );
+        </script>   
     @endif
     
     <div class="relative w-full h-56">
@@ -146,6 +154,13 @@
                 <div class="text-left text-submitButton">Status</div>
                 <div class="text-left text-submitButton">:</div>
                 <div class="font-bold mb-4">{{ $account->status }}</div>
+
+                    
+                @if ($account->rLatitudeLoc == null && $account->rLongitudeLoc == null)
+                    <div class="text-left text-submitButton">Locate Restaurant</div>
+                    <div class="text-left text-submitButton">:</div>
+                    <div class="font-bold mb-4">Click <a href="/restaurant/manage-restaurant/about/restaurant-information/updateLocation" class="underline text-purple-500">here</a> to locate your restaurant</div>
+                @endif
             </div>
 
 
@@ -246,27 +261,83 @@
                 </div>
             </form>
 
+
             <div class="uppercase font-bold bg-gradient-to-r from-adminViewAccountHeaderColor to-adminViewAccountHeaderColor2 py-2 text-submitButton pl-5">Tables</div>
+            
+            <div class="w-10/12 mx-auto mt-5">
+                <p>Total Tables: {{ $account->rNumberOfTables }}</p>
+            </div>
             <form action="/restaurant/manage-restaurant/about/restaurant-information/updateTables" id="formUpdateTables" method="POST">
                 @csrf
-                <div class="grid grid-cols-formsThreeCols w-10/12 mx-auto mt-5">
-                    <div class="text-left text-submitButton">Number of Tables</div>
+                <div class="grid grid-cols-formsThreeCols w-10/12 mx-auto mt-2">
+                    <div class="text-left text-submitButton">2 seater</div>
                     <div class="text-left text-submitButton">:</div>
                     <div class="font-bold mb-4">
-                        <input type="number" name="rNumberOfTables" value="{{ $account->rNumberOfTables }}" class="w-full border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none {{ $errors->has('rNumberOfTables') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }}">
-                        <span class="mt-2 text-red-600 italic text-sm">@error('rNumberOfTables'){{ $message }}@enderror</span>
+                        <input type="number" min="0" max="50" name="r2seater" value="{{ $account->r2seater }}" class="w-full border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none {{ $errors->has('r2seater') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }}">
+                        <span class="mt-2 text-red-600 italic text-sm">@error('r2seater'){{ $message }}@enderror</span>
+                    </div>
+                    
+                    <div class="text-left text-submitButton">3 seater</div>
+                    <div class="text-left text-submitButton">:</div>
+                    <div class="font-bold mb-4">
+                        <input type="number" min="0" max="50"  name="r3seater" value="{{ $account->r3seater }}" class="w-full border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none {{ $errors->has('r3seater') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }}">
+                        <span class="mt-2 text-red-600 italic text-sm">@error('r3seater'){{ $message }}@enderror</span>
                     </div>
 
                     
-                    <div class="text-left text-submitButton">Capacity per Table</div>
+                    <div class="text-left text-submitButton">4 seater</div>
                     <div class="text-left text-submitButton">:</div>
                     <div class="font-bold mb-4">
-                        <input type="number" name="rCapacityPerTable" value="{{ $account->rCapacityPerTable }}" class="w-full border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none {{ $errors->has('rCapacityPerTable') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }}">
-                        <span class="mt-2 text-red-600 italic text-sm">@error('rCapacityPerTable'){{ $message }}@enderror</span>
+                        <input type="number" min="0" max="50"  name="r4seater" value="{{ $account->r4seater }}" class="w-full border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none {{ $errors->has('r4seater') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }}">
+                        <span class="mt-2 text-red-600 italic text-sm">@error('r4seater'){{ $message }}@enderror</span>
                     </div>
+
+                    
+                    <div class="text-left text-submitButton">5 seater</div>
+                    <div class="text-left text-submitButton">:</div>
+                    <div class="font-bold mb-4">
+                        <input type="number" min="0" max="50"  name="r5seater" value="{{ $account->r5seater }}" class="w-full border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none {{ $errors->has('r5seater') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }}">
+                        <span class="mt-2 text-red-600 italic text-sm">@error('r5seater'){{ $message }}@enderror</span>
+                    </div>
+
+                    <div class="text-left text-submitButton">6 seater</div>
+                    <div class="text-left text-submitButton">:</div>
+                    <div class="font-bold mb-4">
+                        <input type="number" min="0" max="50"  name="r6seater" value="{{ $account->r6seater }}" class="w-full border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none {{ $errors->has('r6seater') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }}">
+                        <span class="mt-2 text-red-600 italic text-sm">@error('r6seater'){{ $message }}@enderror</span>
+                    </div>
+
+                    <div class="text-left text-submitButton">7 seater</div>
+                    <div class="text-left text-submitButton">:</div>
+                    <div class="font-bold mb-4">
+                        <input type="number" min="0" max="50"  name="r7seater" value="{{ $account->r7seater }}" class="w-full border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none {{ $errors->has('r7seater') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }}">
+                        <span class="mt-2 text-red-600 italic text-sm">@error('r7seater'){{ $message }}@enderror</span>
+                    </div>
+
+                    <div class="text-left text-submitButton">8 seater</div>
+                    <div class="text-left text-submitButton">:</div>
+                    <div class="font-bold mb-4">
+                        <input type="number" min="0" max="50"  name="r8seater" value="{{ $account->r8seater }}" class="w-full border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none {{ $errors->has('r8seater') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }}">
+                        <span class="mt-2 text-red-600 italic text-sm">@error('r8seater'){{ $message }}@enderror</span>
+                    </div>
+
+                    <div class="text-left text-submitButton">9 seater</div>
+                    <div class="text-left text-submitButton">:</div>
+                    <div class="font-bold mb-4">
+                        <input type="number" min="0" max="50"  name="r9seater" value="{{ $account->r9seater }}" class="w-full border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none {{ $errors->has('r9seater') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }}">
+                        <span class="mt-2 text-red-600 italic text-sm">@error('r9seater'){{ $message }}@enderror</span>
+                    </div>
+
+                    <div class="text-left text-submitButton">10 seater</div>
+                    <div class="text-left text-submitButton">:</div>
+                    <div class="font-bold mb-4">
+                        <input type="number" min="0" max="50"  name="r10seater" value="{{ $account->r10seater }}" class="w-full border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none {{ $errors->has('r10seater') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }}">
+                        <span class="mt-2 text-red-600 italic text-sm">@error('r10seater'){{ $message }}@enderror</span>
+                    </div>
+
                 </div>
                 <div class="w-10/12 mx-auto text-right mt-3 mb-5">
-                    <button type="submit" id="btnUpdateTables" class="bg-submitButton hover:bg-btnHoverColor text-white hover:text-gray-300 w-36 h-9 rounded-md transition duration-200 ease-in-out ">Update Table</button>
+                    <button type="submit" id="btnUpdateTables" class="bg-submitButton hover:bg-btnHoverColor text-white hover:text-gray-300 w-36 h-9 rounded-md transition duration-200 ease-in-out ">Update Tables</button>
                 </div>
             </form>
 

@@ -49,3 +49,22 @@ $('#formUpdateTables').submit(function(e) {
         }
     });
 });
+
+
+// SUBMIT LOCATIOn
+$('#locationForm').submit(function(e) {
+    e.preventDefault();
+    Swal.fire({
+      title: 'Submit Location?',
+      text: 'After you\'ve submit it you cannot go back here. This is one time only',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes'
+    }).then((result) =>{
+        if(result.value){
+          e.currentTarget.submit();
+        }
+    });
+  });

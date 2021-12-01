@@ -27,6 +27,7 @@ class CreateCustomerReservesTable extends Migration
             $table->string('reserveTime');
             $table->integer('numberOfPersons');
             $table->integer('numberOfTables');
+            $table->integer('tableType')->nullable();
             $table->integer('hoursOfStay');
             $table->integer('numberOfChildren');
             $table->integer('numberOfPwd');

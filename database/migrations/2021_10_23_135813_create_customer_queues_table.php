@@ -26,6 +26,7 @@ class CreateCustomerQueuesTable extends Migration
             $table->string('name')->nullable();
             $table->integer('numberOfPersons');
             $table->integer('numberOfTables');
+            $table->integer('tableType')->nullable();
             $table->integer('hoursOfStay');
             $table->integer('numberOfChildren');
             $table->integer('numberOfPwd');

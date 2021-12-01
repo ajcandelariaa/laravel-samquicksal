@@ -31,22 +31,6 @@ $('#declinedForm').submit(function(e) {
   });
 });
 
-// RESTAURANT APPROVED FORM
-$( "#btn-approved" ).click(function() {
-  document.querySelector(".popup2").classList.add("active2");
-  document.querySelector(".overlay").classList.add("active");
-});
-
-$(".overlay").click(function(){
-  document.querySelector(".popup2").classList.remove("active2");
-  document.querySelector(".overlay").classList.remove("active");
-});
-
-$(".popup2 .close-btn2").click(function(){
-  document.querySelector(".popup2").classList.remove("active2");
-  document.querySelector(".overlay").classList.remove("active");
-});
-
 $('#approvedForm').submit(function(e) {
   e.preventDefault();
   Swal.fire({

@@ -35,8 +35,8 @@
             </div>
             <div class="w-10/12 mx-auto py-10 font-Montserrat grid grid-cols-3 items-center gap-y-3">
                 <div class="col-span-full">
-                    <p class="italic text-gray-400">Note: {{ $rCapacityPerTable }} person/s only per table</p>
-                    <input type="text" name="capacityPerTable" id="capacityPerTable" value="{{ $rCapacityPerTable }}" hidden>
+                    {{-- <p class="italic text-gray-400">Note: {{ $rCapacityPerTable }} person/s only per table</p>
+                    <input type="text" name="capacityPerTable" id="capacityPerTable" value="{{ $rCapacityPerTable }}" hidden> --}}
                 </div>
 
                 <div class="col-span-1">Name: <span class="text-red-600">*</span></div>
@@ -61,9 +61,18 @@
                     <span class="mt-2 text-red-600 italic text-sm">@error('walkInPersons'){{ $message }}@enderror</span>
                 </div>
                 
+                <div class="col-span-1">Table Type: <span class="text-red-600">*</span></div>
+                <div class="col-span-2 w-full">
+                    <select name="capacityPerTable" id="capacityPerTable" class="w-full py-2 px-3 border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none focus:border-black">
+                        @foreach ($tableTypes as $tableType)
+                            <option value="{{ $tableType['tableValue'] }}">{{ $tableType['tableLable'] }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                
                 <div class="col-span-1">Hours of Stay: <span class="text-red-600">*</span></div>
                 <div class="col-span-2 w-full">
-                    @if ($rTimeLimit == 0)
+                    @if ($restaurant->rTimeLimit == 0)
                         <select name="walkInHoursOfStay" class="w-full py-2 px-3 border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none {{ $errors->has('walkInHoursOfStay') ? 'border-red-600 focus:border-red-600' : 'focus:border-black' }}">
                             <option value="2">2 hours</option>
                             <option value="3">3 hours</option>
@@ -72,7 +81,7 @@
                         </select>
                         <span class="mt-2 text-red-600 italic text-sm">@error('walkInHoursOfStay'){{ $message }}@enderror</span>
                     @else
-                        <input type="text" name="walkInHoursOfStay" class="w-full py-2 px-3 bg-gray-200 border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none focus:border-black" value="{{ $rTimeLimit }}" readonly>
+                        <input type="text" name="walkInHoursOfStay" class="w-full py-2 px-3 bg-gray-200 border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none focus:border-black" value="{{ $restaurant->rTimeLimit }}" readonly>
                     @endif
                 </div>
                 

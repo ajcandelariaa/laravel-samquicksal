@@ -16,8 +16,30 @@ $('#addWalkInForm').submit(function(e) {
     });
 });
 
-//  CHANGE NUMBER OF TABLE
+//  CHANGE NUMBER OF TABLE 1
 $( "#noOfPersons" ).keyup(function() {
+    noOfPersons = $('#noOfPersons').val();
+    capacityPerTable = $('#capacityPerTable').val();
+    noOfPersons = noOfPersons.replace(/^0+/, '');
+    $('#noOfPersons').val(noOfPersons)
+
+    if(noOfPersons == 0){
+        $('#noOfTables').val(0)
+    } else if(parseInt(noOfPersons) <= parseInt(capacityPerTable)){
+        $('#noOfTables').val(1)
+    } else {
+        var x = parseInt(noOfPersons / capacityPerTable)
+        var remainder = noOfPersons % capacityPerTable
+        if(remainder > 0){
+            x += 1
+        }
+        $('#noOfTables').val(x)
+    }
+});
+
+
+//  CHANGE NUMBER OF TABLE 2
+$( "#capacityPerTable" ).on('change', function() {
     noOfPersons = $('#noOfPersons').val();
     capacityPerTable = $('#capacityPerTable').val();
     noOfPersons = noOfPersons.replace(/^0+/, '');
@@ -117,3 +139,4 @@ $('#admitForm').submit(function(e) {
         }
     });
 });
+
