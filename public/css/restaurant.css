@@ -249,7 +249,7 @@
     cursor:pointer;
 }
 
-/* DECLINE QUEUE FORM */
+/* DECLINE/APPROVED QUEUE/RESERVED FORM */
 .booking .declined-form,
 .booking .approved-form{
     position:fixed;

@@ -146,7 +146,7 @@
             <div class="modal-header flex justify-end px-4 py-2">
                 <button id="btn-close" class="close-btn text-xl font-bold">&times;</button>
             </div>
-            <h1 class="text-center text-submitButton font-bold text-2xl font-Montserrat">Approved Customer Reserve</h1>
+            <h1 class="text-center text-submitButton font-bold text-2xl font-Montserrat">Approved Customer Queue</h1>
             <form action="/restaurant/live-transaction/customer-booking/queue/approve/{{ $customerQueue->id }}" method="POST" id="approvedForm">
                 @csrf
                 <div class="w-11/12 mx-auto mt-10 text-center">
