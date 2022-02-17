@@ -87,3 +87,26 @@ $( "#tableType" ).on('change', function() {
         $('#noOfTables').val(x)
     }
 });
+
+
+// DECLINED FORM
+$(document).ready(function () {
+    $("#declinedForm").submit(function (e) {
+        $("#btn-declined-form")
+        .removeClass("bg-submitButton hover:bg-darkerSubmitButton hover:text-gray-300")
+        .addClass("cursor-wait bg-multiStepBoxColor")
+        .attr("disabled", true);
+        return true;
+    });
+});
+
+// APPROVED FORM
+$(document).ready(function () {
+    $("#approvedForm").submit(function (e) {
+        $("#btn-approved-form")
+        .removeClass("bg-submitButton hover:bg-darkerSubmitButton hover:text-gray-300")
+        .addClass("cursor-wait bg-multiStepBoxColor")
+        .attr("disabled", true);
+        return true;
+    });
+});

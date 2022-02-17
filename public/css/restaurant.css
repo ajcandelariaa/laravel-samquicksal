@@ -75,8 +75,8 @@
     position:fixed;
     top:-150%;
     left:50%;
-    opacity:0;
     transform:translate(-50%,-50%) scale(1.25);
+    opacity:0;
     width:60%;
     padding:20px 15px;
     background:#000;
@@ -96,8 +96,8 @@
 .food-set .add-form.active,
 .food-set .add-form2.active{
     top:50%;
-    opacity:1;
     transform:translate(-50%,-50%) scale(1);
+    opacity:1;
     transition:top 0ms ease-in-out 0ms, opacity 200ms ease-in-out 0ms, transform 200ms ease-in-out 0ms;
     z-index:2;
 }

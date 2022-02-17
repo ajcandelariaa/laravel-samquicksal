@@ -73,14 +73,12 @@
                 <button id="btn-close" class="close-btn text-xl font-bold">&times;</button>
             </div>
             <h1 class="text-center text-submitButton font-bold text-2xl font-Montserrat ">Create Food Set</h1>
-            <form action="/restaurant/manage-restaurant/food-menu/food-set/add" method="POST" enctype="multipart/form-data">
+            <form action="/restaurant/manage-restaurant/food-menu/food-set/add" id="foodSet-add-form" method="POST" enctype="multipart/form-data">
                 @csrf
                 <div class="flex flex-col w-9/12 gap-y-5 mx-auto mt-10 font-Montserrat ">
                     <div class="flex flex-row -mb-1">
                         <h1 class="mr-2">Name:</h1>
-                        <input type="text" name="foodName" class="border focus:border-black rounded-md w-7/12 py-1 px-2 text-sm focus:outline-non text-gray-700 " required>
-                        <h1 class="ml-4 mr-2">Price:</h1>
-                        <input type="number" min="0" step=".01" name="foodPrice" class="border focus:border-black rounded-md w-2/12 py-1 px-2 text-sm focus:outline-non text-gray-700" required>
+                        <input type="text" name="foodName" class="border focus:border-black rounded-md w-full py-1 px-2 text-sm focus:outline-non text-gray-700 " required>
                     </div>
 
                     <div class="-mb-3 ">Description: </div>
@@ -96,7 +94,7 @@
                     </div>
                 </div>
                 <div class="text-center mt-2 mb-4">
-                    <button class="bg-submitButton text-white rounded-full w-32 h-10 text-sm hover:bg-darkerSubmitButton hover:text-gray-300 transition duration-200 ease-in-out font-bold" type="submit">ADD</button>
+                    <button id="btn-foodSet-add" class="bg-submitButton text-white rounded-full w-32 h-10 text-sm hover:bg-darkerSubmitButton hover:text-gray-300 transition duration-200 ease-in-out font-bold" type="submit">ADD</button>
                 </div>
             </form>
         </div>

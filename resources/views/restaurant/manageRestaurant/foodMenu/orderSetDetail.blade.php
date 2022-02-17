@@ -241,11 +241,10 @@
                                 <button id="btn-add-food-set" class="bg-submitButton text-white w-36 h-9 rounded-md"><i class="fas fa-plus mr-3"></i>Food Set</button>
                             </div>
                         </div>
-                        <div class="grid grid-cols-10 items-center text-center font-bold h-16 px-5">
+                        <div class="grid grid-cols-8 items-center text-center font-bold h-16 px-5">
                             <div class="col-span-1">No.</div>
                             <div class="col-span-2">Image</div>
                             <div class="col-span-3">Name</div>
-                            <div class="col-span-2">Price</div>
                             <div class="col-span-1">View</div>
                             <div class="col-span-1">Delete</div>
                         </div>
@@ -257,13 +256,12 @@
                                 @foreach ($foodSets as $foodSet)
                                     @if ($orderSetFoodSet->foodSet_id == $foodSet->id)
                                         @if ($count % 2 == 0)
-                                            <div class="bg-manageFoodItemHeaderBgColor grid grid-cols-10 justify-items-center items-center h-10 px-5 mb-2">
+                                            <div class="bg-manageFoodItemHeaderBgColor grid grid-cols-8 justify-items-center items-center h-10 px-5 mb-2">
                                                 <div class="col-span-1">{{ $count }}</div>
                                                 <div class="col-span-2">
                                                     <img src="{{ asset('uploads/restaurantAccounts/foodSet/'.$id.'/'.$foodSet->foodSetImage) }}" alt="foodSetImage" class="w-8 h-7">
                                                 </div>
                                                 <div class="col-span-3">{{ $foodSet->foodSetName }}</div>
-                                                <div class="col-span-2">₱ 0.00</div>
                                                 <div class="col-span-1">
                                                     <a href="/restaurant/manage-restaurant/food-menu/food-set/detail/{{ $foodSet->id }}" target="_blank"><i class="fas fa-eye"></i></a>
                                                 </div>
@@ -272,13 +270,12 @@
                                                 </div>
                                             </div>
                                         @else
-                                            <div class="bg-white grid grid-cols-10 justify-items-center items-center h-10 px-5 mb-2">
+                                            <div class="bg-white grid grid-cols-8 justify-items-center items-center h-10 px-5 mb-2">
                                                 <div class="col-span-1">{{ $count }}</div>
                                                 <div class="col-span-2">
                                                     <img src="{{ asset('uploads/restaurantAccounts/foodSet/'.$id.'/'.$foodSet->foodSetImage) }}" alt="foodSetImage" class="w-8 h-7">
                                                 </div>
                                                 <div class="col-span-3">{{ $foodSet->foodSetName }}</div>
-                                                <div class="col-span-2">₱ 0.00</div>
                                                 <div class="col-span-1">
                                                     <a href="/restaurant/manage-restaurant/food-menu/food-set/detail/{{ $foodSet->id }}" target="_blank"><i class="fas fa-eye"></i></a>
                                                 </div>
@@ -382,14 +379,14 @@
 
     {{-- FOOOOOD SETSSSSSS INVERNTORY --}}
     <div class="add-form2" id="add-form2">
-        <form action="/restaurant/manage-restaurant/food-menu/order-set/detail/add-set/{{ $orderSet->id }}" method="POST" enctype="multipart/form-data">
+        <form action="/restaurant/manage-restaurant/food-menu/order-set/detail/add-set/{{ $orderSet->id }}" id="orderSet-add-food-set-form" method="POST" enctype="multipart/form-data">
             <div class="flex justify-between">
                 <h1 class="font-bold text-xl text-white">FOOD SET INVENTORY</h1>
-                <button class="bg-submitButton text-white rounded-md w-28 h-10 text-sm" type="submit">Add</button>
+                <button id="btn-orderSet-add-food-set" class="bg-submitButton text-white rounded-md w-28 h-10 text-sm" type="submit">Add</button>
             </div>
             @csrf
-            <div class="w-full bg-adminViewAccountHeaderColor2 mt-3">
-                <div class="grid grid-cols-10 items-center text-center font-bold h-16 px-5">
+            <div class="w-full bg-adminViewAccountHeaderColor2 mt-3 overflow-x-hidden overflow-y-scroll max-h-52">
+                <div class="grid grid-cols-8 items-center text-center font-bold h-16 px-5">
                     <div class="col-span-2 bg-white py-2">
                         <input type="checkbox" name="select-all-food-set" id="select-all-food-set" class="mr-4"> 
                         <label class="text-manageRestaurantSidebarColorActive">Select All</label>
@@ -397,7 +394,6 @@
                     <div class="col-span-2"> </div>
                     <div class="col-span-1">No. </div>
                     <div class="col-span-3">Name</div>
-                    <div class="col-span-2">Price</div>
                 </div>
                 @if (!$foodSets->isEmpty())
                     @php
@@ -405,7 +401,7 @@
                     @endphp
                     @foreach ($foodSets as $foodSet)  
                         @if ($count % 2 == 0)
-                            <div class="bg-manageFoodItemHeaderBgColor grid grid-cols-10 justify-items-center items-center h-10 px-5 mb-2">
+                            <div class="bg-manageFoodItemHeaderBgColor grid grid-cols-8 justify-items-center items-center h-10 px-5 mb-2">
                                 <div class="col-span-2">
                                     <input type="checkbox" class="foodSet" name="foodSet[]" value="{{ $foodSet->id }}">
                                 </div>
@@ -415,10 +411,9 @@
                                 </div>
                                 <div class="col-span-1">{{ $count }}</div>
                                 <div class="col-span-3">{{ $foodSet->foodSetName }}</div>
-                                <div class="col-span-2">₱ 0.00</div>
                             </div>
                         @else
-                            <div class="bg-white grid grid-cols-10 justify-items-center items-center h-10 px-5 mb-2">
+                            <div class="bg-white grid grid-cols-8 justify-items-center items-center h-10 px-5 mb-2">
                                 <div class="col-span-2">
                                     <input type="checkbox" class="foodSet" name="foodSet[]" value="{{ $foodSet->id }}">
                                 </div>
@@ -428,7 +423,6 @@
                                 </div>
                                 <div class="col-span-1">{{ $count }}</div>
                                 <div class="col-span-3">{{ $foodSet->foodSetName }}</div>
-                                <div class="col-span-2">₱ 0.00</div>
                             </div>
                         @endif
                         @php
@@ -449,13 +443,13 @@
 
     {{-- FOOOOOD ITEMMMMMM INVENTORY --}}
     <div class="add-form" id="add-form">
-        <form action="/restaurant/manage-restaurant/food-menu/order-set/detail/add-item/{{ $orderSet->id }}" method="POST" enctype="multipart/form-data">
+        <form action="/restaurant/manage-restaurant/food-menu/order-set/detail/add-item/{{ $orderSet->id }}" id="orderSet-add-food-item-form" method="POST" enctype="multipart/form-data">
             <div class="flex justify-between">
                 <h1 class="font-bold text-xl text-white">FOOD ITEM INVENTORY</h1>
-                <button class="bg-submitButton text-white rounded-md w-28 h-10 text-sm" type="submit">Add</button>
+                <button id="btn-orderSet-add-food-item" class="bg-submitButton text-white rounded-md w-28 h-10 text-sm" type="submit">Add</button>
             </div>
             @csrf
-            <div class="w-full bg-adminViewAccountHeaderColor2 mt-3">
+            <div class="w-full bg-adminViewAccountHeaderColor2 mt-3 overflow-x-hidden overflow-y-scroll max-h-52">
                 <div class="grid grid-cols-10 items-center text-center font-bold h-16 px-5">
                     <div class="col-span-2 bg-white py-2">
                         <input type="checkbox" name="select-all-food-item" id="select-all-food-item" class="mr-4"> 

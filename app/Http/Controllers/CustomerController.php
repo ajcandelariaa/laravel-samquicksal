@@ -48,15 +48,15 @@ use Illuminate\Support\Facades\Session;
 
 class CustomerController extends Controller
 {
-    // public $RESTAURANT_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/logo";
-    // public $ACCOUNT_NO_IMAGE_PATH = "http://192.168.1.53:8000/images";
-    // public $CUSTOMER_IMAGE_PATH = "http://192.168.1.53:8000/uploads/customerAccounts/logo";
-    // public $POST_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/post";
-    // public $PROMO_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/promo";
-    // public $ORDER_SET_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/orderSet";
-    // public $FOOD_SET_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/foodSet";
-    // public $FOOD_ITEM_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/foodItem";
-    // public $RESTAURANT_GCASH_QR_IMAGE_PATH = "http://192.168.1.53:8000/uploads/restaurantAccounts/gcashQr";
+    // public $RESTAURANT_IMAGE_PATH = "http://192.168.1.24:8000/uploads/restaurantAccounts/logo";
+    // public $ACCOUNT_NO_IMAGE_PATH = "http://192.168.1.24:8000/images";
+    // public $CUSTOMER_IMAGE_PATH = "http://192.168.1.24:8000/uploads/customerAccounts/logo";
+    // public $POST_IMAGE_PATH = "http://192.168.1.24:8000/uploads/restaurantAccounts/post";
+    // public $PROMO_IMAGE_PATH = "http://192.168.1.24:8000/uploads/restaurantAccounts/promo";
+    // public $ORDER_SET_IMAGE_PATH = "http://192.168.1.24:8000/uploads/restaurantAccounts/orderSet";
+    // public $FOOD_SET_IMAGE_PATH = "http://192.168.1.24:8000/uploads/restaurantAccounts/foodSet";
+    // public $FOOD_ITEM_IMAGE_PATH = "http://192.168.1.24:8000/uploads/restaurantAccounts/foodItem";
+    // public $RESTAURANT_GCASH_QR_IMAGE_PATH = "http://192.168.1.24:8000/uploads/restaurantAccounts/gcashQr";
     
     public $RESTAURANT_IMAGE_PATH = "https://www.samquicksal.com/uploads/restaurantAccounts/logo";
     public $ACCOUNT_NO_IMAGE_PATH = "https://www.samquicksal.com/images";
@@ -265,6 +265,7 @@ class CustomerController extends Controller
     }
 
     public function createBlockNotif(
+        $custLoggedIn, 
         $customerId, 
         $restAccId, 
         $notifTitle, 
@@ -285,7 +286,7 @@ class CustomerController extends Controller
 
         $notif = CustomerNotification::select('id')->latest()->first();
 
-        if($custDeviceToken != null){
+        if($custDeviceToken != null && $custLoggedIn == "Yes"){
             $to = $custDeviceToken;
             $notification = array(
                 'title' => $notif2Title,
@@ -1125,6 +1126,27 @@ class CustomerController extends Controller
 
 
     // -------LOGIN CUSTOMER------------ //
+    public function logoutCustomer(Request $request){
+        $request->validate([
+            'id' => 'required',
+        ]);
+        
+        $account = CustomerAccount::where('id', $request->id)->first();
+
+        if(empty($account)){
+            return response()->json([
+                'status' => "Account does not exist",
+            ]);
+        } else {
+            CustomerAccount::where('id', $account->id)
+            ->update([
+                'loggedIn' => "No"
+            ]);
+            return response()->json([
+                'status' => "Logged Out Successfully",
+            ]);
+        }
+    }
     public function loginCustomer(Request $request){
         $request->validate([
             'emailAddress' => 'required',
@@ -1141,7 +1163,8 @@ class CustomerController extends Controller
             if(Hash::check($request->password, $account->password)){
                 CustomerAccount::where('id', $account->id)
                 ->update([
-                    'deviceToken' => $request->deviceToken
+                    'deviceToken' => $request->deviceToken,
+                    'loggedIn' => "Yes"
                 ]);
                 return response()->json([
                     'id' => $account->id,
@@ -1181,6 +1204,7 @@ class CustomerController extends Controller
                 'contactNumberVerified' => "No",
                 'password' => Hash::make($request->password),
                 'deviceToken' => $request->deviceToken,
+                'loggedIn' => "Yes"
             ]);
 
             $customer = CustomerAccount::latest()->first();
@@ -1216,7 +1240,7 @@ class CustomerController extends Controller
 
             $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/samquicksalLogo.png';
             
-            if($customer != null && $customer->deviceToken != null){
+            if($customer != null && $customer->deviceToken != null && $customer->loggedIn == "Yes"){
                 $to = $customer->deviceToken;
                 $notification = array(
                     'title' => "Hi $customer->name, Welcome to Samquicksal!",
@@ -1348,7 +1372,7 @@ class CustomerController extends Controller
     }
     public function submitQueueForm(Request $request){
         $restaurant = RestaurantAccount::select('id', 'rName', 'rBranch', 'rAddress', 'rCity', 'rLogo')->where('id', $request->restAcc_id)->first();
-        $customer = CustomerAccount::select('deviceToken')->where('id', $request->customer_id)->first();
+        $customer = CustomerAccount::select('deviceToken', 'loggedIn')->where('id', $request->customer_id)->first();
         $orderSet = OrderSet::where('id', $request->orderSet_id)->first();
 
         CustomerQueue::create([
@@ -1395,7 +1419,7 @@ class CustomerController extends Controller
             $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
         }
         
-        if($customer != null && $customer->deviceToken != null){
+        if($customer != null && $customer->deviceToken != null && $customer->loggedIn == "Yes"){
             $to = $customer->deviceToken;
             $notification = array(
                 'title' => "$restaurant->rName, $restaurant->rBranch",
@@ -1415,7 +1439,7 @@ class CustomerController extends Controller
     }
     public function submitReserveForm(Request $request){
         $restaurant = RestaurantAccount::select('id', 'rName', 'rBranch', 'rAddress', 'rCity', 'rLogo')->where('id', $request->restAcc_id)->first();
-        $customer = CustomerAccount::select('deviceToken')->where('id', $request->customer_id)->first();
+        $customer = CustomerAccount::select('deviceToken', 'loggedIn')->where('id', $request->customer_id)->first();
         $orderSet = OrderSet::where('id', $request->orderSet_id)->first();
 
         CustomerReserve::create([
@@ -1463,7 +1487,7 @@ class CustomerController extends Controller
             $finalImageUrl = $this->RESTAURANT_IMAGE_PATH.'/'.$restaurant->id.'/'. $restaurant->rLogo;
         }
         
-        if($customer != null && $customer->deviceToken != null){
+        if($customer != null && $customer->deviceToken != null && $customer->loggedIn == "Yes"){
             $to = $customer->deviceToken;
             $notification = array(
                 'title' => "$restaurant->rName, $restaurant->rBranch",
@@ -1950,13 +1974,7 @@ class CustomerController extends Controller
 
         if($customerQueue != null){
             $restaurant = RestaurantAccount::select('id', 'rAddress', 'rCity', 'rLogo', 'rName', 'rBranch')->where('id', $customerQueue->restAcc_id)->first();
-            $customer = CustomerAccount::select('deviceToken')->where('id', $id)->first();
-    
-            CustomerQueue::where('id', $customerQueue->id)
-            ->update([
-                'status' => 'cancelled',
-                'cancelDateTime' => date('Y-m-d H:i:s'),
-            ]);
+            $customer = CustomerAccount::select('deviceToken', 'loggedIn')->where('id', $id)->first();
 
             // CHECK IF THERES LATEST CANCEL OFFENSE
             $mainOffense = CustOffenseMain::where('customer_id', $customerQueue->customer_id)
@@ -2024,6 +2042,7 @@ class CustomerController extends Controller
                                 }
                                 
                                 //FOR BLOCKED NOTIFICATION
+                                $custLoggedIn = $customer->loggedIn;
                                 $customerId = $customerQueue->customer_id;
                                 $restAccId = $customerQueue->restAcc_id;
                                 $notifTitle = "You have been blocked due to number of cancellation";
@@ -2037,7 +2056,7 @@ class CustomerController extends Controller
                                 $custDeviceToken  = $customer->deviceToken;
                                 $notif2Title = "$restaurant->rAddress, $restaurant->rCity";
                                 $notif2Desc = "You have been blocked due to number of cancellation";
-                                $this->createBlockNotif($customerId, $restAccId, $notifTitle, $notifDesc, $custDeviceToken, $notif2Title, $notif2Desc, $finalImageUrl);
+                                $this->createBlockNotif($custLoggedIn, $customerId, $restAccId, $notifTitle, $notifDesc, $custDeviceToken, $notif2Title, $notif2Desc, $finalImageUrl);
                             } 
                         } 
                     } else {
@@ -2067,6 +2086,7 @@ class CustomerController extends Controller
                             }
                             
                             //FOR BLOCKED NOTIFICATION
+                            $custLoggedIn = $customer->loggedIn;
                             $customerId = $customerQueue->customer_id;
                             $restAccId = $customerQueue->restAcc_id;
                             $notifTitle = "You have been blocked due to number of cancellation";
@@ -2080,7 +2100,7 @@ class CustomerController extends Controller
                             $custDeviceToken  = $customer->deviceToken;
                             $notif2Title = "$restaurant->rAddress, $restaurant->rCity";
                             $notif2Desc = "You have been blocked due to number of cancellation";
-                            $this->createBlockNotif($customerId, $restAccId, $notifTitle, $notifDesc, $custDeviceToken, $notif2Title, $notif2Desc, $finalImageUrl);
+                            $this->createBlockNotif($custLoggedIn, $customerId, $restAccId, $notifTitle, $notifDesc, $custDeviceToken, $notif2Title, $notif2Desc, $finalImageUrl);
                         } else {
                             //walang block na mangyayari, update lang
                             CustOffenseMain::where('id', $mainOffense->id)
@@ -2125,6 +2145,9 @@ class CustomerController extends Controller
                         }
                         
                         //FOR BLOCKED NOTIFICATION
+                    
+                        
+                        $custLoggedIn = $customer->loggedIn;
                         $customerId = $customerQueue->customer_id;
                         $restAccId = $customerQueue->restAcc_id;
                         $notifTitle = "You have been blocked due to number of cancellation";
@@ -2138,7 +2161,7 @@ class CustomerController extends Controller
                         $custDeviceToken  = $customer->deviceToken;
                         $notif2Title = "$restaurant->rAddress, $restaurant->rCity";
                         $notif2Desc = "You have been blocked due to number of cancellation";
-                        $this->createBlockNotif($customerId, $restAccId, $notifTitle, $notifDesc, $custDeviceToken, $notif2Title, $notif2Desc, $finalImageUrl);
+                        $this->createBlockNotif($custLoggedIn, $customerId, $restAccId, $notifTitle, $notifDesc, $custDeviceToken, $notif2Title, $notif2Desc, $finalImageUrl);
                     } else {
                         //kung yung noOfcanccellation ay lagpas sa isa then create na tayo tas di pa to block
                         $createMainOffense = CustOffenseMain::create([
@@ -2174,6 +2197,12 @@ class CustomerController extends Controller
                 'notificationDescription' => "$restaurant->rAddress, $restaurant->rCity",
                 'notificationStatus' => "Unread",
             ]);
+
+            CustomerQueue::where('id', $customerQueue->id)
+            ->update([
+                'status' => 'cancelled',
+                'cancelDateTime' => date('Y-m-d H:i:s'),
+            ]);
             
             $notif = CustomerNotification::select('id')->latest()->first();
     
@@ -2185,7 +2214,7 @@ class CustomerController extends Controller
             }
     
             
-            if($customer != null && $customer->deviceToken != null){
+            if($customer != null && $customer->deviceToken != null && $customer->loggedIn == "Yes"){
                 $to = $customer->deviceToken;
                 $notification = array(
                     'title' => "$restaurant->rName, $restaurant->rBranch",
@@ -2200,15 +2229,9 @@ class CustomerController extends Controller
             }
         } else {
             $restaurant = RestaurantAccount::select('id', 'rAddress', 'rCity', 'rLogo', 'rName', 'rBranch')->where('id', $customerReserve->restAcc_id)->first();
-            $customer = CustomerAccount::select('deviceToken')->where('id', $id)->first();
+            $customer = CustomerAccount::select('deviceToken', 'loggedIn')->where('id', $id)->first();
     
-            CustomerReserve::where('id', $customerReserve->id)
-            ->update([
-                'status' => 'cancelled',
-                'cancelDateTime' => date('Y-m-d H:i:s'),
-            ]);
-
-
+            
             // CHECK IF THERES LATEST CANCEL OFFENSE
             $mainOffense = CustOffenseMain::where('customer_id', $customerReserve->customer_id)
             ->where('restAcc_id', $restaurant->id)
@@ -2263,6 +2286,9 @@ class CustomerController extends Controller
                                     
 
                                     //FOR BLOCKED NOTIFICATION
+                                    
+                                    
+                                    $custLoggedIn = $customer->loggedIn;
                                     $customerId = $customerReserve->customer_id;
                                     $restAccId = $customerReserve->restAcc_id;
                                     $notifTitle = "You have been blocked due to number of cancellation";
@@ -2276,8 +2302,7 @@ class CustomerController extends Controller
                                     $custDeviceToken  = $customer->deviceToken;
                                     $notif2Title = "$restaurant->rAddress, $restaurant->rCity";
                                     $notif2Desc = "You have been blocked due to number of cancellation";
-                                    $this->createBlockNotif($customerId, $restAccId, $notifTitle, $notifDesc, $custDeviceToken, $notif2Title, $notif2Desc, $finalImageUrl);
-
+                                    $this->createBlockNotif($custLoggedIn, $customerId, $restAccId, $notifTitle, $notifDesc, $custDeviceToken, $notif2Title, $notif2Desc, $finalImageUrl);
                                 } else {
                                     //kung yung noOfcanccellation ay lagpas sa isa then create na tayo tas di pa to block
                                     $createMainOffense = CustOffenseMain::create([
@@ -2320,6 +2345,7 @@ class CustomerController extends Controller
                             
 
                             //FOR BLOCKED NOTIFICATION
+                            $custLoggedIn = $customer->loggedIn;
                             $customerId = $customerReserve->customer_id;
                             $restAccId = $customerReserve->restAcc_id;
                             $notifTitle = "You have been blocked due to number of cancellation";
@@ -2333,7 +2359,7 @@ class CustomerController extends Controller
                             $custDeviceToken  = $customer->deviceToken;
                             $notif2Title = "$restaurant->rAddress, $restaurant->rCity";
                             $notif2Desc = "You have been blocked due to number of cancellation";
-                            $this->createBlockNotif($customerId, $restAccId, $notifTitle, $notifDesc, $custDeviceToken, $notif2Title, $notif2Desc, $finalImageUrl);
+                            $this->createBlockNotif($custLoggedIn, $customerId, $restAccId, $notifTitle, $notifDesc, $custDeviceToken, $notif2Title, $notif2Desc, $finalImageUrl);
 
                         } else {
                             //walang block na mangyayari, update lang
@@ -2379,6 +2405,7 @@ class CustomerController extends Controller
                         }
                         
                         //FOR BLOCKED NOTIFICATION
+                        $custLoggedIn = $customer->loggedIn;
                         $customerId = $customerReserve->customer_id;
                         $restAccId = $customerReserve->restAcc_id;
                         $notifTitle = "You have been blocked due to number of cancellation";
@@ -2392,7 +2419,7 @@ class CustomerController extends Controller
                         $custDeviceToken  = $customer->deviceToken;
                         $notif2Title = "$restaurant->rAddress, $restaurant->rCity";
                         $notif2Desc = "You have been blocked due to number of cancellation";
-                        $this->createBlockNotif($customerId, $restAccId, $notifTitle, $notifDesc, $custDeviceToken, $notif2Title, $notif2Desc, $finalImageUrl);
+                        $this->createBlockNotif($custLoggedIn, $customerId, $restAccId, $notifTitle, $notifDesc, $custDeviceToken, $notif2Title, $notif2Desc, $finalImageUrl);
 
                     } else {
                         //kung yung noOfcanccellation ay lagpas sa isa then create na tayo tas di pa to block
@@ -2431,6 +2458,12 @@ class CustomerController extends Controller
                 'notificationStatus' => "Unread",
             ]);
 
+            CustomerReserve::where('id', $customerReserve->id)
+            ->update([
+                'status' => 'cancelled',
+                'cancelDateTime' => date('Y-m-d H:i:s'),
+            ]);
+
             $notif = CustomerNotification::select('id')->latest()->first();
     
             $finalImageUrl = "";
@@ -2441,7 +2474,7 @@ class CustomerController extends Controller
             }
     
             
-            if($customer != null && $customer->deviceToken != null){
+            if($customer != null && $customer->deviceToken != null && $customer->loggedIn == "Yes"){
                 $to = $customer->deviceToken;
                 $notification = array(
                     'title' => "$restaurant->rName, $restaurant->rBranch",
@@ -2569,6 +2602,12 @@ class CustomerController extends Controller
     public function getNotificationDeclined($cust_id, $notif_id){
         $notification = CustomerNotification::where('id', $notif_id)->where('customer_id', $cust_id)->first();
         $restaurant = RestaurantAccount::select('rName', 'rBranch')->where('id', $notification->restAcc_id)->first();
+        
+
+        CustomerNotification::where('id', $notif_id)->where('customer_id', $cust_id)
+        ->update([
+            'notificationStatus' => "Read"
+        ]);
         
         $customerQueue = CustomerQueue::where('customer_id', $cust_id)
         ->where('restAcc_id', $notification->restAcc_id)
@@ -2920,7 +2959,7 @@ class CustomerController extends Controller
 
             $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/samquicksalLogo.png';
             
-            if($findEmailAddress != null){
+            if($findEmailAddress != null && $findEmailAddress->loggedIn == "Yes"){
                 $to = $findEmailAddress->deviceToken;
                 $notification = array(
                     'title' => "Forgot Password",
@@ -2988,7 +3027,7 @@ class CustomerController extends Controller
 
         $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/samquicksalLogo.png';
             
-        if($findEmailAddress != null){
+        if($findEmailAddress != null && $findEmailAddress->loggedIn == "Yes"){
             $to = $findEmailAddress->deviceToken;
             $notification = array(
                 'title' => "Password Changed",
@@ -4070,7 +4109,7 @@ class CustomerController extends Controller
                     } else if ($customerQrA->status == "approved"){
                         $customer = CustomerAccount::where('id', $customerQrA->subCust_id)->first();
                         $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/samquicksalLogo.png';
-                        if($customer != null && $customer->deviceToken != null){
+                        if($customer != null && $customer->deviceToken != null && $customer->loggedIn == "Yes"){
                             $to = $customer->deviceToken;
                             $notification = array(
                                 'title' => "Hi $customer->name, thank you for ordering together with your friends!",
@@ -4130,7 +4169,7 @@ class CustomerController extends Controller
                     } else if ($customerQrA->status == "approved"){
                         $customer = CustomerAccount::where('id', $customerQrA->subCust_id)->first();
                         $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/samquicksalLogo.png';
-                        if($customer != null && $customer->deviceToken != null){
+                        if($customer != null && $customer->deviceToken != null && $customer->loggedIn == "Yes"){
                             $to = $customer->deviceToken;
                             $notification = array(
                                 'title' => "Hi $customer->name, thank you for ordering together with your friends!",
@@ -5107,7 +5146,7 @@ class CustomerController extends Controller
 
                 $customer = CustomerAccount::where('id', $cust_id)->first();
         
-                if($customer != null && $customer->deviceToken != null){
+                if($customer != null && $customer->deviceToken != null && $customer->loggedIn == "Yes"){
                     $to = $customer->deviceToken;
                     $notification = array(
                         'title' => $custNotif['rName'].', '.$custNotif['rBranch'],
@@ -5581,7 +5620,7 @@ class CustomerController extends Controller
             $notif = CustomerNotification::select('id')->latest()->first();
 
             $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/samquicksalLogo.png';
-            if($customer != null && $customer->deviceToken != null){
+            if($customer != null && $customer->deviceToken != null && $customer->loggedIn == "Yes"){
                 $to = $customer->deviceToken;
                 $notification = array(
                     'title' => "Hi $customer->name, Someone has scanned your QR Code!",
@@ -5598,7 +5637,7 @@ class CustomerController extends Controller
 
             $customerSub = CustomerAccount::where('id', $cust_id)->first();
             $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/samquicksalLogo.png';
-            if($customerSub != null){
+            if($customerSub != null && $customerSub->loggedIn == "Yes"){
                 $to2 = $customerSub->deviceToken;
                 $notification2 = array(
                     'title' => "Hi $customerSub->name, Your request has been sent",
@@ -5640,7 +5679,7 @@ class CustomerController extends Controller
             $notif = CustomerNotification::select('id')->latest()->first();
 
             $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/samquicksalLogo.png';
-            if($customer != null && $customer->deviceToken != null){
+            if($customer != null && $customer->deviceToken != null && $customer->loggedIn == "Yes"){
                 $to = $customer->deviceToken;
                 $notification = array(
                     'title' => "Hi $customer->name, Someone has scanned your QR Code!",
@@ -5656,7 +5695,7 @@ class CustomerController extends Controller
 
             $customerSub = CustomerAccount::where('id', $cust_id)->first();
             $finalImageUrl = $this->ACCOUNT_NO_IMAGE_PATH.'/samquicksalLogo.png';
-            if($customerSub != null){
+            if($customerSub != null && $customerSub->loggedIn == "Yes"){
                 $to2 = $customerSub->deviceToken;
                 $notification2 = array(
                     'title' => "Hi $customerSub->name, Your request has been sent",
@@ -5801,7 +5840,7 @@ class CustomerController extends Controller
 
             $notif = CustomerNotification::select('id')->latest()->first();
 
-            if($customerSub != null){
+            if($customerSub != null && $customerSub->loggedIn == "Yes"){
                 $to = $customerSub->deviceToken;
                 $notification = array(
                     'title' => "Hi $customerSub->name, your request has been declined",
@@ -5817,7 +5856,7 @@ class CustomerController extends Controller
 
 
             $customerMain = CustomerAccount::where('id', $customerQrAccess->mainCust_id)->first();
-            if($customerMain != null){
+            if($customerMain != null && $customerMain->loggedIn == "Yes"){
                 $to = $customerMain->deviceToken;
                 $notification = array(
                     'title' => "Customer Request Declined",
@@ -5859,7 +5898,7 @@ class CustomerController extends Controller
 
             $notif = CustomerNotification::select('id')->latest()->first();
 
-            if($customerSub != null){
+            if($customerSub != null && $customerSub->loggedIn == "Yes"){
                 $to = $customerSub->deviceToken;
                 $notification = array(
                     'title' => "Hi $customerSub->name, your request has been approved",
@@ -5875,7 +5914,7 @@ class CustomerController extends Controller
 
 
             $customerMain = CustomerAccount::where('id', $customerQrAccess->mainCust_id)->first();
-            if($customerMain != null){
+            if($customerMain != null && $customerMain->loggedIn == "Yes"){
                 $to = $customerMain->deviceToken;
                 $notification = array(
                     'title' => "Customer Request Approved",

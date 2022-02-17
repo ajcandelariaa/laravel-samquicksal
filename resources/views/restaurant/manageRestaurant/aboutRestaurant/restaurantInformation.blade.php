@@ -165,7 +165,7 @@
 
 
             <div class="uppercase font-bold bg-gradient-to-r from-adminViewAccountHeaderColor to-adminViewAccountHeaderColor2 py-2 text-submitButton pl-5">Contact Information</div>
-            <form action="/restaurant/manage-restaurant/about/restaurant-information/updateContact" method="POST">
+            <form action="/restaurant/manage-restaurant/about/restaurant-information/updateContact" id="contact-form" method="POST">
                 @csrf
                 <div class="grid grid-cols-formsThreeCols w-10/12 mx-auto mt-5 mb-3">
                     <div class="text-left text-submitButton">Phone</div>
@@ -183,12 +183,12 @@
                     </div>
                 </div>
                 <div class="w-10/12 mx-auto text-right mb-5">
-                    <button type="submit" class="bg-submitButton hover:bg-btnHoverColor text-white hover:text-gray-300 w-36 h-9 rounded-md transition duration-200 ease-in-out ">Update Contact</button>
+                    <button type="submit" id="btn-contact-submit" class="bg-submitButton hover:bg-btnHoverColor text-white hover:text-gray-300 w-36 h-9 rounded-md transition duration-200 ease-in-out ">Update Contact</button>
                 </div>
             </form>
 
             <div class="uppercase font-bold bg-gradient-to-r from-adminViewAccountHeaderColor to-adminViewAccountHeaderColor2 py-2 text-submitButton pl-5">Update Email Address</div>
-            <form action="/restaurant/manage-restaurant/about/restaurant-information/updateEmailAddress" method="POST">
+            <form action="/restaurant/manage-restaurant/about/restaurant-information/updateEmailAddress" id="email-form" method="POST">
                 @csrf
                 <div class="grid grid-cols-formsThreeCols w-10/12 mx-auto mt-5 mb-3">
                     <div class="text-left text-submitButton">Email</div>
@@ -208,12 +208,12 @@
                     </div>
                 </div>
                 <div class="w-10/12 mx-auto text-right mb-5">
-                    <button type="submit" class="bg-submitButton hover:bg-btnHoverColor text-white hover:text-gray-300 w-36 h-9 rounded-md transition duration-200 ease-in-out ">Update Email</button>
+                    <button type="submit" id="btn-email-submit" class="bg-submitButton hover:bg-btnHoverColor text-white hover:text-gray-300 w-36 h-9 rounded-md transition duration-200 ease-in-out ">Update Email</button>
                 </div>
             </form>
 
             <div class="uppercase font-bold bg-gradient-to-r from-adminViewAccountHeaderColor to-adminViewAccountHeaderColor2 py-2 text-submitButton pl-5">Owner/Staff Information</div>
-            <form action="/restaurant/manage-restaurant/about/restaurant-information/updateUsername" method="POST">
+            <form action="/restaurant/manage-restaurant/about/restaurant-information/updateUsername" id="username-form" method="POST">
                 @csrf
                 <div class="grid grid-cols-formsThreeCols w-10/12 mx-auto mt-5 mb-3">
                     <div class="text-left text-submitButton">Name</div>
@@ -257,7 +257,7 @@
                     </div>
                 </div>
                 <div class="w-10/12 mx-auto text-right mb-5">
-                    <button type="submit" class="bg-submitButton hover:bg-btnHoverColor text-white hover:text-gray-300 w-36 h-9 rounded-md transition duration-200 ease-in-out ">Update Username</button>
+                    <button type="submit" id="btn-username-submit" class="bg-submitButton hover:bg-btnHoverColor text-white hover:text-gray-300 w-36 h-9 rounded-md transition duration-200 ease-in-out ">Update Username</button>
                 </div>
             </form>
 
@@ -343,7 +343,7 @@
 
 
             <div class="uppercase font-bold bg-gradient-to-r from-adminViewAccountHeaderColor to-adminViewAccountHeaderColor2 py-2 text-submitButton pl-5">Reset Password</div>
-            <form action="/restaurant/manage-restaurant/about/restaurant-information/updatePassword" method="POST">
+            <form action="/restaurant/manage-restaurant/about/restaurant-information/updatePassword" id="password-form" method="POST">
                 @csrf
                 <div class="grid grid-cols-formsThreeCols w-10/12 mx-auto mt-5">
                     <div class="text-left text-submitButton">Current Password</div>
@@ -382,13 +382,13 @@
                     
                 </div>
                 <div class="w-10/12 mx-auto text-right mt-3 mb-5">
-                    <button type="submit" class="bg-submitButton hover:bg-btnHoverColor text-white hover:text-gray-300 w-36 h-9 rounded-md transition duration-200 ease-in-out ">Reset Password</button>
+                    <button type="submit" id="btn-password-submit" class="bg-submitButton hover:bg-btnHoverColor text-white hover:text-gray-300 w-36 h-9 rounded-md transition duration-200 ease-in-out ">Reset Password</button>
                 </div>
             </form>
 
 
             <div class="uppercase font-bold bg-gradient-to-r from-adminViewAccountHeaderColor to-adminViewAccountHeaderColor2 py-2 text-submitButton pl-5">Update Restaurant Radius</div>
-            <form action="/restaurant/manage-restaurant/about/restaurant-information/updateRadius" method="POST">
+            <form action="/restaurant/manage-restaurant/about/restaurant-information/updateRadius" id="radius-form" method="POST">
                 @csrf
                 <div class="grid grid-cols-formsThreeCols w-10/12 mx-auto mt-5">
                     <div class="text-left text-submitButton">Meters</div>
@@ -404,13 +404,13 @@
                 </div>
 
                 <div class="w-10/12 mx-auto text-right mt-3 mb-5">
-                    <button type="submit" class="bg-submitButton hover:bg-btnHoverColor text-white hover:text-gray-300 w-36 h-9 rounded-md transition duration-200 ease-in-out ">Update Radius</button>
+                    <button type="submit" id="btn-radius-submit" class="bg-submitButton hover:bg-btnHoverColor text-white hover:text-gray-300 w-36 h-9 rounded-md transition duration-200 ease-in-out ">Update Radius</button>
                 </div>
             </form>
 
 
             <div class="uppercase font-bold bg-gradient-to-r from-adminViewAccountHeaderColor to-adminViewAccountHeaderColor2 py-2 text-submitButton pl-5">Update Restaurant Logo</div>
-            <form action="/restaurant/manage-restaurant/about/restaurant-information/updateLogo" method="POST" enctype="multipart/form-data">
+            <form action="/restaurant/manage-restaurant/about/restaurant-information/updateLogo" method="POST" id="logo-form" enctype="multipart/form-data">
                 @csrf
                 <div class="grid grid-cols-formsThreeCols w-10/12 mx-auto mt-5">
                     <div class="text-left text-submitButton">Logo</div>
@@ -427,13 +427,13 @@
                         <img src="{{ asset('uploads/restaurantAccounts/logo/'.$id.'/'.$account->rLogo) }}" id="restaurantLogo" alt="restaurantLogo" class="border-multiStepBoxBorder border-gray-300 w-36 h-36">
                     @endif
                     <div class="w-full mx-auto text-right">
-                        <button type="submit" class="bg-submitButton hover:bg-btnHoverColor text-white hover:text-gray-300 w-36 h-9 rounded-md transition duration-200 ease-in-out ">Update Logo</button>
+                        <button type="submit" id="btn-logo-submit" class="bg-submitButton hover:bg-btnHoverColor text-white hover:text-gray-300 w-36 h-9 rounded-md transition duration-200 ease-in-out ">Update Logo</button>
                     </div>
                 </div>
             </form>
 
             <div class="uppercase font-bold bg-gradient-to-r from-adminViewAccountHeaderColor to-adminViewAccountHeaderColor2 py-2 text-submitButton pl-5">Update GCash QrCode Image</div>
-            <form action="/restaurant/manage-restaurant/about/restaurant-information/updateGcashQr" method="POST" enctype="multipart/form-data">
+            <form action="/restaurant/manage-restaurant/about/restaurant-information/updateGcashQr" id="qr-form" method="POST" enctype="multipart/form-data">
                 @csrf
                 <div class="grid grid-cols-formsThreeCols w-10/12 mx-auto mt-5">
                     <div class="text-left text-submitButton">Gcash Qr Code</div>
@@ -450,7 +450,7 @@
                         <img src="{{ asset('uploads/restaurantAccounts/gcashQr/'.$id.'/'.$account->rGcashQrCodeImage) }}" id="restaurantGcashQr" alt="restaurantGcashQr" class="border-multiStepBoxBorder border-gray-300 w-36 h-36">
                     @endif
                     <div class="w-full mx-auto text-right">
-                        <button type="submit" class="bg-submitButton hover:bg-btnHoverColor text-white hover:text-gray-300 w-36 h-9 rounded-md transition duration-200 ease-in-out ">Update Qr Code</button>
+                        <button type="submit" id="btn-qr-submit" class="bg-submitButton hover:bg-btnHoverColor text-white hover:text-gray-300 w-36 h-9 rounded-md transition duration-200 ease-in-out ">Update Qr Code</button>
                     </div>
                 </div>
             </form>

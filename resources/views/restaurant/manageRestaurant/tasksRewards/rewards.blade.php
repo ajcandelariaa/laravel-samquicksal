@@ -71,14 +71,14 @@
                 <button id="btn-close" class="close-btn text-xl font-bold">&times;</button>
             </div>
             <h1 class="text-center text-submitButton font-bold text-2xl mt-16">Discount % in a Total Bill</h1>
-            <form action="/restaurant/manage-restaurant/task-rewards/rewards/edit/reward1" method="POST">
+            <form action="/restaurant/manage-restaurant/task-rewards/rewards/edit/reward1" id="reward1-form" method="POST">
                 @csrf
                 <div class="flex flex-row w-5/12 gap-y-5 mx-auto mt-10">
                     <h1 class="mr-3">Input:</h1>
                     <input type="number" min="1" max="100" name="discount" value="{{ $rewards[0]->rewardInput }}" class="border rounded-md focus:border-black w-full py-1 px-2 text-sm focus:outline-non text-gray-700" required>
                 </div>
                 <div class="text-center mt-10">
-                    <button class="bg-submitButton text-white rounded-full w-32 h-10 text-sm hover:bg-darkerSubmitButton hover:text-gray-300 transition duration-200 ease-in-out uppercase font-bold " type="submit">Update</button>
+                    <button id="btn-reward1-submit" class="bg-submitButton text-white rounded-full w-32 h-10 text-sm hover:bg-darkerSubmitButton hover:text-gray-300 transition duration-200 ease-in-out uppercase font-bold " type="submit">Update</button>
                 </div>
             </form>
         </div>
@@ -89,14 +89,14 @@
                 <button id="btn-close" class="close-btn text-xl font-bold">&times;</button>
             </div>
             <h1 class="text-center text-submitButton font-bold text-2xl mt-16">Free n<sup>th</sup> person in a group</h1>
-            <form action="/restaurant/manage-restaurant/task-rewards/rewards/edit/reward2" method="POST">
+            <form action="/restaurant/manage-restaurant/task-rewards/rewards/edit/reward2" id="reward2-form" method="POST">
                 @csrf
                 <div class="flex flex-row w-5/12 gap-y-5 mx-auto mt-10">
                     <h1 class="mr-3">Input:</h1>
                     <input type="number" min="1" max="20" name="free" value="{{ $rewards[1]->rewardInput }}" class="border rounded-md focus:border-black w-full py-1 px-2 text-sm focus:outline-non text-gray-700" required>
                 </div>
                 <div class="text-center mt-10">
-                    <button class="bg-submitButton text-white hover:bg-darkerSubmitButton hover:text-gray-300 rounded-full w-32 h-10 text-sm uppercase font-bold transition duration-200 ease-in-out " type="submit">Update</button>
+                    <button id="btn-reward2-submit" class="bg-submitButton text-white hover:bg-darkerSubmitButton hover:text-gray-300 rounded-full w-32 h-10 text-sm uppercase font-bold transition duration-200 ease-in-out " type="submit">Update</button>
                 </div>
             </form>
         </div>

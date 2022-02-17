@@ -9,6 +9,7 @@ use App\Models\Cancellation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use App\Models\CustomerAccount;
+use App\Models\UnavailableDate;
 use App\Models\RestaurantAccount;
 use App\Models\RestaurantTaskList;
 use Illuminate\Support\Facades\DB;
@@ -24,6 +25,130 @@ use Illuminate\Support\Facades\Storage;
 
 class AdminController extends Controller
 {
+    public function convertDays($day){
+        if ($day == "MO"){
+            return "Monday";
+        } else if ($day == "TU"){
+            return "Tuesday";
+        } else if ($day == "WE"){
+            return "Wednesday";
+        } else if ($day == "TH"){
+            return "Thursday";
+        } else if ($day == "FR"){
+            return "Friday";
+        } else if ($day == "SA"){
+            return "Saturday";
+        } else if ($day == "SU"){
+            return "Sunday";
+        } else {
+            return "";
+        }
+    }
+    public function checkTodaySched($restId){
+        $restAcc_id = $restId;
+        $restaurant = RestaurantAccount::select('status', 'id')->where('id', $restAcc_id)->first();
+
+        $getAvailability = "Open";
+        $rSchedule = "";
+        $getUDStartTimeasED = "none";
+
+        $restaurantUnavailableDates = UnavailableDate::select('unavailableDatesDate', 'startTime')->where('restAcc_id', $restaurant->id)->get();
+        if(!$restaurantUnavailableDates->isEmpty()){
+            foreach ($restaurantUnavailableDates as $restaurantUnavailableDate) {
+                if($restaurantUnavailableDate->unavailableDatesDate == date("Y-m-d")){
+                    if($restaurantUnavailableDate->startTime <= date('H:i')){
+                        $getAvailability = "Closed Now";
+                    } else {
+                        $getUDStartTimeasED = $restaurantUnavailableDate->startTime;
+                    }
+                }
+            }
+        }
+
+        if($getAvailability == "Open"){
+            $currentDay = date('l');
+            $prevDay = date('l', strtotime(date('Y-m-d') . " -1 days"));
+
+            $isHasCurr = false;
+            $isHasCurrIndex = "";
+
+            $isHasPrev = false;
+            $isHasPrevIndex = "";
+
+            $currentTime = date("H:i");
+            
+            $storeDay = array();
+            $storeOpeningTime = array();
+            $storeClosingTime = array();
+            $restaurantStoreHours = StoreHour::where('restAcc_id', $restaurant->id)->get();
+            foreach ($restaurantStoreHours as $restaurantStoreHour){
+                foreach (explode(",", $restaurantStoreHour->days) as $day){
+                    array_push($storeDay, $this->convertDays($day));
+                    array_push($storeOpeningTime, $restaurantStoreHour->openingTime);
+                    array_push($storeClosingTime, $restaurantStoreHour->closingTime);
+                }
+            }
+            for($i=0; $i<sizeOf($storeDay); $i++){
+                if($prevDay == $storeDay[$i]){
+                    if(strtotime($storeClosingTime[$i]) >= strtotime("00:00") && strtotime($storeClosingTime[$i]) <= strtotime("04:00")){
+                        $isHasPrev = true;
+                        $isHasPrevIndex = $i;
+                    }
+                }
+                if($currentDay == $storeDay[$i]){
+                    $isHasCurr = true;
+                    $isHasCurrIndex = $i;
+                }
+            }
+            
+            if(strtotime($currentTime) >= strtotime("00:00") && strtotime($currentTime) <= strtotime("04:00")){
+                if($isHasPrev){
+                    if(strtotime($currentTime) <= strtotime($storeClosingTime[$isHasPrevIndex])){
+                        $openingTime = date("g:i a", strtotime($storeOpeningTime[$isHasPrevIndex]));
+                        $closingTime = date("g:i a", strtotime($storeClosingTime[$isHasPrevIndex]));
+                        if($getUDStartTimeasED != "none"){
+                            $closingTime = date("g:i a", strtotime($getUDStartTimeasED));
+                        }
+                        $rSchedule = "Open today at ".$openingTime." to ".$closingTime;
+                    } else {
+                        $rSchedule = "Closed Now";
+                    }
+                } else {
+                    $rSchedule = "Closed Now";
+                }
+            } else if(strtotime($currentTime) >= strtotime("05:00") && strtotime($currentTime) <= strtotime("23:59")){
+                if($isHasCurr){
+                    if(strtotime($storeClosingTime[$isHasCurrIndex]) >= strtotime("00:00") && strtotime($storeClosingTime[$isHasCurrIndex]) <= strtotime("04:00")){
+                        $openingTime = date("g:i a", strtotime($storeOpeningTime[$isHasCurrIndex]));
+                        $closingTime = date("g:i a", strtotime($storeClosingTime[$isHasCurrIndex]));
+                        if($getUDStartTimeasED != "none"){
+                            $closingTime = date("g:i a", strtotime($getUDStartTimeasED));
+                        }
+                        $rSchedule = "Open today at ".$openingTime." to ".$closingTime;
+                    } else {
+                        if(strtotime($currentTime) >= strtotime($storeOpeningTime[$isHasCurrIndex]) && strtotime($currentTime) <= strtotime($storeClosingTime[$isHasCurrIndex])){
+                            $openingTime = date("g:i a", strtotime($storeOpeningTime[$isHasCurrIndex]));
+                            $closingTime = date("g:i a", strtotime($storeClosingTime[$isHasCurrIndex]));
+                            if($getUDStartTimeasED != "none"){
+                                $closingTime = date("g:i a", strtotime($getUDStartTimeasED));
+                            }
+                            $rSchedule = "Open today at ".$openingTime." to ".$closingTime;
+                        } else {
+                            $rSchedule = "Closed Now";
+                        }
+                    }
+                } else {
+                    $rSchedule = "Closed Now";
+                }
+            } else {
+                $rSchedule = "Closed Now";
+            }
+        } else {
+            $rSchedule = "Closed Now";
+        }
+        return $rSchedule;
+    }
+
     public function convertMonths($month){
         switch ($month) {
             case '1':
@@ -248,6 +373,8 @@ class AdminController extends Controller
         $year = $userDate[0];
         $day  = $userDate[2];
 
+
+
         return view('admin.customer-account', [
             'account' => $account,
             'title' => "Customer Account View",
@@ -302,11 +429,26 @@ class AdminController extends Controller
                 array_push($existingDays, $day);
             }
         }
+
+        $totalNumberOfChairs = ($account->r2seater * 2) + 
+        ($account->r3seater * 3) + 
+        ($account->r4seater * 4) + 
+        ($account->r5seater * 5) + 
+        ($account->r6seater * 6) + 
+        ($account->r7seater * 7) + 
+        ($account->r8seater * 8) + 
+        ($account->r9seater * 9) + 
+        ($account->r10seater * 10);
+
+        $schedToday = $this->checkTodaySched($id);
+
         return view('admin.restaurant-account', [
             'account' => $account,
             'storeHours' => $storeHours,
             'existingDays' => $existingDays,
-            'title' => "Restaurant Account View"
+            'totalNumberOfChairs' => $totalNumberOfChairs,
+            'title' => "Restaurant Account View",
+            'schedToday' => $schedToday,
         ]);
     }
     public function customerAccountsView(Request $request){
@@ -619,6 +761,7 @@ class AdminController extends Controller
 
         if($request->username == env('ADMIN_USERNAME') && $request->password == env('ADMIN_PASSWORD')){
             $request->session()->put('userType', 'admin');
+            $request->session()->put('userValidation', 'S@mquiks@lwav');
             return redirect('/admin/dashboard');
         } else {
             $request->session()->flash('invalid', "Username and Password is incorrect");

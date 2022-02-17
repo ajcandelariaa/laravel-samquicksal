@@ -21,7 +21,7 @@
     @endif
     <div class="w-11/12 mx-auto my-10">
         <div class="w-full mt-5 bg-adminViewAccountHeaderColor2 p-5 rounded-xl shadow-adminDownloadButton">
-            <form action="/restaurant/manage-restaurant/about/restaurant-post/add" method="POST" enctype="multipart/form-data">
+            <form action="/restaurant/manage-restaurant/about/restaurant-post/add" method="POST" id="post-form" enctype="multipart/form-data">
                 @csrf
                 <textarea type="text" name="postDesc" placeholder="Write a post..." class="border border-gray-400 focus:border-black rounded-sm w-full p-2 text-sm text-gray-700 focus:outline-none" rows="5"></textarea>
                 <div class="flex justify-between mt-3">
@@ -30,7 +30,7 @@
                         <br>
                         <span class="mt-2 text-red-600 italic text-sm">@error('postImage'){{ $message }}@enderror</span>
                     </div>
-                    <button class="bg-submitButton text-white w-36 h-9 rounded-md font-Montserrat hover:text-gray-300 hover:bg-darkerSubmitButton transition duration-200 ease-in-out">Post</button>
+                    <button class="bg-submitButton text-white w-36 h-9 rounded-md font-Montserrat hover:text-gray-300 hover:bg-darkerSubmitButton transition duration-200 ease-in-out" id="btn-post-submit">Post</button>
                 </div>
             </form>
         </div>
@@ -57,8 +57,8 @@
         </div>
 
         @if ($posts->isEmpty())
-            <div class="mx-auto w-full mt-2 grid grid-cols-1 items-center bg-red-400 h-14 shadow-xl rounded-lg">
-                <div class="text-center text-white">There are no Posts right now</div>
+            <div class="mx-auto w-full mt-1 grid grid-cols-1 items-center bg-manageFoodItemHeaderBgColor h-14 shadow-sm rounded-lg">
+                <div class="text-center text-multiStepBoxColor uppercase">There are no Posts right now</div>
             </div>
         @endif
     </div>

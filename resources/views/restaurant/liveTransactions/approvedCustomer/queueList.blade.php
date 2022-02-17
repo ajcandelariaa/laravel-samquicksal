@@ -30,9 +30,21 @@
 
     
     <div class="w-11/12 mx-auto mt-10 font-Montserrat text-right">
-        <a href="/restaurant/live-transaction/approved-customer/queue/add-walk-in" class="bg-submitButton text-white py-3 px-9">
-            <i class="fas fa-plus mr-3"></i>Walk In
-        </a>
+        @if ($checkRestIfPublished->status == "Unpublished")
+            <p class="mb-3 text-submitButton">Please publish your restaurant first so you can add walk-in customers.</p>
+            <button class="bg-manageRestaurantSidebarColor text-white py-3 px-9 cursor-not-allowed">
+                <i class="fas fa-plus mr-3"></i>Walk In
+            </button>
+        @elseif ($checkTodaySched == "Closed Now")
+            <p class="mb-3 text-submitButton">Wait till your restaurant is open so you can add walk-in customers.</p>
+            <button class="bg-manageRestaurantSidebarColor text-white py-3 px-9 cursor-not-allowed">
+                <i class="fas fa-plus mr-3"></i>Walk In
+            </button>
+        @else
+            <a href="/restaurant/live-transaction/approved-customer/queue/add-walk-in" class="bg-submitButton text-white py-3 px-9">
+                <i class="fas fa-plus mr-3"></i>Walk In
+            </a>
+        @endif
     </div>
     <div class="w-11/12 mx-auto mt-5 font-Montserrat bg-adminViewAccountHeaderColor2 pb-2">
         <div class="bg-manageRestaurantSidebarColorActive">

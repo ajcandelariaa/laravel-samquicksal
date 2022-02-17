@@ -31,12 +31,12 @@
     @endif
     <div class="w-11/12 mx-auto mt-10 font-Montserrat">
         <div class="w-full mt-5 bg-adminViewAccountHeaderColor2 p-5 rounded-xl shadow-adminDownloadButton">
-            <form action="/restaurant/manage-restaurant/offense/policy/add" method="POST" enctype="multipart/form-data">
+            <form action="/restaurant/manage-restaurant/offense/policy/add" method="POST" enctype="multipart/form-data" id="policy-add-form">
                 @csrf
                 <textarea type="text" name="policyDesc" placeholder="Write a policy..." class="border {{ $errors->has('policyDesc') ? 'border-red-600 focus:border-red-600' : 'border-gray-400 focus:border-black' }} rounded-lg w-full py-1 px-2 text-sm text-gray-700 focus:outline-none" rows="5"></textarea>
                 <span class="mt-2 text-red-600 italic text-sm">@error('policyDesc'){{ "Policy is required" }}@enderror</span>
                 <div class="text-right mt-2">
-                    <button class="bg-submitButton text-white w-36 h-9 rounded-md font-Montserrat hover:bg-btnHoverColor transition duration-200 ease-in-out">Add</button>
+                    <button id="btn-policy-add" class="bg-submitButton text-white w-36 h-9 rounded-md font-Montserrat hover:bg-btnHoverColor transition duration-200 ease-in-out">Add</button>
                 </div>
             </form>
         </div>
@@ -76,14 +76,14 @@
                 <button id="btn-close" class="close-btn text-xl font-bold">&times;</button>
             </div>
             <h1 class="text-center text-submitButton font-bold text-2xl">Edit Policy</h1>
-            <form action="/restaurant/manage-restaurant/offense/policy/edit" method="POST">
+            <form action="/restaurant/manage-restaurant/offense/policy/edit" id="policy-edit-form" method="POST">
                 @csrf
                 <input type="text" name="updatePolicyId" id="updatePolicyId" hidden>
                 <div class="w-1/2 mx-auto mt-5">
                     <textarea type="text" name="updatePolicyDesc" id="updatePolicyDesc" class="border border-gray-400 focus:border-black rounded-lg w-full py-1 px-2 text-sm text-gray-700 focus:outline-none" rows="5" required></textarea>
                 </div>
                 <div class="text-center mt-5">
-                    <button class="bg-submitButton text-white rounded-w-9/12 w-32 h-10 text-sm" type="submit">Update</button>
+                    <button id="btn-policy-edit" class="bg-submitButton text-white rounded-w-9/12 w-32 h-10 text-sm" type="submit">Update</button>
                 </div>
             </form>
         </div> 

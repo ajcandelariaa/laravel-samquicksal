@@ -149,7 +149,7 @@
                 <button id="btn-close" class="close-btn text-xl font-bold">&times;</button>
             </div>
             <h1 class="text-center text-submitButton font-bold text-2xl">Add a Time Slot</h1>
-            <form action="/restaurant/manage-restaurant/time/store-hours/add" method="POST">
+            <form action="/restaurant/manage-restaurant/time/store-hours/add" method="POST" id="storeHour-add-form">
                 @csrf
                 <div class="grid grid-cols-2 w-9/12 mx-auto text-center items-center mt-5">
                     <div class="grid grid-cols-storeHoursThreeCols">
@@ -178,7 +178,7 @@
                     </div>
                 </div>
                 <div class="text-center mt-5">
-                    <button class="bg-submitButton text-white hover:bg-darkerSubmitButton hover:text-gray-300 rounded-md rounded-w-9/12 w-32 h-10 text-sm transition duration-200 ease-in-out uppercase font-bold" type="submit">Add</button>
+                    <button id="btn-storeHour-add" class="bg-submitButton text-white hover:bg-darkerSubmitButton hover:text-gray-300 rounded-md rounded-w-9/12 w-32 h-10 text-sm transition duration-200 ease-in-out uppercase font-bold" type="submit">Add</button>
                 </div>
             </form>
         </div> 
@@ -189,7 +189,7 @@
                 <button id="btn-close" class="close-btn text-xl font-bold">&times;</button>
             </div>
             <h1 class="text-center text-submitButton font-bold text-2xl">Edit Time Slot</h1>
-            <form action="/restaurant/manage-restaurant/time/store-hours/edit" method="POST">
+            <form action="/restaurant/manage-restaurant/time/store-hours/edit" method="POST" id="storeHour-edit-form">
                 @csrf
                 <input type="text" name="storeId" id="storeId" hidden>
                 <div class="grid grid-cols-2 w-9/12 mx-auto text-center items-center mt-5">
@@ -219,7 +219,7 @@
                     </div>
                 </div>
                 <div class="text-center mt-5">
-                    <button class="bg-submitButton hover:bg-darkerSubmitButton text-white hover:text-gray-300 rounded-md rounded-w-9/12 w-32 h-10 text-sm uppercase font-bold transition duration-200 ease-in-out" type="submit">UPDATE</button>
+                    <button id="btn-storeHour-edit" class="bg-submitButton hover:bg-darkerSubmitButton text-white hover:text-gray-300 rounded-md rounded-w-9/12 w-32 h-10 text-sm uppercase font-bold transition duration-200 ease-in-out" type="submit">UPDATE</button>
                 </div>
             </form>
         </div> 

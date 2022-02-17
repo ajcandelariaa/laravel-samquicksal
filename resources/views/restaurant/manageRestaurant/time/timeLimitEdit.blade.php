@@ -1,7 +1,7 @@
 @extends('restaurant.app2')
 
 @section('content')
-<form action="/restaurant/manage-restaurant/time/time-limit/edit" method="POST">
+<form action="/restaurant/manage-restaurant/time/time-limit/edit" id="dine-tl-form" method="POST">
 <div class="container mx-auto store-hours">
     <div class="w-11/12 mx-auto mt-10">
         <div class="w-full mt-3 rounded-2xl shadow-adminDownloadButton items-center bg-manageRestaurantSidebarColorActive pb-7">

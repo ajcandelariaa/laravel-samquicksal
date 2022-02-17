@@ -65,3 +65,24 @@ $('.btn-delete').on('click', function(e){
         }
     })
 })
+
+
+$(document).ready(function () {
+    $("#unavailableDate-add-form").submit(function (e) {
+        $("#btn-unavailableDate-add")
+        .removeClass("bg-submitButton hover:bg-darkerSubmitButton hover:text-gray-300")
+        .addClass("cursor-wait bg-multiStepBoxColor")
+        .attr("disabled", true);
+        return true;
+    });
+});
+
+$(document).ready(function () {
+    $("#unavailableDate-edit-form").submit(function (e) {
+        $("#btn-unavailableDate-edit")
+        .removeClass("bg-submitButton hover:bg-darkerSubmitButton hover:text-gray-300")
+        .addClass("cursor-wait bg-multiStepBoxColor")
+        .attr("disabled", true);
+        return true;
+    });
+});

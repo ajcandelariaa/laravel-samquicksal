@@ -137,7 +137,7 @@
                     <textarea type="text" name="reason" placeholder="Please type your reason here" class="border rounded-md focus:border-black w-full py-3 px-2 text-sm focus:outline-non text-gray-700" rows="5" required></textarea>
                 </div>
                 <div class="text-center mt-10">
-                    <button class="bg-submitButton text-white hover:bg-darkerSubmitButton hover:text-gray-300 rounded-md w-32 h-10 text-sm uppercase font-bold transition duration-200 ease-in-out" type="submit">Submit</button>
+                    <button id="btn-declined-form" class="bg-submitButton text-white hover:bg-darkerSubmitButton hover:text-gray-300 rounded-md w-32 h-10 text-sm uppercase font-bold transition duration-200 ease-in-out" type="submit">Submit</button>
                 </div>
             </form>
         </div>
@@ -166,7 +166,7 @@
                     <input type="text" name="walkInNoOfTables" class="mt-2 ml-5 py-1 px-3 w-16 bg-gray-200 border border-gray-400 rounded-sm text-sm text-gray-700 focus:outline-none focus:border-black" value="{{ $firstNoOfTable }}" id="noOfTables" disabled>
                 </div>
                 <div class="text-center mt-10">
-                    <button class="bg-submitButton text-white hover:bg-darkerSubmitButton hover:text-gray-300 rounded-md w-32 h-10 text-sm uppercase font-bold transition duration-200 ease-in-out" type="submit">Submit</button>
+                    <button id="btn-approved-form" class="bg-submitButton text-white hover:bg-darkerSubmitButton hover:text-gray-300 rounded-md w-32 h-10 text-sm uppercase font-bold transition duration-200 ease-in-out" type="submit">Submit</button>
                 </div>
             </form>
         </div>

@@ -84,6 +84,7 @@ Route::get('/customer/verify-email-link/{cust_id}', [CustomerController::class, 
 
 Route::post('/customer/register-customer', [CustomerController::class, 'registerCustomer']);
 Route::post('/customer/login-customer', [CustomerController::class, 'loginCustomer']);
+Route::post('/customer/logout-customer', [CustomerController::class, 'logoutCustomer']);
 Route::post('/customer/submit-queue-form', [CustomerController::class, 'submitQueueForm']);
 Route::post('/customer/submit-reserve-form', [CustomerController::class, 'submitReserveForm']);
 Route::post('/customer/forgot-password', [CustomerController::class, 'forgotPassword']);

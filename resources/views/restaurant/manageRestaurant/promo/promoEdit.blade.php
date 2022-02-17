@@ -14,7 +14,7 @@
     <div class="w-11/12 mx-auto mt-10">
         <a href="/restaurant/manage-restaurant/promo" class="mt-2 text-submitButton uppercase font-bold"><i class="fas fa-chevron-left mr-2"></i>Back</a>
         <div class="w-full bg-manageRestaurantSidebarColorActive mt-5 rounded-2xl pb-8 mb-10">
-            <form action="/restaurant/manage-restaurant/promo/edit/{{ $promo->id }}" method="POST" enctype="multipart/form-data">
+            <form action="/restaurant/manage-restaurant/promo/edit/{{ $promo->id }}" id="promo-edit-form" method="POST" enctype="multipart/form-data">
                 @csrf
                 <div class="flex justify-between items-center px-4 py-3">
                     <div class="text-white font-bold uppercase text-xl">Update Promo</div>

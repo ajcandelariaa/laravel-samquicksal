@@ -58,7 +58,13 @@
                 
                 <div class="col-span-1 text-left text-submitButton">Landline</div>
                 <div class="col-span-1 text-left text-submitButton">:</div>
-                <div class="col-span-4 font-bold mb-2">{{ $account->landlineNumber }}</div>
+                <div class="col-span-4 font-bold mb-2">
+                    @if ($account->landlineNumber != null)
+                        {{ $account->landlineNumber }}
+                    @else
+                        N/A
+                    @endif
+                </div>
                 
                 <div class="col-span-1 text-left text-submitButton">Email</div>
                 <div class="col-span-1 text-left text-submitButton">:</div>
@@ -175,15 +181,15 @@
                     
                     <div class="col-span-2 text-left text-submitButton"><i class="fas fa-store w-7 text-center mr-1"></i>Store</div>
                     <div class="col-span-1 text-center text-submitButton">:</div>
-                    <div class="col-span-2 font-bold mb-4 text-right">{{ "Open" }}</div>
+                    <div class="col-span-2 font-bold mb-4 text-right">{{ $schedToday }}</div>
                     
                     <div class="col-span-2 text-left text-submitButton"><i class="fas fa-ethernet w-7 text-center mr-1"></i>Number of Tables</div>
                     <div class="col-span-1 text-center text-submitButton">:</div>
                     <div class="col-span-2 font-bold mb-4 text-right">{{ $account->rNumberOfTables }}</div>
                     
-                    <div class="col-span-2 text-left text-submitButton"><i class="fas fa-chair w-7 text-center mr-1"></i>Chairs per Table</div>
+                    <div class="col-span-2 text-left text-submitButton"><i class="fas fa-chair w-7 text-center mr-1"></i>Total Chairs</div>
                     <div class="col-span-1 text-center text-submitButton">:</div>
-                    <div class="col-span-2 font-bold mb-4 text-right">{{ $account->rCapacityPerTable }}</div>
+                    <div class="col-span-2 font-bold mb-4 text-right">{{ $totalNumberOfChairs }}</div>
                 </div>
             </div>
         </div>

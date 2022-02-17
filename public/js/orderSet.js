@@ -105,3 +105,36 @@ $('.btn-delete3').on('click', function(e){
         }
     })
 });
+
+
+$(document).ready(function () {
+    $("#orderSet-add-food-set-form").submit(function (e) {
+        $("#btn-orderSet-add-food-set")
+        .removeClass("bg-submitButton")
+        .addClass("cursor-wait bg-multiStepBoxColor")
+        .attr("disabled", true);
+        return true;
+    });
+});
+
+
+$(document).ready(function () {
+    $("#orderSet-add-food-item-form").submit(function (e) {
+        $("#btn-orderSet-add-food-item")
+        .removeClass("bg-submitButton")
+        .addClass("cursor-wait bg-multiStepBoxColor")
+        .attr("disabled", true);
+        return true;
+    });
+});
+
+
+$(document).ready(function () {
+    $("#orderSet-edit-form").submit(function (e) {
+        $("#btn-add-food-item")
+        .removeClass("bg-submitButton")
+        .addClass("cursor-wait bg-multiStepBoxColor")
+        .attr("disabled", true);
+        return true;
+    });
+});

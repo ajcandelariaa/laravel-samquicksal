@@ -18,5 +18,6 @@ class CustomerAccount extends Model
         'password',
         'profileImage',
         'deviceToken',
+        'loggedIn',
     ];
 }

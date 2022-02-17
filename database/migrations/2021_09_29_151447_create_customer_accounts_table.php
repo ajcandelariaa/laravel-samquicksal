@@ -23,6 +23,7 @@ class CreateCustomerAccountsTable extends Migration
             $table->string('password');
             $table->mediumText('deviceToken');
             $table->string('profileImage')->nullable();
+            $table->string('loggedIn')->nullable();
             $table->timestamps();
         });
     }

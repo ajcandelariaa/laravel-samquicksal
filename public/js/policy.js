@@ -43,3 +43,24 @@ $('.btn-delete').on('click', function(e){
         }
     })
 })
+
+
+$(document).ready(function () {
+    $("#policy-add-form").submit(function (e) {
+        $("#btn-policy-add")
+        .removeClass("bg-submitButton hover:bg-btnHoverColor")
+        .addClass("cursor-wait bg-multiStepBoxColor")
+        .attr("disabled", true);
+        return true;
+    });
+});
+
+$(document).ready(function () {
+    $("#policy-edit-form").submit(function (e) {
+        $("#btn-policy-edit")
+        .removeClass("bg-submitButton hover:bg-btnHoverColor")
+        .addClass("cursor-wait bg-multiStepBoxColor")
+        .attr("disabled", true);
+        return true;
+    });
+});

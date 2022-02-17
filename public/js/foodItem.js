@@ -65,6 +65,59 @@ $('#stampCardForm').submit(function(e) {
     });
   });
 
+// FOOD ITEM
+$(document).ready(function () {
+    $("#food-item").submit(function (e) {
+        $("#btn-food-item")
+        .removeClass("bg-submitButton hover:bg-darkerSubmitButton hover:text-gray-300")
+        .addClass("cursor-wait bg-multiStepBoxColor")
+        .attr("disabled", true);
+        return true;
+    });
+});
+
+$(document).ready(function () {
+    $("#foodItem-edit-form").submit(function (e) {
+        $("#btn-add-food-item")
+        .removeClass("bg-submitButton hover:bg-darkerSubmitButton hover:text-gray-300")
+        .addClass("cursor-wait bg-multiStepBoxColor")
+        .attr("disabled", true);
+        return true;
+    });
+});
 
 
-//   PARA TO SA CLIENT VALIDATION
+// FOOD SET
+$(document).ready(function () {
+    $("#foodSet-add-form").submit(function (e) {
+        $("#btn-foodSet-add")
+        .removeClass("bg-submitButton hover:bg-darkerSubmitButton hover:text-gray-300")
+        .addClass("cursor-wait bg-multiStepBoxColor")
+        .attr("disabled", true);
+        return true;
+    });
+});
+
+
+// ORDER SET
+$(document).ready(function () {
+    $("#orderSet-add-form").submit(function (e) {
+        $("#btn-orderSet-add")
+        .removeClass("bg-submitButton hover:bg-darkerSubmitButton hover:text-gray-300")
+        .addClass("cursor-wait bg-multiStepBoxColor")
+        .attr("disabled", true);
+        return true;
+    });
+});
+
+// DINE IN TIME LIMIT
+$(document).ready(function () {
+    $("#dine-tl-form").submit(function (e) {
+        $("#btn-add-item")
+        .removeClass("bg-submitButton hover:bg-darkerSubmitButton hover:text-gray-300")
+        .addClass("cursor-wait bg-multiStepBoxColor")
+        .attr("disabled", true);
+        return true;
+    });
+});
+

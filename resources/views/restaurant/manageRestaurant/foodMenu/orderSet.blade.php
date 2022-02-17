@@ -73,7 +73,7 @@
                 <button id="btn-close" class="close-btn text-xl font-bold">&times;</button>
             </div>
             <h1 class="text-center text-submitButton font-bold text-2xl font-Montserrat">Create Order Set</h1>
-            <form action="/restaurant/manage-restaurant/food-menu/order-set/add" method="POST" enctype="multipart/form-data">
+            <form action="/restaurant/manage-restaurant/food-menu/order-set/add" id="orderSet-add-form" method="POST" enctype="multipart/form-data">
                 @csrf
                 {{-- sample --}}
                 <div class="flex flex-col w-9/12 gap-y-5 mx-auto mt-10 ">
@@ -101,7 +101,7 @@
                     </div>
                 </div>
                 <div class="text-center mt-2 mb-4">
-                    <button class="bg-submitButton text-white rounded-full w-32 h-10 text-sm hover:bg-darkerSubmitButton hover:text-gray-300 transition duration-300 ease-in-out font-bold font-Montserrat" type="submit">ADD</button>
+                    <button id="btn-orderSet-add" class="bg-submitButton text-white rounded-full w-32 h-10 text-sm hover:bg-darkerSubmitButton hover:text-gray-300 transition duration-300 ease-in-out font-bold font-Montserrat" type="submit">ADD</button>
                 </div>
                 {{-- sample --}}
             </form>

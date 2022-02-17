@@ -14,7 +14,7 @@
     <div class="w-11/12 mx-auto mt-10 font-Montserrat">
         <div class="grid grid-cols-2 gap-x-5 items-start">
             <div class="col-span-1 bg-manageRestaurantSidebarColorActive pb-8 shadow-adminDownloadButton">
-                <form action="/restaurant/manage-restaurant/offense/cancel-reservation/edit/{{ $cancellation->id }}" method="POST">
+                <form action="/restaurant/manage-restaurant/offense/cancel-reservation/edit/{{ $cancellation->id }}" id="cancel-offense-form" method="POST">
                 @csrf
                     <div class="w-11/12 mx-auto">
                         <div class="uppercase font-bold text-white text-xl py-3">Cancel Offense</div>
@@ -45,7 +45,7 @@
 
                             
                             <div class="text-center mt-4 col-span-full">
-                                <button type="submit" class="bg-submitButton text-white w-36 h-9 rounded-md font-Montserrat hover:bg-btnHoverColor transition duration-200 ease-in-out ">Update</button>
+                                <button id="btn-cancel-offense" type="submit" class="bg-submitButton text-white w-36 h-9 rounded-md font-Montserrat hover:bg-btnHoverColor transition duration-200 ease-in-out ">Update</button>
                             </div>
                         </div>
                     </div>
@@ -83,7 +83,7 @@
 
         <div class="grid grid-cols-2 gap-x-5 mt-16 items-start">
             <div class="col-span-1 bg-manageRestaurantSidebarColorActive pb-8 shadow-adminDownloadButton">
-                <form action="/restaurant/manage-restaurant/offense/no-show/edit/{{ $noShow->id }}" method="POST">
+                <form action="/restaurant/manage-restaurant/offense/no-show/edit/{{ $noShow->id }}" id="noShow-offense-form"  method="POST">
                 @csrf
                     <div class="w-11/12 mx-auto">
                         <div class="uppercase font-bold text-white text-xl py-3">No Show Offense</div>
@@ -114,7 +114,7 @@
 
                             
                             <div class="text-center mt-4 col-span-full">
-                                <button type="submit" class="bg-submitButton text-white w-36 h-9 rounded-md font-Montserrat hover:bg-btnHoverColor transition duration-200 ease-in-out">Update</button>
+                                <button id="btn-noShow-offense" type="submit" class="bg-submitButton text-white w-36 h-9 rounded-md font-Montserrat hover:bg-btnHoverColor transition duration-200 ease-in-out">Update</button>
                             </div>
                         </div>
                     </div>
@@ -147,9 +147,10 @@
             </div>
         </div>
 
+
         <div class="grid grid-cols-2 gap-x-5 mt-16 items-start">
             <div class="col-span-1 bg-manageRestaurantSidebarColorActive pb-8 shadow-adminDownloadButton">
-                <form action="/restaurant/manage-restaurant/offense/runaway/edit/{{ $runaway->id }}" method="POST">
+                <form action="/restaurant/manage-restaurant/offense/runaway/edit/{{ $runaway->id }}" id="runaway-offense-form"  method="POST">
                 @csrf
                     <div class="w-11/12 mx-auto">
                         <div class="uppercase font-bold text-white text-xl py-3">Runaway Offense</div>
@@ -181,7 +182,7 @@
 
                             
                             <div class="text-center mt-4 col-span-full">
-                                <button type="submit" class="bg-submitButton text-white w-36 h-9 rounded-md font-Montserrat hover:bg-btnHoverColor transition duration-200 ease-in-out">Update</button>
+                                <button id="btn-runaway-offense" type="submit" class="bg-submitButton text-white w-36 h-9 rounded-md font-Montserrat hover:bg-btnHoverColor transition duration-200 ease-in-out">Update</button>
                             </div>
                         </div>
                     </div>

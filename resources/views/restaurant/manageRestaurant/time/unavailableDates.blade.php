@@ -126,7 +126,7 @@
                 <button id="btn-close" class="close-btn text-xl font-bold">&times;</button>
             </div>
             <h1 class="text-center text-submitButton font-bold text-2xl">Add Unavailable Date</h1>
-            <form action="/restaurant/manage-restaurant/time/unavailable-dates/add" method="POST">
+            <form action="/restaurant/manage-restaurant/time/unavailable-dates/add" method="POST" id="unavailableDate-add-form">
                 @csrf
                 <div class="w-9/12 mx-auto mt-10">
                     <div class="grid grid-cols-storeHoursThreeCols justify-center">
@@ -152,7 +152,7 @@
                     </div>
                 </div>
                 <div class="text-center mt-5">
-                    <button class="bg-submitButton hover:bg-darkerSubmitButton text-white hover:text-gray-300 rounded-md rounded-w-9/12 w-32 h-10 text-sm uppercase font-bold transition duration-200 ease-in-out " type="submit">Add</button>
+                    <button id="btn-unavailableDate-add" class="bg-submitButton hover:bg-darkerSubmitButton text-white hover:text-gray-300 rounded-md rounded-w-9/12 w-32 h-10 text-sm uppercase font-bold transition duration-200 ease-in-out" type="submit">Add</button>
                 </div>
             </form>
         </div> 
@@ -163,7 +163,7 @@
                 <button id="btn-close" class="close-btn text-xl font-bold">&times;</button>
             </div>
             <h1 class="text-center text-submitButton font-bold text-2xl">Edit Unavailable Date</h1>
-            <form action="/restaurant/manage-restaurant/time/unavailable-dates/edit" method="POST">
+            <form action="/restaurant/manage-restaurant/time/unavailable-dates/edit" method="POST" id="unavailableDate-edit-form">
                 @csrf
                 <input type="text" name="updateUnavailableDateId" id="updateUnavailableDateId" value="" hidden>
                 <div class="w-9/12 mx-auto mt-10">
@@ -190,7 +190,7 @@
                     </div>
                 </div>
                 <div class="text-center mt-5">
-                    <button class="bg-submitButton hover:bg-darkerSubmitButton text-white bg:text-gray-300 rounded-md rounded-w-9/12 w-32 h-10 text-sm uppercase font-bold transition duration-200 ease-in-out" type="submit">Update</button>
+                    <button id="btn-unavailableDate-edit" class="bg-submitButton hover:bg-darkerSubmitButton text-white bg:text-gray-300 rounded-md rounded-w-9/12 w-32 h-10 text-sm uppercase font-bold transition duration-200 ease-in-out" type="submit">Update</button>
                 </div>
             </form>
         </div> 

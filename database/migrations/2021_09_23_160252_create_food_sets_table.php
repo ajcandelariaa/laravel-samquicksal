@@ -20,7 +20,7 @@ class CreateFoodSetsTable extends Migration
             $table->string('available');
             $table->string('foodSetName');
             $table->mediumText('foodSetDescription');
-            $table->decimal('foodSetPrice', 5, 2);
+            $table->decimal('foodSetPrice', 5, 2)->nullable();
             $table->string('foodSetImage');
             $table->timestamps();
             $table->foreign('restAcc_id')->references('id')->on('restaurant_accounts')->onDelete('cascade');

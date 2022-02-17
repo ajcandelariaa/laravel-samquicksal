@@ -109,14 +109,14 @@
                 <button id="btn-close" class="close-btn text-xl font-bold">&times;</button>
             </div>
             <h1 class="text-center text-submitButton font-bold text-2xl font-Montserrat mt-16">Spend n<sup>th</sup> pesos in 1 visit only</h1>
-            <form action="/restaurant/manage-restaurant/task-rewards/tasks/edit/task1" method="POST">
+            <form action="/restaurant/manage-restaurant/task-rewards/tasks/edit/task1" id="task1-form" method="POST">
                 @csrf
                 <div class="flex flex-row w-5/12 gap-y-5 mx-auto mt-10">
                     <h1 class="mr-3 text-lg">Input:</h1>
                     <input type="number" min="1" name="task1" value="{{ $tasks[0]->taskInput }}" class="border rounded-md focus:border-black w-full py-1 px-2 text-sm focus:outline-non text-gray-700" required>
                 </div>
                 <div class="text-center mt-10">
-                    <button class="bg-submitButton text-white hover:bg-darkerSubmitButton hover:text-gray-300 rounded-full w-32 h-10 text-sm uppercase font-bold transition duration-200 ease-in-out  " type="submit">Update</button>
+                    <button id="btn-task1-submit" class="bg-submitButton text-white hover:bg-darkerSubmitButton hover:text-gray-300 rounded-full w-32 h-10 text-sm uppercase font-bold transition duration-200 ease-in-out  " type="submit">Update</button>
                 </div>
             </form>
         </div>
@@ -127,14 +127,14 @@
                 <button id="btn-close" class="close-btn text-xl font-bold">&times;</button>
             </div>
             <h1 class="text-center text-submitButton font-bold text-2xl font-Montserrat mt-16">Free n<sup>th</sup> person in a group</h1>
-            <form action="/restaurant/manage-restaurant/task-rewards/tasks/edit/task2" method="POST">
+            <form action="/restaurant/manage-restaurant/task-rewards/tasks/edit/task2" id="task2-form" method="POST">
                 @csrf
                 <div class="flex flex-row w-5/12 gap-y-5 mx-auto mt-10">
                     <h1 class="mr-3 text-lg">Input:</h1>
                     <input type="number" min="1" name="task2" value="{{ $tasks[1]->taskInput }}" class="border rounded-md focus:border-black w-full py-1 px-2 text-sm focus:outline-non text-gray-700" required>
                 </div>
                 <div class="text-center mt-10">
-                    <button class="bg-submitButton text-white hover:bg-darkerSubmitButton hover:text-gray-300 rounded-full w-32 h-10 text-sm uppercase font-bold transition duration-200 ease-in-out  " type="submit">Update</button>
+                    <button id="btn-task2-submit" class="bg-submitButton text-white hover:bg-darkerSubmitButton hover:text-gray-300 rounded-full w-32 h-10 text-sm uppercase font-bold transition duration-200 ease-in-out  " type="submit">Update</button>
                 </div>
             </form>
         </div>
@@ -145,14 +145,14 @@
                 <button id="btn-close" class="close-btn text-xl font-bold ">&times;</button>
             </div>
             <h1 class="text-center text-submitButton font-bold text-2xl font-Montserrat mt-16">Order n<sup>th</sup> add on/s per visit</h1>
-            <form action="/restaurant/manage-restaurant/task-rewards/tasks/edit/task3" method="POST">
+            <form action="/restaurant/manage-restaurant/task-rewards/tasks/edit/task3" id="task3-form" method="POST">
                 @csrf
                 <div class="flex flex-row w-5/12 gap-y-5 mx-auto mt-10">
                     <h1 class="mr-3 text-lg">Input:</h1>
                     <input type="number" min="1" name="task3" value="{{ $tasks[2]->taskInput }}" class="border rounded-md focus:border-black w-full py-1 px-2 text-sm focus:outline-non text-gray-700" required>
                 </div>
                 <div class="text-center mt-10">
-                    <button class="bg-submitButton text-white hover:bg-darkerSubmitButton hover:text-gray-300 rounded-full w-32 h-10 text-sm uppercase font-bold transition duration-200 ease-in-out  " type="submit">Update</button>
+                    <button id="btn-task3-submit" class="bg-submitButton text-white hover:bg-darkerSubmitButton hover:text-gray-300 rounded-full w-32 h-10 text-sm uppercase font-bold transition duration-200 ease-in-out  " type="submit">Update</button>
                 </div>
             </form>
         </div>

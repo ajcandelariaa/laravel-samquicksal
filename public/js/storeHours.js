@@ -178,3 +178,24 @@ $('.btn-delete').on('click', function(e){
         }
     })
 })
+
+
+$(document).ready(function () {
+    $("#storeHour-add-form").submit(function (e) {
+        $("#btn-storeHour-add")
+        .removeClass("bg-submitButton hover:bg-darkerSubmitButton hover:text-gray-300")
+        .addClass("cursor-wait bg-multiStepBoxColor")
+        .attr("disabled", true);
+        return true;
+    });
+});
+
+$(document).ready(function () {
+    $("#storeHour-edit-form").submit(function (e) {
+        $("#btn-storeHour-edit")
+        .removeClass("bg-submitButton hover:bg-darkerSubmitButton hover:text-gray-300")
+        .addClass("cursor-wait bg-multiStepBoxColor")
+        .attr("disabled", true);
+        return true;
+    });
+});

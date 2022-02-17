@@ -63,3 +63,24 @@ $('.btn-delete').on('click', function(e){
         }
     })
 })
+
+
+$(document).ready(function () {
+    $("#promo-form").submit(function (e) {
+        $("#btn-add-food-item")
+        .removeClass("bg-submitButton")
+        .addClass("cursor-wait bg-multiStepBoxColor")
+        .attr("disabled", true);
+        return true;
+    });
+});
+
+$(document).ready(function () {
+    $("#promo-edit-form").submit(function (e) {
+        $("#btn-add-food-item")
+        .removeClass("bg-submitButton")
+        .addClass("cursor-wait bg-multiStepBoxColor")
+        .attr("disabled", true);
+        return true;
+    });
+});

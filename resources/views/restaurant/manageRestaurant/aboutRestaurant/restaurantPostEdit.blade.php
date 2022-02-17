@@ -14,7 +14,7 @@
     <div class="w-11/12 mx-auto mt-10 font-Montserrat ">
         <a href="/restaurant/manage-restaurant/about/restaurant-post" class="mt-2 text-submitButton hover:text-darkerSubmitButton transition duration-200 ease-in-out uppercase font-bold"><i class="fas fa-chevron-left mr-2"></i>Back</a>
         <div class="w-full bg-manageRestaurantSidebarColorActive mt-5 rounded-2xl pb-8 mb-10">
-            <form action="/restaurant/manage-restaurant/about/restaurant-post/edit/{{ $post->id }}" method="POST" enctype="multipart/form-data">
+            <form action="/restaurant/manage-restaurant/about/restaurant-post/edit/{{ $post->id }}" method="POST" enctype="multipart/form-data" id="post-edit-form">
                 @csrf
                 <div class="flex justify-between items-center px-4 py-3">
                     <div class="text-white font-bold uppercase text-xl">Update Post</div>

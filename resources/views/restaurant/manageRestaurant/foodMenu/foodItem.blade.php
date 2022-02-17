@@ -224,7 +224,7 @@
                 </div>
 
                 <div class="text-center mt-2 mb-4">
-                    <button class="bg-submitButton text-white rounded-full w-32 h-10 text-sm hover:bg-darkerSubmitButton hover:text-gray-300 transition duration-200 ease-in-out font-bold font-Montserrat" type="submit">ADD</button>
+                    <button id="btn-food-item" class="bg-submitButton text-white rounded-full w-32 h-10 text-sm hover:bg-darkerSubmitButton hover:text-gray-300 transition duration-200 ease-in-out font-bold font-Montserrat" type="submit">ADD</button>
                 </div>
             </form>
         </div> 

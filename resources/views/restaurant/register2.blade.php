@@ -29,7 +29,7 @@
     <div class="flex items-center justify-center">
         <div class="w-adminDashboardBox max-w-full shadow-2xl bg-white rounded-2xl my-10">
             <div class="w-3/5 mx-auto pt-10 pb-12">
-                <form action="/restaurant/register" method="POST" enctype="multipart/form-data">
+                <form action="/restaurant/register" method="POST" id="register2-form" enctype="multipart/form-data">
                     @csrf
                     <h3 class="text-xl font-semibold text-center">Tell us about yourself</h3>
                     <div class="mt-5">
@@ -57,8 +57,6 @@
                                 <option value="">Please select your role</span></option>
                                 <option value="Manager">Manager</option>
                                 <option value="Owner">Owner</option>
-                                <option value="Staff">Staff</option>
-                                <option value="Server">Server</option>
                             </select>
                             <span class="mt-2 text-red-600 italic text-sm">@error('role'){{ $message }}@enderror</span>
                         </div>
@@ -253,11 +251,13 @@
 
 
                     <div class="mt-6 font-Roboto flex justify-center items-center">            
-                        <button type="submit" class="rounded-xl bg-submitButton py-3 px-8 text-white font-semibold tracking-wide hover:bg-adminLoginTextColor transition duration-200 ease-in-out">Submit <i class="fas fa-chevron-right ml-2"></i></button>
+                        <button type="submit" id="btn-post-submit" class="rounded-xl bg-submitButton py-3 px-8 text-white font-semibold tracking-wide hover:bg-adminLoginTextColor transition duration-200 ease-in-out">Submit <i class="fas fa-chevron-right ml-2"></i></button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
+    
+    <script type="text/javascript" src="{{ asset('js/register2.js') }}"></script>
 </body>
 </html>

@@ -112,7 +112,6 @@
                 <div class="mt-4">
                     <div class="flex justify-between">
                         <p class="text-4xl uppercase font-bold">{{ $foodSet->foodSetName }}</p>
-                        <p class="text-lg font-bold text-manageRestaurantSidebarColor">Price: <span class="text-red-800"> ₱ {{ $foodSet->foodSetPrice }} </span></p>
                     </div>
                     <p class="mt-3 text-sm">Description: {{ $foodSet->foodSetDescription }}</p>
                     <p class="mt-1 text-sm">Status: {{ $foodSet->status }}</p>
@@ -128,11 +127,10 @@
                     <button id="btn-add-food-item" class="bg-submitButton text-white w-36 h-9 rounded-md font-Montserrat hover:bg-white hover:text-submitButton hover:shadow-xl transition duration-300 ease-in-out  "><i class="fas fa-plus mr-3"></i>Food Item</button>
                 </div>
             </div>
-            <div class="grid grid-cols-10 items-center text-center font-bold h-16 px-5 font-Montserrat">
+            <div class="grid grid-cols-8 items-center text-center font-bold h-16 px-5 font-Montserrat">
                 <div class="col-span-1">No.</div>
                 <div class="col-span-2">Image</div>
                 <div class="col-span-3">Name</div>
-                <div class="col-span-2">Price</div>
                 <div class="col-span-1">View</div>
                 <div class="col-span-1">Delete</div>
             </div>
@@ -144,13 +142,12 @@
                         @foreach ($foodItems as $foodItem)
                             @if ($foodSetItem->foodItem_id == $foodItem->id)
                                 @if ($count % 2 == 0)
-                                    <div class="bg-manageFoodItemHeaderBgColor grid grid-cols-10 justify-items-center items-center h-10 px-5 mb-2">
+                                    <div class="bg-manageFoodItemHeaderBgColor grid grid-cols-8 justify-items-center items-center h-10 px-5 mb-2">
                                         <div class="col-span-1">{{ $count }}</div>
                                         <div class="col-span-2">
                                             <img src="{{ asset('uploads/restaurantAccounts/foodItem/'.$id.'/'.$foodItem->foodItemImage) }}" alt="foodItemImage" class="w-8 h-7">
                                         </div>
                                         <div class="col-span-3">{{ $foodItem->foodItemName }}</div>
-                                        <div class="col-span-2">₱ {{ $foodItem->foodItemPrice }}</div>
                                         <div class="col-span-1">
                                             <a href="/restaurant/manage-restaurant/food-menu/food-item/edit/{{ $foodSetItem->foodItem_id }}" target="_blank"><i class="fas fa-eye"></i></a>
                                         </div>
@@ -159,13 +156,12 @@
                                         </div>
                                     </div>
                                 @else
-                                    <div class="bg-white grid grid-cols-10 justify-items-center items-center h-10 px-5 mb-2">
+                                    <div class="bg-white grid grid-cols-8 justify-items-center items-center h-10 px-5 mb-2">
                                         <div class="col-span-1">{{ $count }}</div>
                                         <div class="col-span-2">
                                             <img src="{{ asset('uploads/restaurantAccounts/foodItem/'.$id.'/'.$foodItem->foodItemImage) }}" alt="foodItemImage" class="w-8 h-7">
                                         </div>
                                         <div class="col-span-3">{{ $foodItem->foodItemName }}</div>
-                                        <div class="col-span-2">₱ {{ $foodItem->foodItemPrice }}</div>
                                         <div class="col-span-1">
                                             <a href="/restaurant/manage-restaurant/food-menu/food-item/edit/{{ $foodItem->id  }}" target="_blank"><i class="fas fa-eye"></i></a>
                                         </div>
@@ -191,14 +187,14 @@
     </div>
 
     <div class="add-form" id="add-form">
-        <form action="/restaurant/manage-restaurant/food-menu/food-set/detail" method="POST" enctype="multipart/form-data">
+        <form action="/restaurant/manage-restaurant/food-menu/food-set/detail" id="foodSet-add-fi-form" method="POST" enctype="multipart/form-data">
             <div class="flex justify-between">
                 <h1 class="font-bold text-xl text-white">FOOD ITEM INVENTORY</h1>
-                <button class="bg-submitButton text-white rounded-md w-28 h-10 text-sm" type="submit">Add</button>
+                <button id="btn-foodSet-add-fi" class="bg-submitButton text-white rounded-md w-28 h-10 text-sm" type="submit">Add</button>
             </div>
             @csrf
             <input type="text" name="foodSetId" value="{{ $foodSet->id }}" hidden>
-            <div class="w-full bg-adminViewAccountHeaderColor2 mt-3">
+            <div class="w-full bg-adminViewAccountHeaderColor2 mt-3 overflow-x-hidden overflow-y-scroll max-h-52">
                 <div class="grid grid-cols-10 items-center text-center font-bold h-16 px-5">
                     <div class="col-span-2 bg-white py-2">
                         <input type="checkbox" name="select-all" id="select-all" class="mr-4"> 
