@@ -89,3 +89,23 @@ $( "#tableType" ).on('change', function() {
         $('#noOfTables').val(x)
     }
 });
+
+$(document).ready(function () {
+    $("#declinedForm").submit(function (e) {
+        $("#btnDeclined")
+        .removeClass("bg-submitButton hover:bg-darkerSubmitButton hover:text-gray-300")
+        .addClass("cursor-wait bg-multiStepBoxColor")
+        .attr("disabled", true);
+        return true;
+    });
+});
+
+$(document).ready(function () {
+    $("#approvedForm").submit(function (e) {
+        $("#btnApproved")
+        .removeClass("bg-submitButton hover:bg-darkerSubmitButton hover:text-gray-300")
+        .addClass("cursor-wait bg-multiStepBoxColor")
+        .attr("disabled", true);
+        return true;
+    });
+});

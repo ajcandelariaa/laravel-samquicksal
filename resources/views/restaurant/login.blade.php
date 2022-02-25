@@ -33,7 +33,7 @@
                 <div style="background-image: linear-gradient(rgba(255, 255, 255, 0), rgba(255, 255, 255, 0)), url({{asset('images/login-left-bg.png')}}); background-repeat: no-repeat; background-size: cover;" class=" md:h-full lg:h-full xl:h-full rounded-l-xl"></div>
             </div>
             <div class="grid md:col-span-7 lg:col-span-7 xl:col-span-7  items-center py-12 px-16 bg-gradient-to-b from-white to-headerBgColor md:rounded-r-xl lg:rounded-r-xl xl:rounded-r-xl">
-                <form action="/restaurant/login" method="POST">
+                <form action="/restaurant/login" id="login-form" method="POST">
                     @csrf
                     <h1 class="flex justify-center text-login text-lg sm:text-xl md:text-lg lg:text-2xl xl:text-2xl text-adminLoginTextColor">Restaurant Login</h1>
                     <div class="grid grid-col-2 my-8 lg:text-sm xl:text-sm">
@@ -63,11 +63,23 @@
                     </div>
                     
                     <div class="text-center">
-                        <button class="text-white bg-headerActiveTextColor rounded-full w-36 h-7 sm:w-36 sm:h-7 md:w-28 md:h-7 lg:w-36 lg:h-8 xl:h-10 xl:w-56 mb-5 text-xs sm:text-sm  md:text-xs lg:text-xs xl:text-xs font-Roboto hover:bg-btnHoverColor transition duration-300 ease-in-out hover:font-bold">Login</button>
+                        <button id="btn-login" class="text-white bg-headerActiveTextColor rounded-full w-36 h-7 sm:w-36 sm:h-7 md:w-28 md:h-7 lg:w-36 lg:h-8 xl:h-10 xl:w-56 mb-5 text-xs sm:text-sm  md:text-xs lg:text-xs xl:text-xs font-Roboto hover:bg-btnHoverColor transition duration-300 ease-in-out hover:font-bold">Login</button>
                     </div>
                 </form>
             </div>
         </section>
     </div>
+
+    <script>
+        $(document).ready(function () {
+            $("#login-form").submit(function (e) {
+                $("#btn-login")
+                .removeClass("bg-headerActiveTextColor hover:bg-btnHoverColor text-white")
+                .addClass("cursor-wait bg-multiStepBoxColor text-manageRestaurantSidebarColor")
+                .attr("disabled", true);
+                return true;
+            });
+        });
+    </script>
 </body>
 </html>

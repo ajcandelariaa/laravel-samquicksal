@@ -140,3 +140,24 @@ $('#admitForm').submit(function(e) {
     });
 });
 
+
+$(document).ready(function () {
+    $("#addWalkInForm").submit(function (e) {
+        $("#btnAddWalkIn")
+        .removeClass("bg-postedStatus")
+        .addClass("cursor-wait bg-multiStepBoxColor")
+        .attr("disabled", true);
+        return true;
+    });
+});
+
+
+$(document).ready(function () {
+    $("#admitForm").submit(function (e) {
+        $("#btnAdmit")
+        .removeClass("bg-submitButton hover:bg-darkerSubmitButton hover:text-gray-300")
+        .addClass("cursor-wait bg-multiStepBoxColor")
+        .attr("disabled", true);
+        return true;
+    });
+});

@@ -30,7 +30,7 @@
             <div class="bg-adminViewAccountHeaderColor2 grid grid-cols-2 items-center px-5 py-2">
                 <div class="uppercase font-bold text-black text-xl py-3 col-span-1">CUSTOMER WALK-IN DETAILS</div>
                 <div class="font-bold text-black col-span-1 text-right">
-                    <button type="submit" class="text-white bg-postedStatus py-2 px-6">Submit</button>
+                    <button id="btnAddWalkIn" type="submit" class="text-white bg-postedStatus py-2 px-6">Submit</button>
                 </div>
             </div>
             <div class="w-10/12 mx-auto py-10 font-Montserrat grid grid-cols-3 items-center gap-y-3">

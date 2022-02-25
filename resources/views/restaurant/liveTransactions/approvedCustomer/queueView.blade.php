@@ -243,7 +243,7 @@
                     <input type="text" name="tableNumbers" placeholder="(e.g 1,2,3)" id="inputTableNum" class="mt-5 border rounded-md focus:border-black w-full py-3 px-2 text-sm focus:outline-non text-gray-700" required>
                 </div>
                 <div class="text-center mt-10">
-                    <button class="bg-submitButton text-white hover:bg-darkerSubmitButton hover:text-gray-300 rounded-md w-32 h-10 text-sm uppercase font-bold transition duration-200 ease-in-out" type="submit">Submit</button>
+                    <button id="btnAdmit" class="bg-submitButton text-white hover:bg-darkerSubmitButton hover:text-gray-300 rounded-md w-32 h-10 text-sm uppercase font-bold transition duration-200 ease-in-out" type="submit">Submit</button>
                 </div>
             </form>
         </div>

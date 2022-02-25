@@ -34,7 +34,7 @@
             </div>
             
             <div class="grid items-center w-full py-12 px-16 col-span-7 bg-gradient-to-b from-white to-headerBgColor">
-                <form action="/restaurant/login/forgot-password" method="POST">
+                <form action="/restaurant/login/forgot-password" id="forgot-password-form" method="POST">
                     @csrf
                     <h1 class="flex justify-center text-login text-2xl text-adminLoginTextColor">Forgot Password</h1>
                     <div class="grid grid-col-2 my-8 text-sm">
@@ -54,11 +54,23 @@
                     </div>
                     
                     <div class="text-center">
-                        <button class="text-white bg-headerActiveTextColor rounded-full h-10 w-56 mb-5 text-xs font-Roboto hover:bg-btnHoverColor">Send Password Link</button>
+                        <button id="btn-forgot-password" class="text-white bg-headerActiveTextColor rounded-full h-10 w-56 mb-5 text-xs font-Roboto hover:bg-btnHoverColor">Send Password Link</button>
                     </div>
                 </form>
             </div>
         </section>
     </div>
+
+    <script>
+        $(document).ready(function () {
+            $("#forgot-password-form").submit(function (e) {
+                $("#btn-forgot-password")
+                .removeClass("bg-headerActiveTextColor hover:bg-btnHoverColor text-white")
+                .addClass("cursor-wait bg-multiStepBoxColor text-manageRestaurantSidebarColor")
+                .attr("disabled", true);
+                return true;
+            });
+        });
+    </script>
 </body>
 </html>
