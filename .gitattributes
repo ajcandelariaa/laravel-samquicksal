@@ -10,8 +10,9 @@
 *.html diff=html
 *.md diff=markdown
 *.php diff=php
-*.css linguist-vendored
-*.scss linguist-vendored
-*.js linguist-vendored
+*.js diff=js
+# *.css linguist-vendored
+# *.scss linguist-vendored
+# *.js linguist-vendored
 /.github export-ignore
 CHANGELOG.md export-ignore
