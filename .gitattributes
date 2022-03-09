@@ -5,14 +5,12 @@
 # CHANGELOG.md export-ignore
 
 * text=auto
-*.blade.php diff=html
-*.css diff=css
-*.html diff=html
-*.md diff=markdown
 *.php diff=php
+*.blade.php diff=html
+*.html diff=html
 *.js diff=js
-# *.css linguist-vendored
-# *.scss linguist-vendored
-# *.js linguist-vendored
+*.css diff=css
+*.scss diff=scss
+*.md diff=markdown
 /.github export-ignore
 CHANGELOG.md export-ignore
