@@ -9,7 +9,7 @@
 *.blade.php diff=html
 *.html diff=html
 *.js diff=js
-*.css diff=css
+# *.css diff=css
 *.scss diff=scss
 *.md diff=markdown
 /.github export-ignore
